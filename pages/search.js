@@ -1,4 +1,3 @@
-// pages/search.js
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
 import SearchResult from './components/SearchResult';
@@ -41,7 +40,7 @@ export default function Search() {
 
   return (
     <div className="container mx-auto p-4">
-      <h1 className="text-2xl font-bold mb-4">Search Results for "{q}"</h1>
+      <h1 className="text-2xl font-bold mb-4">Search Results for &quot;{q}&quot;</h1>
       <SearchResult results={results} />
       {memeData && <MemeCard memeData={memeData} />}
     </div>
