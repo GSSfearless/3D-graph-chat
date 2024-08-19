@@ -4,10 +4,20 @@ import { useState } from 'react';
 export default function Home() {
   const [query, setQuery] = useState('');
   const [results, setResults] = useState([]);
+  const [answer, setAnswer] = useState('');
 
   const handleSearch = async () => {
-    const response = await axios.post('/api/rag-search', { query });
-    setResults(response.data);
+    // 调用 rag-search 接口获取搜索结果
+    const searchResponse = await axios.post('/api/rag-search', { query });
+    const searchResults = searchResponse.data;
+    setResults(searchResults);
+
+    // 调用 chat 接口生成回答
+    const chatResponse = await axios.post('/api/chat', {
+      context: searchResults,
+      query
+    });
+    setAnswer(chatResponse.data.answer);
   };
 
   return (
@@ -21,7 +31,7 @@ export default function Home() {
           value={query}
           onChange={(e) => setQuery(e.target.value)}
         />
-      <button className="btn btn-primary w-full mt-4" onClick={handleSearch}>
+        <button className="btn btn-primary w-full mt-4" onClick={handleSearch}>
           Search
         </button>
       </div>
@@ -32,6 +42,10 @@ export default function Home() {
             <p>{result.snippet}</p>
           </div>
         ))}
+      </div>
+      <div className="mt-4 p-4 border rounded">
+        <h2 className="text-2xl font-bold">AI Generated Answer</h2>
+        <p>{answer}</p>
       </div>
     </div>
   );
