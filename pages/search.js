@@ -1,8 +1,9 @@
 // pages/search.js
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
-import MemeCard from '../components/MemeCard';
-import SearchResult from '../components/SearchResult';
+import SearchResult from './components/SearchResult';
+import MemeCard from './components/MemeCard';
+
 
 export default function Search() {
   const router = useRouter();
