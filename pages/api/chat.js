@@ -1,4 +1,9 @@
-const { Configuration, OpenAIApi } = require('openai');
+const OpenAI = require('openai');
+
+const openai = new OpenAI({
+  organization: 'org-gLWuvsHwqOs4i3QAdK8nQ5zk',
+  project: 'proj_TRi4aW8PdBr9LBaE9W34pDPi',
+});
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -11,13 +16,6 @@ export default async function handler(req, res) {
   if (!context || !query) {
     return res.status(400).json({ error: 'Context and query are required' });
   }
-
-  // 配置 OpenAI API 客户端
-  const configuration = new Configuration({
-    apiKey: process.env.OPENAI_API_KEY,
-  });
-
-  const openai = new OpenAIApi(configuration);
 
   // 创建提示词，将检索结果拼接成一个上下文
   const prompt = `
