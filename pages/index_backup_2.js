@@ -25,8 +25,8 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen bg-white flex flex-col items-center justify-center py-12 px-4">
-      <h1 className="text-6xl font-bold text-center text-black mb-10">AI 搜索引擎</h1>
+    <div className="min-h-screen bg-[#f0f8ff] flex flex-col items-center justify-center py-12 px-4">
+      <h1 className="text-6xl font-bold text-center text-[#003366] mb-10">AI 搜索引擎</h1>
       
       <form onSubmit={handleSearch} className="w-full max-w-3xl flex flex-col items-center space-y-6">
         <input
@@ -34,9 +34,9 @@ export default function Home() {
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder="请输入搜索内容"
-          className="input input-bordered w-full max-w-lg px-8 py-4 text-xl border-blue-500"
+          className="input input-bordered w-full max-w-lg px-8 py-4 text-xl border-[#003366]"
         />
-        <button type="submit" className="btn btn-lg bg-blue-500 text-white w-full max-w-lg py-3 text-2xl">
+        <button type="submit" className="btn btn-lg bg-[#003366] text-white w-full max-w-lg py-3 text-2xl">
           搜索
         </button>
       </form>
@@ -44,18 +44,18 @@ export default function Home() {
       <div className="flex flex-wrap mt-10 justify-center w-full space-x-10">
         {answer && (
           <div className="w-full md:w-5/12 mt-10 md:mt-0 order-1 md:order-2">
-            <h2 className="text-3xl font-semibold text-black">AI 回答</h2>
-            <p className="mt-4 p-4 bg-white border rounded-lg shadow-md text-lg text-black">{answer}</p>
+            <h2 className="text-3xl font-semibold text-[#003366]">AI 回答</h2>
+            <p className="mt-4 p-4 bg-white border rounded-lg shadow-md text-lg text-[#003366]">{answer}</p>
           </div>
         )}
 
         {results.length > 0 && (
           <div className="w-full md:w-5/12 mt-10 md:mt-0 order-2 md:order-1">
-            <h2 className="text-3xl font-semibold text-black">搜索结果</h2>
+            <h2 className="text-3xl font-semibold text-[#003366]">搜索结果</h2>
             <ul className="mt-4 space-y-6">
               {results.map((result, index) => (
                 <li key={index} className="p-4 bg-white border rounded-lg shadow-md">
-                  <h3 className="text-2xl font-bold text-black">{result.title}</h3>
+                  <h3 className="text-2xl font-bold text-[#003366]">{result.title}</h3>
                   <p className="text-lg text-gray-700">{result.snippet}</p>
                 </li>
               ))}
@@ -65,5 +65,4 @@ export default function Home() {
       </div>
     </div>
   );
-
 }
