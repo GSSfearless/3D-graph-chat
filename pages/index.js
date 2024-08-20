@@ -25,7 +25,7 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen bg-[#f0f8ff] flex flex-col items-center justify-center py-12">
+    <div className="min-h-screen bg-[#f0f8ff] flex flex-col items-center justify-center py-12 px-4">
       <h1 className="text-6xl font-bold text-center text-[#003366] mb-10">AI 搜索引擎</h1>
       
       <form onSubmit={handleSearch} className="w-full max-w-3xl flex flex-col items-center space-y-6">
@@ -34,23 +34,23 @@ export default function Home() {
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder="请输入搜索内容"
-          className="input input-bordered w-full max-w-lg px-4 py-2 text-xl border-[#003366]"
+          className="input input-bordered w-full max-w-lg px-8 py-4 text-xl border-[#003366]"
         />
-        <button type="submit" className="btn btn-lg bg-[#003366] text-white w-full max-w-lg">
+        <button type="submit" className="btn btn-lg bg-[#003366] text-white w-full max-w-lg py-3 text-2xl">
           搜索
         </button>
       </form>
 
-      <div className="flex flex-wrap mt-10 justify-center space-x-10">
+      <div className="flex flex-wrap mt-10 justify-center w-full space-x-10">
         {answer && (
-          <div className="w-full md:w-5/12 mt-10 md:mt-0">
+          <div className="w-full md:w-5/12 mt-10 md:mt-0 order-1 md:order-2">
             <h2 className="text-3xl font-semibold text-[#003366]">AI 回答</h2>
-            <p className="mt-4 p-4 bg-white border rounded-lg shadow-md text-lg">{answer}</p>
+            <p className="mt-4 p-4 bg-white border rounded-lg shadow-md text-lg text-[#003366]">{answer}</p>
           </div>
         )}
 
         {results.length > 0 && (
-          <div className="w-full md:w-5/12 mt-10 md:mt-0">
+          <div className="w-full md:w-5/12 mt-10 md:mt-0 order-2 md:order-1">
             <h2 className="text-3xl font-semibold text-[#003366]">搜索结果</h2>
             <ul className="mt-4 space-y-6">
               {results.map((result, index) => (
