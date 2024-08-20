@@ -1,5 +1,7 @@
 import axios from 'axios';
 import { useState } from 'react';
+import '../app/globals.css';
+import '../styles/globals.css';
 
 export default function Home() {
   const [query, setQuery] = useState('');
