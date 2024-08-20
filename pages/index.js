@@ -6,47 +6,59 @@ export default function Home() {
   const [results, setResults] = useState([]);
   const [answer, setAnswer] = useState('');
 
-  const handleSearch = async () => {
-    // 调用 rag-search 接口获取搜索结果
-    const searchResponse = await axios.post('/api/rag-search', { query });
-    const searchResults = searchResponse.data;
-    setResults(searchResults);
+  const handleSearch = async (e) => {
+    e.preventDefault();
+    try {
+      const response = await axios.post('/api/rag-search', { query });
+      setResults(response.data);
 
-    // 调用 chat 接口生成回答
-    const chatResponse = await axios.post('/api/chat', {
-      context: searchResults,
-      query
-    });
-    setAnswer(chatResponse.data.answer);
+      const context = response.data.map((item) => ({
+        title: item.title,
+        snippet: item.snippet
+      }));
+
+      const chatResponse = await axios.post('/api/chat', { context, query });
+      setAnswer(chatResponse.data.answer);
+    } catch (error) {
+      console.error('Error fetching data:', error);
+    }
   };
 
   return (
-    <div className="container mx-auto p-4">
-      <h1 className="text-4xl mb-4 text-center">Blue Space AI Search Engine</h1>
-      <div className="mb-4">
+    <div className="container mx-auto px-4">
+      <h1 className="text-4xl font-bold text-center mt-20">AI 搜索引擎</h1>
+      
+      <form onSubmit={handleSearch} className="mt-10 flex justify-center">
         <input
           type="text"
-          className="input input-bordered w-full"
-          placeholder="Enter your search query"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
+          placeholder="请输入搜索内容"
+          className="input input-bordered w-full max-w-lg"
         />
-        <button className="btn btn-primary w-full mt-4" onClick={handleSearch}>
-          Search
-        </button>
-      </div>
-      <div className="mt-4">
-        {results.map((result, index) => (
-          <div key={index} className="mb-4 p-4 border rounded">
-            <h2 className="text-2xl font-bold">{result.title}</h2>
-            <p>{result.snippet}</p>
-          </div>
-        ))}
-      </div>
-      <div className="mt-4 p-4 border rounded">
-        <h2 className="text-2xl font-bold">AI Generated Answer</h2>
-        <p>{answer}</p>
-      </div>
+        <button type="submit" className="btn btn-primary ml-4">搜索</button>
+      </form>
+
+      {results.length > 0 && (
+        <div>
+          <h2 className="text-2xl font-semibold mt-10">搜索结果</h2>
+          <ul className="mt-4 space-y-4">
+            {results.map((result, index) => (
+              <li key={index} className="p-4 border rounded-lg shadow-md">
+                <h3 className="text-xl font-bold">{result.title}</h3>
+                <p>{result.snippet}</p>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {answer && (
+        <div className="mt-10">
+          <h2 className="text-2xl font-semibold">AI 回答</h2>
+          <p className="mt-4 p-4 border rounded-lg shadow-md">{answer}</p>
+        </div>
+      )}
     </div>
   );
 }
