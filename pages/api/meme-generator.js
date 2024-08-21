@@ -67,9 +67,9 @@ export default async function handler(req, res) {
     // 调整位置，确保高度位于视觉中心
     const positions = [
       { x: canvas.width / 2, y: logoY - halfLogoHeight - textPadding - 30 }, // 上方
-      { x: logoX + logoSizeWidth + textPadding + 70, y: canvasHalfHeight + halfLogoHeight }, // 右侧，增加距离并确保垂直居中
+      { x: logoX + logoSizeWidth + textPadding + 70, y: canvasHalfHeight - halfLogoHeight -70 }, // 右侧，增加距离并确保垂直居中
       { x: canvas.width / 2, y: logoY + logoSizeHeight + textPadding + 30 }, // 下方
-      { x: logoX - textPadding - 70, y: canvasHalfHeight + halfLogoHeight } // 左侧，增加距离并确保垂直居中
+      { x: logoX - textPadding - 70, y: canvasHalfHeight - halfLogoHeight - 70} // 左侧，增加距离并确保垂直居中
     ];
 
     // 调整文本框宽度
