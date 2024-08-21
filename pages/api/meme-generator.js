@@ -42,14 +42,14 @@ export default async function handler(req, res) {
     const logoImage = await loadImage(logoImagePath);
 
     // Draw logo in the center without distortion
-    const logoSizeWidth = 125;
-    const logoSizeHeight = 164;
+    const logoSizeWidth = 200;
+    const logoSizeHeight = 200; // 使logo变成正方形保持比例
     context.drawImage(logoImage, (canvas.width - logoSizeWidth) / 2, (canvas.height - logoSizeHeight) / 2, logoSizeWidth, logoSizeHeight);
 
     // Draw memes around the logo
-    const memeFont = '20px Arial';
+    const memeFont = '16px Arial'; // 小一点的字体
     const memeColor = 'black';
-    const memePadding = 30;
+    const memePadding = 40; // 增加一点padding
 
     context.font = memeFont;
     context.fillStyle = memeColor;
@@ -64,7 +64,7 @@ export default async function handler(req, res) {
 
     memes.forEach((meme, index) => {
       const { x, y } = positions[index];
-      drawWrappedText(context, meme, x, y, 150);
+      drawWrappedText(context, meme, x, y, 300); // 更大一点的文本框宽度
     });
 
     const buffer = canvas.toBuffer('image/png');
@@ -85,17 +85,19 @@ export default async function handler(req, res) {
 function drawWrappedText(context, text, x, y, maxWidth) {
   const words = text.split(' ');
   let line = '';
+  let testY = y;
+  
   for (let n = 0; n < words.length; n++) {
     const testLine = line + words[n] + ' ';
     const metrics = context.measureText(testLine);
     const testWidth = metrics.width;
     if (testWidth > maxWidth && n > 0) {
-      context.fillText(line, x, y);
+      context.fillText(line, x, testY);
       line = words[n] + ' ';
-      y += 20;
+      testY += 20; // 行距
     } else {
       line = testLine;
     }
   }
-  context.fillText(line, x, y);
+  context.fillText(line, x, testY);
 }
