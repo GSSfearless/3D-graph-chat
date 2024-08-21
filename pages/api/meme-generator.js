@@ -25,7 +25,7 @@ module.exports = async function handler(req, res) {
     ctx.fillRect(0, 0, width, height);
 
     // 注册字体
-    const fontPath = path.join(process.cwd(), 'public/fonts/Impact.ttf');
+    const fontPath = path.join(process.cwd(), '../../public/fonts/Impact.ttf');
     registerFont(fontPath, { family: 'Impact' });
 
     // 设置文本样式
@@ -35,7 +35,7 @@ module.exports = async function handler(req, res) {
 
     // 2. 使用 AI 生成短语
     const response = await openai.completions.create({
-      model: 'text-davinci-003',
+      model: 'gpt-3.5-turbo',
       prompt: `Generate ${NUM_PHRASES} funny meme phrases about ${topic}.`,
       max_tokens: 150,
     });
