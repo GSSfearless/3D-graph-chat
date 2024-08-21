@@ -1,11 +1,14 @@
 const OpenAI = require('openai');
-const { createCanvas, loadImage } = require('canvas');
+const { createCanvas, loadImage, registerFont } = require('canvas'); // 引入registerFont
 const path = require('path');
 
 const openai = new OpenAI({
   organization: 'org-gLWuvsHwqOs4i3QAdK8nQ5zk',
   project: 'proj_TRi4aW8PdBr9LBaE9W34pDPi',
 });
+
+// 注册字体，确保使用的字体存在
+registerFont(path.resolve('./public/fonts/Impact.ttf'), { family: 'Impact' });
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -41,13 +44,13 @@ export default async function handler(req, res) {
     const logoImagePath = path.resolve('./public/logo-image.png');
     const logoImage = await loadImage(logoImagePath);
 
-    // Draw logo in the center without distortion
-    const logoSizeWidth = 200;
-    const logoSizeHeight = 200; // 使logo变成正方形保持比例
+    // Draw logo in the center maintaining original proportions
+    const logoSizeWidth = 150;
+    const logoSizeHeight = 164;
     context.drawImage(logoImage, (canvas.width - logoSizeWidth) / 2, (canvas.height - logoSizeHeight) / 2, logoSizeWidth, logoSizeHeight);
 
     // Draw memes around the logo
-    const memeFont = '16px Arial'; // 小一点的字体
+    const memeFont = '16px Impact'; // 使用Impact字体
     const memeColor = 'black';
     const memePadding = 40; // 增加一点padding
 
