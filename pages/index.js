@@ -9,32 +9,36 @@ export default function Home() {
   const [memeImage, setMemeImage] = useState('');
 
   const handleSearch = async () => {
-    // Fetch search results from /api/rag-search
-    const searchResponse = await fetch('/api/rag-search', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ query }),
-    });
-    const searchData = await searchResponse.json();
-    setSearchResults(searchData);
+    try {
+      // Fetch search results from /api/rag-search
+      const searchResponse = await fetch('/api/rag-search', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ query }),
+      });
+      const searchData = await searchResponse.json();
+      setSearchResults(searchData);
 
-    // Fetch AI answer from /api/chat
-    const chatResponse = await fetch('/api/chat', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ context: searchData, query }),
-    });
-    const chatData = await chatResponse.json();
-    setAiAnswer(chatData.answer);
+      // Fetch AI answer from /api/chat
+      const chatResponse = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ context: searchData, query }),
+      });
+      const chatData = await chatResponse.json();
+      setAiAnswer(chatData.answer);
 
-    // Generate meme from /api/meme-generator
-    const memeResponse = await fetch('/api/meme-generator', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ query, aiAnswer: chatData.answer }),
-    });
-    const memeBlob = await memeResponse.blob();
-    setMemeImage(URL.createObjectURL(memeBlob));
+      // Generate meme from /api/meme-generator
+      const memeResponse = await fetch('/api/meme-generator', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ topic: query }),
+      });
+      const memeBlob = await memeResponse.blob();
+      setMemeImage(URL.createObjectURL(memeBlob));
+    } catch (error) {
+      console.error('Error:', error);
+    }
   };
 
   return (

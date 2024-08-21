@@ -1,16 +1,11 @@
 import { createCanvas, registerFont } from 'canvas';
-import dotenv from 'dotenv';
 import { OpenAI } from 'openai';
 import path from 'path';
 
-// 加载环境变量
-dotenv.config();
-
-// OpenAI API 配置
+// 配置 OpenAI API
 const openai = new OpenAI({
   organization: 'org-gLWuvsHwqOs4i3QAdK8nQ5zk',
   project: 'proj_TRi4aW8PdBr9LBaE9W34pDPi',
-
 });
 
 const NUM_PHRASES = 5;
