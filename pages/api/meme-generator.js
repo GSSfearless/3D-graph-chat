@@ -1,6 +1,5 @@
-// pages/api/meme-generator.js
 const OpenAI = require('openai');
-const { createCanvas, loadImage, registerFont } = require('canvas');
+const { createCanvas, loadImage } = require('canvas');
 const path = require('path');
 
 const openai = new OpenAI({
@@ -39,12 +38,13 @@ export default async function handler(req, res) {
     context.fillRect(0, 0, canvas.width, canvas.height);
 
     // Load logo image
-    const logoImagePath = path.resolve('./public/logo-image.png');       // 你需要将logo图像保存在 public 文件夹中
+    const logoImagePath = path.resolve('./public/logo-image.png');
     const logoImage = await loadImage(logoImagePath);
 
-    // Draw logo in the center
-    const logoSize = 200;
-    context.drawImage(logoImage, (canvas.width - logoSize) / 2, (canvas.height - logoSize) / 2, logoSize, logoSize);
+    // Draw logo in the center without distortion
+    const logoSizeWidth = 200;
+    const logoSizeHeight = 100;
+    context.drawImage(logoImage, (canvas.width - logoSizeWidth) / 2, (canvas.height - logoSizeHeight) / 2, logoSizeWidth, logoSizeHeight);
 
     // Draw memes around the logo
     const memeFont = '20px Arial';
@@ -64,21 +64,7 @@ export default async function handler(req, res) {
 
     memes.forEach((meme, index) => {
       const { x, y } = positions[index];
-      const lines = meme.split(' ');
-      let line = '';
-
-      lines.forEach(word => {
-        const tempLine = line + word + ' ';
-        const lineWidth = context.measureText(tempLine).width;
-        if (lineWidth < 150) {
-          line = tempLine;
-        } else {
-          context.fillText(line, x, y - (lines.length - 1) * 20 / 2 + index * 20);
-          line = word + ' ';
-        }
-      });
-
-      context.fillText(line, x, y - (lines.length - 1) * 20 / 2 + index * 20);
+      drawWrappedText(context, meme, x, y, 150);
     });
 
     const buffer = canvas.toBuffer('image/png');
@@ -94,4 +80,22 @@ export default async function handler(req, res) {
       res.status(500).json({ error: 'Failed to generate meme', details: error.message });
     }
   }
+}
+
+function drawWrappedText(context, text, x, y, maxWidth) {
+  const words = text.split(' ');
+  let line = '';
+  for (let n = 0; n < words.length; n++) {
+    const testLine = line + words[n] + ' ';
+    const metrics = context.measureText(testLine);
+    const testWidth = metrics.width;
+    if (testWidth > maxWidth && n > 0) {
+      context.fillText(line, x, y);
+      line = words[n] + ' ';
+      y += 20;
+    } else {
+      line = testLine;
+    }
+  }
+  context.fillText(line, x, y);
 }
