@@ -1,8 +1,6 @@
 import axios from 'axios';
 import { createCanvas, loadImage, registerFont } from 'canvas';
-
-// 确保 Impact.ttf 字体文件在项目根目录下
-registerFont('Impact.ttf', { family: 'Impact' });
+import path from 'path';
 
 const memeTemplates = [
   {
@@ -20,13 +18,13 @@ const memeTemplates = [
     name: 'Drake Hotline Bling',
     url: 'https://i.imgflip.com/30b1gx.jpg'
   },
-  // 更多模板可以在这里添加
+  // More templates can be added here
 ];
 
 export default async function handler(req, res) {
   const { query, aiAnswer } = req.body;
 
-  // 随机选择一个模板
+  // Randomly select a meme template
   const selectedTemplate = memeTemplates[Math.floor(Math.random() * memeTemplates.length)];
 
   try {
@@ -34,37 +32,40 @@ export default async function handler(req, res) {
     const response = await axios.get(selectedTemplate.url, { responseType: 'arraybuffer' });
     const templateBuffer = Buffer.from(response.data);
 
-    // 加载模板图片
+    // Load template image
     const img = await loadImage(templateBuffer);
 
-    // 创建 canvas 画布
+    // Create canvas
     const width = img.width;
     const height = img.height;
     const canvas = createCanvas(width, height);
     const ctx = canvas.getContext('2d');
 
-    // 绘制模板图片
+    // Draw template image
     ctx.drawImage(img, 0, 0, width, height);
 
-    // 设置文字样式
+    // Set font path correctly
+    registerFont(path.join(process.cwd(), 'public/fonts/Impact.ttf'), { family: 'Impact' });
+
+    // Set text style
     ctx.font = '40px Impact';
     ctx.fillStyle = 'white';
     ctx.strokeStyle = 'black';
     ctx.lineWidth = 2;
     ctx.textAlign = 'center';
 
-    // 在图片顶部绘制查询文字
+    // Draw query text at the top
     ctx.fillText(query, width / 2, 50);
     ctx.strokeText(query, width / 2, 50);
 
-    // 在图片底部绘制 AI 回答文本
+    // Draw AI answer text at the bottom
     const lines = aiAnswer.split('. ').map((line, i) => {
       const y = height - (lines.length - i) * 40;
       ctx.fillText(line, width / 2, y);
       ctx.strokeText(line, width / 2, y);
     });
 
-    // 输出最终图片
+    // Output final image
     const buffer = canvas.toBuffer('image/png');
     res.setHeader('Content-Type', 'image/png');
     res.send(buffer);
