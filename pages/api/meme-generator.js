@@ -8,7 +8,7 @@ const openai = new OpenAI({
 });
 
 // 注册字体，确保使用的字体存在
-registerFont(path.resolve('./public/fonts/Roboto-Regular.ttf'), { family: 'Roboto' });
+registerFont(path.resolve('./public/fonts/NotoSansSC-Regular.ttf'), { family: 'Noto Sans SC' });
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -47,27 +47,32 @@ export default async function handler(req, res) {
     // Draw logo in the center maintaining original proportions
     const logoSizeWidth = 150;
     const logoSizeHeight = 164;
-    context.drawImage(logoImage, (canvas.width - logoSizeWidth) / 2, (canvas.height - logoSizeHeight) / 2, logoSizeWidth, logoSizeHeight);
+    const logoX = (canvas.width - logoSizeWidth) / 2;
+    const logoY = (canvas.height - logoSizeHeight) / 2;
+    context.drawImage(logoImage, logoX, logoY, logoSizeWidth, logoSizeHeight);
 
     // Draw memes around the logo
-    const memeFont = '16px Roboto'; // 使用Roboto字体
+    const memeFont = '16px "Noto Sans SC"'; // 使用 Noto Sans SC 字体
     const memeColor = 'black';
-    const memePadding = 20; // 减少padding，靠近logo
 
     context.font = memeFont;
     context.fillStyle = memeColor;
     context.textAlign = 'center';
 
+    // 调整文本框位置，使其更靠近 Logo
     const positions = [
-      { x: canvas.width / 2, y: memePadding },
-      { x: canvas.width - memePadding, y: canvas.height / 2 },
-      { x: canvas.width / 2, y: canvas.height - memePadding },
-      { x: memePadding, y: canvas.height / 2 }
+      { x: canvas.width / 2, y: logoY - 50 }, // 上方
+      { x: logoX + logoSizeWidth + 20, y: canvas.height / 2 }, // 右侧
+      { x: canvas.width / 2, y: logoY + logoSizeHeight + 40 }, // 下方
+      { x: logoX - 20, y: canvas.height / 2 } // 左侧
     ];
+
+    // 调整文本框宽度
+    const textMaxWidth = 200;
 
     memes.forEach((meme, index) => {
       const { x, y } = positions[index];
-      drawWrappedText(context, meme, x, y, 300); // 更大一点的文本框宽度
+      drawWrappedText(context, meme, x, y, textMaxWidth);
     });
 
     const buffer = canvas.toBuffer('image/png');
