@@ -32,27 +32,27 @@ export default async function handler(req, res) {
     const templateBuffer = Buffer.from(response.data);
 
     // Define image dimensions (assuming same dimensions for simplicity)
-    const width = 800;
-    const height = 600;
+    const { width, height } = await sharp(templateBuffer).metadata();
 
-    // Create meme image with sharp
+    // 创建 SVG 文本
     const svgText = `
       <svg width="${width}" height="${height}">
         <style>
-          .title { fill: white; font-size: 28px; font-family: Impact; }
-          .shadow { fill: black; font-size: 28px; font-family: Impact; }
-          .text { fill: white; font-size: 20px; font-family: Impact; }
-          .text-shadow { fill: black; font-size: 20px; font-family: Impact; }
+          .title { fill: white; font-size: 28px; font-family: Impact, sans-serif; }
+          .shadow { fill: black; font-size: 28px; font-family: Impact, sans-serif; }
+          .text { fill: white; font-size: 20px; font-family: Impact, sans-serif; }
+          .text-shadow { fill: black; font-size: 20px; font-family: Impact, sans-serif; }
         </style>
         <text x="50%" y="50" text-anchor="middle" class="shadow">${query}</text>
         <text x="50%" y="50" text-anchor="middle" class="title">${query}</text>
         ${aiAnswer.split('. ').map((line, i) => `
-          <text x="50%" y="${100 + i * 30}" text-anchor="middle" class="text-shadow">${line}</text>
-          <text x="50%" y="${100 + i * 30}" text-anchor="middle" class="text">${line}</text>
+          <text x="50%" y="${height - 150 + (i * 50)}" text-anchor="middle" class="text-shadow">${line}</text>
+          <text x="50%" y="${height - 150 + (i * 50)}" text-anchor="middle" class="text">${line}</text>
         `).join('')}
       </svg>
     `;
 
+    // 生成模因图片
     const memeImage = await sharp(templateBuffer)
       .composite([
         { input: Buffer.from(svgText), blend: 'over' }
