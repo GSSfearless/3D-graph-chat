@@ -60,17 +60,18 @@ export default async function handler(req, res) {
     context.textAlign = 'center';
 
     // 调整文本框位置，使其更靠近 Logo
-    const textPadding = 10;
+    const textPadding = 20;
     const halfLogoHeight = logoSizeHeight / 2;
+    const halfLogoWidth = logoSizeWidth / 2;
     const positions = [
-      { x: canvas.width / 2, y: logoY - (halfLogoHeight + textPadding + 20) }, // 上方
-      { x: logoX + logoSizeWidth + textPadding + 50, y: canvas.height / 2 }, // 右侧
-      { x: canvas.width / 2, y: logoY + logoSizeHeight + (textPadding + 60) }, // 下方
-      { x: logoX - (textPadding + 50), y: canvas.height / 2 } // 左侧
+      { x: canvas.width / 2, y: logoY - halfLogoHeight - textPadding - 30 }, // 上方
+      { x: logoX + logoSizeWidth + textPadding + 30, y: canvas.height / 2 }, // 右侧
+      { x: canvas.width / 2, y: logoY + logoSizeHeight + textPadding + 30 }, // 下方
+      { x: logoX - textPadding - 30, y: canvas.height / 2 } // 左侧
     ];
 
     // 调整文本框宽度
-    const textMaxWidth = 150;
+    const textMaxWidth = 200;
 
     memes.forEach((meme, index) => {
       const { x, y } = positions[index];
@@ -96,11 +97,12 @@ function drawWrappedText(context, text, x, y, maxWidth) {
   const words = text.split(' ');
   let line = '';
   let testY = y;
-  
+
   for (let n = 0; n < words.length; n++) {
     const testLine = line + words[n] + ' ';
     const metrics = context.measureText(testLine);
     const testWidth = metrics.width;
+  
     if (testWidth > maxWidth && n > 0) {
       context.fillText(line, x, testY);
       line = words[n] + ' ';
