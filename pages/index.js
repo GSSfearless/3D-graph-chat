@@ -1,77 +1,78 @@
-import axios from 'axios';
 import { useState } from 'react';
 import '../app/globals.css';
 import '../styles/globals.css';
 
 export default function Home() {
   const [query, setQuery] = useState('');
-  const [results, setResults] = useState([]);
-  const [answer, setAnswer] = useState('');
+  const [searchResults, setSearchResults] = useState([]);
+  const [aiAnswer, setAiAnswer] = useState('');
+  const [memeImage, setMemeImage] = useState('');
 
-  const handleSearch = async (e) => {
-    e.preventDefault();
-    try {
-      const response = await axios.post('/api/rag-search', { query });
-      setResults(response.data);
+  const handleSearch = async () => {
+    // Fetch search results from /api/rag-search
+    const searchResponse = await fetch('/api/rag-search', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ query }),
+    });
+    const searchData = await searchResponse.json();
+    setSearchResults(searchData);
 
-      const context = response.data.map((item) => ({
-        title: item.title,
-        snippet: item.snippet
-      }));
+    // Fetch AI answer from /api/chat
+    const chatResponse = await fetch('/api/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ context: searchData, query }),
+    });
+    const chatData = await chatResponse.json();
+    setAiAnswer(chatData.answer);
 
-      const chatResponse = await axios.post('/api/chat', { context, query });
-      setAnswer(chatResponse.data.answer);
-    } catch (error) {
-      console.error('Error fetching data:', error);
-    }
+    // Generate meme from /api/meme-generator
+    const memeResponse = await fetch('/api/meme-generator', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ query, aiAnswer: chatData.answer }),
+    });
+    const memeBlob = await memeResponse.blob();
+    setMemeImage(URL.createObjectURL(memeBlob));
   };
 
   return (
-    <div className="min-h-screen bg-frosted flex flex-col">
-      <div className="flex flex-col items-center w-full mb-10">
-        <h1 className="text-6xl font-bold text-center text-[#003366] mb-10 mt-10">MeMe Cat Search</h1>
-        <form onSubmit={handleSearch} className="flex justify-center w-full max-w-2xl mb-10">
+    <div className="container mx-auto p-4">
+      <header className="mb-4">
+        <h1 className="text-4xl font-bold mb-4">AI 搜索引擎</h1>
+        <div className="flex space-x-2">
           <input
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="请输入搜索内容"
-            className="input input-bordered w-3/4 h-12 rounded-l-lg px-4 text-xl border-[#003366] focus:outline-none focus:border-[#003366] focus:ring ring-[#003366] transition duration-200"
+            className="input input-bordered flex-grow"
           />
-          <button type="submit" className="btn bg-[#003366] text-white w-1/4 h-12 rounded-r-lg text-xl">
-            搜索
-          </button>
-        </form>
-      </div>
-
-      <div className="flex flex-grow w-full max-w-5xl mx-auto space-x-10">
-        <div className="flex-grow w-1/2">
-          {answer && (
-            <>
-              <h2 className="text-3xl font-semibold text-[#003366]">AI 回答</h2>
-              <div className="mt-4 p-6 bg-white bg-opacity-70 border rounded-lg shadow-md text-lg text-[#003366]">
-                {answer}
-              </div>
-            </>
-          )}
+          <button onClick={handleSearch} className="btn btn-primary">搜索</button>
         </div>
-
-        <div className="flex-grow w-1/2">
-          {results.length > 0 && (
-            <>
-              <h2 className="text-3xl font-semibold text-[#003366]">搜索结果</h2>
-              <ul className="mt-4 space-y-6">
-                {results.map((result, index) => (
-                  <li key={index} className="p-4 bg-white bg-opacity-70 border rounded-lg shadow-md">
-                    <h3 className="text-2xl font-bold text-[#003366]">{result.title}</h3>
-                    <p className="text-lg text-gray-700">{result.snippet}</p>
-                  </li>
-                ))}
-              </ul>
-            </>
-          )}
-        </div>
-      </div>
+      </header>
+      <main className="flex flex-row space-x-4">
+        <section className="w-1/2">
+          <div className="mb-4">
+            <h2 className="text-2xl font-bold">AI 回答：</h2>
+            <p>{aiAnswer}</p>
+          </div>
+          <div>
+            <h2 className="text-2xl font-bold">生成的模因图：</h2>
+            {memeImage && <img src={memeImage} alt="Generated Meme" className="rounded shadow" />}
+          </div>
+        </section>
+        <section className="w-1/2">
+          <h2 className="text-2xl font-bold">搜索结果：</h2>
+          {searchResults.map((result, index) => (
+            <div key={index} className="my-2 p-2 border rounded">
+              <h3 className="text-lg font-semibold">{result.title}</h3>
+              <p>{result.snippet}</p>
+            </div>
+          ))}
+        </section>
+      </main>
     </div>
   );
 }

@@ -1,20 +1,41 @@
-import fs from 'fs';
-import path from 'path';
+import axios from 'axios';
 import sharp from 'sharp';
+
+const memeTemplates = [
+  {
+    id: '1',
+    name: 'Distracted Boyfriend',
+    url: 'https://i.imgflip.com/1ur9b0.jpg'
+  },
+  {
+    id: '2',
+    name: 'Two Buttons',
+    url: 'https://i.imgflip.com/1g8my4.jpg'
+  },
+  {
+    id: '3',
+    name: 'Drake Hotline Bling',
+    url: 'https://i.imgflip.com/30b1gx.jpg'
+  },
+  // 更多模板可以在这里添加
+];
 
 export default async function handler(req, res) {
   const { query, aiAnswer } = req.body;
 
-  // Define image dimensions
-  const width = 800;
-  const height = 600;
+  // 随机选择一个模板
+  const selectedTemplate = memeTemplates[Math.floor(Math.random() * memeTemplates.length)];
 
-  // Load background image for meme (stored locally)
-  const backgroundPath = path.join(process.cwd(), 'public', 'background.jpg');
-  const backgroundImage = fs.readFileSync(backgroundPath);
-
-  // Create meme image with sharp
   try {
+    // Fetch the meme template image from external URL
+    const response = await axios.get(selectedTemplate.url, { responseType: 'arraybuffer' });
+    const templateBuffer = Buffer.from(response.data);
+
+    // Define image dimensions (assuming same dimensions for simplicity)
+    const width = 800;
+    const height = 600;
+
+    // Create meme image with sharp
     const svgText = `
       <svg width="${width}" height="${height}">
         <style>
@@ -32,7 +53,7 @@ export default async function handler(req, res) {
       </svg>
     `;
 
-    const memeImage = await sharp(backgroundImage)
+    const memeImage = await sharp(templateBuffer)
       .composite([
         { input: Buffer.from(svgText), blend: 'over' }
       ])
