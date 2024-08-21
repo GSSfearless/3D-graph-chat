@@ -1,58 +1,77 @@
-const { createCanvas, registerFont } = require('canvas');
-const path = require('path');
+const sharp = require('sharp');
 const { OpenAI } = require('openai');
+const path = require('path');
+const fs = require('fs');
 
 // 配置 OpenAI API
 const openai = new OpenAI({
   organization: 'org-gLWuvsHwqOs4i3QAdK8nQ5zk',
   project: 'proj_TRi4aW8PdBr9LBaE9W34pDPi',
+  apiKey: process.env.OPENAI_API_KEY,
 });
 
 const NUM_PHRASES = 5;
 
-module.exports = async function handler(req, res) {
+const handler = async (req, res) => {
+  if (req.method !== 'POST') {
+    res.setHeader('Allow', ['POST']);
+    return res.status(405).end(`Method ${req.method} Not Allowed`);
+  }
+
   const { topic } = req.body;
+  if (!topic) {
+    return res.status(400).json({ error: 'Topic is required' });
+  }
 
   try {
-    // 1. 生成空白背景图像
+    // 生成空白背景图像
     const width = 800;
     const height = 600;
-    const canvas = createCanvas(width, height);
-    const ctx = canvas.getContext('2d');
+    const blankImageBuffer = await sharp({
+      create: {
+        width: width,
+        height: height,
+        channels: 3,
+        background: { r: 255, g: 255, b: 255 }
+      }
+    }).png().toBuffer();
 
-    // 填充白色背景
-    ctx.fillStyle = 'white';
-    ctx.fillRect(0, 0, width, height);
-
-    // 注册字体
-    const fontPath = path.join(process.cwd(), '../../public/fonts/Impact.ttf');
-    registerFont(fontPath, { family: 'Impact' });
-
-    // 设置文本样式
-    ctx.font = '30px Impact';
-    ctx.fillStyle = 'black';
-    ctx.textAlign = 'center';
-
-    // 2. 使用 AI 生成短语
+    // 使用 AI 生成短语
     const response = await openai.completions.create({
-      model: 'gpt-3.5-turbo',
+      model: 'text-davinci-003',
       prompt: `Generate ${NUM_PHRASES} funny meme phrases about ${topic}.`,
       max_tokens: 150,
     });
 
     const phrases = response.choices[0].text.trim().split('\n').filter(Boolean);
 
-    // 3. 将短语均匀分布在背景上
-    const interval = height / (phrases.length + 1);
-    phrases.forEach((phrase, index) => {
-      const y = interval * (index + 1);
-      ctx.fillText(phrase, width / 2, y);
-    });
+    // 使用 sharp 在图像上绘制文字
+    let image = sharp(blankImageBuffer);
+    
+    // 加载字体文件
+    const fontPath = path.join(process.cwd(), 'public/fonts/Impact.ttf');
+    if (!fs.existsSync(fontPath)) {
+      console.error(`Font file not found at path: ${fontPath}`);
+      return res.status(500).json({ error: 'Font file not found' });
+    }
+
+    // 绘制每一个短语
+    const textOverlay = phrases.map((phrase, index) => ({
+      input: Buffer.from(
+        `<svg width="${width}" height="40">
+          <text x="50%" y="50%" font-family="Impact" font-size="30" fill="black" text-anchor="middle" dominant-baseline="middle">${phrase}</text>
+        </svg>`
+      ),
+      top: 50 + index * ((height - 100) / NUM_PHRASES),
+      left: 0
+    }));
+
+    // 合成文本和背景
+    image = await image.composite(textOverlay).png().toBuffer();
 
     // 输出图像
-    const buffer = canvas.toBuffer('image/png');
     res.setHeader('Content-Type', 'image/png');
-    res.send(buffer);
+    res.send(image);
 
   } catch (error) {
     console.error('Error generating meme:', error);
@@ -63,3 +82,5 @@ module.exports = async function handler(req, res) {
     });
   }
 };
+
+module.exports = handler;
