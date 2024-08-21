@@ -1,15 +1,10 @@
-
-
-// /pages/api/meme-generator.js
+// pages/api/meme-generator.js
 const OpenAI = require('openai');
 
-// Replace with your actual OpenAI credentials
 const openai = new OpenAI({
-  organization: 'org-your-organization-id',
+  organization: 'org-gLWuvsHwqOs4i3QAdK8nQ5zk',
   project: 'proj_TRi4aW8PdBr9LBaE9W34pDPi',
 });
-
-const Jimp = require('jimp');
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -24,29 +19,21 @@ export default async function handler(req, res) {
   }
 
   try {
-    // Generate meme text using OpenAI API
-    const prompt = `Generate a funny meme caption about the topic: ${topic}`;
-    const response = await openai.completions.create({
-      model: 'gpt-3.5-turbo',
-      messages: [{ role: 'user', content: prompt }],
+    const response = await openai.images.generate({
+      prompt: `Create a funny meme about ${topic}`,
+      n: 1,
+      size: "512x512",
     });
-    const memeText = response.choices[0].text.trim();
 
-    // Load a meme template image
-    const image = await Jimp.read('https://i.imgflip.com/30b1gx.jpg'); // Sample template image URL
-
-    // Add text to the image
-    const font = await Jimp.loadFont(Jimp.FONT_SANS_32_BLACK);
-    image.print(font, 10, 10, memeText, image.bitmap.width - 20);
-
-    // Convert the image to a buffer
-    const imageBuffer = await image.getBufferAsync(Jimp.MIME_JPEG);
-
-    // Return the image as response
-    res.setHeader('Content-Type', 'image/jpeg');
-    res.send(imageBuffer);
+    const memeUrl = response.data[0].url; 
+    res.status(200).json({ memeUrl });
   } catch (error) {
-    console.error('Error creating meme:', error);
-    res.status(500).json({ error: 'Failed to create meme' });
+    console.error('Error generating meme:', error);
+
+    if (error.response) {
+      res.status(500).json({ error: 'Failed to generate meme', details: error.response.data });
+    } else {
+      res.status(500).json({ error: 'Failed to generate meme', details: error.message });
+    }
   }
 }
