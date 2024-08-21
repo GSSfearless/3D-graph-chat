@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { createCanvas, loadImage, registerFont } from 'canvas';
 
-// 在项目根目录添加 Impact.ttf 字体文件，并注册字体
+// 确保 Impact.ttf 字体文件在项目根目录下
 registerFont('Impact.ttf', { family: 'Impact' });
 
 const memeTemplates = [
@@ -70,6 +70,7 @@ export default async function handler(req, res) {
     res.send(buffer);
 
   } catch (error) {
+    console.error('Error generating meme:', error);
     res.status(500).json({ error: 'Failed to generate meme', details: error.message });
   }
 }
