@@ -42,8 +42,8 @@ export default async function handler(req, res) {
     const logoImage = await loadImage(logoImagePath);
 
     // Draw logo in the center without distortion
-    const logoSizeWidth = 250;
-    const logoSizeHeight = 328;
+    const logoSizeWidth = 125;
+    const logoSizeHeight = 164;
     context.drawImage(logoImage, (canvas.width - logoSizeWidth) / 2, (canvas.height - logoSizeHeight) / 2, logoSizeWidth, logoSizeHeight);
 
     // Draw memes around the logo
