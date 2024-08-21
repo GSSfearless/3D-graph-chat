@@ -1,6 +1,6 @@
-import { createCanvas, registerFont } from 'canvas';
-import { OpenAI } from 'openai';
-import path from 'path';
+const { createCanvas, registerFont } = require('canvas');
+const path = require('path');
+const { OpenAI } = require('openai');
 
 // 配置 OpenAI API
 const openai = new OpenAI({
@@ -10,7 +10,7 @@ const openai = new OpenAI({
 
 const NUM_PHRASES = 5;
 
-export default async function handler(req, res) {
+module.exports = async function handler(req, res) {
   const { topic } = req.body;
 
   try {
@@ -62,4 +62,4 @@ export default async function handler(req, res) {
       stack: error.stack,
     });
   }
-}
+};
