@@ -64,9 +64,9 @@ export default async function handler(req, res) {
     const halfLogoHeight = logoSizeHeight / 2;
     const positions = [
       { x: canvas.width / 2, y: logoY - halfLogoHeight - textPadding - 30 }, // 上方
-      { x: logoX + logoSizeWidth + textPadding + 40, y: canvas.height / 2 + halfLogoHeight - 20 }, // 右侧
+      { x: logoX + logoSizeWidth + textPadding + 40, y: canvas.height / 2 + halfLogoHeight + 20 }, // 右侧
       { x: canvas.width / 2, y: logoY + logoSizeHeight + textPadding + 30 }, // 下方
-      { x: logoX - textPadding - 40, y: canvas.height / 2 + halfLogoHeight - 20 } // 左侧
+      { x: logoX - textPadding - 40, y: canvas.height / 2 + halfLogoHeight + 20 } // 左侧
     ];
 
     // 调整文本框宽度
