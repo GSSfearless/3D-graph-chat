@@ -63,11 +63,13 @@ export default async function handler(req, res) {
     const textPadding = 20;
     const halfLogoHeight = logoSizeHeight / 2;
     const canvasHalfHeight = canvas.height / 2;
+    
+    // 调整位置，确保高度位于视觉中心
     const positions = [
       { x: canvas.width / 2, y: logoY - halfLogoHeight - textPadding - 30 }, // 上方
-      { x: logoX + logoSizeWidth + textPadding + 70, y: canvasHalfHeight }, // 右侧，增加距离
+      { x: logoX + logoSizeWidth + textPadding + 70, y: canvasHalfHeight - halfLogoHeight }, // 右侧，增加距离并确保垂直居中
       { x: canvas.width / 2, y: logoY + logoSizeHeight + textPadding + 30 }, // 下方
-      { x: logoX - textPadding - 70, y: canvasHalfHeight } // 左侧，增加距离
+      { x: logoX - textPadding - 70, y: canvasHalfHeight - halfLogoHeight } // 左侧，增加距离并确保垂直居中
     ];
 
     // 调整文本框宽度
@@ -75,7 +77,7 @@ export default async function handler(req, res) {
 
     memes.forEach((meme, index) => {
       const { x, y } = positions[index];
-      drawWrappedText(context, meme, x, y, textMaxWidth, context.textAlign === 'left');
+      drawWrappedText(context, meme, x, y, textMaxWidth);
     });
 
     const buffer = canvas.toBuffer('image/png');
@@ -93,7 +95,7 @@ export default async function handler(req, res) {
   }
 }
 
-function drawWrappedText(context, text, x, y, maxWidth, isVertical) {
+function drawWrappedText(context, text, x, y, maxWidth) {
   // 使文本内容居中对齐
   context.textAlign = 'center';
 
