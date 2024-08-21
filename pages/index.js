@@ -35,8 +35,9 @@ export default function Home() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ topic: query }),
       });
-      const memeData = await memeResponse.json();
-      setMemeImage(memeData.memeUrl);
+      const memeBlob = await memeResponse.blob();
+      const memeUrl = URL.createObjectURL(memeBlob);
+      setMemeImage(memeUrl);
     } catch (error) {
       console.error('Error:', error);
     }
@@ -65,7 +66,7 @@ export default function Home() {
           </div>
           <div>
             <h2 className="text-2xl font-bold">生成的模因图：</h2>
-            {memeImage && <img src={memeImage} alt="Generated Meme" className="rounded shadow" />}
+            {memeImage && <img src={memeImage} alt="Generated Meme" className="rounded shadow max-w-full h-auto" />}
           </div>
         </section>
         <section className="w-1/2">
