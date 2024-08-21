@@ -30,7 +30,12 @@ export default async function handler(req, res) {
       messages: [{ role: 'user', content: prompt }],
     });
 
-    const memes = gptResponse.choices[0].message.content.split('\n').filter(meme => meme.trim().length > 0);
+    let memes = gptResponse.choices[0].message.content.split('\n').filter(meme => meme.trim().length > 0);
+
+    // 如果memes数量少于4个，填充缺失的部分
+    while (memes.length < 4) {
+      memes.push("No meme generated.");
+    }
 
     // Step 2: Create meme image
     const canvas = createCanvas(800, 800);
@@ -67,17 +72,20 @@ export default async function handler(req, res) {
     // 调整位置，确保高度位于视觉中心
     const positions = [
       { x: canvas.width / 2, y: logoY - halfLogoHeight - textPadding - 30 }, // 上方
-      { x: logoX + logoSizeWidth + textPadding + 70, y: canvasHalfHeight - halfLogoHeight -30 }, // 右侧，增加距离并确保垂直居中
+      { x: logoX + logoSizeWidth + textPadding + 70, y: canvasHalfHeight - halfLogoHeight }, // 右侧，增加距离并确保垂直居中
       { x: canvas.width / 2, y: logoY + logoSizeHeight + textPadding + 30 }, // 下方
-      { x: logoX - textPadding - 70, y: canvasHalfHeight - halfLogoHeight - 30} // 左侧，增加距离并确保垂直居中
+      { x: logoX - textPadding - 70, y: canvasHalfHeight - halfLogoHeight } // 左侧，增加距离并确保垂直居中
     ];
 
     // 调整文本框宽度
     const textMaxWidth = 200;
 
     memes.forEach((meme, index) => {
-      const { x, y } = positions[index];
-      drawWrappedText(context, meme, x, y, textMaxWidth);
+      // 检查是否存在位置和meme内容
+      if (positions[index] && meme) {
+        const { x, y } = positions[index];
+        drawWrappedText(context, meme, x, y, textMaxWidth);
+      }
     });
 
     const buffer = canvas.toBuffer('image/png');
@@ -96,7 +104,6 @@ export default async function handler(req, res) {
 }
 
 function drawWrappedText(context, text, x, y, maxWidth) {
-  // 使文本内容居中对齐
   context.textAlign = 'center';
 
   const words = text.split(' ');
