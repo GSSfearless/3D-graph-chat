@@ -1,66 +1,48 @@
-import { createCanvas, loadImage } from 'canvas';
 import fs from 'fs';
 import path from 'path';
+import sharp from 'sharp';
 
 export default async function handler(req, res) {
   const { query, aiAnswer } = req.body;
 
-  // Define canvas dimensions
+  // Define image dimensions
   const width = 800;
   const height = 600;
 
-  // Create canvas
-  const canvas = createCanvas(width, height);
-  const ctx = canvas.getContext('2d');
-
   // Load background image for meme (stored locally)
-  const backgroundPath = path.join(process.cwd(), 'public', 'background.jpg'); 
-  const backgroundImage = await loadImage(backgroundPath);
-  ctx.drawImage(backgroundImage, 0, 0, width, height);
+  const backgroundPath = path.join(process.cwd(), 'public', 'background.jpg');
+  const backgroundImage = fs.readFileSync(backgroundPath);
 
-  // Define text properties
-  ctx.font = '28px Impact';
-  ctx.fillStyle = 'white';
-  ctx.strokeStyle = 'black';
-  ctx.lineWidth = 2;
-  ctx.textAlign = 'center';
+  // Create meme image with sharp
+  try {
+    const svgText = `
+      <svg width="${width}" height="${height}">
+        <style>
+          .title { fill: white; font-size: 28px; font-family: Impact; }
+          .shadow { fill: black; font-size: 28px; font-family: Impact; }
+          .text { fill: white; font-size: 20px; font-family: Impact; }
+          .text-shadow { fill: black; font-size: 20px; font-family: Impact; }
+        </style>
+        <text x="50%" y="50" text-anchor="middle" class="shadow">${query}</text>
+        <text x="50%" y="50" text-anchor="middle" class="title">${query}</text>
+        ${aiAnswer.split('. ').map((line, i) => `
+          <text x="50%" y="${100 + i * 30}" text-anchor="middle" class="text-shadow">${line}</text>
+          <text x="50%" y="${100 + i * 30}" text-anchor="middle" class="text">${line}</text>
+        `).join('')}
+      </svg>
+    `;
 
-  // Add text to canvas
-  ctx.fillText(query, width / 2, 60);
-  ctx.strokeText(query, width / 2, 60);
+    const memeImage = await sharp(backgroundImage)
+      .composite([
+        { input: Buffer.from(svgText), blend: 'over' }
+      ])
+      .png()
+      .toBuffer();
 
-  // Split AI answer into lines if it's too long
-  const maxLineLength = 60;
-  const lines = [];
-  aiAnswer.split('. ').forEach(sentence => {
-    if (sentence.length > maxLineLength) {
-      const words = sentence.split(' ');
-      let line = '';
-      words.forEach(word => {
-        if ((line + word).length < maxLineLength) {
-          line += (line === '' ? '' : ' ') + word;
-        } else {
-          lines.push(line);
-          line = word;
-        }
-      });
-      if (line !== '') lines.push(line);
-    } else {
-      lines.push(sentence);
-    }
-  });
+    res.setHeader('Content-Type', 'image/png');
+    res.send(memeImage);
 
-  // Add multiline AI answer to canvas
-  lines.forEach((line, index) => {
-    const yPosition = 100 + index * 30;
-    ctx.fillText(line, width / 2, yPosition);
-    ctx.strokeText(line, width / 2, yPosition);
-  });
-
-  // Convert canvas to PNG and return as response
-  const buffer = canvas.toBuffer('image/png');
-  fs.writeFileSync('/tmp/meme.png', buffer);
-
-  res.setHeader('Content-Type', 'image/png');
-  res.send(buffer);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to generate meme', details: error.message });
+  }
 }
