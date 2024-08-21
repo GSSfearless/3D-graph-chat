@@ -7,7 +7,6 @@ const fs = require('fs');
 const openai = new OpenAI({
   organization: 'org-gLWuvsHwqOs4i3QAdK8nQ5zk',
   project: 'proj_TRi4aW8PdBr9LBaE9W34pDPi',
-  apiKey: process.env.OPENAI_API_KEY,
 });
 
 const NUM_PHRASES = 5;
@@ -71,15 +70,18 @@ const handler = async (req, res) => {
     console.log('Font file found at:', fontPath);  // 日志 11
 
     // 绘制每一个短语
-    const textOverlay = phrases.map((phrase, index) => ({
-      input: Buffer.from(
-        `<svg width="${width}" height="40">
-          <text x="50%" y="50%" font-family="Impact" font-size="30" fill="black" text-anchor="middle" dominant-baseline="middle">${phrase}</text>
-        </svg>`
-      ),
-      top: 50 + index * ((height - 100) / NUM_PHRASES),
-      left: 0
-    }));
+    const textOverlay = [];
+    for (let i = 0; i < phrases.length; i++) {
+      textOverlay.push({
+        input: Buffer.from(
+          `<svg width="${width}" height="40">
+            <text x="50%" y="50%" font-family="Impact" font-size="30" fill="black" text-anchor="middle" dominant-baseline="middle">${phrases[i]}</text>
+          </svg>`
+        ),
+        top: 50 + ((height - 100) / NUM_PHRASES) * i,
+        left: 0
+      });
+    }
     
     // 合成文本和背景
     console.log('Creating composite image...');  // 日志 12
@@ -102,4 +104,4 @@ const handler = async (req, res) => {
   }
 };
 
-module.exports = handler;
+module.exports = handler; // 默认导出
