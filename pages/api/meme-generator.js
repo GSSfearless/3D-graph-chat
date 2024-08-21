@@ -60,15 +60,16 @@ export default async function handler(req, res) {
     context.textAlign = 'center';
 
     // 调整文本框位置，使其更靠近 Logo
+    const textPadding = 10;
     const positions = [
-      { x: canvas.width / 2, y: logoY - 50 }, // 上方
-      { x: logoX + logoSizeWidth + 20, y: canvas.height / 2 }, // 右侧
-      { x: canvas.width / 2, y: logoY + logoSizeHeight + 40 }, // 下方
-      { x: logoX - 20, y: canvas.height / 2 } // 左侧
+      { x: canvas.width / 2, y: logoY - (textPadding + 40) }, // 上方
+      { x: logoX + logoSizeWidth + textPadding + 50, y: canvas.height / 2 }, // 右侧
+      { x: canvas.width / 2, y: logoY + logoSizeHeight + (textPadding + 40) }, // 下方
+      { x: logoX - (textPadding + 50), y: canvas.height / 2 } // 左侧
     ];
 
     // 调整文本框宽度
-    const textMaxWidth = 200;
+    const textMaxWidth = 150;
 
     memes.forEach((meme, index) => {
       const { x, y } = positions[index];
