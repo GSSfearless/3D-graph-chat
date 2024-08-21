@@ -1,5 +1,5 @@
 const OpenAI = require('openai');
-const { createCanvas, loadImage, registerFont } = require('canvas'); // 引入registerFont
+const { createCanvas, loadImage, registerFont } = require('canvas');
 const path = require('path');
 
 const openai = new OpenAI({
@@ -8,7 +8,7 @@ const openai = new OpenAI({
 });
 
 // 注册字体，确保使用的字体存在
-registerFont(path.resolve('./public/fonts/Impact.ttf'), { family: 'Impact' });
+registerFont(path.resolve('./public/fonts/Roboto-Regular.ttf'), { family: 'Roboto' });
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -50,9 +50,9 @@ export default async function handler(req, res) {
     context.drawImage(logoImage, (canvas.width - logoSizeWidth) / 2, (canvas.height - logoSizeHeight) / 2, logoSizeWidth, logoSizeHeight);
 
     // Draw memes around the logo
-    const memeFont = '16px Impact'; // 使用Impact字体
+    const memeFont = '16px Roboto'; // 使用Roboto字体
     const memeColor = 'black';
-    const memePadding = 40; // 增加一点padding
+    const memePadding = 20; // 减少padding，靠近logo
 
     context.font = memeFont;
     context.fillStyle = memeColor;
