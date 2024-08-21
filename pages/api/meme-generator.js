@@ -1,5 +1,8 @@
 import axios from 'axios';
-import sharp from 'sharp';
+import { createCanvas, loadImage, registerFont } from 'canvas';
+
+// 在项目根目录添加 Impact.ttf 字体文件，并注册字体
+registerFont('Impact.ttf', { family: 'Impact' });
 
 const memeTemplates = [
   {
@@ -31,37 +34,40 @@ export default async function handler(req, res) {
     const response = await axios.get(selectedTemplate.url, { responseType: 'arraybuffer' });
     const templateBuffer = Buffer.from(response.data);
 
-    // Define image dimensions (assuming same dimensions for simplicity)
-    const { width, height } = await sharp(templateBuffer).metadata();
+    // 加载模板图片
+    const img = await loadImage(templateBuffer);
 
-    // 创建 SVG 文本
-    const svgText = `
-      <svg width="${width}" height="${height}">
-        <style>
-          .title { fill: white; font-size: 28px; font-family: Impact, sans-serif; }
-          .shadow { fill: black; font-size: 28px; font-family: Impact, sans-serif; }
-          .text { fill: white; font-size: 20px; font-family: Impact, sans-serif; }
-          .text-shadow { fill: black; font-size: 20px; font-family: Impact, sans-serif; }
-        </style>
-        <text x="50%" y="50" text-anchor="middle" class="shadow">${query}</text>
-        <text x="50%" y="50" text-anchor="middle" class="title">${query}</text>
-        ${aiAnswer.split('. ').map((line, i) => `
-          <text x="50%" y="${height - 150 + (i * 50)}" text-anchor="middle" class="text-shadow">${line}</text>
-          <text x="50%" y="${height - 150 + (i * 50)}" text-anchor="middle" class="text">${line}</text>
-        `).join('')}
-      </svg>
-    `;
+    // 创建 canvas 画布
+    const width = img.width;
+    const height = img.height;
+    const canvas = createCanvas(width, height);
+    const ctx = canvas.getContext('2d');
 
-    // 生成模因图片
-    const memeImage = await sharp(templateBuffer)
-      .composite([
-        { input: Buffer.from(svgText), blend: 'over' }
-      ])
-      .png()
-      .toBuffer();
+    // 绘制模板图片
+    ctx.drawImage(img, 0, 0, width, height);
 
+    // 设置文字样式
+    ctx.font = '40px Impact';
+    ctx.fillStyle = 'white';
+    ctx.strokeStyle = 'black';
+    ctx.lineWidth = 2;
+    ctx.textAlign = 'center';
+
+    // 在图片顶部绘制查询文字
+    ctx.fillText(query, width / 2, 50);
+    ctx.strokeText(query, width / 2, 50);
+
+    // 在图片底部绘制 AI 回答文本
+    const lines = aiAnswer.split('. ').map((line, i) => {
+      const y = height - (lines.length - i) * 40;
+      ctx.fillText(line, width / 2, y);
+      ctx.strokeText(line, width / 2, y);
+    });
+
+    // 输出最终图片
+    const buffer = canvas.toBuffer('image/png');
     res.setHeader('Content-Type', 'image/png');
-    res.send(memeImage);
+    res.send(buffer);
 
   } catch (error) {
     res.status(500).json({ error: 'Failed to generate meme', details: error.message });
