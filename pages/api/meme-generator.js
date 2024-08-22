@@ -11,6 +11,8 @@ const openai = new OpenAI({
 // 注册字体，确保使用的字体存在
 registerFont(path.resolve('./public/fonts/NotoSansSC-Regular.ttf'), { family: 'Noto Sans SC' });
 
+const WATERMARK_TEXT = "memedog.online";
+
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     res.setHeader('Allow', ['POST']);
@@ -47,7 +49,7 @@ export default async function handler(req, res) {
     context.fillRect(0, 0, canvas.width, canvas.height);
 
     // Load random logo image from /doge_test directory
-    const logoDir = path.resolve('./public/doge_raw');
+    const logoDir = path.resolve('./doge_test');
     const logos = fs.readdirSync(logoDir);
     const randomLogo = logos[Math.floor(Math.random() * logos.length)];
     const logoImagePath = path.join(logoDir, randomLogo);
@@ -92,10 +94,19 @@ export default async function handler(req, res) {
       }
     });
 
-    const buffer = canvas.toBuffer('image/png');
+    // 添加水印
+    context.font = 'bold 20px Arial';
+    context.fillStyle = 'rgba(0,0,0,0.5)';
+    context.textAlign = 'right';
+    context.fillText(WATERMARK_TEXT, canvas.width - 10, canvas.height - 10);
 
-    res.setHeader('Content-Type', 'image/png');
-    res.status(200).end(buffer, 'binary');
+    // 保存图片并返回URL
+    const timestamp = Date.now();
+    const outputPath = path.resolve(`./public/memes/${timestamp}.png`);
+    fs.writeFileSync(outputPath, canvas.toBuffer('image/png'));
+
+    res.status(200).json({ url: `/memes/${timestamp}.png` });
+    
   } catch (error) {
     console.error('Error generating meme:', error);
 

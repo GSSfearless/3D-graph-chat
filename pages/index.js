@@ -1,4 +1,3 @@
-// pages/index.js
 import { useState } from 'react';
 import '../app/globals.css';
 import '../styles/globals.css';
@@ -43,6 +42,31 @@ export default function Home() {
     }
   };
 
+  const downloadMeme = () => {
+    if (!memeImage) return;
+    const link = document.createElement('a');
+    link.href = memeImage;
+    link.download = 'meme.png';
+    link.click();
+  };
+
+  const shareMeme = async () => {
+    if (!memeImage) return;
+    const response = await fetch(memeImage);
+    const blob = await response.blob();
+    const file = new File([blob], 'meme.png', { type: blob.type });
+
+    try {
+      await navigator.share({
+        files: [file],
+        title: 'Generated Meme',
+        text: 'Check out this meme I generated on memedog.online!',
+      });
+    } catch (err) {
+      console.error('Error sharing meme:', err);
+    }
+  };
+
   return (
     <div className="container mx-auto p-4">
       <header className="mb-4">
@@ -66,7 +90,15 @@ export default function Home() {
           </div>
           <div>
             <h2 className="text-2xl font-bold">生成的模因图：</h2>
-            {memeImage && <img src={memeImage} alt="Generated Meme" className="rounded shadow max-w-full h-auto" />}
+            {memeImage && (
+              <>
+                <img src={memeImage} alt="Generated Meme" className="rounded shadow max-w-full h-auto" />
+                <div className="mt-4 flex space-x-2">
+                  <button onClick={downloadMeme} className="btn btn-secondary">下载图片</button>
+                  <button onClick={shareMeme} className="btn btn-secondary">分享图片</button>
+                </div>
+              </>
+            )}
           </div>
         </section>
         <section className="w-1/2">
