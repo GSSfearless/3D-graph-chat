@@ -2,7 +2,6 @@ const OpenAI = require('openai');
 const { createCanvas, loadImage, registerFont } = require('canvas');
 const path = require('path');
 const fs = require('fs');
-const os = require('os');  // Import os module to get temporary directory
 
 const openai = new OpenAI({
   organization: 'org-gLWuvsHwqOs4i3QAdK8nQ5zk',
@@ -10,9 +9,7 @@ const openai = new OpenAI({
 });
 
 // 注册字体，确保使用的字体存在
-registerFont(path.resolve(__dirname, '../../public/fonts/NotoSansSC-Regular.ttf'), { family: 'Noto Sans SC' });
-
-const WATERMARK_TEXT = "memedog.online";
+registerFont(path.resolve('./public/fonts/NotoSansSC-Regular.ttf'), { family: 'Noto Sans SC' });
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -49,7 +46,7 @@ export default async function handler(req, res) {
     context.fillStyle = '#FFFFFF';
     context.fillRect(0, 0, canvas.width, canvas.height);
 
-    // Load random logo image from /public/doge_raw directory
+    // Load random logo image from /doge_test directory
     const logoDir = path.resolve('./public/doge_raw');
     const logos = fs.readdirSync(logoDir);
     const randomLogo = logos[Math.floor(Math.random() * logos.length)];
@@ -95,22 +92,10 @@ export default async function handler(req, res) {
       }
     });
 
-    // 添加水印
-    context.font = 'bold 20px "Noto Sans SC"';
-    context.fillStyle = 'rgba(0,0,0,0.5)';
-    context.textAlign = 'right';
-    context.fillText(WATERMARK_TEXT, canvas.width - 10, canvas.height - 10);
+    const buffer = canvas.toBuffer('image/png');
 
-    // 确认临时目录存在
-    const tempDir = os.tmpdir();
-
-    // 保存图片并返回URL
-    const timestamp = Date.now();
-    const outputPath = path.join(tempDir, `${timestamp}.png`);
-    fs.writeFileSync(outputPath, canvas.toBuffer('image/png'));
-
-    res.status(200).json({ url: outputPath }); // 返回临时文件路径
-
+    res.setHeader('Content-Type', 'image/png');
+    res.status(200).end(buffer, 'binary');
   } catch (error) {
     console.error('Error generating meme:', error);
 
@@ -133,7 +118,7 @@ function drawWrappedText(context, text, x, y, maxWidth) {
     const testLine = line + words[n] + ' ';
     const metrics = context.measureText(testLine);
     const testWidth = metrics.width;
-
+  
     if (testWidth > maxWidth && n > 0) {
       context.fillText(line, x, testY);
       line = words[n] + ' ';
