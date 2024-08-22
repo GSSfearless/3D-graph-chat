@@ -77,8 +77,7 @@ export default async function handler(req, res) {
     const positions = [
       { x: canvas.width / 2, y: logoY - halfLogoHeight - textPadding - 30 }, // 上方
       { x: logoX + logoSizeWidth + textPadding + 70, y: canvasHalfHeight - halfLogoHeight }, // 右侧，增加距离并确保垂直居中
-      // 下方位置替换为域名
-      { x: canvas.width / 2, y: logoY + logoSizeHeight + textPadding + 30, text: 'memedog.online' },
+      { x: canvas.width / 2, y: logoY + logoSizeHeight + textPadding + 30 }, // 下方
       { x: logoX - textPadding - 70, y: canvasHalfHeight - halfLogoHeight } // 左侧，增加距离并确保垂直居中
     ];
 
@@ -86,11 +85,10 @@ export default async function handler(req, res) {
     const textMaxWidth = 200;
 
     memes.forEach((meme, index) => {
-      if (positions[index]) {
-        const { x, y, text } = positions[index];
-        // 如果文本存在，使用指定文本，否则使用生成的 meme
-        const displayText = text || meme;
-        drawWrappedText(context, displayText, x, y, textMaxWidth);
+      // 检查是否存在位置和meme内容
+      if (positions[index] && meme) {
+        const { x, y } = positions[index];
+        drawWrappedText(context, meme, x, y, textMaxWidth);
       }
     });
 
