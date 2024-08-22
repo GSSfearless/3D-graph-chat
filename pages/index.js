@@ -1,4 +1,3 @@
-// pages/index.js
 import { useState } from 'react';
 import '../app/globals.css';
 import '../styles/globals.css';
@@ -36,8 +35,7 @@ export default function Home() {
         body: JSON.stringify({ topic: query }),
       });
       const memeBlob = await memeResponse.blob();
-      const memeUrl = URL.createObjectURL(memeBlob);
-      setMemeImage(memeUrl);
+      setMemeImage(URL.createObjectURL(memeBlob));
     } catch (error) {
       console.error('Error:', error);
     }
