@@ -48,8 +48,8 @@ export default async function handler(req, res) {
     context.fillStyle = '#FFFFFF';
     context.fillRect(0, 0, canvas.width, canvas.height);
 
-    // Load random logo image from /doge_test directory
-    const logoDir = path.resolve('./public/doge_test');
+    // Load random logo image from /public/doge_raw directory
+    const logoDir = path.resolve('./public/doge_raw');
     const logos = fs.readdirSync(logoDir);
     const randomLogo = logos[Math.floor(Math.random() * logos.length)];
     const logoImagePath = path.join(logoDir, randomLogo);
@@ -100,13 +100,19 @@ export default async function handler(req, res) {
     context.textAlign = 'right';
     context.fillText(WATERMARK_TEXT, canvas.width - 10, canvas.height - 10);
 
+    // 确认/memes目录存在
+    const memeDir = path.resolve('./public/memes');
+    if (!fs.existsSync(memeDir)) {
+      fs.mkdirSync(memeDir, { recursive: true });
+    }
+
     // 保存图片并返回URL
     const timestamp = Date.now();
-    const outputPath = path.resolve(`./public/memes/${timestamp}.png`);
+    const outputPath = path.join(memeDir, `${timestamp}.png`);
     fs.writeFileSync(outputPath, canvas.toBuffer('image/png'));
 
     res.status(200).json({ url: `/memes/${timestamp}.png` });
-    
+
   } catch (error) {
     console.error('Error generating meme:', error);
 
@@ -129,7 +135,7 @@ function drawWrappedText(context, text, x, y, maxWidth) {
     const testLine = line + words[n] + ' ';
     const metrics = context.measureText(testLine);
     const testWidth = metrics.width;
-  
+
     if (testWidth > maxWidth && n > 0) {
       context.fillText(line, x, testY);
       line = words[n] + ' ';
