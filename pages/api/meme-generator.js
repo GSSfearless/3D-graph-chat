@@ -2,6 +2,7 @@ const OpenAI = require('openai');
 const { createCanvas, loadImage, registerFont } = require('canvas');
 const path = require('path');
 const fs = require('fs');
+const os = require('os');  // Import os module to get temporary directory
 
 const openai = new OpenAI({
   organization: 'org-gLWuvsHwqOs4i3QAdK8nQ5zk',
@@ -100,18 +101,15 @@ export default async function handler(req, res) {
     context.textAlign = 'right';
     context.fillText(WATERMARK_TEXT, canvas.width - 10, canvas.height - 10);
 
-    // 确认/memes目录存在
-    const memeDir = path.resolve('./public/memes');
-    if (!fs.existsSync(memeDir)) {
-      fs.mkdirSync(memeDir, { recursive: true });
-    }
+    // 确认临时目录存在
+    const tempDir = os.tmpdir();
 
     // 保存图片并返回URL
     const timestamp = Date.now();
-    const outputPath = path.join(memeDir, `${timestamp}.png`);
+    const outputPath = path.join(tempDir, `${timestamp}.png`);
     fs.writeFileSync(outputPath, canvas.toBuffer('image/png'));
 
-    res.status(200).json({ url: `/memes/${timestamp}.png` });
+    res.status(200).json({ url: outputPath }); // 返回临时文件路径
 
   } catch (error) {
     console.error('Error generating meme:', error);

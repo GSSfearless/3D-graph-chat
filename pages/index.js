@@ -18,7 +18,7 @@ export default function Home() {
       });
       const searchData = await searchResponse.json();
       setSearchResults(searchData);
-
+  
       // Fetch AI answer from /api/chat
       const chatResponse = await fetch('/api/chat', {
         method: 'POST',
@@ -27,14 +27,15 @@ export default function Home() {
       });
       const chatData = await chatResponse.json();
       setAiAnswer(chatData.answer);
-
+  
       // Generate meme from /api/meme-generator
       const memeResponse = await fetch('/api/meme-generator', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ topic: query }),
       });
-      const memeBlob = await memeResponse.blob();
+      const memeData = await memeResponse.json();
+      const memeBlob = await fetch(memeData.url).then(r => r.blob());
       const memeUrl = URL.createObjectURL(memeBlob);
       setMemeImage(memeUrl);
     } catch (error) {
