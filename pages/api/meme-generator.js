@@ -10,7 +10,7 @@ const openai = new OpenAI({
 });
 
 // 注册字体，确保使用的字体存在
-registerFont(path.resolve('./public/fonts/NotoSansSC-Regular.ttf'), { family: 'Noto Sans SC' });
+registerFont(path.resolve(__dirname, '../../public/fonts/NotoSansSC-Regular.ttf'), { family: 'Noto Sans SC' });
 
 const WATERMARK_TEXT = "memedog.online";
 
@@ -96,7 +96,7 @@ export default async function handler(req, res) {
     });
 
     // 添加水印
-    context.font = 'bold 20px Arial';
+    context.font = 'bold 20px "Noto Sans SC"';
     context.fillStyle = 'rgba(0,0,0,0.5)';
     context.textAlign = 'right';
     context.fillText(WATERMARK_TEXT, canvas.width - 10, canvas.height - 10);
