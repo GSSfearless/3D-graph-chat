@@ -1,6 +1,7 @@
 const OpenAI = require('openai');
 const { createCanvas, loadImage, registerFont } = require('canvas');
 const path = require('path');
+const fs = require('fs');
 
 const openai = new OpenAI({
   organization: 'org-gLWuvsHwqOs4i3QAdK8nQ5zk',
@@ -45,8 +46,11 @@ export default async function handler(req, res) {
     context.fillStyle = '#FFFFFF';
     context.fillRect(0, 0, canvas.width, canvas.height);
 
-    // Load logo image
-    const logoImagePath = path.resolve('./public/logo-image.png');
+    // Load random logo image from /doge_test directory
+    const logoDir = path.resolve('./doge_test');
+    const logos = fs.readdirSync(logoDir);
+    const randomLogo = logos[Math.floor(Math.random() * logos.length)];
+    const logoImagePath = path.join(logoDir, randomLogo);
     const logoImage = await loadImage(logoImagePath);
 
     // Draw logo in the center maintaining original proportions
