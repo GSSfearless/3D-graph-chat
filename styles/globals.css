@@ -1,6 +1,6 @@
 body {
   font-family: 'Noto Sans', sans-serif;
-  background-color: #f4f4f4;
+  background-color: #ffffff;
   margin: 0;
 }
 
@@ -8,53 +8,23 @@ body {
   max-width: 1200px;
   margin: 0 auto;
   padding: 20px;
-}
-
-.header {
-  text-align: center;
-  margin-bottom: 20px;
-}
-
-.search-bar {
-  display: flex;
-  justify-content: center;
-  margin-bottom: 20px;
-}
-
-.search-input {
-  width: 400px;
-  padding: 10px;
-  font-size: 16px;
-  border: 1px solid #ccc;
-  border-radius: 4px 0 0 4px;
-}
-
-.search-button {
-  padding: 10px 20px;
-  font-size: 16px;
-  border: none;
-  border-radius: 0 4px 4px 0;
-  background-color: #007bff;
-  color: white;
-  cursor: pointer;
-}
-
-.search-button:hover {
-  background-color: #0056b3;
+  text-align: center; /* 水平特别居中，使底部搜索框的定位更加美观 */
 }
 
 .results-container {
   display: flex;
   justify-content: space-between;
   gap: 20px;
+  align-items:center; /* 水平和垂直居中所有内容 */
+  min-height: 80vh;
 }
 
 .results-left,
 .results-right {
-  background-color: white;
-  padding: 20px;
+  background-color: #f4f4f4;
+  padding: 40px;
   border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .results-left {
@@ -65,18 +35,13 @@ body {
   flex: 1;
 }
 
+.loading-placeholder {
+  font-size: 18px;
+  color: #ccc;
+}
+
 .result-item {
   margin-bottom: 20px;
-}
-
-.result-title {
-  font-size: 18px;
-  font-weight: bold;
-  color: #333;
-}
-
-.result-snippet {
-  color: #666;
 }
 
 .footer-search {
@@ -84,24 +49,24 @@ body {
   bottom: 20px;
   left: 50%;
   transform: translateX(-50%);
-  width: 600px;
+  width: 80%; /* 扩大搜索框的宽度 */
   display: flex;
   justify-content: center;
   margin-top: 20px;
 }
 
 .footer-search-input {
-  width: 80%;
-  padding: 10px;
-  font-size: 16px;
+  width: 90%; /* 扩展输入框接近整个搜索栏宽度 */
+  padding: 15px;/* 设置较大的填充 */
+  font-size: 24px; /* 增加字体大小 */
   border: 1px solid #ccc;
   border-radius: 4px 0 0 4px;
 }
 
 .footer-search-button {
-  width: 20%;
-  padding: 10px 20px;
-  font-size: 16px;
+  width: 10%; /* 设置按钮的宽度占比 */
+  padding: 15px 20px; /* 增加按钮的填充 */
+  font-size: 24px; /* 增加字体大小 */
   border: none;
   border-radius: 0 4px 4px 0;
   background-color: #007bff;

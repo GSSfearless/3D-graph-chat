@@ -7,8 +7,10 @@ export default function Home() {
   const [searchResults, setSearchResults] = useState([]);
   const [aiAnswer, setAiAnswer] = useState('');
   const [memeImage, setMemeImage] = useState('');
+  const [loading, setLoading] = useState(false);
 
   const handleSearch = async () => {
+    setLoading(true);
     try {
       // Fetch search results from /api/rag-search
       const searchResponse = await fetch('/api/rag-search', {
@@ -39,42 +41,39 @@ export default function Home() {
     } catch (error) {
       console.error('Error:', error);
     }
+    setLoading(false);
   };
 
   return (
     <div className="container">
-      <header className="header">
-        <h1>AI 搜索引擎</h1>
-        <div className="search-bar">
-          <input
-            type="text"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="请输入搜索内容"
-            className="search-input"
-          />
-          <button onClick={handleSearch} className="search-button">搜索</button>
-        </div>
-      </header>
       <main className="results-container">
         <section className="results-left">
-          <div className="result-item">
-            <h2 className="result-title">AI 回答：</h2>
-            <p className="result-snippet">{aiAnswer}</p>
-          </div>
-          <div className="result-item">
-            <h2 className="result-title">生成的模因图：</h2>
-            {memeImage && <img src={memeImage} alt="Generated Meme" />}
-          </div>
+          {loading ? (
+            <div className="loading-placeholder">加载中...</div>
+          ) : (
+            <>
+              <div className="result-item">
+                <p className="result-snippet">{aiAnswer}</p>
+              </div>
+              <div className="result-item">
+                {memeImage && <img src={memeImage} alt="Generated Meme" />}
+              </div>
+            </>
+          )}
         </section>
         <section className="results-right">
-          <h2 className="result-title">搜索结果：</h2>
-          {searchResults.map((result, index) => (
-            <div key={index} className="result-item">
-              <h3 className="result-title">{result.title}</h3>
-              <p className="result-snippet">{result.snippet}</p>
-            </div>
-          ))}
+          {loading ? (
+            <div className="loading-placeholder">加载中...</div>
+          ) : (
+            <>
+              {searchResults.map((result, index) => (
+                <div key={index} className="result-item">
+                  <h3 className="result-title">{result.title}</h3>
+                  <p className="result-snippet">{result.snippet}</p>
+                </div>
+              ))}
+            </>
+          )}
         </section>
       </main>
       <footer className="footer-search">
