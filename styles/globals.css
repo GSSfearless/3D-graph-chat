@@ -47,29 +47,17 @@ body {
 .loading-placeholder {
   text-align: center;
   font-size: 18px;
-  color: #ccc;
+  color: #ffffff; /* 设置为纯白色 */
 }
 
-.progress-bar {
-  width: 80%;
-  height: 20px;
-  background-color: #e0e0e0;
-  border-radius: 10px;
-  overflow: hidden;
-  margin: 0 auto;
+.loading-img {
+  max-width: 100px; /* 设置预加载旋转图标的最大宽度 */
+  animation: spin 2s linear infinite; /* 动画效果 */
 }
 
-.progress-fill {
-  height: 100%;
-  width: 0;
-  background-color: #007bff;
-  border-radius: 10px;
-  animation: loadingProgress 2s linear infinite;
-}
-
-@keyframes loadingProgress {
-  0% { width: 0; }
-  100% { width: 100%; }
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 }
 
 .footer-search-container {
@@ -79,7 +67,7 @@ body {
   transform: translateX(-50%);
   width: 80%;
   max-width: 600px;
-  display: flex;
+  display: flex; 
   align-items: center;
   justify-content: center;
   gap: 10px;
@@ -90,7 +78,7 @@ body {
   height: 50px; /* 增加输入框高度 */
   padding: 10px 20px; /* 设置适中的内边距 */
   font-size: 18px; /* 增加字体大小 */
-  border: 1px solid #ccc;
+  border: 1px solid #ffffff; /* 设置为纯白色 */
   border-radius: 25px;
 }
 
@@ -100,9 +88,9 @@ body {
   display: flex;
   justify-content: center;
   align-items: center;
-  font-size: 24px; /* 设置较大字体 */
+  padding: 2px;
   border: none;
-  border-radius: 50%;
+  border-radius: 100%; /* 设置为圆形 */
   background-color: #38b2ac; /* 青蓝色 */
   color: white;
   cursor: pointer;
@@ -113,5 +101,5 @@ body {
 }
 
 .footer-search-button i {
-  font-size: 20px; /* 增加箭头图标大小 */
+  font-size: 20px; /* 设置箭头图标大小 */
 }

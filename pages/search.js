@@ -48,13 +48,11 @@ export default function Home() {
       <div className="column">
         {loading ? (
           <div className="loading-placeholder">
-            <div className="progress-bar">
-              <div className="progress-fill"></div>
-            </div>
+            <img src="YOUR-LOADING-IMAGE-URL" alt="Loading..." className="loading-img" />
           </div>
         ) : (
           <div className="result-item">
-            <h3 className="result-title">AI 回答：</h3>
+            <h3 className="result-title">AI Answer:</h3>
             <p className="result-snippet">{aiAnswer}</p>
           </div>
         )}
@@ -62,13 +60,11 @@ export default function Home() {
       <div className="column column-center">
         {loading ? (
           <div className="loading-placeholder">
-            <div className="progress-bar">
-              <div className="progress-fill"></div>
-            </div>
+            <img src="YOUR-LOADING-IMAGE-URL" alt="Loading..." className="loading-img" />
           </div>
         ) : (
           <div className="result-item">
-            <h3 className="result-title">生成的模因图：</h3>
+            <h3 className="result-title">Generated Meme:</h3>
             <div style={{ textAlign: 'center' }}>
               {memeImage && <img src={memeImage} alt="Generated Meme" style={{ maxWidth: '100%', height: 'auto' }} />}
             </div>
@@ -78,13 +74,11 @@ export default function Home() {
       <div className="column">
         {loading ? (
           <div className="loading-placeholder">
-            <div className="progress-bar">
-              <div className="progress-fill"></div>
-            </div>
+            <img src="YOUR-LOADING-IMAGE-URL" alt="Loading..." className="loading-img" />
           </div>
         ) : (
           <>
-            <h3 className="result-title">搜索结果：</h3>
+            <h3 className="result-title">Search Results:</h3>
             {searchResults.map((result, index) => (
               <div key={index} className="result-item">
                 <h4 className="result-title">{result.title}</h4>
@@ -99,11 +93,11 @@ export default function Home() {
           type="text"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder="提出后续问题"
+          placeholder="Ask follow-up question"
           className="footer-search-input"
         />
         <button onClick={handleSearch} className="footer-search-button">
-          <i className="fas fa-arrow-up"></i>
+          <i className="fas fa-arrow-up text-lg text-white"></i>
         </button>
       </div>
     </div>
