@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import '../styles/globals.css';
 
 export default function Home() {
@@ -7,9 +7,11 @@ export default function Home() {
   const [aiAnswer, setAiAnswer] = useState('');
   const [memeImage, setMemeImage] = useState('');
   const [loading, setLoading] = useState(false);
+  const [showLoading, setShowLoading] = useState(false);
 
   const handleSearch = async () => {
     setLoading(true);
+    setShowLoading(true);
     try {
       // Fetch search results from /api/rag-search
       const searchResponse = await fetch('/api/rag-search', {
@@ -43,30 +45,39 @@ export default function Home() {
     setLoading(false);
   };
 
+  useEffect(() => {
+    if (!loading) {
+      const timeout = setTimeout(() => {
+        setShowLoading(false);
+      }, 500); // 0.5秒后隐藏加载动画
+
+      return () => clearTimeout(timeout);
+    }
+  }, [loading]);
+
   return (
     <div className="container">
+      {showLoading && (
+        <div className="loading-overlay">
+          <img src="YOUR-LOADING-IMAGE-URL" alt="Loading..." className="loading-img" />
+        </div>
+      )}
       <div className="column">
         <div className="result-item">
-          <h3 className="result-title">AI Answer:</h3>
+          <h3 className="result-title">😲 Answer:</h3>
           <p className="result-snippet">{aiAnswer}</p>
         </div>
       </div>
       <div className="column column-center">
-        {loading ? (
-          <div className="loading-placeholder">
-            <img src="../public/doge_raw/0.png" alt="Loading..." className="loading-img" />
+        <div className="result-item">
+          <h3 className="result-title">🍳 Cooking Meme:</h3>
+          <div style={{ textAlign: 'center' }}>
+            {memeImage && <img src={memeImage} alt="Generated Meme" style={{ maxWidth: '100%', height: 'auto' }} />}
           </div>
-        ) : (
-          <div className="result-item">
-            <h3 className="result-title">Generated Meme:</h3>
-            <div style={{ textAlign: 'center' }}>
-              {memeImage && <img src={memeImage} alt="Generated Meme" style={{ maxWidth: '100%', height: 'auto' }} />}
-            </div>
-          </div>
-        )}
+        </div>
       </div>
       <div className="column">
-        <h3 className="result-title">Search Results:</h3>
+        <h3 className="result-title">📚 Reference:</h3>
         {searchResults.map((result, index) => (
           <div key={index} className="result-item">
             <h4 className="result-title">{result.title}</h4>
@@ -83,7 +94,7 @@ export default function Home() {
           className="footer-search-input"
         />
         <button onClick={handleSearch} className="footer-search-button">
-          <i className="fas fa-arrow-up text-lg text-white"></i>
+          <i className="fas fa-arrow-up"></i>
         </button>
       </div>
     </div>
