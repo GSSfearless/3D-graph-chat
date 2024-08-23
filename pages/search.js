@@ -46,21 +46,15 @@ export default function Home() {
   return (
     <div className="container">
       <div className="column">
-        {loading ? (
-          <div className="loading-placeholder">
-            <img src="YOUR-LOADING-IMAGE-URL" alt="Loading..." className="loading-img" />
-          </div>
-        ) : (
-          <div className="result-item">
-            <h3 className="result-title">AI Answer:</h3>
-            <p className="result-snippet">{aiAnswer}</p>
-          </div>
-        )}
+        <div className="result-item">
+          <h3 className="result-title">AI Answer:</h3>
+          <p className="result-snippet">{aiAnswer}</p>
+        </div>
       </div>
       <div className="column column-center">
         {loading ? (
           <div className="loading-placeholder">
-            <img src="YOUR-LOADING-IMAGE-URL" alt="Loading..." className="loading-img" />
+            <img src="../public/doge_raw/0.png" alt="Loading..." className="loading-img" />
           </div>
         ) : (
           <div className="result-item">
@@ -72,21 +66,13 @@ export default function Home() {
         )}
       </div>
       <div className="column">
-        {loading ? (
-          <div className="loading-placeholder">
-            <img src="YOUR-LOADING-IMAGE-URL" alt="Loading..." className="loading-img" />
+        <h3 className="result-title">Search Results:</h3>
+        {searchResults.map((result, index) => (
+          <div key={index} className="result-item">
+            <h4 className="result-title">{result.title}</h4>
+            <p className="result-snippet">{result.snippet}</p>
           </div>
-        ) : (
-          <>
-            <h3 className="result-title">Search Results:</h3>
-            {searchResults.map((result, index) => (
-              <div key={index} className="result-item">
-                <h4 className="result-title">{result.title}</h4>
-                <p className="result-snippet">{result.snippet}</p>
-              </div>
-            ))}
-          </>
-        )}
+        ))}
       </div>
       <div className="footer-search-container">
         <input

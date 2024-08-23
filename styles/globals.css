@@ -15,7 +15,7 @@ body {
 }
 
 .column {
-  background-color: #f4f4f4;
+  background-color: #ffffff; /* 背景改为纯白色 */
   padding: 20px;
   border-radius: 8px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
@@ -46,8 +46,6 @@ body {
 
 .loading-placeholder {
   text-align: center;
-  font-size: 18px;
-  color: #ffffff; /* 设置为纯白色 */
 }
 
 .loading-img {
@@ -78,7 +76,7 @@ body {
   height: 50px; /* 增加输入框高度 */
   padding: 10px 20px; /* 设置适中的内边距 */
   font-size: 18px; /* 增加字体大小 */
-  border: 1px solid #ffffff; /* 设置为纯白色 */
+  border: 1px solid #ccc; /* 边框设置为浅灰色 */
   border-radius: 25px;
 }
 
