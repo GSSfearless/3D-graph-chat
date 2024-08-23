@@ -61,21 +61,16 @@ export default function SearchResults() {
                     <div className="mb-6">
                         <h2 className="text-xl font-semibold mb-2 flex items-center">
                             <i className="fas fa-question-circle mr-2"></i>
-                            答案
+                            Answer
                         </h2>
                         <p className="mb-4">{aiAnswer}</p>
-                        <h3 className="text-lg font-semibold mb-2">Key Aspects of {query}</h3>
-                        <ul className="list-disc list-inside">
-                            <li className="mb-2"><strong>GIFs and Videos:</strong> Platforms like GIPHY and YouTube host a variety of {query} GIFs and videos, showcasing dogs in funny scenarios, such as the &quot;Funny Laughing Dog Meme&quot; and others that have garnered millions of views <span className="text-gray-500">1 2</span>.</li>
-                            <li><strong>Merchandise:</strong> The {query} phenomenon has inspired a range of products available on platforms like Etsy and Redbubble. These include unique items such as laptop decals, T-shirts, posters, and stickers, all featuring {query} designs created by fans.</li>
-                        </ul>
                     </div>
                 </div>
                 <div className="w-full md:w-1/3 md:pl-8">
                     <div className="mb-6">
                         <h2 className="text-xl font-semibold mb-2 flex items-center">
                             <i className="fas fa-info-circle mr-2"></i>
-                            来源
+                            Reference
                         </h2>
                         <div className="flex flex-col space-y-2">
                             {searchResults.map((result, index) => (
@@ -94,12 +89,12 @@ export default function SearchResults() {
                     type="text"
                     value={query}
                     onChange={(e) => setQuery(e.target.value)}
-                    placeholder="提出后续问题"
-                    className="input input-bordered flex-grow p-2 border rounded-lg"
+                    placeholder="Better meme image..."
+                    className="w-full p-4 border rounded-full"
                     onKeyPress={(e) => e.key === 'Enter' && handleSearch(query)}
                 />
                 <button
-                    className="bg-teal-500 text-white rounded-full h-12 w-12 flex items-center justify-center"
+                    className="bg-teal-500 p-2 rounded-full flex items-center justify-center w-10 h-10"
                     onClick={() => handleSearch(query)}
                     disabled={loading}
                 >
