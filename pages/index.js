@@ -13,9 +13,9 @@ export default function Home() {
 
   return (
     <div className="search-container">
-      <div className="text-center">
-        <h1 className="text-6xl font-bold mb-8">Sharing Joy</h1>
-        <div className="relative search-box">
+      <div className="text-center search-inner">
+        <h1 className="search-title">Sharing Joy</h1>
+        <div className="search-box">
           <input
             type="text"
             value={query}
