@@ -61,12 +61,12 @@ export default function SearchResults() {
                     <div className="mb-6">
                         <h2 className="text-xl font-semibold mb-2 flex items-center">
                             <i className="fas fa-question-circle mr-2"></i>
-                            Answer
+                            答案
                         </h2>
                         <p className="mb-4">{aiAnswer}</p>
                         <h3 className="text-lg font-semibold mb-2">Key Aspects of Meme Dog</h3>
                         <ul className="list-disc list-inside">
-                            <li className="mb-2"><strong>GIFs and Videos:</strong> Platforms like GIPHY and YouTube host a variety of Meme Dog GIFs and videos, showcasing dogs in funny scenarios, such as the "Funny Laughing Dog Meme" and others that have garnered millions of views <span className="text-gray-500">1 2</span>.</li>
+                            <li className="mb-2"><strong>GIFs and Videos:</strong> Platforms like GIPHY and YouTube host a variety of Meme Dog GIFs and videos, showcasing dogs in funny scenarios, such as the &quot;Funny Laughing Dog Meme&quot; and others that have garnered millions of views <span className="text-gray-500">1 2</span>.</li>
                             <li><strong>Merchandise:</strong> The Meme Dog phenomenon has inspired a range of products available on platforms like Etsy and Redbubble. These include unique items such as laptop decals, T-shirts, posters, and stickers, all featuring Meme Dog designs created by fans.</li>
                         </ul>
                     </div>
@@ -75,7 +75,7 @@ export default function SearchResults() {
                     <div className="mb-6">
                         <h2 className="text-xl font-semibold mb-2 flex items-center">
                             <i className="fas fa-info-circle mr-2"></i>
-                            Reference
+                            来源
                         </h2>
                         <div className="flex flex-col space-y-2">
                             {searchResults.map((result, index) => (
@@ -93,7 +93,7 @@ export default function SearchResults() {
                 <input
                     type="text"
                     className="w-full p-4 border rounded-full"
-                    placeholder="Try another meme image?"
+                    placeholder="提出后续问题"
                     value={query}
                     onChange={(e) => setQuery(e.target.value)}
                 />
