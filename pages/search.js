@@ -59,7 +59,7 @@ export default function Home() {
           </div>
         )}
       </div>
-      <div className="column">
+      <div className="column column-center">
         {loading ? (
           <div className="loading-placeholder">
             <div className="progress-bar">
@@ -69,7 +69,9 @@ export default function Home() {
         ) : (
           <div className="result-item">
             <h3 className="result-title">生成的模因图：</h3>
-            {memeImage && <img src={memeImage} alt="Generated Meme" />}
+            <div style={{ textAlign: 'center' }}>
+              {memeImage && <img src={memeImage} alt="Generated Meme" style={{ maxWidth: '100%', height: 'auto' }} />}
+            </div>
           </div>
         )}
       </div>

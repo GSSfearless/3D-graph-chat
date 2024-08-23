@@ -20,7 +20,12 @@ body {
   border-radius: 8px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   flex: 1;
-  max-width: 30%;
+  max-width: 30%; /* 每个栏目最大比例 */
+}
+
+.column-center {
+  flex: 2;
+  max-width: 50%; /* 中心栏最大比例 */
 }
 
 .result-item {
