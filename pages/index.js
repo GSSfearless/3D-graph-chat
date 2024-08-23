@@ -1,16 +1,17 @@
 // pages/index.js
-import { config } from '@fortawesome/fontawesome-svg-core';
-import '@fortawesome/fontawesome-svg-core/styles.css'; // Import the CSS
+import { faArrowRight } from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { useRouter } from 'next/router';
 import { useState } from 'react';
-import 'tailwindcss/tailwind.css';
-config.autoAddCss = false; // Tell Font Awesome to skip adding the CSS automatically since it's being imported above
+import 'tailwindcss/tailwind.css'; // 引入 Tailwind CSS
 
 export default function Home() {
+    const router = useRouter();
     const [query, setQuery] = useState('');
 
     const handleSearch = () => {
         if (query.trim() !== '') {
-            window.location.href = `/search?q=${query}`;
+            router.push(`/search?q=${query}`);
         }
     };
 
@@ -33,7 +34,7 @@ export default function Home() {
                         style={{ top: 'calc(50% - 2rem)' }}
                         onClick={handleSearch}
                     >
-                        <i className="fas fa-arrow-right"></i>
+                        <FontAwesomeIcon icon={faArrowRight} />
                     </button>
                 </div>
             </div>
