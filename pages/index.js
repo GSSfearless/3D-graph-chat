@@ -12,21 +12,21 @@ export default function Home() {
   };
 
   return (
-    <div className="container mx-auto flex items-center justify-center min-h-screen bg-gray-100">
+    <div className="search-container">
       <div className="text-center">
         <h1 className="text-6xl font-bold mb-8">Sharing Joy</h1>
-        <div className="relative">
+        <div className="relative search-box">
           <input
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="宇宙的终极答案是多少..."
-            className="w-full p-4 text-xl rounded-lg border border-gray-300"
+            className="search-input"
             onKeyPress={(e) => e.key === 'Enter' && handleSearchRedirect()}
           />
           <button
             onClick={handleSearchRedirect}
-            className="absolute right-2 top-2 bottom-2 bg-blue-500 hover:bg-blue-700 text-white rounded-full px-4 py-2 text-xl"
+            className="search-button"
           >
             搜索
           </button>

@@ -70,23 +70,35 @@ button {
   margin-bottom: 2rem;
 }
 
-.search-input {
-  width: 100%;
-  padding: 1rem;
-  font-size: 1.25rem;
-  border-radius: 0.5rem;
+.search-box {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
   border: 1px solid #ccc;
+  border-radius: 9999px;
+  padding: 0.5rem 1rem;
+  background-color: #ffffff;
+  width: 60%;
+  max-width: 800px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.search-input {
+  font-size: 1rem;
+  border: none;
+  outline: none;
+  flex-grow: 1;
+  padding: 0.5rem 0.75rem;
 }
 
 .search-button {
-  position: absolute;
-  right: 10px;
-  top: 10px;
-  bottom: 10px;
   background-color: #3182ce;
   color: white;
-  padding: 0 1.5rem;
+  padding: 0.5rem 1rem;
   border-radius: 9999px;
+  border: none;
+  cursor: pointer;
 }
 
 .search-button:hover {
