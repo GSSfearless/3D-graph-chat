@@ -5,44 +5,44 @@ body {
 }
 
 .container {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 20px;
-  text-align: center;
-}
-
-.results-container {
   display: flex;
-  justify-content: space-between;
+  justify-content: center;
+  align-items: flex-start;
   gap: 20px;
-  align-items: stretch; /* 水平和垂直居中所有内容，并确保相同高度 */
-  min-height: 80vh;
+  padding: 20px;
+  min-height: 80vh; /* 确保内容区域占满视口 */
+  box-sizing: border-box;
 }
 
-.results-left,
-.results-right {
+.column {
   background-color: #f4f4f4;
-  padding: 40px;
+  padding: 20px;
   border-radius: 8px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  display: flex;
-  align-items: center; /* 确保内容垂直居中 */
-  justify-content: center; /* 确保内容水平居中 */
-  position: relative;
   flex: 1;
+  max-width: 30%;
+}
+
+.result-item {
+  margin-bottom: 20px;
+  text-align: left; /* 左对齐内容，提升阅读性 */
+}
+
+.result-title {
+  font-size: 18px;
+  color: #333;
+  font-weight: bold;
+  margin-bottom: 10px;
+}
+
+.result-snippet {
+  color: #666;
 }
 
 .loading-placeholder {
-  position: absolute;
-  left: 0;
-  right: 0;
-  top: 0;
-  bottom: 0;
-  background-color: #ffffff;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  border-radius: 8px;
+  text-align: center;
+  font-size: 18px;
+  color: #ccc;
 }
 
 .progress-bar {
@@ -51,6 +51,7 @@ body {
   background-color: #e0e0e0;
   border-radius: 10px;
   overflow: hidden;
+  margin: 0 auto;
 }
 
 .progress-fill {
@@ -66,53 +67,46 @@ body {
   100% { width: 100%; }
 }
 
-.result-item {
-  margin-bottom: 20px;
-}
-
-.footer-search {
+.footer-search-container {
   position: fixed;
   bottom: 20px;
   left: 50%;
   transform: translateX(-50%);
+  width: 80%;
+  max-width: 600px;
   display: flex;
+  align-items: center;
   justify-content: center;
+  gap: 10px;
 }
 
 .footer-search-input {
-  width: 70%; /* 调整占比宽度 */
-  padding: 15px;/* 设置较大的填充 */
-  font-size: 24px; /* 增加字体大小 */
+  width: 100%; /* 扩展输入框接近整个搜索栏宽度 */
+  height: 50px; /* 增加输入框高度 */
+  padding: 10px 20px; /* 设置适中的内边距 */
+  font-size: 18px; /* 增加字体大小 */
   border: 1px solid #ccc;
-  border-radius: 25px 0 0 25px;
+  border-radius: 25px;
 }
 
 .footer-search-button {
-  width: 60px;
-  height: 60px;
-  padding: 0; /* 移除内部填充 */
+  width: 50px;
+  height: 50px;
   display: flex;
-  justify-content: center; /* 中心对齐按钮内容 */
+  justify-content: center;
   align-items: center;
-  font-size: 24px; /* 增加字体大小 */
+  font-size: 24px; /* 设置较大字体 */
   border: none;
   border-radius: 50%;
-  background-color: #007bff;
+  background-color: #38b2ac; /* 青蓝色 */
   color: white;
   cursor: pointer;
-  position: relative; /* 确保设置箭头的绝对定位 */
 }
 
 .footer-search-button:hover {
-  background-color: #0056b3;
+  background-color: #319795;
 }
 
-.footer-search-button::before {
-  content: '';
-  width: 20px;
-  height: 20px;
-  border-left: 4px solid white;
-  border-bottom: 4px solid white;
-  transform: rotate(45deg);
-  position: absolute; /* 确保箭头在按钮中心 */
+.footer-search-button i {
+  font-size: 20px; /* 增加箭头图标大小 */
 }

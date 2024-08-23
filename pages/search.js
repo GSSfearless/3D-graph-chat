@@ -1,4 +1,3 @@
-// /pages/index.js
 import { useState } from 'react';
 import '../styles/globals.css';
 
@@ -46,54 +45,65 @@ export default function Home() {
 
   return (
     <div className="container">
-      <main className="results-container">
-        <section className="results-left">
-          {loading ? (
-            <div className="loading-placeholder">
-              <div className="progress-bar">
-                <div className="progress-fill"></div>
-              </div>
+      <div className="column">
+        {loading ? (
+          <div className="loading-placeholder">
+            <div className="progress-bar">
+              <div className="progress-fill"></div>
             </div>
-          ) : (
-            <>
-              <div className="result-item">
-                <p className="result-snippet">{aiAnswer}</p>
-              </div>
-              <div className="result-item">
-                {memeImage && <img src={memeImage} alt="Generated Meme" />}
-              </div>
-            </>
-          )}
-        </section>
-        <section className="results-right">
-          {loading ? (
-            <div className="loading-placeholder">
-              <div className=" progress-bar">
-                <div className="progress-fill"></div>
-              </div>
+          </div>
+        ) : (
+          <div className="result-item">
+            <h3 className="result-title">AI 回答：</h3>
+            <p className="result-snippet">{aiAnswer}</p>
+          </div>
+        )}
+      </div>
+      <div className="column">
+        {loading ? (
+          <div className="loading-placeholder">
+            <div className="progress-bar">
+              <div className="progress-fill"></div>
             </div>
-          ) : (
-            <>
-              {searchResults.map((result, index) => (
-                <div key={index} className="result-item">
-                  <h3 className="result-title">{result.title}</h3>
-                  <p className="result-snippet">{result.snippet}</p>
-                </div>
-              ))}
-            </>
-          )}
-        </section>
-      </main>
-      <footer className="footer-search">
+          </div>
+        ) : (
+          <div className="result-item">
+            <h3 className="result-title">生成的模因图：</h3>
+            {memeImage && <img src={memeImage} alt="Generated Meme" />}
+          </div>
+        )}
+      </div>
+      <div className="column">
+        {loading ? (
+          <div className="loading-placeholder">
+            <div className="progress-bar">
+              <div className="progress-fill"></div>
+            </div>
+          </div>
+        ) : (
+          <>
+            <h3 className="result-title">搜索结果：</h3>
+            {searchResults.map((result, index) => (
+              <div key={index} className="result-item">
+                <h4 className="result-title">{result.title}</h4>
+                <p className="result-snippet">{result.snippet}</p>
+              </div>
+            ))}
+          </>
+        )}
+      </div>
+      <div className="footer-search-container">
         <input
           type="text"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder="请输入搜索内容"
+          placeholder="提出后续问题"
           className="footer-search-input"
         />
-        <button onClick={handleSearch} className="footer-search-button"></button>
-      </footer>
+        <button onClick={handleSearch} className="footer-search-button">
+          <i className="fas fa-arrow-up"></i>
+        </button>
+      </div>
     </div>
   );
 }
