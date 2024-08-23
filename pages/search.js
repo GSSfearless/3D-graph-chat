@@ -1,8 +1,7 @@
-// pages/search.js
 import { useEffect, useState } from 'react';
 import '../styles/globals.css';
 
-export default function Search() {
+export default function Home() {
   const [query, setQuery] = useState('');
   const [searchResults, setSearchResults] = useState([]);
   const [aiAnswer, setAiAnswer] = useState('');
@@ -56,15 +55,6 @@ export default function Search() {
     }
   }, [loading]);
 
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const queryParam = params.get('q');
-    if (queryParam) {
-      setQuery(queryParam);
-      handleSearch();
-    }
-  }, []);
-
   return (
     <div className="container">
       {showLoading && (
@@ -74,20 +64,20 @@ export default function Search() {
       )}
       <div className="column">
         <div className="result-item">
-          <h3 className="result-title">Answer:</h3>
+          <h3 className="result-title">😲 Answer:</h3>
           <p className="result-snippet">{aiAnswer}</p>
         </div>
       </div>
       <div className="column column-center">
         <div className="result-item">
-          <h3 className="result-title">Cooking Meme:</h3>
+          <h3 className="result-title">🍳 Cooking Meme:</h3>
           <div style={{ textAlign: 'center' }}>
             {memeImage && <img src={memeImage} alt="Generated Meme" style={{ maxWidth: '100%', height: 'auto' }} />}
           </div>
         </div>
       </div>
       <div className="column">
-        <h3 className="result-title">Reference:</h3>
+        <h3 className="result-title">📚 Reference:</h3>
         {searchResults.map((result, index) => (
           <div key={index} className="result-item">
             <h4 className="result-title">{result.title}</h4>
