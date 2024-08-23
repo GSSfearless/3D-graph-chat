@@ -1,37 +1,38 @@
 import { useState } from 'react';
-import '../app/globals.css';
+import { useRouter } from 'next/router';
 import '../styles/globals.css';
 
 export default function Home() {
+  const router = useRouter();
   const [query, setQuery] = useState('');
 
-  const handleSearchRedirect = () => {
+  const handleSearch = () => {
     if (query.trim()) {
-      window.location.href = `/search?q=${encodeURIComponent(query)}`;
+      router.push(`/search?query=${encodeURIComponent(query.trim())}`);
     }
   };
 
   return (
-    <div className="search-container">
-      <div className="text-center search-inner">
-        <h1 className="search-title">Sharing Joy</h1>
+    <div className="container">
+      <header className="header">
+        <h1>Enjoy the Joy</h1>
         <div className="search-box">
           <input
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="宇宙的终极答案是多少..."
-            className="search-input"
-            onKeyPress={(e) => e.key === 'Enter' && handleSearchRedirect()}
           />
-          <button
-            onClick={handleSearchRedirect}
-            className="search-button"
-          >
-            搜索
-          </button>
+          <button onClick={handleSearch}>搜索</button>
         </div>
-      </div>
+        <div className="lang-selector">
+          <span>Language: </span>
+          <select defaultValue="en">
+            <option value="en">English (English)</option>
+            <option value="zh">中文 (Chinese)</option>
+          </select>
+        </div>
+      </header>
     </div>
   );
 }

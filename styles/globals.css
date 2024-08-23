@@ -1,66 +1,68 @@
-/* styles/globals.css */
-.min-h-screen {
-  min-height: 100vh;
-  background-color: #ffffff; /* 修改页面背景颜色 */
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+  background-color: #f8f8f8;
 }
 
-.text-6xl {
-  font-size: 4rem;
-  line-height: 1;
-  font-weight: 700;
-  text-align: center;
-  color: #000000; /* 修改标题字体颜色 */
-}
-
-.input-bordered {
-  border-width: 2px;
-  border-color: #0000ff; /* 修改搜索框边框颜色 */
-}
-
-.btn-lg {
-  background-color: #0000ff; /* 修改按钮背景颜色 */
-  color: #ffffff; /* 修改按钮字体颜色 */
-  padding-top: 1rem;
-  padding-bottom: 1rem;
-  text-align: center;
-}
-
-.flex-col {
+.container {
   display: flex;
-  flex-direction: column;
   justify-content: center;
   align-items: center;
-  padding: 3rem 1rem;
+  height: 100vh;
+  flex-direction: column;
+  text-align: center;
+  background-color: #f0f0f5;
 }
 
-input {
-  width: 100%;
-  max-width: 32rem;
-  padding: 1rem 2rem;
-  font-size: 1rem;
-  border-radius: 0.5rem;
-  border: 1px solid #d1d5db;
-  outline: none;
-  transition: all 0.3s ease;
+.header {
+  position: relative;
 }
 
-input:focus {
-  border-color: #0000ff; /* 焦点状态边框颜色 */
-  box-shadow: 0 0 0 3px rgba(0, 0, 255, 0.3); /* 焦点状态阴影颜色 */
+.header h1 {
+  font-size: 4rem;
+  margin-bottom: 2rem;
 }
 
-button {
-  width: 100%;
-  max-width: 32rem;
-  padding: 0.75rem 0;
-  font-size: 1.25rem;
-  color: #fff;
-  background-color: #0000ff;
+.search-box {
+  width: 60%;
+  height: 3rem;
+  position: relative;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: white;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.search-box input {
+  width: 80%;
+  height: 100%;
   border: none;
-  border-radius: 0.5rem;
-  transition: background-color 0.3s ease;
+  padding: 1rem;
+  font-size: 1.25rem;
+  border-radius: 8px 0 0 8px;
 }
 
-button:hover {
-  background-color: #0000cc; /* 鼠标悬停状态按钮颜色 */
+.search-box button {
+  height: 100%;
+  background-color: #0070f3;
+  color: white;
+  border: none;
+  padding: 1rem;
+  border-radius: 0 8px 8px 0;
+  cursor: pointer;
+  font-size: 1.25rem;
+}
+
+.search-box button:hover {
+  background-color: #005bb5;
+}
+
+.lang-selector {
+  position: absolute;
+  bottom: 2rem;
+  width: 100%;
+  text-align: center;
 }
