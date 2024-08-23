@@ -66,7 +66,7 @@ export default function SearchResults() {
                         <p className="mb-4">{aiAnswer}</p>
                         <h3 className="text-lg font-semibold mb-2">Key Aspects of {query}</h3>
                         <ul className="list-disc list-inside">
-                            <li className="mb-2"><strong>GIFs and Videos:</strong> Platforms like GIPHY and YouTube host a variety of {query} GIFs and videos, showcasing dogs in funny scenarios, such as the "Funny Laughing Dog Meme" and others that have garnered millions of views <span className="text-gray-500">1 2</span>.</li>
+                            <li className="mb-2"><strong>GIFs and Videos:</strong> Platforms like GIPHY and YouTube host a variety of {query} GIFs and videos, showcasing dogs in funny scenarios, such as the &quot;Funny Laughing Dog Meme&quot; and others that have garnered millions of views <span className="text-gray-500">1 2</span>.</li>
                             <li><strong>Merchandise:</strong> The {query} phenomenon has inspired a range of products available on platforms like Etsy and Redbubble. These include unique items such as laptop decals, T-shirts, posters, and stickers, all featuring {query} designs created by fans.</li>
                         </ul>
                     </div>
