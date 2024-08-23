@@ -8,14 +8,14 @@ body {
   max-width: 1200px;
   margin: 0 auto;
   padding: 20px;
-  text-align: center; /* 水平特别居中，使底部搜索框的定位更加美观 */
+  text-align: center;
 }
 
 .results-container {
   display: flex;
   justify-content: space-between;
   gap: 20px;
-  align-items:center; /* 水平和垂直居中所有内容 */
+  align-items: stretch; /* 水平和垂直居中所有内容，并确保相同高度 */
   min-height: 80vh;
 }
 
@@ -25,19 +25,45 @@ body {
   padding: 40px;
   border-radius: 8px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-.results-left {
-  flex: 2;
-}
-
-.results-right {
+  display: flex;
+  align-items: center; /* 确保内容垂直居中 */
+  justify-content: center; /* 确保内容水平居中 */
+  position: relative;
   flex: 1;
 }
 
 .loading-placeholder {
-  font-size: 18px;
-  color: #ccc;
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  background-color: #ffffff;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border-radius: 8px;
+}
+
+.progress-bar {
+  width: 80%;
+  height: 20px;
+  background-color: #e0e0e0;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  width: 0;
+  background-color: #007bff;
+  border-radius: 10px;
+  animation: loadingProgress 2s linear infinite;
+}
+
+@keyframes loadingProgress {
+  0% { width: 0; }
+  100% { width: 100%; }
 }
 
 .result-item {
@@ -49,31 +75,44 @@ body {
   bottom: 20px;
   left: 50%;
   transform: translateX(-50%);
-  width: 80%; /* 扩大搜索框的宽度 */
   display: flex;
   justify-content: center;
-  margin-top: 20px;
 }
 
 .footer-search-input {
-  width: 90%; /* 扩展输入框接近整个搜索栏宽度 */
+  width: 70%; /* 调整占比宽度 */
   padding: 15px;/* 设置较大的填充 */
   font-size: 24px; /* 增加字体大小 */
   border: 1px solid #ccc;
-  border-radius: 4px 0 0 4px;
+  border-radius: 25px 0 0 25px;
 }
 
 .footer-search-button {
-  width: 10%; /* 设置按钮的宽度占比 */
-  padding: 15px 20px; /* 增加按钮的填充 */
+  width: 60px;
+  height: 60px;
+  padding: 0; /* 移除内部填充 */
+  display: flex;
+  justify-content: center; /* 中心对齐按钮内容 */
+  align-items: center;
   font-size: 24px; /* 增加字体大小 */
   border: none;
-  border-radius: 0 4px 4px 0;
+  border-radius: 50%;
   background-color: #007bff;
   color: white;
   cursor: pointer;
+  position: relative; /* 确保设置箭头的绝对定位 */
 }
 
 .footer-search-button:hover {
   background-color: #0056b3;
+}
+
+.footer-search-button::before {
+  content: '';
+  width: 20px;
+  height: 20px;
+  border-left: 4px solid white;
+  border-bottom: 4px solid white;
+  transform: rotate(45deg);
+  position: absolute; /* 确保箭头在按钮中心 */
 }

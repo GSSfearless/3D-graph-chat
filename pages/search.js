@@ -49,7 +49,11 @@ export default function Home() {
       <main className="results-container">
         <section className="results-left">
           {loading ? (
-            <div className="loading-placeholder">加载中...</div>
+            <div className="loading-placeholder">
+              <div className="progress-bar">
+                <div className="progress-fill"></div>
+              </div>
+            </div>
           ) : (
             <>
               <div className="result-item">
@@ -63,7 +67,11 @@ export default function Home() {
         </section>
         <section className="results-right">
           {loading ? (
-            <div className="loading-placeholder">加载中...</div>
+            <div className="loading-placeholder">
+              <div className=" progress-bar">
+                <div className="progress-fill"></div>
+              </div>
+            </div>
           ) : (
             <>
               {searchResults.map((result, index) => (
@@ -84,7 +92,7 @@ export default function Home() {
           placeholder="请输入搜索内容"
           className="footer-search-input"
         />
-        <button onClick={handleSearch} className="footer-search-button">搜索</button>
+        <button onClick={handleSearch} className="footer-search-button"></button>
       </footer>
     </div>
   );
