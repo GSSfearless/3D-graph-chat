@@ -75,7 +75,7 @@
                                 type="text"
                                 value={query}
                                 onChange={(e) => setQuery(e.target.value)}
-                                placeholder="请输入搜索内容"
+                                placeholder="Woof woof ... "
                                 className="input input-bordered flex-grow p-2 border rounded-lg"
                                 onKeyPress={(e) => e.key === 'Enter' && handleSearch(query)}
                             />
@@ -84,23 +84,23 @@
                                 disabled={loading}
                                 onClick={() => handleSearch(query)}
                             >
-                                搜索
+                                Go
                             </button>
                         </div>
                     </header>
                     <main className="flex space-x-4">
                         <section className="w-full sm:w-7/12">
                             <div className="mb-4 p-4 border rounded-lg bg-gray-100">
-                                <h2 className="text-2xl font-bold mb-2">AI 回答：</h2>
+                                <h2 className="text-2xl font-bold mb-2">Answer：</h2>
                                 <p>{aiAnswer}</p>
                             </div>
                             <div className="mb-4 p-4 border rounded-lg bg-gray-100">
-                                <h2 className="text-2xl font-bold mb-2">生成的模因图：</h2>
+                                <h2 className="text-2xl font-bold mb-2">Meme Image：</h2>
                                 {memeImage && <img src={memeImage} alt="Generated Meme" className="rounded shadow max-w-full h-auto" />}
                             </div>
                         </section>
                         <section className="w-full sm:w-5/12">
-                            <h2 className="text-2xl font-bold mb-4">搜索结果：</h2>
+                            <h2 className="text-2xl font-bold mb-4">Reference：</h2>
                             {searchResults.map((result, index) => (
                                 <div key={index} className="mb-2 p-2 border rounded-lg hover:bg-gray-200">
                                     <h3 className="text-lg font-semibold">{result.title}</h3>
