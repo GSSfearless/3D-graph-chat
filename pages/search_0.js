@@ -1,9 +1,14 @@
+// pages/search.js
+import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
 import 'tailwindcss/tailwind.css'; // 引入 Tailwind CSS
-import '../styles/globals.css';
+import '../styles/globals.css'; // 修改了导入路径
 
-export default function Home() {
-  const [query, setQuery] = useState('');
+export default function Search() {
+  const router = useRouter();
+  const { q } = router.query;
+
+  const [query, setQuery] = useState(q || '');
   const [searchResults, setSearchResults] = useState([]);
   const [aiAnswer, setAiAnswer] = useState('');
   const [memeImage, setMemeImage] = useState('');
@@ -47,6 +52,12 @@ export default function Home() {
   };
 
   useEffect(() => {
+    if (query) {
+      handleSearch();
+    }
+  }, [query]);
+
+  useEffect(() => {
     if (!loading) {
       const timeout = setTimeout(() => {
         setShowLoading(false);
@@ -60,7 +71,7 @@ export default function Home() {
     <div className="container">
       {showLoading && (
         <div className="loading-overlay">
-          <img src="../public/0.png" alt="Loading..." className="loading-img" />
+          <img src="../public/0.png" alt="Loading." className="loading-img" />
         </div>
       )}
       <div className="column">
