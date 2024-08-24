@@ -75,7 +75,7 @@ export default function Search() {
     <div className="container mx-auto p-4">
       {showLoading && (
         <div className="loading-overlay">
-          <img src="../public/0.png" alt="Loading." className="loading-img" />
+          <img src="/0.png" alt="Loading." className="loading-img" />
         </div>
       )}
 
@@ -113,8 +113,12 @@ export default function Search() {
           placeholder="Ask follow-up question"
           className="footer-search-input w-full p-2 border border-gray-300 rounded"
         />
-        <button onClick={handleSearch} className="footer-search-button rounded-full h-12 w-12 flex items-center justify-center bg-teal-500 text-white ml-2">
-          <FontAwesomeIcon icon={faArrowUp} />
+        <button 
+          onClick={handleSearch} 
+          className="footer-search-button rounded-full flex items-center justify-center bg-teal-500 text-white ml-2" 
+          style={{ height: '48px', width: '48px' }} // 将高度和宽度设置相同且更小以确保按钮成为圆形
+        >
+          <FontAwesomeIcon icon={faArrowUp} style={{ fontSize: '24px' }} /> // 提高中间箭头图片的大小
         </button>
       </div>
     </div>

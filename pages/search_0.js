@@ -1,4 +1,6 @@
 // pages/search.js
+import { faArrowUp } from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
 import 'tailwindcss/tailwind.css'; // 引入 Tailwind CSS
@@ -103,7 +105,7 @@ export default function Search() {
         </div>
       </div>
 
-      <div className="footer-search-container mt-4">
+      <div className="footer-search-container mt-4 flex items-center">
         <input
           type="text"
           value={query}
@@ -111,8 +113,8 @@ export default function Search() {
           placeholder="Ask follow-up question"
           className="footer-search-input w-full p-2 border border-gray-300 rounded"
         />
-        <button onClick={handleSearch} className="footer-search-button p-2 bg-teal-500 text-white rounded mt-2">
-          <i className="fas fa-arrow-up"></i>
+        <button onClick={handleSearch} className="footer-search-button rounded-full h-12 w-12 flex items-center justify-center bg-teal-500 text-white ml-2">
+          <FontAwesomeIcon icon={faArrowUp} />
         </button>
       </div>
     </div>
