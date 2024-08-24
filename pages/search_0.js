@@ -14,6 +14,7 @@ export default function Search() {
   const [memeImage, setMemeImage] = useState('');
   const [loading, setLoading] = useState(false);
   const [showLoading, setShowLoading] = useState(false);
+  const [initialLoad, setInitialLoad] = useState(true); // 添加这个状态
 
   const handleSearch = async () => {
     setLoading(true);
@@ -52,10 +53,11 @@ export default function Search() {
   };
 
   useEffect(() => {
-    if (query) {
+    if (initialLoad && query) {
       handleSearch();
+      setInitialLoad(false); // 一旦初次加载完成，将 initialLoad 设置为 false
     }
-  }, [query]);
+  }, [initialLoad, query]);
 
   useEffect(() => {
     if (!loading) {
@@ -71,7 +73,7 @@ export default function Search() {
     <div className="container">
       {showLoading && (
         <div className="loading-overlay">
-          <img src="../public/0.png" alt="Loading." className="loading-img" />
+          <img src="./public/0.png" alt="Loading." className="loading-img" />
         </div>
       )}
       <div className="column">

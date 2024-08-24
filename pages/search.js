@@ -70,44 +70,48 @@ export default function Search() {
   }, [loading]);
 
   return (
-    <div className="container">
+    <div className="container mx-auto p-4">
       {showLoading && (
         <div className="loading-overlay">
-          <img src="./public/0.png" alt="Loading." className="loading-img" />
+          <img src="../public/0.png" alt="Loading." className="loading-img" />
         </div>
       )}
-      <div className="column">
-        <div className="result-item">
-          <h3 className="result-title">😲 Answer:</h3>
-          <p className="result-snippet">{aiAnswer}</p>
-        </div>
-      </div>
-      <div className="column column-center">
-        <div className="result-item">
-          <h3 className="result-title">🍳 Cooking Meme:</h3>
-          <div style={{ textAlign: 'center' }}>
-            {memeImage && <img src={memeImage} alt="Generated Meme" style={{ maxWidth: '100%', height: 'auto' }} />}
+
+      <div className="flex">
+        <div className="w-1/4 p-2">
+          <div className="result-item">
+            <h3 className="result-title">😲 Answer:</h3>
+            <p className="result-snippet">{aiAnswer}</p>
           </div>
         </div>
-      </div>
-      <div className="column">
-        <h3 className="result-title">📚 Reference:</h3>
-        {searchResults.map((result, index) => (
-          <div key={index} className="result-item">
-            <h4 className="result-title">{result.title}</h4>
-            <p className="result-snippet">{result.snippet}</p>
+        <div className="w-2/4 p-2">
+          <div className="result-item">
+            <h3 className="result-title">🍳 Cooking Meme:</h3>
+            <div style={{ textAlign: 'center' }}>
+              {memeImage && <img src={memeImage} alt="Generated Meme" style={{ maxWidth: '100%', height: 'auto' }} />}
+            </div>
           </div>
-        ))}
+        </div>
+        <div className="w-1/4 p-2">
+          <h3 className="result-title">📚 Reference:</h3>
+          {searchResults.map((result, index) => (
+            <div key={index} className="result-item">
+              <h4 className="result-title">{result.title}</h4>
+              <p className="result-snippet">{result.snippet}</p>
+            </div>
+          ))}
+        </div>
       </div>
-      <div className="footer-search-container">
+
+      <div className="footer-search-container mt-4">
         <input
           type="text"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder="Ask follow-up question"
-          className="footer-search-input"
+          className="footer-search-input w-full p-2 border border-gray-300 rounded"
         />
-        <button onClick={handleSearch} className="footer-search-button">
+        <button onClick={handleSearch} className="footer-search-button p-2 bg-teal-500 text-white rounded mt-2">
           <i className="fas fa-arrow-up"></i>
         </button>
       </div>
