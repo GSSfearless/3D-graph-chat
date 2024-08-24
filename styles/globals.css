@@ -34,15 +34,6 @@ body {
   align-items: center; /* 居中 emoji 和标题 */
 }
 
-.column h3::before {
-  content: '😀';  /* 添加emoji */
-  margin-right: 8px;
-}
-
-.column-center h3::before {
-  content: '🍳';  /* 中部栏添加煮饭emoji */
-}
-
 .loading-overlay {
   position: fixed;
   top: 0;

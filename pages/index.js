@@ -1,46 +1,102 @@
-// pages/index.js
-import { faArrowRight } from '@fortawesome/free-solid-svg-icons';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { useRouter } from 'next/router';
-import { useState } from 'react';
-import 'tailwindcss/tailwind.css'; // 引入 Tailwind CSS
+import { useEffect, useState } from 'react';
+import '../styles/globals.css';
 
 export default function Home() {
-    const router = useRouter();
-    const [query, setQuery] = useState('');
+  const [query, setQuery] = useState('');
+  const [searchResults, setSearchResults] = useState([]);
+  const [aiAnswer, setAiAnswer] = useState('');
+  const [memeImage, setMemeImage] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [showLoading, setShowLoading] = useState(false);
 
-    const handleSearch = () => {
-        if (query.trim() !== '') {
-            router.push(`/search?q=${query}`);
-        }
-    };
+  const handleSearch = async () => {
+    setLoading(true);
+    setShowLoading(true);
+    try {
+      // Fetch search results from /api/rag-search
+      const searchResponse = await fetch('/api/rag-search', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ query }),
+      });
+      const searchData = await searchResponse.json();
+      setSearchResults(searchData);
 
-    return (
-        <div className="flex flex-col items-center justify-center min-h-screen p-4 bg-[#f8f9fa]">
-            <h1 className="text-4xl font-semibold mb-8 text-center">
-                <span role="img" aria-label="funny dog">😏</span> Share Your Joy
-            </h1>
-            <div className="w-full max-w-2xl relative">
-                <div className="bg-white p-4 rounded-lg shadow-md mb-4 flex items-center border border-gray-300" style={{ height: '8rem' }}>
-                    <input 
-                        type="text" 
-                        placeholder="Just ask..." 
-                        className="w-full p-4 border-none outline-none text-xl"
-                        value={query}
-                        onChange={(e) => setQuery(e.target.value)}
-                    />
-                    <button 
-                        className="bg-teal-500 text-white rounded-full h-12 w-12 flex items-center justify-center absolute right-4" 
-                        style={{ top: 'calc(50% - 2rem)' }}
-                        onClick={handleSearch}
-                    >
-                        <FontAwesomeIcon icon={faArrowRight} />
-                    </button>
-                </div>
-            </div>
-            <div className="mt-8 text-gray-500 text-center">
-                <span>English (English)</span>
-            </div>
+      // Fetch AI answer from /api/chat
+      const chatResponse = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ context: searchData, query }),
+      });
+      const chatData = await chatResponse.json();
+      setAiAnswer(chatData.answer);
+
+      // Generate meme from /api/meme-generator
+      const memeResponse = await fetch('/api/meme-generator', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ topic: query }),
+      });
+      const memeBlob = await memeResponse.blob();
+      setMemeImage(URL.createObjectURL(memeBlob));
+    } catch (error) {
+      console.error('Error:', error);
+    }
+    setLoading(false);
+  };
+
+  useEffect(() => {
+    if (!loading) {
+      const timeout = setTimeout(() => {
+        setShowLoading(false);
+      }, 500); // 0.5秒后隐藏加载动画
+
+      return () => clearTimeout(timeout);
+    }
+  }, [loading]);
+
+  return (
+    <div className="container">
+      {showLoading && (
+        <div className="loading-overlay">
+          <img src="../public/0.png" alt="Loading..." className="loading-img" />
         </div>
-    );
+      )}
+      <div className="column">
+        <div className="result-item">
+          <h3 className="result-title">😲 Answer:</h3>
+          <p className="result-snippet">{aiAnswer}</p>
+        </div>
+      </div>
+      <div className="column column-center">
+        <div className="result-item">
+          <h3 className="result-title">🍳 Cooking Meme:</h3>
+          <div style={{ textAlign: 'center' }}>
+            {memeImage && <img src={memeImage} alt="Generated Meme" style={{ maxWidth: '100%', height: 'auto' }} />}
+          </div>
+        </div>
+      </div>
+      <div className="column">
+        <h3 className="result-title">📚 Reference:</h3>
+        {searchResults.map((result, index) => (
+          <div key={index} className="result-item">
+            <h4 className="result-title">{result.title}</h4>
+            <p className="result-snippet">{result.snippet}</p>
+          </div>
+        ))}
+      </div>
+      <div className="footer-search-container">
+        <input
+          type="text"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder="Ask follow-up question"
+          className="footer-search-input"
+        />
+        <button onClick={handleSearch} className="footer-search-button">
+          <i className="fas fa-arrow-up"></i>
+        </button>
+      </div>
+    </div>
+  );
 }
