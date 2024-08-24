@@ -1,7 +1,7 @@
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
 import 'tailwindcss/tailwind.css'; // 引入 Tailwind CSS
-import './styles/globals.css';
+import '../styles/globals.css';
 
 export default function Search() {
   const router = useRouter();
