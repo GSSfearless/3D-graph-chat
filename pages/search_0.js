@@ -77,7 +77,7 @@ export default function Search() {
     <div className="container mx-auto p-4">
       {showLoading && (
         <div className="loading-overlay">
-          <Image src="/0.png" alt="Loading." className="loading-img" width={200} height={200} />
+          <Image src="/0.png" alt="Loading." className="loading-img" width={500} height={656} />
         </div>
       )}
 
@@ -117,10 +117,10 @@ export default function Search() {
         />
         <button 
           onClick={handleSearch} 
-          className="footer-search-button rounded-full flex items-center justify-center bg-teal-500 text-white ml-2" 
-          style={{ height: '48px', width: '48px' }} // 将高度和宽度设置相同且更小以确保按钮成为圆形
+          className="footer-search-button rounded-full flex items-center justify-center ml-2" 
+          style={{ height: '70px', width: '70px' }} // 放大按钮尺寸
         >
-          <span role="img" aria-label="search-emoji" style={{ fontSize: '24px' }}>😏</span> {/* 使用emoji替代箭头图标 */}
+          <span role="img" aria-label="search-emoji" style={{ fontSize: '48px' }}>😏</span> {/* 增大 emoji 尺寸 */}
         </button>
       </div>
     </div>

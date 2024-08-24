@@ -47,7 +47,7 @@ export default function Search() {
       });
       const memeBlob = await memeResponse.blob();
       setMemeImage(URL.createObjectURL(memeBlob));
-      
+
       // 清空输入框内容
       setQuery('');
     } catch (error) {
@@ -81,22 +81,22 @@ export default function Search() {
         </div>
       )}
 
-      <div className="flex">
-        <div className="w-1/4 p-2">
+      <div className="flex flex-col md:flex-row">
+        <div className="w-full md:w-1/4 p-2">
           <div className="result-item">
             <h3 className="result-title">😲 Answer</h3>
             <p className="result-snippet">{aiAnswer}</p>
           </div>
         </div>
-        <div className="w-2/4 p-2">
+        <div className="w-full md:w-2/4 p-2">
           <div className="result-item">
             <h3 className="result-title">🍳 Cooking Meme</h3>
-            <div style={{ textAlign: 'center' }}>
-              {memeImage && <img src={memeImage} alt="Generated Meme" style={{ maxWidth: '100%', height: 'auto' }} />}
+            <div className="flex justify-center">
+              {memeImage && <img src={memeImage} alt="Generated Meme" className="max-w-full h-auto" />}
             </div>
           </div>
         </div>
-        <div className="w-1/4 p-2">
+        <div className="w-full md:w-1/4 p-2">
           <h3 className="result-title">📚 Reference:</h3>
           {searchResults.map((result, index) => (
             <div key={index} className="result-item">

@@ -57,7 +57,7 @@ body {
 }
 
 .loading-img {
-  max-width: 656px; /* 设置预加载旋转图标的最大宽度 */
+  max-width: 164px; /* 设置预加载旋转图标的最大宽度 */
   animation: spin 2s linear infinite; /* 动画效果 */
 }
 
