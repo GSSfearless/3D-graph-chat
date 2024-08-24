@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import '../styles/globals.css';
+import 'tailwindcss/tailwind.css'; // 引入 Tailwind CSS
 
 export default function Home() {
   const [query, setQuery] = useState('');
@@ -59,7 +60,7 @@ export default function Home() {
     <div className="container">
       {showLoading && (
         <div className="loading-overlay">
-          <img src="../public/0.png" alt="Loading..." className="loading-img" />
+          <img src="YOUR-LOADING-IMAGE-URL" alt="Loading..." className="loading-img" />
         </div>
       )}
       <div className="column">
