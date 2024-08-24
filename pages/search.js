@@ -1,12 +1,9 @@
-import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
 import 'tailwindcss/tailwind.css'; // 引入 Tailwind CSS
 import '../styles/globals.css';
 
-export default function Search() {
-  const router = useRouter();
-  const { q } = router.query;
-  const [query, setQuery] = useState(q || '');
+export default function Home() {
+  const [query, setQuery] = useState('');
   const [searchResults, setSearchResults] = useState([]);
   const [aiAnswer, setAiAnswer] = useState('');
   const [memeImage, setMemeImage] = useState('');
@@ -14,7 +11,6 @@ export default function Search() {
   const [showLoading, setShowLoading] = useState(false);
 
   const handleSearch = async () => {
-    if (query.trim() === '') return;
     setLoading(true);
     setShowLoading(true);
     try {
@@ -51,12 +47,6 @@ export default function Search() {
   };
 
   useEffect(() => {
-    if (q) {
-      handleSearch();
-    }
-  }, [q]);
-
-  useEffect(() => {
     if (!loading) {
       const timeout = setTimeout(() => {
         setShowLoading(false);
@@ -70,33 +60,31 @@ export default function Search() {
     <div className="container">
       {showLoading && (
         <div className="loading-overlay">
-          <img src="/path-to-your-loading-image.png" alt="Loading" className="loading-img" />
+          <img src="../public/0.png" alt="Loading..." className="loading-img" />
         </div>
       )}
-      <div className="columns">
-        <div className="column">
-          <div className="result-item">
-            <h3 className="result-title">😲 Answer:</h3>
-            <p className="result-snippet">{aiAnswer}</p>
+      <div className="column">
+        <div className="result-item">
+          <h3 className="result-title">😲 Answer:</h3>
+          <p className="result-snippet">{aiAnswer}</p>
+        </div>
+      </div>
+      <div className="column column-center">
+        <div className="result-item">
+          <h3 className="result-title">🍳 Cooking Meme:</h3>
+          <div style={{ textAlign: 'center' }}>
+            {memeImage && <img src={memeImage} alt="Generated Meme" style={{ maxWidth: '100%', height: 'auto' }} />}
           </div>
         </div>
-        <div className="column center">
-          <div className="result-item">
-            <h3 className="result-title">🍳 Cooking Meme:</h3>
-            <div style={{ textAlign: 'center' }}>
-              {memeImage && <img src={memeImage} alt="Generated Meme" style={{ maxWidth: '100%', height: 'auto' }} />}
-            </div>
+      </div>
+      <div className="column">
+        <h3 className="result-title">📚 Reference:</h3>
+        {searchResults.map((result, index) => (
+          <div key={index} className="result-item">
+            <h4 className="result-title">{result.title}</h4>
+            <p className="result-snippet">{result.snippet}</p>
           </div>
-        </div>
-        <div className="column">
-          <h3 className="result-title">📚 Reference:</h3>
-          {searchResults.map((result, index) => (
-            <div key={index} className="result-item">
-              <h4 className="result-title">{result.title}</h4>
-              <p className="result-snippet">{result.snippet}</p>
-            </div>
-          ))}
-        </div>
+        ))}
       </div>
       <div className="footer-search-container">
         <input

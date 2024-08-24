@@ -60,7 +60,7 @@ export default function Home() {
     <div className="container">
       {showLoading && (
         <div className="loading-overlay">
-          <img src="YOUR-LOADING-IMAGE-URL" alt="Loading..." className="loading-img" />
+          <img src="../public/0.png" alt="Loading..." className="loading-img" />
         </div>
       )}
       <div className="column">
