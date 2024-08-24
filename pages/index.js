@@ -1,46 +1,33 @@
-// pages/index.js
-import { faArrowRight } from '@fortawesome/free-solid-svg-icons';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { useRouter } from 'next/router';
-import { useState } from 'react';
-import 'tailwindcss/tailwind.css'; // 引入 Tailwind CSS
+import { useRouter } from 'next/router'
+import { useState } from 'react'
+import styles from '../styles/Home.module.css'; // 将样式保存在 styles/Home.module.css 文件中
 
-export default function Home() {
-    const router = useRouter();
-    const [query, setQuery] = useState('');
+const Home = () => {
+  const router = useRouter()
+  const [query, setQuery] = useState('')
 
-    const handleSearch = () => {
-        if (query.trim() !== '') {
-            router.push(`/search?q=${query}`);
-        }
-    };
+  const handleSubmit = (event) => {
+    event.preventDefault()
+    router.push(`/search?query=${encodeURIComponent(query)}`)
+  }
 
-    return (
-        <div className="flex flex-col items-center justify-center min-h-screen p-4 bg-[#f8f9fa]">
-            <h1 className="text-4xl font-semibold mb-8 text-center">
-                <span role="img" aria-label="funny dog">😏</span> Share Your Joy
-            </h1>
-            <div className="w-full max-w-2xl relative">
-                <div className="bg-white p-4 rounded-lg shadow-md mb-4 flex items-center border border-gray-300" style={{ height: '8rem' }}>
-                    <input 
-                        type="text" 
-                        placeholder="Just ask..." 
-                        className="w-full p-4 border-none outline-none text-xl"
-                        value={query}
-                        onChange={(e) => setQuery(e.target.value)}
-                    />
-                    <button 
-                        className="bg-teal-500 text-white rounded-full h-12 w-12 flex items-center justify-center absolute right-4" 
-                        style={{ top: 'calc(50% - 2rem)' }}
-                        onClick={handleSearch}
-                    >
-                        <FontAwesomeIcon icon={faArrowRight} />
-                    </button>
-                </div>
-            </div>
-            <div className="mt-8 text-gray-500 text-center">
-                <span>English (English)</span>
-            </div>
-        </div>
-    );
+  return (
+    <div className={styles.container}>
+      <main className={styles.main}>
+        <h1 className={styles.title}>AI 搜索引擎</h1>
+        <form onSubmit={handleSubmit} className={styles.searchForm}>
+          <input
+            type="text"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            className={styles.searchInput}
+            placeholder="请输入搜索内容"
+          />
+          <button type="submit" className={styles.searchButton}>搜索</button>
+        </form>
+      </main>
+    </div>
+  )
 }
+
+export default Home

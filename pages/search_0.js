@@ -1,113 +1,103 @@
-import Head from 'next/head';
-import { useRouter } from 'next/router';
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
+import 'tailwindcss/tailwind.css'; // 引入 Tailwind CSS
+import '../styles/globals.css';
 
-const SearchResults = () => {
-    const router = useRouter();
-    const [query, setQuery] = useState(router.query.query || '');
-    const [searchResults, setSearchResults] = useState([]);
-    const [aiAnswer, setAiAnswer] = useState('');
-    const [memeImage, setMemeImage] = useState('');
-    const [loading, setLoading] = useState(false);
+export default function Home() {
+  const [query, setQuery] = useState('');
+  const [searchResults, setSearchResults] = useState([]);
+  const [aiAnswer, setAiAnswer] = useState('');
+  const [memeImage, setMemeImage] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [showLoading, setShowLoading] = useState(false);
 
-    useEffect(() => {
-        if (query) {
-            handleSearch(query);
-        }
-    }, [query]);
+  const handleSearch = async () => {
+    setLoading(true);
+    setShowLoading(true);
+    try {
+      // Fetch search results from /api/rag-search
+      const searchResponse = await fetch('/api/rag-search', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ query }),
+      });
+      const searchData = await searchResponse.json();
+      setSearchResults(searchData);
 
-    const handleSearch = async (searchQuery) => {
-        if (loading) return;
-        setLoading(true);
-        try {
-            // Fetch search results from /api/rag-search
-            const searchResponse = await fetch('/api/rag-search', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ query: searchQuery }),
-            });
-            const searchData = await searchResponse.json();
-            setSearchResults(searchData);
+      // Fetch AI answer from /api/chat
+      const chatResponse = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ context: searchData, query }),
+      });
+      const chatData = await chatResponse.json();
+      setAiAnswer(chatData.answer);
 
-            // Fetch AI answer from /api/chat
-            const chatResponse = await fetch('/api/chat', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ context: searchData, query: searchQuery }),
-            });
-            const chatData = await chatResponse.json();
-            setAiAnswer(chatData.answer);
+      // Generate meme from /api/meme-generator
+      const memeResponse = await fetch('/api/meme-generator', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ topic: query }),
+      });
+      const memeBlob = await memeResponse.blob();
+      setMemeImage(URL.createObjectURL(memeBlob));
+    } catch (error) {
+      console.error('Error:', error);
+    }
+    setLoading(false);
+  };
 
-            // Generate meme from /api/meme-generator
-            const memeResponse = await fetch('/api/meme-generator', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ topic: searchQuery }),
-            });
-            const memeBlob = await memeResponse.blob();
-            setMemeImage(URL.createObjectURL(memeBlob));
-        } catch (error) {
-            console.error('Error:', error);
-        } finally {
-            setLoading(false);
-        }
-    };
+  useEffect(() => {
+    if (!loading) {
+      const timeout = setTimeout(() => {
+        setShowLoading(false);
+      }, 500); // 0.5秒后隐藏加载动画
 
-    return (
-        <>
-            <Head>
-                <title>Search Results Page</title>
-                <link rel="stylesheet" href="https://cdn.tailwindcss.com" />
-                <style>{`
-                    body {
-                        font-family: Arial, sans-serif;
-                    }
-                `}</style>
-            </Head>
-            <div className="container mx-auto p-4">
-                <header className="mb-4">
-                    <div className="fixed bottom-4 left-1/2 transform -translate-x-1/2 bg-white rounded-lg shadow-lg p-2 w-full max-w-2xl flex space-x-2">
-                        <input
-                            type="text"
-                            value={query}
-                            onChange={(e) => setQuery(e.target.value)}
-                            placeholder="Search for next meme"
-                            className="input input-bordered flex-grow p-2 border rounded-lg"
-                            onKeyPress={(e) => e.key === 'Enter' && handleSearch(query)}
-                        />
-                        <button
-                            className={`btn btn-primary p-2 bg-blue-500 text-white rounded-lg ${loading ? 'opacity-50 cursor-not-allowed' : ''}`}
-                            disabled={loading}
-                            onClick={() => handleSearch(query)}
-                        >
-                            Go
-                        </button>
-                    </div>
-                </header>
-                <main className="flex space-x-4">
-                    <section className="w-full sm:w-7/12">
-                        <div className="mb-4 p-4 border rounded-lg bg-gray-100">
-                            <h2 className="text-2xl font-bold mb-2">Answer：</h2>
-                            <p>{aiAnswer}</p>
-                        </div>
-                        <div className="mb-4 p-4 border rounded-lg bg-gray-100">
-                            <h2 className="text-2xl font-bold mb-2">MeMe image：</h2>
-                            {memeImage && <img src={memeImage} alt="Generated Meme" className="rounded shadow max-w-full h-auto" />}
-                        </div>
-                    </section>
-                    <section className="w-full sm:w-5/12">
-                        <h2 className="text-2xl font-bold mb-4">Reference：</h2>
-                        {searchResults.map((result, index) => (
-                            <div key={index} className="mb-2 p-2 border rounded-lg hover:bg-gray-200">
-                                <h3 className="text-lg font-semibold">{result.title}</h3>
-                                <p>{result.snippet}</p>
-                            </div>
-                        ))}
-                    </section>
-                </main>
-            </div>
-        </>
-    );
-};
+      return () => clearTimeout(timeout);
+    }
+  }, [loading]);
 
-export default SearchResults;
+  return (
+    <div className="container">
+      {showLoading && (
+        <div className="loading-overlay">
+          <img src="YOUR-LOADING-IMAGE-URL" alt="Loading..." className="loading-img" />
+        </div>
+      )}
+      <div className="column">
+        <div className="result-item">
+          <h3 className="result-title">😲 Answer:</h3>
+          <p className="result-snippet">{aiAnswer}</p>
+        </div>
+      </div>
+      <div className="column column-center">
+        <div className="result-item">
+          <h3 className="result-title">🍳 Cooking Meme:</h3>
+          <div style={{ textAlign: 'center' }}>
+            {memeImage && <img src={memeImage} alt="Generated Meme" style={{ maxWidth: '100%', height: 'auto' }} />}
+          </div>
+        </div>
+      </div>
+      <div className="column">
+        <h3 className="result-title">📚 Reference:</h3>
+        {searchResults.map((result, index) => (
+          <div key={index} className="result-item">
+            <h4 className="result-title">{result.title}</h4>
+            <p className="result-snippet">{result.snippet}</p>
+          </div>
+        ))}
+      </div>
+      <div className="footer-search-container">
+        <input
+          type="text"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder="Ask follow-up question"
+          className="footer-search-input"
+        />
+        <button onClick={handleSearch} className="footer-search-button">
+          <i className="fas fa-arrow-up"></i>
+        </button>
+      </div>
+    </div>
+  );
+}
