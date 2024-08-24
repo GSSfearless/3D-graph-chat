@@ -1,6 +1,4 @@
 // pages/search.js
-import { faArrowUp } from '@fortawesome/free-solid-svg-icons';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import Image from 'next/image';
 import { useRouter } from 'next/router';
 import { useCallback, useEffect, useState } from 'react';
@@ -79,20 +77,20 @@ export default function Search() {
     <div className="container mx-auto p-4">
       {showLoading && (
         <div className="loading-overlay">
-          <Image src="/0.png" alt="Loading." className="loading-img" width={100} height={100} />
+          <Image src="/0.png" alt="Loading." className="loading-img" width={200} height={200} />
         </div>
       )}
 
       <div className="flex">
         <div className="w-1/4 p-2">
           <div className="result-item">
-            <h3 className="result-title">😲 Answer:</h3>
+            <h3 className="result-title">😲 Answer</h3>
             <p className="result-snippet">{aiAnswer}</p>
           </div>
         </div>
         <div className="w-2/4 p-2">
           <div className="result-item">
-            <h3 className="result-title">🍳 Cooking Meme:</h3>
+            <h3 className="result-title">🍳 Cooking Meme</h3>
             <div style={{ textAlign: 'center' }}>
               {memeImage && <img src={memeImage} alt="Generated Meme" style={{ maxWidth: '100%', height: 'auto' }} />}
             </div>
@@ -122,7 +120,7 @@ export default function Search() {
           className="footer-search-button rounded-full flex items-center justify-center bg-teal-500 text-white ml-2" 
           style={{ height: '48px', width: '48px' }} // 将高度和宽度设置相同且更小以确保按钮成为圆形
         >
-          <FontAwesomeIcon icon={faArrowUp} style={{ fontSize: '24px' }} /> {/* 提高中间箭头图标的大小 */}
+          <span role="img" aria-label="search-emoji" style={{ fontSize: '24px' }}>😏</span> {/* 使用emoji替代箭头图标 */}
         </button>
       </div>
     </div>

@@ -49,6 +49,9 @@ export default function Search() {
       });
       const memeBlob = await memeResponse.blob();
       setMemeImage(URL.createObjectURL(memeBlob));
+      
+      // 清空输入框内容
+      setQuery('');
     } catch (error) {
       console.error('Error:', error);
     }
@@ -76,27 +79,27 @@ export default function Search() {
     <div className="container mx-auto p-4">
       {showLoading && (
         <div className="loading-overlay">
-          <Image src="/0.png" alt="Loading." className="loading-img" width={50} height={50} />
+          <Image src="/0.png" alt="Loading." className="loading-img" width={200} height={200} />
         </div>
       )}
 
       <div className="flex">
         <div className="w-1/4 p-2">
           <div className="result-item">
-            <h3 className="result-title">😲 Answer:</h3>
+            <h3 className="result-title">😲 Answer</h3>
             <p className="result-snippet">{aiAnswer}</p>
           </div>
         </div>
         <div className="w-2/4 p-2">
           <div className="result-item">
-            <h3 className="result-title">🍳 Cooking Meme:</h3>
+            <h3 className="result-title">🍳 Cooking Meme</h3>
             <div style={{ textAlign: 'center' }}>
               {memeImage && <img src={memeImage} alt="Generated Meme" style={{ maxWidth: '100%', height: 'auto' }} />}
             </div>
           </div>
         </div>
         <div className="w-1/4 p-2">
-          <h3 className="result-title">📚 Reference:</h3>
+          <h3 className="result-title">📚 Reference</h3>
           {searchResults.map((result, index) => (
             <div key={index} className="result-item">
               <h4 className="result-title">{result.title}</h4>
