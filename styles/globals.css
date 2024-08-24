@@ -57,7 +57,7 @@ body {
 }
 
 .loading-img {
-  max-width: 100px; /* 设置预加载旋转图标的最大宽度 */
+  max-width: 656px; /* 设置预加载旋转图标的最大宽度 */
   animation: spin 2s linear infinite; /* 动画效果 */
 }
 
@@ -114,13 +114,13 @@ body {
   padding: 0; /* 去除内边距 */
   border: none;
   border-radius: 50%; /* 设置为圆形 */
-  background-color: #38b2ac; /* 青蓝色 */
+  background-color: #ffffff; /* 青蓝色 */
   color: white;
   cursor: pointer;
 }
 
 .footer-search-button:hover {
-  background-color: #319795;
+  background-color: #ffffff;
 }
 
 .footer-search-button i {
