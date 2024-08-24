@@ -1,8 +1,9 @@
 // pages/search.js
 import { faArrowUp } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import Image from 'next/image';
 import { useRouter } from 'next/router';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import 'tailwindcss/tailwind.css'; // 引入 Tailwind CSS
 import '../styles/globals.css'; // 修改了导入路径
 
@@ -18,7 +19,7 @@ export default function Search() {
   const [showLoading, setShowLoading] = useState(false);
   const [initialLoad, setInitialLoad] = useState(true); // 添加这个状态
 
-  const handleSearch = async () => {
+  const handleSearch = useCallback(async () => {
     setLoading(true);
     setShowLoading(true);
     try {
@@ -52,14 +53,14 @@ export default function Search() {
       console.error('Error:', error);
     }
     setLoading(false);
-  };
+  }, [query]);
 
   useEffect(() => {
     if (initialLoad && query) {
       handleSearch();
       setInitialLoad(false); // 一旦初次加载完成，将 initialLoad 设置为 false
     }
-  }, [initialLoad, query]);
+  }, [initialLoad, query, handleSearch]);
 
   useEffect(() => {
     if (!loading) {
@@ -75,7 +76,7 @@ export default function Search() {
     <div className="container mx-auto p-4">
       {showLoading && (
         <div className="loading-overlay">
-          <img src="../public/0.png" alt="Loading." className="loading-img" />
+          <Image src="/0.png" alt="Loading." className="loading-img" width={50} height={50} />
         </div>
       )}
 
@@ -113,8 +114,12 @@ export default function Search() {
           placeholder="Ask follow-up question"
           className="footer-search-input w-full p-2 border border-gray-300 rounded"
         />
-        <button onClick={handleSearch} className="footer-search-button rounded-full h-12 w-12 flex items-center justify-center bg-teal-500 text-white ml-2">
-          <FontAwesomeIcon icon={faArrowUp} />
+        <button 
+          onClick={handleSearch} 
+          className="footer-search-button rounded-full flex items-center justify-center bg-teal-500 text-white ml-2" 
+          style={{ height: '48px', width: '48px' }} // 将高度和宽度设置相同且更小以确保按钮成为圆形
+        >
+          <FontAwesomeIcon icon={faArrowUp} style={{ fontSize: '24px' }} /> {/* 提高中间箭头图标的大小 */}
         </button>
       </div>
     </div>

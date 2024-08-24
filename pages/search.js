@@ -49,6 +49,9 @@ export default function Search() {
       });
       const memeBlob = await memeResponse.blob();
       setMemeImage(URL.createObjectURL(memeBlob));
+      
+      // 清空输入框内容
+      setQuery('');
     } catch (error) {
       console.error('Error:', error);
     }
@@ -76,7 +79,7 @@ export default function Search() {
     <div className="container mx-auto p-4">
       {showLoading && (
         <div className="loading-overlay">
-          <Image src="/0.png" alt="Loading." className="loading-img" width={50} height={50} />
+          <Image src="/0.png" alt="Loading." className="loading-img" width={100} height={100} />
         </div>
       )}
 
