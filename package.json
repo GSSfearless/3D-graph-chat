@@ -19,6 +19,7 @@
     "canvas": "^2.11.2",
     "daisyui": "^4.12.10",
     "jimp": "^0.22.12",
+    "lodash.debounce": "^4.0.8",
     "next": "14.2.5",
     "openai": "^4.56.0",
     "pango": "^0.0.3",
