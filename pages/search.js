@@ -1,10 +1,9 @@
 // pages/search.js
-import debounce from 'lodash.debounce';
 import Image from 'next/image';
 import { useRouter } from 'next/router';
 import { useCallback, useEffect, useState } from 'react';
 import 'tailwindcss/tailwind.css'; // 引入 Tailwind CSS
-import '../styles/globals.css'; // 修改了导入路径
+import '../styles/globals.css'; // 修改导入路径
 
 export default function Search() {
   const router = useRouter();
@@ -18,7 +17,7 @@ export default function Search() {
   const [showLoading, setShowLoading] = useState(false);
   const [initialLoad, setInitialLoad] = useState(true); // 添加这个状态
 
-  const handleSearch = useCallback(debounce(async (searchQuery) => {
+  const handleSearch = useCallback(async (searchQuery) => {
     setLoading(true);
     setShowLoading(true);
     try {
@@ -53,7 +52,7 @@ export default function Search() {
       console.error('Error:', error);
     }
     setLoading(false);
-  }, 300), []);
+  }, []);
 
   useEffect(() => {
     if (initialLoad && query) {
@@ -73,11 +72,17 @@ export default function Search() {
   }, [loading]);
 
   const handleChange = (e) => {
-    const value = e.target.value;
-    setQuery(value);
-    if (value.length > 1) {
-      handleSearch(value);
+    setQuery(e.target.value);
+  }
+
+  const handleKeyUp = (e) => {
+    if (e.key === 'Enter') {
+      handleSearch(query);
     }
+  }
+
+  const handleButtonClick = () => {
+    handleSearch(query);
   }
 
   return (
@@ -119,11 +124,12 @@ export default function Search() {
           type="text"
           value={query}
           onChange={handleChange}
+          onKeyUp={handleKeyUp}
           placeholder="Ask follow-up question"
           className="footer-search-input w-full p-2 border border-gray-300 rounded"
         />
         <button 
-          onClick={() => handleSearch(query)} 
+          onClick={handleButtonClick} 
           className="footer-search-button rounded-full flex items-center justify-center ml-2" 
           style={{ height: '70px', width: '70px' }} // 放大按钮尺寸
         >
