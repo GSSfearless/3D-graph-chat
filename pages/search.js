@@ -1,4 +1,5 @@
 // pages/search.js
+import debounce from 'lodash.debounce';
 import Image from 'next/image';
 import { useRouter } from 'next/router';
 import { useCallback, useEffect, useState } from 'react';
@@ -17,7 +18,7 @@ export default function Search() {
   const [showLoading, setShowLoading] = useState(false);
   const [initialLoad, setInitialLoad] = useState(true); // 添加这个状态
 
-  const handleSearch = useCallback(async () => {
+  const handleSearch = useCallback(debounce(async (searchQuery) => {
     setLoading(true);
     setShowLoading(true);
     try {
@@ -25,7 +26,7 @@ export default function Search() {
       const searchResponse = await fetch('/api/rag-search', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ query }),
+        body: JSON.stringify({ query: searchQuery }),
       });
       const searchData = await searchResponse.json();
       setSearchResults(searchData);
@@ -34,7 +35,7 @@ export default function Search() {
       const chatResponse = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ context: searchData, query }),
+        body: JSON.stringify({ context: searchData, query: searchQuery }),
       });
       const chatData = await chatResponse.json();
       setAiAnswer(chatData.answer);
@@ -43,22 +44,20 @@ export default function Search() {
       const memeResponse = await fetch('/api/meme-generator', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ topic: query }),
+        body: JSON.stringify({ topic: searchQuery }),
       });
       const memeBlob = await memeResponse.blob();
       setMemeImage(URL.createObjectURL(memeBlob));
 
-      // 清空输入框内容
-      setQuery('');
     } catch (error) {
       console.error('Error:', error);
     }
     setLoading(false);
-  }, [query]);
+  }, 300), []);
 
   useEffect(() => {
     if (initialLoad && query) {
-      handleSearch();
+      handleSearch(query);
       setInitialLoad(false); // 一旦初次加载完成，将 initialLoad 设置为 false
     }
   }, [initialLoad, query, handleSearch]);
@@ -72,6 +71,14 @@ export default function Search() {
       return () => clearTimeout(timeout);
     }
   }, [loading]);
+
+  const handleChange = (e) => {
+    const value = e.target.value;
+    setQuery(value);
+    if (value.length > 1) {
+      handleSearch(value);
+    }
+  }
 
   return (
     <div className="container mx-auto p-4">
@@ -111,12 +118,12 @@ export default function Search() {
         <input
           type="text"
           value={query}
-          onChange={(e) => setQuery(e.target.value)}
+          onChange={handleChange}
           placeholder="Ask follow-up question"
           className="footer-search-input w-full p-2 border border-gray-300 rounded"
         />
         <button 
-          onClick={handleSearch} 
+          onClick={() => handleSearch(query)} 
           className="footer-search-button rounded-full flex items-center justify-center ml-2" 
           style={{ height: '70px', width: '70px' }} // 放大按钮尺寸
         >
