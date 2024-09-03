@@ -1,5 +1,5 @@
 // pages/search.js
-import { faArrowRight } from '@fortawesome/free-solid-svg-icons';
+import { faArrowUp } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
@@ -57,10 +57,14 @@ export default function Search() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ topic: query }),
       });
+      if (!memeResponse.ok) {
+        throw new Error('Meme generation failed');
+      }
       const memeBlob = await memeResponse.blob();
       setMemeImage(URL.createObjectURL(memeBlob));
     } catch (error) {
       console.error('Error generating meme:', error);
+      setMemeImage('');
     }
     setMemeLoading(false);
   };
@@ -88,7 +92,7 @@ export default function Search() {
 
   return (
     <div className="flex flex-row min-h-screen">
-      <div className="w-1/6 p-4 bg-gray-200">
+      <div className="w-1/6 p-4 bg-gray-300">
         <h2 className="text-2xl font-bold mb-4 text-center">Memedog ❤️</h2>
         <div className="mb-4 relative">
           <input 
@@ -101,7 +105,7 @@ export default function Search() {
           />
         </div>
         <Link href="/">
-          <a className="block bg-gray-300 text-center p-2 rounded hover:bg-gray-400 transition duration-300">Home</a>
+          <a className="block bg-gray-400 text-center p-2 rounded hover:bg-gray-500 transition duration-300">Home</a>
         </Link>
       </div>
       <div className="w-2/3 p-4">
@@ -115,13 +119,14 @@ export default function Search() {
             )}
           </div>
         </div>
-        <div className="result-item">
+        <div className="result-item flex flex-col items-center">
+          <span className="text-2xl mb-2">🍳</span>
           <button 
             onClick={handleGenerateMeme}
             className="bg-black text-white px-4 py-2 rounded-lg mb-4 flex items-center"
             disabled={memeLoading}
           >
-            <span className="mr-2">🍳</span> Cooking meme
+            Cooking meme
           </button>
           <div className="flex justify-center h-[calc(100vh-300px)] p-4">
             {memeLoading ? (
@@ -133,7 +138,7 @@ export default function Search() {
           </div>
         </div>
       </div>
-      <div className="w-1/6 p-4 bg-gray-300">
+      <div className="w-1/6 p-4 bg-white">
         <h3 className="result-title">📚 Reference</h3>
         <div className="space-y-2">
           {loading ? (
@@ -144,7 +149,7 @@ export default function Search() {
             </>
           ) : (
             searchResults.map((result, index) => (
-              <div key={index} className="result-item bg-white p-2">
+              <div key={index} className="result-item bg-white p-2 border border-gray-200 rounded">
                 <h4 className="result-title">{result.title}</h4>
                 <p className="result-snippet">{result.snippet}</p>
               </div>
@@ -164,10 +169,10 @@ export default function Search() {
             onKeyPress={handleKeyPress}
           />
           <button 
-            className="bg-black text-white rounded-full h-8 w-8 flex items-center justify-center absolute right-3 hover:bg-gray-800 transition duration-300" 
+            className="bg-black text-white rounded-full h-10 w-10 flex items-center justify-center absolute right-2 hover:bg-gray-800 transition duration-300" 
             onClick={handleButtonClick}
           >
-            <FontAwesomeIcon icon={faArrowRight} />
+            <FontAwesomeIcon icon={faArrowUp} />
           </button>
         </div>
       </div>
