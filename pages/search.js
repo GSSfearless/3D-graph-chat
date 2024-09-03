@@ -49,6 +49,10 @@ export default function Search() {
   }, []);
 
   const handleGenerateMeme = async () => {
+    if (!query) {
+      console.error('Topic is required');
+      return;
+    }
     setMemeLoading(true);
     try {
       // Generate meme from /api/meme-generator
@@ -108,7 +112,7 @@ export default function Search() {
           <a className="block bg-gray-400 text-center p-2 rounded hover:bg-gray-500 transition duration-300">Home</a>
         </Link>
       </div>
-      <div className="w-2/3 p-4">
+      <div className="w-1/2 p-4">
         <div className="result-item mb-4">
           <h3 className="result-title">😲 Answer</h3>
           <div className="min-h-40 p-4">
@@ -120,25 +124,27 @@ export default function Search() {
           </div>
         </div>
         <div className="result-item flex flex-col items-center">
-          <span className="text-2xl mb-2">🍳</span>
-          <button 
-            onClick={handleGenerateMeme}
-            className="bg-black text-white px-4 py-2 rounded-lg mb-4 flex items-center"
-            disabled={memeLoading}
-          >
-            Cooking meme
-          </button>
-          <div className="flex justify-center h-[calc(100vh-300px)] p-4">
+          <div className="flex items-center mb-4">
+            <span className="text-2xl mr-2">🍳</span>
+            <button 
+              onClick={handleGenerateMeme}
+              className="bg-black text-white px-4 py-2 rounded-lg flex items-center"
+              disabled={memeLoading}
+            >
+              Cooking meme
+            </button>
+          </div>
+          <div className="flex justify-center w-full h-[calc(100vh-300px)] p-4">
             {memeLoading ? (
               <div className="w-full h-full bg-gray-200 animate-pulse rounded"></div>
             ) : (
-              memeImage ? <img src={memeImage} alt="Memedog is out..." className="max-w-full max-h-full object-contain" /> :
+              memeImage ? <img src={memeImage} alt="Memedog is out..." className="w-full h-full object-contain" /> :
               <div className="w-full h-full bg-gray-100 flex items-center justify-center text-gray-500">Meme will appear here</div>
             )}
           </div>
         </div>
       </div>
-      <div className="w-1/6 p-4 bg-white">
+      <div className="w-1/3 p-4 bg-white">
         <h3 className="result-title">📚 Reference</h3>
         <div className="space-y-2">
           {loading ? (
