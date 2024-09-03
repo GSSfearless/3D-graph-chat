@@ -1,5 +1,4 @@
 // pages/search.js
-import Image from 'next/image';
 import { useRouter } from 'next/router';
 import { useCallback, useEffect, useState } from 'react';
 import 'tailwindcss/tailwind.css'; // 引入 Tailwind CSS
@@ -14,12 +13,10 @@ export default function Search() {
   const [aiAnswer, setAiAnswer] = useState('');
   const [memeImage, setMemeImage] = useState('');
   const [loading, setLoading] = useState(false);
-  const [showLoading, setShowLoading] = useState(false);
-  const [initialLoad, setInitialLoad] = useState(true); // 添加这个状态
+  const [initialLoad, setInitialLoad] = useState(true);
 
   const handleSearch = useCallback(async (searchQuery) => {
     setLoading(true);
-    setShowLoading(true);
     try {
       // Fetch search results from /api/rag-search
       const searchResponse = await fetch('/api/rag-search', {
@@ -57,19 +54,9 @@ export default function Search() {
   useEffect(() => {
     if (initialLoad && query) {
       handleSearch(query);
-      setInitialLoad(false); // 一旦初次加载完成，将 initialLoad 设置为 false
+      setInitialLoad(false);
     }
   }, [initialLoad, query, handleSearch]);
-
-  useEffect(() => {
-    if (!loading) {
-      const timeout = setTimeout(() => {
-        setShowLoading(false);
-      }, 500); // 0.5秒后隐藏加载动画
-
-      return () => clearTimeout(timeout);
-    }
-  }, [loading]);
 
   const handleChange = (e) => {
     setQuery(e.target.value);
@@ -87,35 +74,45 @@ export default function Search() {
 
   return (
     <div className="container mx-auto p-4">
-      {showLoading && (
-        <div className="loading-overlay">
-          <Image src="/0.png" alt="Loading." className="loading-img" width={500} height={656} />
-        </div>
-      )}
-
       <div className="flex flex-col md:flex-row">
         <div className="w-full md:w-1/4 p-2">
           <div className="result-item">
             <h3 className="result-title">😲 Answer</h3>
-            <p className="result-snippet">{aiAnswer}</p>
+            {loading ? (
+              <div className="h-20 bg-gray-200 animate-pulse rounded"></div>
+            ) : (
+              <p className="result-snippet">{aiAnswer}</p>
+            )}
           </div>
         </div>
         <div className="w-full md:w-2/4 p-2">
           <div className="result-item">
             <h3 className="result-title">🍳 Cooking Meme</h3>
             <div className="flex justify-center">
-              {memeImage && <img src={memeImage} alt="Generated Meme" className="max-w-full h-auto" />}
+              {loading ? (
+                <div className="w-full h-64 bg-gray-200 animate-pulse rounded"></div>
+              ) : (
+                memeImage && <img src={memeImage} alt="Generated Meme" className="max-w-full h-auto" />
+              )}
             </div>
           </div>
         </div>
         <div className="w-full md:w-1/4 p-2">
           <h3 className="result-title">📚 Reference:</h3>
-          {searchResults.map((result, index) => (
-            <div key={index} className="result-item">
-              <h4 className="result-title">{result.title}</h4>
-              <p className="result-snippet">{result.snippet}</p>
+          {loading ? (
+            <div className="space-y-2">
+              <div className="h-16 bg-gray-200 animate-pulse rounded"></div>
+              <div className="h-16 bg-gray-200 animate-pulse rounded"></div>
+              <div className="h-16 bg-gray-200 animate-pulse rounded"></div>
             </div>
-          ))}
+          ) : (
+            searchResults.map((result, index) => (
+              <div key={index} className="result-item">
+                <h4 className="result-title">{result.title}</h4>
+                <p className="result-snippet">{result.snippet}</p>
+              </div>
+            ))
+          )}
         </div>
       </div>
 
@@ -131,9 +128,9 @@ export default function Search() {
         <button 
           onClick={handleButtonClick} 
           className="footer-search-button rounded-full flex items-center justify-center ml-2" 
-          style={{ height: '70px', width: '70px' }} // 放大按钮尺寸
+          style={{ height: '70px', width: '70px' }}
         >
-          <span role="img" aria-label="search-emoji" style={{ fontSize: '48px' }}>😏</span> {/* 增大 emoji 尺寸 */}
+          <span role="img" aria-label="search-emoji" style={{ fontSize: '48px' }}>😏</span>
         </button>
       </div>
     </div>
