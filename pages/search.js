@@ -77,8 +77,8 @@ export default function Search() {
 
   return (
     <div className="flex flex-row min-h-screen">
-      <div className="w-1/4 p-4 bg-gray-100">
-        <h2 className="text-2xl font-bold mb-4">Memedog</h2>
+      <div className="w-1/8 p-4 bg-gray-100">
+        <h2 className="text-2xl font-bold mb-4 text-center">Memedog ❤️</h2>
         <div className="mb-4 relative">
           <input 
             type="text" 
@@ -88,12 +88,6 @@ export default function Search() {
             onChange={handleChange}
             onKeyPress={handleKeyPress}
           />
-          <button 
-            className="bg-teal-500 text-white rounded-full h-12 w-12 flex items-center justify-center absolute right-2 top-1/2 transform -translate-y-1/2 hover:bg-teal-600 transition duration-300"
-            onClick={handleButtonClick}
-          >
-            <FontAwesomeIcon icon={faArrowRight} />
-          </button>
         </div>
         <Link href="/">
           <a className="block bg-gray-200 text-center p-2 rounded hover:bg-gray-300 transition duration-300">Home</a>
@@ -102,7 +96,7 @@ export default function Search() {
       <div className="w-1/2 p-4">
         <div className="result-item mb-4">
           <h3 className="result-title">😲 Answer</h3>
-          <div className="h-40 bg-white border border-gray-300 rounded p-4">
+          <div className="h-40 p-4">
             {loading ? (
               <div className="h-full bg-gray-200 animate-pulse rounded"></div>
             ) : (
@@ -111,8 +105,8 @@ export default function Search() {
           </div>
         </div>
         <div className="result-item">
-          <h3 className="result-title">🍳 Cooking meme...</h3>
-          <div className="flex justify-center h-64 bg-white border border-gray-300 rounded p-4">
+          <h3 className="result-title">🍳 Cooking meme</h3>
+          <div className="flex justify-center h-64 p-4">
             {loading ? (
               <div className="w-full h-full bg-gray-200 animate-pulse rounded"></div>
             ) : (
@@ -143,7 +137,7 @@ export default function Search() {
       </div>
 
       <div className="fixed bottom-4 left-1/2 transform -translate-x-1/2 w-full max-w-2xl">
-        <div className="bg-white p-4 rounded-lg shadow-md flex items-center border border-gray-300" style={{ height: '8rem' }}>
+        <div className="bg-white p-4 rounded-full shadow-md flex items-center border border-gray-300" style={{ height: '8rem' }}>
           <input 
             type="text" 
             placeholder="What is the ultimate answer to the universe?" 
