@@ -15,6 +15,12 @@ export default function Home() {
         }
     };
 
+    const handleKeyPress = (e) => {
+        if (e.key === 'Enter') {
+            handleSearch();
+        }
+    };
+
     return (
         <div className="flex flex-col items-center justify-center min-h-screen p-4 bg-[#f8f9fa]">
             <h1 className="text-4xl font-semibold mb-8 text-center">
@@ -28,6 +34,7 @@ export default function Home() {
                         className="w-full p-4 border-none outline-none text-xl"
                         value={query}
                         onChange={(e) => setQuery(e.target.value)}
+                        onKeyPress={handleKeyPress}
                     />
                     <button 
                         className="bg-teal-500 text-white rounded-full h-12 w-12 flex items-center justify-center absolute right-4" 
