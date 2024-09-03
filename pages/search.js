@@ -48,6 +48,8 @@ export default function Search() {
       const memeBlob = await memeResponse.blob();
       setMemeImage(URL.createObjectURL(memeBlob));
 
+      // 清除搜索输入
+      setQuery('');
     } catch (error) {
       console.error('Error:', error);
     }
@@ -77,7 +79,7 @@ export default function Search() {
 
   return (
     <div className="flex flex-row min-h-screen">
-      <div className="w-1/8 p-4 bg-gray-100">
+      <div className="w-1/6 p-4 bg-gray-100">
         <h2 className="text-2xl font-bold mb-4 text-center">Memedog ❤️</h2>
         <div className="mb-4 relative">
           <input 
@@ -93,7 +95,7 @@ export default function Search() {
           <a className="block bg-gray-200 text-center p-2 rounded hover:bg-gray-300 transition duration-300">Home</a>
         </Link>
       </div>
-      <div className="w-1/2 p-4">
+      <div className="w-2/3 p-4">
         <div className="result-item mb-4">
           <h3 className="result-title">😲 Answer</h3>
           <div className="h-40 p-4">
@@ -106,17 +108,17 @@ export default function Search() {
         </div>
         <div className="result-item">
           <h3 className="result-title">🍳 Cooking meme</h3>
-          <div className="flex justify-center h-64 p-4">
+          <div className="flex justify-center h-96 p-4">
             {loading ? (
               <div className="w-full h-full bg-gray-200 animate-pulse rounded"></div>
             ) : (
-              memeImage ? <img src={memeImage} alt="Memedog is out..." className="max-w-full h-auto" /> :
+              memeImage ? <img src={memeImage} alt="Memedog is out..." className="w-full h-full object-contain" /> :
               <div className="w-full h-full bg-gray-100 flex items-center justify-center text-gray-500">Meme will appear here</div>
             )}
           </div>
         </div>
       </div>
-      <div className="w-1/4 p-4">
+      <div className="w-1/6 p-4">
         <h3 className="result-title">📚 Reference：</h3>
         <div className="space-y-2">
           {loading ? (
@@ -127,7 +129,7 @@ export default function Search() {
             </>
           ) : (
             searchResults.map((result, index) => (
-              <div key={index} className="result-item bg-white border border-gray-300 rounded p-2">
+              <div key={index} className="result-item bg-white p-2">
                 <h4 className="result-title">{result.title}</h4>
                 <p className="result-snippet">{result.snippet}</p>
               </div>
@@ -137,18 +139,17 @@ export default function Search() {
       </div>
 
       <div className="fixed bottom-4 left-1/2 transform -translate-x-1/2 w-full max-w-2xl">
-        <div className="bg-white p-4 rounded-full shadow-md flex items-center border border-gray-300" style={{ height: '8rem' }}>
+        <div className="bg-white p-2 rounded-full shadow-md flex items-center border border-gray-300" style={{ height: '4rem' }}>
           <input 
             type="text" 
             placeholder="What is the ultimate answer to the universe?" 
-            className="w-full p-4 border-none outline-none text-xl"
+            className="w-full p-2 border-none outline-none text-xl"
             value={query}
             onChange={handleChange}
             onKeyPress={handleKeyPress}
           />
           <button 
-            className="bg-teal-500 text-white rounded-full h-12 w-12 flex items-center justify-center absolute right-4 hover:bg-teal-600 transition duration-300" 
-            style={{ top: 'calc(50% - 2rem)' }}
+            className="bg-teal-500 text-white rounded-full h-8 w-8 flex items-center justify-center absolute right-3 hover:bg-teal-600 transition duration-300" 
             onClick={handleButtonClick}
           >
             <FontAwesomeIcon icon={faArrowRight} />
