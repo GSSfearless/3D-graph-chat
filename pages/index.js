@@ -25,7 +25,7 @@ export default function Home() {
     return (
         <div className="flex flex-col items-center justify-center min-h-screen p-4 bg-[#f8f9fa]">
             <h1 className="text-4xl font-semibold mb-8 text-center flex items-center">
-                <Image src="/public/0.png" alt="Memedog" width={50} height={50} className="mr-2" />
+                <Image src="/0.png" alt="Memedog" width={50} height={50} className="mr-2" />
                 Memedog ❤️ you
             </h1>
             <div className="w-full max-w-2xl relative">
