@@ -77,12 +77,12 @@ export default function Search() {
 
   return (
     <div className="flex flex-row min-h-screen">
-      <div className="w-1/8 p-4 bg-white">
+      <div className="w-1/4 p-4 bg-gray-100">
         <h2 className="text-2xl font-bold mb-4">Memedog</h2>
         <div className="mb-4 relative">
           <input 
             type="text" 
-            placeholder="新搜索..." 
+            placeholder="Just ask..." 
             className="w-full p-4 border border-gray-300 rounded-lg outline-none text-xl"
             value={query}
             onChange={handleChange}
@@ -99,49 +99,54 @@ export default function Search() {
           <a className="block bg-gray-200 text-center p-2 rounded hover:bg-gray-300 transition duration-300">Home</a>
         </Link>
       </div>
-      <div className="w-5/8 p-4">
+      <div className="w-1/2 p-4">
         <div className="result-item mb-4">
           <h3 className="result-title">😲 Answer</h3>
-          {loading ? (
-            <div className="h-20 bg-gray-200 animate-pulse rounded"></div>
-          ) : (
-            <p className="result-snippet">{aiAnswer}</p>
-          )}
+          <div className="h-40 bg-white border border-gray-300 rounded p-4">
+            {loading ? (
+              <div className="h-full bg-gray-200 animate-pulse rounded"></div>
+            ) : (
+              <p className="result-snippet">{aiAnswer}</p>
+            )}
+          </div>
         </div>
         <div className="result-item">
           <h3 className="result-title">🍳 Cooking meme...</h3>
-          <div className="flex justify-center">
+          <div className="flex justify-center h-64 bg-white border border-gray-300 rounded p-4">
             {loading ? (
-              <div className="w-full h-64 bg-gray-200 animate-pulse rounded"></div>
+              <div className="w-full h-full bg-gray-200 animate-pulse rounded"></div>
             ) : (
-              memeImage && <img src={memeImage} alt="Memedog is out..." className="max-w-full h-auto" />
+              memeImage ? <img src={memeImage} alt="Memedog is out..." className="max-w-full h-auto" /> :
+              <div className="w-full h-full bg-gray-100 flex items-center justify-center text-gray-500">Meme will appear here</div>
             )}
           </div>
         </div>
       </div>
-      <div className="w-2/8 p-4">
+      <div className="w-1/4 p-4">
         <h3 className="result-title">📚 Reference：</h3>
-        {loading ? (
-          <div className="space-y-2">
-            <div className="h-16 bg-gray-200 animate-pulse rounded"></div>
-            <div className="h-16 bg-gray-200 animate-pulse rounded"></div>
-            <div className="h-16 bg-gray-200 animate-pulse rounded"></div>
-          </div>
-        ) : (
-          searchResults.map((result, index) => (
-            <div key={index} className="result-item">
-              <h4 className="result-title">{result.title}</h4>
-              <p className="result-snippet">{result.snippet}</p>
-            </div>
-          ))
-        )}
+        <div className="space-y-2">
+          {loading ? (
+            <>
+              <div className="h-16 bg-gray-200 animate-pulse rounded"></div>
+              <div className="h-16 bg-gray-200 animate-pulse rounded"></div>
+              <div className="h-16 bg-gray-200 animate-pulse rounded"></div>
+            </>
+          ) : (
+            searchResults.map((result, index) => (
+              <div key={index} className="result-item bg-white border border-gray-300 rounded p-2">
+                <h4 className="result-title">{result.title}</h4>
+                <p className="result-snippet">{result.snippet}</p>
+              </div>
+            ))
+          )}
+        </div>
       </div>
 
       <div className="fixed bottom-4 left-1/2 transform -translate-x-1/2 w-full max-w-2xl">
         <div className="bg-white p-4 rounded-lg shadow-md flex items-center border border-gray-300" style={{ height: '8rem' }}>
           <input 
             type="text" 
-            placeholder="问一个后续问题" 
+            placeholder="What is the ultimate answer to the universe?" 
             className="w-full p-4 border-none outline-none text-xl"
             value={query}
             onChange={handleChange}
