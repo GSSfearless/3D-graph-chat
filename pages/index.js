@@ -1,7 +1,6 @@
 // pages/index.js
 import { faArrowRight } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import Image from 'next/image';
 import { useRouter } from 'next/router';
 import { useState } from 'react';
 import 'tailwindcss/tailwind.css'; // 引入 Tailwind CSS
@@ -24,15 +23,14 @@ export default function Home() {
 
     return (
         <div className="flex flex-col items-center justify-center min-h-screen p-4 bg-[#f8f9fa]">
-            <h1 className="text-4xl font-semibold mb-8 text-center flex items-center">
-                <Image src="/0.png" alt="Memedog" width={50} height={50} className="mr-2" />
+            <h1 className="text-4xl font-semibold mb-8 text-center">
                 Memedog ❤️ you
             </h1>
             <div className="w-full max-w-2xl relative">
                 <div className="bg-white p-4 rounded-lg shadow-md mb-4 flex items-center border border-gray-300" style={{ height: '8rem' }}>
                     <input 
                         type="text" 
-                        placeholder="Just ask..." 
+                        placeholder="Just ask memedog..." 
                         className="w-full p-4 border-none outline-none text-xl"
                         value={query}
                         onChange={(e) => setQuery(e.target.value)}

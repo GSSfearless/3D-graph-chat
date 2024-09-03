@@ -1,4 +1,5 @@
 // pages/search.js
+import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { useCallback, useEffect, useState } from 'react';
 import 'tailwindcss/tailwind.css'; // 引入 Tailwind CSS
@@ -76,29 +77,7 @@ export default function Search() {
     <div className="container mx-auto p-4">
       <div className="flex flex-col md:flex-row">
         <div className="w-full md:w-1/4 p-2">
-          <div className="result-item">
-            <h3 className="result-title">😲 Answer</h3>
-            {loading ? (
-              <div className="h-20 bg-gray-200 animate-pulse rounded"></div>
-            ) : (
-              <p className="result-snippet">{aiAnswer}</p>
-            )}
-          </div>
-        </div>
-        <div className="w-full md:w-2/4 p-2">
-          <div className="result-item">
-            <h3 className="result-title">🍳 Cooking Meme</h3>
-            <div className="flex justify-center">
-              {loading ? (
-                <div className="w-full h-64 bg-gray-200 animate-pulse rounded"></div>
-              ) : (
-                memeImage && <img src={memeImage} alt="Generated Meme" className="max-w-full h-auto" />
-              )}
-            </div>
-          </div>
-        </div>
-        <div className="w-full md:w-1/4 p-2">
-          <h3 className="result-title">📚 Reference:</h3>
+          <h3 className="result-title">📚 参考资料：</h3>
           {loading ? (
             <div className="space-y-2">
               <div className="h-16 bg-gray-200 animate-pulse rounded"></div>
@@ -114,6 +93,47 @@ export default function Search() {
             ))
           )}
         </div>
+        <div className="w-full md:w-2/4 p-2">
+          <div className="result-item mb-4">
+            <h3 className="result-title">😲 AI回答</h3>
+            {loading ? (
+              <div className="h-20 bg-gray-200 animate-pulse rounded"></div>
+            ) : (
+              <p className="result-snippet">{aiAnswer}</p>
+            )}
+          </div>
+          <div className="result-item">
+            <h3 className="result-title">🍳 烹饪表情包</h3>
+            <div className="flex justify-center">
+              {loading ? (
+                <div className="w-full h-64 bg-gray-200 animate-pulse rounded"></div>
+              ) : (
+                memeImage && <img src={memeImage} alt="生成的表情包" className="max-w-full h-auto" />
+              )}
+            </div>
+          </div>
+        </div>
+        <div className="w-full md:w-1/4 p-2">
+          <h2 className="text-2xl font-bold mb-4">Memedog</h2>
+          <div className="mb-4">
+            <input
+              type="text"
+              placeholder="新搜索..."
+              className="w-full p-2 border border-gray-300 rounded"
+              onChange={handleChange}
+              onKeyUp={handleKeyUp}
+            />
+            <button 
+              onClick={handleButtonClick}
+              className="mt-2 bg-blue-500 text-white p-2 rounded w-full"
+            >
+              搜索
+            </button>
+          </div>
+          <Link href="/">
+            <a className="block bg-gray-200 text-center p-2 rounded">首页</a>
+          </Link>
+        </div>
       </div>
 
       <div className="footer-search-container mt-4 flex items-center">
@@ -122,7 +142,7 @@ export default function Search() {
           value={query}
           onChange={handleChange}
           onKeyUp={handleKeyUp}
-          placeholder="Ask follow-up question"
+          placeholder="问一个后续问题"
           className="footer-search-input w-full p-2 border border-gray-300 rounded"
         />
         <button 
