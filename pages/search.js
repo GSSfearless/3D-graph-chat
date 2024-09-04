@@ -87,21 +87,29 @@ export default function Search() {
 
   return (
     <div className="flex flex-row min-h-screen">
-      <div className="w-1/6 p-4 bg-gray-300">
-        <h2 className="text-2xl font-bold mb-4 text-center">Memedog ❤️</h2>
-        <div className="mb-4 relative">
-          <input 
-            type="text" 
-            placeholder="Just ask..." 
-            className="w-full p-4 border-2 border-gray-300 rounded-full outline-none text-xl hover:border-gray-400 focus:border-gray-500 transition-all duration-300"
-            value={query}
-            onChange={handleChange}
-            onKeyPress={handleKeyPress}
-          />
+      <div className="w-1/6 p-4 bg-gray-300 flex flex-col justify-between">
+        <div>
+          <Link href="/">
+            <a className="text-2xl font-bold mb-4 text-center block">Memedog ❤️</a>
+          </Link>
+          <div className="mb-4 relative">
+            <input 
+              type="text" 
+              placeholder="Just ask..." 
+              className="w-full p-4 border-2 border-gray-300 rounded-full outline-none text-xl hover:border-gray-400 focus:border-gray-500 transition-all duration-300"
+              value={query}
+              onChange={handleChange}
+              onKeyPress={handleKeyPress}
+            />
+          </div>
+          <Link href="/">
+            <a className="block bg-gray-300 text-center p-2 rounded hover:bg-gray-400 transition duration-300 text-2xl font-medium text-gray-600 ml-0">🏠 Home</a>
+          </Link>
         </div>
-        <Link href="/">
-          <a className="block bg-gray-300 text-center p-2 rounded hover:bg-gray-400 transition duration-300 text-2xl font-medium text-gray-600">🏠 Home</a>
-        </Link>
+        <div className="flex justify-center space-x-4">
+          <a href="https://twitter.com/your_twitter_link" target="_blank" rel="noopener noreferrer" className="text-2xl">🐦</a>
+          <a href="https://discord.gg/your_discord_link" target="_blank" rel="noopener noreferrer" className="text-2xl">💬</a>
+        </div>
       </div>
       <div className="w-1/2 p-4">
         <div className="result-item mb-4">
@@ -149,7 +157,7 @@ export default function Search() {
         </div>
       </div>
 
-      <div className="fixed bottom-4 left-[calc(50%-50px)] transform -translate-x-1/2 w-full max-w-2xl">
+      <div className="fixed bottom-4 left-[calc(50%-110px)] transform -translate-x-1/2 w-full max-w-2xl">
         <div className="bg-white p-2 rounded-lg shadow-md flex items-center border-2 border-gray-300 transition-all duration-300" style={{ height: '4rem' }}>
           <input 
             type="text" 
