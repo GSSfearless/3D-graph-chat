@@ -1,5 +1,6 @@
 // pages/search.js
-import { faArrowRight } from '@fortawesome/free-solid-svg-icons';
+
+import { faArrowUp } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
@@ -17,9 +18,11 @@ export default function Search() {
   const [memeImage, setMemeImage] = useState('');
   const [loading, setLoading] = useState(false);
   const [initialLoad, setInitialLoad] = useState(true);
+  const [memeLoading, setMemeLoading] = useState(false);
 
   const handleSearch = useCallback(async (searchQuery) => {
     setLoading(true);
+    setMemeLoading(true);
     try {
       // Fetch search results from /api/rag-search
       const searchResponse = await fetch('/api/rag-search', {
@@ -39,19 +42,26 @@ export default function Search() {
       const chatData = await chatResponse.json();
       setAiAnswer(chatData.answer);
 
-      // Generate meme from /api/meme-generator
+      // 自动生成梗图
       const memeResponse = await fetch('/api/meme-generator', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ topic: searchQuery }),
       });
+      if (!memeResponse.ok) {
+        throw new Error('Memedog is out...');
+      }
       const memeBlob = await memeResponse.blob();
       setMemeImage(URL.createObjectURL(memeBlob));
 
+      // 清除搜索输入
+      setQuery('');
     } catch (error) {
       console.error('Error:', error);
+      setMemeImage('');
     }
     setLoading(false);
+    setMemeLoading(false);
   }, []);
 
   useEffect(() => {
@@ -77,32 +87,34 @@ export default function Search() {
 
   return (
     <div className="flex flex-row min-h-screen">
-      <div className="w-1/4 p-4 bg-gray-100">
-        <h2 className="text-2xl font-bold mb-4">Memedog</h2>
-        <div className="mb-4 relative">
-          <input 
-            type="text" 
-            placeholder="Just ask..." 
-            className="w-full p-4 border border-gray-300 rounded-lg outline-none text-xl"
-            value={query}
-            onChange={handleChange}
-            onKeyPress={handleKeyPress}
-          />
-          <button 
-            className="bg-teal-500 text-white rounded-full h-12 w-12 flex items-center justify-center absolute right-2 top-1/2 transform -translate-y-1/2 hover:bg-teal-600 transition duration-300"
-            onClick={handleButtonClick}
-          >
-            <FontAwesomeIcon icon={faArrowRight} />
-          </button>
+      <div className="w-1/6 p-4 bg-gray-300 flex flex-col justify-between">
+        <div>
+          <Link href="/">
+            <a className="text-2xl font-bold mb-4 text-center block">Memedog ❤️</a>
+          </Link>
+          <div className="mb-4 relative">
+            <input 
+              type="text" 
+              placeholder="Just ask..." 
+              className="w-full p-4 border-2 border-gray-300 rounded-full outline-none text-xl hover:border-gray-400 focus:border-gray-500 transition-all duration-300"
+              value={query}
+              onChange={handleChange}
+              onKeyPress={handleKeyPress}
+            />
+          </div>
+          <Link href="/">
+            <a className="block bg-gray-300 text-center p-2 rounded hover:bg-gray-400 transition duration-300 text-2xl font-medium text-gray-600 ml-0">🏠 Home</a>
+          </Link>
         </div>
-        <Link href="/">
-          <a className="block bg-gray-200 text-center p-2 rounded hover:bg-gray-300 transition duration-300">Home</a>
-        </Link>
+        <div className="flex justify-center space-x-4">
+          <a href="https://twitter.com/your_twitter_link" target="_blank" rel="noopener noreferrer" className="text-2xl">🐦</a>
+          <a href="https://discord.gg/your_discord_link" target="_blank" rel="noopener noreferrer" className="text-2xl">💬</a>
+        </div>
       </div>
       <div className="w-1/2 p-4">
         <div className="result-item mb-4">
           <h3 className="result-title">😲 Answer</h3>
-          <div className="h-40 bg-white border border-gray-300 rounded p-4">
+          <div className="min-h-40 p-4">
             {loading ? (
               <div className="h-full bg-gray-200 animate-pulse rounded"></div>
             ) : (
@@ -110,19 +122,22 @@ export default function Search() {
             )}
           </div>
         </div>
-        <div className="result-item">
-          <h3 className="result-title">🍳 Cooking meme...</h3>
-          <div className="flex justify-center h-64 bg-white border border-gray-300 rounded p-4">
-            {loading ? (
+        <div className="result-item flex flex-col items-center">
+          <div className="flex items-center mb-4">
+            <span className="text-2xl mr-2">🍳</span>
+            <h3 className="text-xl font-bold">Cooking Meme</h3>
+          </div>
+          <div className="flex justify-center w-full h-[calc(100vh-300px)] p-4">
+            {memeLoading ? (
               <div className="w-full h-full bg-gray-200 animate-pulse rounded"></div>
             ) : (
-              memeImage ? <img src={memeImage} alt="Memedog is out..." className="max-w-full h-auto" /> :
-              <div className="w-full h-full bg-gray-100 flex items-center justify-center text-gray-500">Meme will appear here</div>
+              memeImage ? <img src={memeImage} alt="Memedog is out..." className="w-full h-full object-contain" /> :
+              <div className="w-full h-full bg-gray-100 flex items-center justify-center text-gray-500">梗图将在这里显示</div>
             )}
           </div>
         </div>
       </div>
-      <div className="w-1/4 p-4">
+      <div className="w-1/3 p-4 bg-white">
         <h3 className="result-title">📚 Reference</h3>
         <div className="space-y-2">
           {loading ? (
@@ -133,7 +148,7 @@ export default function Search() {
             </>
           ) : (
             searchResults.map((result, index) => (
-              <div key={index} className="result-item bg-white border border-gray-300 rounded p-2">
+              <div key={index} className="result-item bg-white p-2 rounded">
                 <h4 className="result-title">{result.title}</h4>
                 <p className="result-snippet">{result.snippet}</p>
               </div>
@@ -142,22 +157,21 @@ export default function Search() {
         </div>
       </div>
 
-      <div className="fixed bottom-4 left-1/2 transform -translate-x-1/2 w-full max-w-2xl">
-        <div className="bg-white p-4 rounded-lg shadow-md flex items-center border border-gray-300" style={{ height: '8rem' }}>
+      <div className="fixed bottom-4 left-[calc(50%-110px)] transform -translate-x-1/2 w-full max-w-2xl">
+        <div className="bg-white p-2 rounded-lg shadow-md flex items-center border-2 border-gray-300 transition-all duration-300" style={{ height: '4rem' }}>
           <input 
             type="text" 
             placeholder="What is the ultimate answer to the universe?" 
-            className="w-full p-4 border-none outline-none text-xl"
+            className="w-full p-2 border-none outline-none text-xl"
             value={query}
             onChange={handleChange}
             onKeyPress={handleKeyPress}
           />
           <button 
-            className="bg-teal-500 text-white rounded-full h-12 w-12 flex items-center justify-center absolute right-4 hover:bg-teal-600 transition duration-300" 
-            style={{ top: 'calc(50% - 2rem)' }}
+            className="bg-black text-white rounded-full h-10 w-10 flex items-center justify-center absolute right-2 hover:bg-gray-800 transition duration-300" 
             onClick={handleButtonClick}
           >
-            <FontAwesomeIcon icon={faArrowRight} />
+            <FontAwesomeIcon icon={faArrowUp} />
           </button>
         </div>
       </div>

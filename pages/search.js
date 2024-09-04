@@ -106,9 +106,13 @@ export default function Search() {
             <a className="block bg-gray-300 text-center p-2 rounded hover:bg-gray-400 transition duration-300 text-2xl font-medium text-gray-600 ml-0">🏠 Home</a>
           </Link>
         </div>
-        <div className="flex justify-center space-x-4">
-          <a href="https://twitter.com/your_twitter_link" target="_blank" rel="noopener noreferrer" className="text-2xl">🐦</a>
-          <a href="https://discord.gg/your_discord_link" target="_blank" rel="noopener noreferrer" className="text-2xl">💬</a>
+        <div className="flex justify-center space-x-4 absolute bottom-[120px]">
+          <a href="https://twitter.com/your_twitter_link" target="_blank" rel="noopener noreferrer" className="text-2xl">
+            <span className="text-black">X</span>
+          </a>
+          <a href="https://discord.gg/your_discord_link" target="_blank" rel="noopener noreferrer" className="text-2xl">
+            <span role="img" aria-label="Discord">🎮</span>
+          </a>
         </div>
       </div>
       <div className="w-1/2 p-4">
