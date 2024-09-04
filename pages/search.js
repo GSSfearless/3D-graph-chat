@@ -20,7 +20,7 @@ export default function Search() {
   const [initialLoad, setInitialLoad] = useState(true);
   const [memeLoading, setMemeLoading] = useState(false);
 
-  const defaultQuery = "什么是生命的意义？";
+  const defaultQuery = "What is the answer to the universe and everything?";
 
   const handleSearch = useCallback(async (searchQuery) => {
     setLoading(true);
@@ -94,7 +94,7 @@ export default function Search() {
       <div className="w-1/6 p-4 bg-gray-300 flex flex-col justify-between fixed h-full" style={{ fontFamily: 'Open Sans, sans-serif' }}>
         <div>
           <Link href="/">
-            <a className="text-2xl font-bold mb-4 text-center block" style={{ fontWeight: 'bold', letterSpacing: '1px', textShadow: '1px 1px 2px rgba(0,0,0,0.1)' }}>❤️Memedog</a>
+            <a className="text-3xl font-extrabold mb-4 text-center block" style={{ fontFamily: 'Poppins, sans-serif', fontWeight: '800', letterSpacing: '2px', textShadow: '2px 2px 4px rgba(0,0,0,0.1)', background: 'linear-gradient(45deg, #FF6B6B, #4ECDC4)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>memedog</a>
           </Link>
           <div className="mb-4 relative">
             <input 
@@ -112,10 +112,10 @@ export default function Search() {
         </div>
         <div className="flex justify-between items-center mt-4">
           <Link href="/about">
-            <a className="text-gray-600 hover:text-gray-800">About us</a>
+            <a className="text-gray-600 hover:text-gray-800">We are hiring</a>
           </Link>
           <a href="https://discord.gg/G66pESH3gm" target="_blank" rel="noopener noreferrer" className="text-gray-600 hover:text-gray-800">
-            Discord
+          ❤️Join our discord
           </a>
         </div>
       </div>
@@ -133,7 +133,7 @@ export default function Search() {
         <div className="result-item flex flex-col items-center">
           <div className="flex items-center mb-4">
             <span className="text-2xl mr-2">🍳</span>
-            <h3 className="text-xl font-bold">Cooking Meme</h3>
+            <h3 className="text-xl font-bold">Memedog is cooking meme</h3>
           </div>
           <div className="flex justify-center w-full h-[calc(100vh-300px)] p-4">
             {memeLoading ? (
