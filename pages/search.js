@@ -2,6 +2,7 @@
 
 import { faArrowUp } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { useCallback, useEffect, useState } from 'react';
@@ -87,10 +88,10 @@ export default function Search() {
 
   return (
     <div className="flex flex-row min-h-screen">
-      <div className="w-1/6 p-4 bg-gray-300 flex flex-col justify-between">
+      <div className="w-1/6 p-4 bg-gray-300 flex flex-col justify-between fixed h-full">
         <div>
           <Link href="/">
-            <a className="text-2xl font-bold mb-4 text-center block">Memedog ❤️</a>
+            <a className="text-2xl font-bold mb-4 text-center block">❤️Memedog</a>
           </Link>
           <div className="mb-4 relative">
             <input 
@@ -106,16 +107,19 @@ export default function Search() {
             <a className="block bg-gray-300 text-center p-2 rounded hover:bg-gray-400 transition duration-300 text-2xl font-medium text-gray-600 ml-0">🏠 Home</a>
           </Link>
         </div>
-        <div className="flex justify-center space-x-4 absolute bottom-[120px]">
-          <a href="https://twitter.com/your_twitter_link" target="_blank" rel="noopener noreferrer" className="text-2xl">
-            <span className="text-black">X</span>
+        <div className="flex justify-end space-x-4 mt-4">
+          <Link href="/about">
+            <a className="text-gray-600 hover:text-gray-800">About us</a>
+          </Link>
+          <a href="https://twitter.com/your_twitter_link" target="_blank" rel="noopener noreferrer">
+            <Image src="/x.png" alt="Twitter" width={24} height={24} />
           </a>
-          <a href="https://discord.gg/your_discord_link" target="_blank" rel="noopener noreferrer" className="text-2xl">
-            <span role="img" aria-label="Discord">🎮</span>
+          <a href="https://discord.gg/your_discord_link" target="_blank" rel="noopener noreferrer">
+            <Image src="/discord.png" alt="Discord" width={24} height={24} />
           </a>
         </div>
       </div>
-      <div className="w-1/2 p-4">
+      <div className="w-1/2 p-4 ml-[16.666667%]">
         <div className="result-item mb-4">
           <h3 className="result-title">😲 Answer</h3>
           <div className="min-h-40 p-4">
@@ -136,7 +140,7 @@ export default function Search() {
               <div className="w-full h-full bg-gray-200 animate-pulse rounded"></div>
             ) : (
               memeImage ? <img src={memeImage} alt="Memedog is out..." className="w-full h-full object-contain" /> :
-              <div className="w-full h-full bg-gray-100 flex items-center justify-center text-gray-500">梗图将在这里显示</div>
+              <div className="w-full h-full bg-gray-100 flex items-center justify-center text-gray-500">Cooking...</div>
             )}
           </div>
         </div>
