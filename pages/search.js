@@ -2,7 +2,6 @@
 
 import { faArrowUp } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { useCallback, useEffect, useState } from 'react';
@@ -91,7 +90,7 @@ export default function Search() {
       <div className="w-1/6 p-4 bg-gray-300 flex flex-col justify-between fixed h-full">
         <div>
           <Link href="/">
-            <a className="text-2xl font-bold mb-4 text-center block">❤️Memedog</a>
+            <a className="text-2xl font-bold mb-4 text-center block" style={{ fontFamily: 'Arial, sans-serif', fontWeight: 'bold', letterSpacing: '1px', textShadow: '1px 1px 2px rgba(0,0,0,0.1)' }}>❤️Memedog</a>
           </Link>
           <div className="mb-4 relative">
             <input 
@@ -107,16 +106,13 @@ export default function Search() {
             <a className="block bg-gray-300 text-center p-2 rounded hover:bg-gray-400 transition duration-300 text-2xl font-medium text-gray-600 ml-0">🏠 Home</a>
           </Link>
         </div>
-        <div className="flex justify-end space-x-4 mt-4">
+        <div className="flex justify-between items-center mt-4">
+          <a href="https://discord.gg/G66pESH3gm" target="_blank" rel="noopener noreferrer" className="text-2xl">
+            💬
+          </a>
           <Link href="/about">
             <a className="text-gray-600 hover:text-gray-800">About us</a>
           </Link>
-          <a href="https://twitter.com/your_twitter_link" target="_blank" rel="noopener noreferrer">
-            <Image src="/x.png" alt="Twitter" width={24} height={24} />
-          </a>
-          <a href="https://discord.gg/your_discord_link" target="_blank" rel="noopener noreferrer">
-            <Image src="/discord.png" alt="Discord" width={24} height={24} />
-          </a>
         </div>
       </div>
       <div className="w-1/2 p-4 ml-[16.666667%]">
