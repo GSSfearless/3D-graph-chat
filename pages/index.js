@@ -27,7 +27,7 @@ export default function Home() {
                 Memedog ❤️ you
             </h1>
             <div className="w-full max-w-2xl relative">
-                <div className="bg-white p-4 rounded-lg shadow-md mb-4 flex items-center border border-gray-300 hover:border-gray-500 hover:border-2 transition-all duration-300" style={{ height: '8rem' }}>
+                <div className="bg-white p-4 rounded-lg shadow-md mb-4 flex items-center border border-gray-300 transition-all duration-300 hover:p-5 hover:bg-gray-50" style={{ height: '8rem' }}>
                     <input 
                         type="text" 
                         placeholder="Just ask memedog..." 

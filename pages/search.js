@@ -49,7 +49,7 @@ export default function Search() {
         body: JSON.stringify({ topic: searchQuery }),
       });
       if (!memeResponse.ok) {
-        throw new Error('梗图生成失败');
+        throw new Error('Memedog is out...');
       }
       const memeBlob = await memeResponse.blob();
       setMemeImage(URL.createObjectURL(memeBlob));
@@ -57,7 +57,7 @@ export default function Search() {
       // 清除搜索输入
       setQuery('');
     } catch (error) {
-      console.error('错误:', error);
+      console.error('Error:', error);
       setMemeImage('');
     }
     setLoading(false);
@@ -100,7 +100,7 @@ export default function Search() {
           />
         </div>
         <Link href="/">
-          <a className="block bg-gray-300 text-center p-2 rounded hover:bg-gray-400 transition duration-300 text-2xl font-bold">Home</a>
+          <a className="block bg-gray-300 text-center p-2 rounded hover:bg-gray-400 transition duration-300 text-2xl font-light text-gray-600">🏠 Home</a>
         </Link>
       </div>
       <div className="w-1/2 p-4">
@@ -117,7 +117,7 @@ export default function Search() {
         <div className="result-item flex flex-col items-center">
           <div className="flex items-center mb-4">
             <span className="text-2xl mr-2">🍳</span>
-            <h3 className="text-xl font-bold">自动生成梗图</h3>
+            <h3 className="text-xl font-bold">Cooking Meme</h3>
           </div>
           <div className="flex justify-center w-full h-[calc(100vh-300px)] p-4">
             {memeLoading ? (
@@ -149,8 +149,8 @@ export default function Search() {
         </div>
       </div>
 
-      <div className="fixed bottom-4 left-1/2 transform -translate-x-1/2 w-full max-w-2xl">
-        <div className="bg-white p-2 rounded-full shadow-md flex items-center border-2 border-gray-300 hover:border-gray-400 focus-within:border-gray-500 transition-all duration-300 hover:border-black hover:border-4" style={{ height: '4rem' }}>
+      <div className="fixed bottom-4 left-[calc(50%+10px)] transform -translate-x-1/2 w-full max-w-2xl">
+        <div className="bg-white p-2 rounded-lg shadow-md flex items-center border-2 border-gray-300 transition-all duration-300" style={{ height: '4rem' }}>
           <input 
             type="text" 
             placeholder="What is the ultimate answer to the universe?" 
