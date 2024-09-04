@@ -123,7 +123,7 @@ export default function Search() {
         </div>
       </div>
       <div className="w-1/4 p-4">
-        <h3 className="result-title">📚 Reference：</h3>
+        <h3 className="result-title">📚 Reference</h3>
         <div className="space-y-2">
           {loading ? (
             <>

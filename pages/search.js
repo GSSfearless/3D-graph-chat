@@ -21,6 +21,7 @@ export default function Search() {
 
   const handleSearch = useCallback(async (searchQuery) => {
     setLoading(true);
+    setMemeLoading(true);
     try {
       // Fetch search results from /api/rag-search
       const searchResponse = await fetch('/api/rag-search', {
@@ -40,38 +41,27 @@ export default function Search() {
       const chatData = await chatResponse.json();
       setAiAnswer(chatData.answer);
 
-      // 清除搜索输入
-      setQuery('');
-    } catch (error) {
-      console.error('Error:', error);
-    }
-    setLoading(false);
-  }, []);
-
-  const handleGenerateMeme = async () => {
-    if (!query) {
-      console.error('Topic is required');
-      return;
-    }
-    setMemeLoading(true);
-    try {
-      // Generate meme from /api/meme-generator
+      // 自动生成梗图
       const memeResponse = await fetch('/api/meme-generator', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ topic: query }),
+        body: JSON.stringify({ topic: searchQuery }),
       });
       if (!memeResponse.ok) {
-        throw new Error('Meme generation failed');
+        throw new Error('梗图生成失败');
       }
       const memeBlob = await memeResponse.blob();
       setMemeImage(URL.createObjectURL(memeBlob));
+
+      // 清除搜索输入
+      setQuery('');
     } catch (error) {
-      console.error('Error generating meme:', error);
+      console.error('错误:', error);
       setMemeImage('');
     }
+    setLoading(false);
     setMemeLoading(false);
-  };
+  }, []);
 
   useEffect(() => {
     if (initialLoad && query) {
@@ -126,20 +116,14 @@ export default function Search() {
         <div className="result-item flex flex-col items-center">
           <div className="flex items-center mb-4">
             <span className="text-2xl mr-2">🍳</span>
-            <button 
-              onClick={handleGenerateMeme}
-              className="bg-black text-white px-4 py-2 rounded-lg flex items-center"
-              disabled={memeLoading}
-            >
-              Cooking meme
-            </button>
+            <h3 className="text-xl font-bold">自动生成梗图</h3>
           </div>
           <div className="flex justify-center w-full h-[calc(100vh-300px)] p-4">
             {memeLoading ? (
               <div className="w-full h-full bg-gray-200 animate-pulse rounded"></div>
             ) : (
               memeImage ? <img src={memeImage} alt="Memedog is out..." className="w-full h-full object-contain" /> :
-              <div className="w-full h-full bg-gray-100 flex items-center justify-center text-gray-500">Meme will appear here</div>
+              <div className="w-full h-full bg-gray-100 flex items-center justify-center text-gray-500">梗图将在这里显示</div>
             )}
           </div>
         </div>
