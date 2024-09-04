@@ -100,7 +100,7 @@ export default function Search() {
           />
         </div>
         <Link href="/">
-          <a className="block bg-gray-300 text-center p-2 rounded hover:bg-gray-400 transition duration-300 text-2xl font-light text-gray-600">🏠 Home</a>
+          <a className="block bg-gray-300 text-center p-2 rounded hover:bg-gray-400 transition duration-300 text-2xl font-medium text-gray-600">🏠 Home</a>
         </Link>
       </div>
       <div className="w-1/2 p-4">
@@ -149,7 +149,7 @@ export default function Search() {
         </div>
       </div>
 
-      <div className="fixed bottom-4 left-[calc(50%+10px)] transform -translate-x-1/2 w-full max-w-2xl">
+      <div className="fixed bottom-4 left-[calc(50%-50px)] transform -translate-x-1/2 w-full max-w-2xl">
         <div className="bg-white p-2 rounded-lg shadow-md flex items-center border-2 border-gray-300 transition-all duration-300" style={{ height: '4rem' }}>
           <input 
             type="text" 
