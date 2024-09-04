@@ -94,7 +94,7 @@ export default function Search() {
       <div className="w-1/6 p-4 bg-gray-300 flex flex-col justify-between fixed h-full" style={{ fontFamily: 'Open Sans, sans-serif' }}>
         <div>
           <Link href="/">
-            <a className="text-3xl font-extrabold mb-4 text-center block" style={{ fontFamily: 'Poppins, sans-serif', fontWeight: '800', letterSpacing: '2px', textShadow: '2px 2px 4px rgba(0,0,0,0.1)', background: 'linear-gradient(45deg, #FF6B6B, #4ECDC4)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>memedog</a>
+            <a className="text-3xl font-extrabold mb-4 text-center block transition-all duration-300 hover:opacity-80" style={{ fontFamily: 'Poppins, sans-serif', fontWeight: '800', letterSpacing: '-1px', color: 'black' }}>memedog</a>
           </Link>
           <div className="mb-4 relative">
             <input 
