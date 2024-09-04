@@ -135,11 +135,11 @@ export default function Search() {
             <span className="text-2xl mr-2">🍳</span>
             <h3 className="text-xl font-bold">Memedog is cooking meme</h3>
           </div>
-          <div className="flex justify-center w-full h-[calc(100vh-300px)] p-4">
+          <div className="flex justify-center w-full h-[calc(100vh-300px)] p-4 overflow-auto">
             {memeLoading ? (
               <div className="w-full h-full bg-gray-200 animate-pulse rounded"></div>
             ) : (
-              memeImage ? <img src={memeImage} alt="Memedog is out..." className="w-full h-full object-contain" /> :
+              memeImage ? <img src={memeImage} alt="Memedog is out..." className="max-w-full max-h-full object-contain" /> :
               <div className="w-full h-full bg-gray-100 flex items-center justify-center text-gray-500">Cooking...</div>
             )}
           </div>
