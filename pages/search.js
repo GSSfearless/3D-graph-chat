@@ -1,4 +1,5 @@
 // pages/search.js
+
 import { faArrowUp } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import Link from 'next/link';
@@ -92,14 +93,14 @@ export default function Search() {
           <input 
             type="text" 
             placeholder="Just ask..." 
-            className="w-full p-4 border-2 border-gray-300 rounded-lg outline-none text-xl hover:border-gray-400 focus:border-gray-500 transition-all duration-300"
+            className="w-full p-4 border-2 border-gray-300 rounded-full outline-none text-xl hover:border-gray-400 focus:border-gray-500 transition-all duration-300"
             value={query}
             onChange={handleChange}
             onKeyPress={handleKeyPress}
           />
         </div>
         <Link href="/">
-          <a className="block bg-gray-400 text-center p-2 rounded hover:bg-gray-500 transition duration-300">Home</a>
+          <a className="block bg-gray-300 text-center p-2 rounded hover:bg-gray-400 transition duration-300 text-2xl font-bold">Home</a>
         </Link>
       </div>
       <div className="w-1/2 p-4">
@@ -139,7 +140,7 @@ export default function Search() {
             </>
           ) : (
             searchResults.map((result, index) => (
-              <div key={index} className="result-item bg-white p-2 border border-gray-200 rounded">
+              <div key={index} className="result-item bg-white p-2 rounded">
                 <h4 className="result-title">{result.title}</h4>
                 <p className="result-snippet">{result.snippet}</p>
               </div>
@@ -149,7 +150,7 @@ export default function Search() {
       </div>
 
       <div className="fixed bottom-4 left-1/2 transform -translate-x-1/2 w-full max-w-2xl">
-        <div className="bg-white p-2 rounded-full shadow-md flex items-center border-2 border-gray-300 hover:border-gray-400 focus-within:border-gray-500 transition-all duration-300" style={{ height: '4rem' }}>
+        <div className="bg-white p-2 rounded-full shadow-md flex items-center border-2 border-gray-300 hover:border-gray-400 focus-within:border-gray-500 transition-all duration-300 hover:border-black hover:border-4" style={{ height: '4rem' }}>
           <input 
             type="text" 
             placeholder="What is the ultimate answer to the universe?" 
