@@ -12,7 +12,7 @@ export default function Search() {
   const router = useRouter();
   const { q } = router.query;
 
-  const [query, setQuery] = useState(q || '');
+  const [query, setQuery] = useState('');
   const [searchResults, setSearchResults] = useState([]);
   const [aiAnswer, setAiAnswer] = useState('');
   const [memeImage, setMemeImage] = useState('');
@@ -20,15 +20,19 @@ export default function Search() {
   const [initialLoad, setInitialLoad] = useState(true);
   const [memeLoading, setMemeLoading] = useState(false);
 
+  const defaultQuery = "什么是生命的意义？";
+
   const handleSearch = useCallback(async (searchQuery) => {
     setLoading(true);
     setMemeLoading(true);
     try {
+      const actualQuery = searchQuery || defaultQuery;
+      
       // Fetch search results from /api/rag-search
       const searchResponse = await fetch('/api/rag-search', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ query: searchQuery }),
+        body: JSON.stringify({ query: actualQuery }),
       });
       const searchData = await searchResponse.json();
       setSearchResults(searchData);
@@ -37,7 +41,7 @@ export default function Search() {
       const chatResponse = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ context: searchData, query: searchQuery }),
+        body: JSON.stringify({ context: searchData, query: actualQuery }),
       });
       const chatData = await chatResponse.json();
       setAiAnswer(chatData.answer);
@@ -46,7 +50,7 @@ export default function Search() {
       const memeResponse = await fetch('/api/meme-generator', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ topic: searchQuery }),
+        body: JSON.stringify({ topic: actualQuery }),
       });
       if (!memeResponse.ok) {
         throw new Error('Memedog is out...');
@@ -65,11 +69,11 @@ export default function Search() {
   }, []);
 
   useEffect(() => {
-    if (initialLoad && query) {
-      handleSearch(query);
+    if (initialLoad) {
+      handleSearch(q || '');
       setInitialLoad(false);
     }
-  }, [initialLoad, query, handleSearch]);
+  }, [initialLoad, q, handleSearch]);
 
   const handleChange = (e) => {
     setQuery(e.target.value);
@@ -87,10 +91,10 @@ export default function Search() {
 
   return (
     <div className="flex flex-row min-h-screen">
-      <div className="w-1/6 p-4 bg-gray-300 flex flex-col justify-between fixed h-full">
+      <div className="w-1/6 p-4 bg-gray-300 flex flex-col justify-between fixed h-full" style={{ fontFamily: 'Open Sans, sans-serif' }}>
         <div>
           <Link href="/">
-            <a className="text-2xl font-bold mb-4 text-center block" style={{ fontFamily: 'Arial, sans-serif', fontWeight: 'bold', letterSpacing: '1px', textShadow: '1px 1px 2px rgba(0,0,0,0.1)' }}>❤️Memedog</a>
+            <a className="text-2xl font-bold mb-4 text-center block" style={{ fontWeight: 'bold', letterSpacing: '1px', textShadow: '1px 1px 2px rgba(0,0,0,0.1)' }}>❤️Memedog</a>
           </Link>
           <div className="mb-4 relative">
             <input 
@@ -107,12 +111,12 @@ export default function Search() {
           </Link>
         </div>
         <div className="flex justify-between items-center mt-4">
-          <a href="https://discord.gg/G66pESH3gm" target="_blank" rel="noopener noreferrer" className="text-2xl">
-            💬
-          </a>
           <Link href="/about">
             <a className="text-gray-600 hover:text-gray-800">About us</a>
           </Link>
+          <a href="https://discord.gg/G66pESH3gm" target="_blank" rel="noopener noreferrer" className="text-gray-600 hover:text-gray-800">
+            Discord
+          </a>
         </div>
       </div>
       <div className="w-1/2 p-4 ml-[16.666667%]">
@@ -165,7 +169,7 @@ export default function Search() {
         <div className="bg-white p-2 rounded-lg shadow-md flex items-center border-2 border-gray-300 transition-all duration-300" style={{ height: '4rem' }}>
           <input 
             type="text" 
-            placeholder="What is the ultimate answer to the universe?" 
+            placeholder={defaultQuery}
             className="w-full p-2 border-none outline-none text-xl"
             value={query}
             onChange={handleChange}
