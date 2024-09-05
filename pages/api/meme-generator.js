@@ -14,18 +14,18 @@ registerFont(path.resolve('./public/fonts/NotoSansSC-Regular.ttf'), { family: 'N
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     res.setHeader('Allow', ['POST']);
-    return res.status(405).end(`Method ${req.method} Not Allowed`);
+    return res.status(405).end(`方法 ${req.method} 不被允许`);
   }
 
   const { topic } = req.body;
 
   if (!topic) {
-    return res.status(400).json({ error: 'Topic is required' });
+    return res.status(400).json({ error: '主题是必需的' });
   }
 
   try {
-    // Step 1: 生成一个meme文本
-    const prompt = `生成一个有趣且适合家庭的meme关于${topic}。格式应为两行，上下句。`;
+    // 步骤 1: 生成一个meme文本
+    const prompt = `生成一个有趣且适合家庭的meme关于${topic}。格式应为两行文本。`;
     const gptResponse = await openai.chat.completions.create({
       model: 'gpt-3.5-turbo',
       messages: [{ role: 'user', content: prompt }],
@@ -34,19 +34,7 @@ export default async function handler(req, res) {
     let meme = gptResponse.choices[0].message.content.trim();
     let [topText, bottomText] = meme.split('\n');
 
-    // Step 2: 为meme打分
-    const scorePrompt = `给刚才生成的meme打分，范围0-5分。meme内容：${meme}`;
-    const scoreResponse = await openai.chat.completions.create({
-      model: 'gpt-3.5-turbo',
-      messages: [{ role: 'user', content: scorePrompt }],
-    });
-
-    let score = parseFloat(scoreResponse.choices[0].message.content);
-    if (isNaN(score) || score < 0 || score > 5) {
-      score = Math.floor(Math.random() * 6);  // 如果无法获得有效分数，随机生成0-5的分数
-    }
-
-    // Step 3: 创建meme图片
+    // 步骤 2: 创建meme图片
     const canvas = createCanvas(800, 800);
     const context = canvas.getContext('2d');
 
@@ -84,12 +72,6 @@ export default async function handler(req, res) {
     // 绘制上下文本
     drawWrappedText(context, topText, canvas.width / 2, 100, canvas.width - 40);
     drawWrappedText(context, bottomText, canvas.width / 2, canvas.height - 100, canvas.width - 40);
-
-    // 绘制分数
-    context.font = 'bold 24px "Noto Sans SC"';
-    context.fillStyle = 'red';
-    context.textAlign = 'right';
-    context.fillText(`评分: ${score.toFixed(1)}`, canvas.width - 20, canvas.height - 20);
 
     const buffer = canvas.toBuffer('image/png');
 

@@ -1,12 +1,11 @@
-// pages/search.js
-
 import { faArrowUp, faDownload } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { useCallback, useEffect, useState } from 'react';
-import 'tailwindcss/tailwind.css'; // 引入 Tailwind CSS
-import '../styles/globals.css'; // 修改导入路径
+import 'tailwindcss/tailwind.css';
+import KnowledgeGraph from '../components/KnowledgeGraph';
+import '../styles/globals.css';
 
 export default function Search() {
   const router = useRouter();
@@ -19,6 +18,7 @@ export default function Search() {
   const [loading, setLoading] = useState(false);
   const [initialLoad, setInitialLoad] = useState(true);
   const [memeLoading, setMemeLoading] = useState(false);
+  const [knowledgeGraphData, setKnowledgeGraphData] = useState(null);
 
   const defaultQuery = "What is the answer to the universe and everything?";
 
@@ -28,7 +28,7 @@ export default function Search() {
     try {
       const actualQuery = searchQuery || defaultQuery;
       
-      // Fetch search results from /api/rag-search
+      // 获取搜索结果
       const searchResponse = await fetch('/api/rag-search', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -37,7 +37,7 @@ export default function Search() {
       const searchData = await searchResponse.json();
       setSearchResults(searchData);
 
-      // Fetch AI answer from /api/chat
+      // 获取AI回答
       const chatResponse = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -46,7 +46,16 @@ export default function Search() {
       const chatData = await chatResponse.json();
       setAiAnswer(chatData.answer);
 
-      // 自动生成梗图
+      // 获取知识图表数据
+      const graphResponse = await fetch('/api/knowledgeGraph', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ query: actualQuery }),
+      });
+      const graphData = await graphResponse.json();
+      setKnowledgeGraphData(graphData);
+
+      // 生成梗图
       const memeResponse = await fetch('/api/meme-generator', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -58,11 +67,11 @@ export default function Search() {
       const memeBlob = await memeResponse.blob();
       setMemeImage(URL.createObjectURL(memeBlob));
 
-      // 清除搜索输入
       setQuery('');
     } catch (error) {
       console.error('Error:', error);
       setMemeImage('');
+      setKnowledgeGraphData(null);
     }
     setLoading(false);
     setMemeLoading(false);
@@ -90,7 +99,6 @@ export default function Search() {
   }
 
   const handleDownload = () => {
-    // 实现下载功能
     const link = document.createElement('a');
     link.href = memeImage;
     link.download = 'meme.png';
@@ -130,61 +138,71 @@ export default function Search() {
         </div>
       </div>
       <div className="w-5/6 p-4 ml-[16.666667%] overflow-y-auto">
-        <div className="flex">
-          <div className="w-2/3 pr-4">
-            <div className="result-item mb-4">
-              <h3 className="result-title">😲 Answer</h3>
-              <div className="min-h-40 p-4">
-                {loading ? (
-                  <div className="h-full bg-gray-200 animate-pulse rounded"></div>
-                ) : (
-                  <p className="result-snippet">{aiAnswer}</p>
-                )}
-              </div>
-            </div>
-            <div className="result-item flex flex-col items-center">
-              <div className="flex items-center mb-4">
-                <span className="text-2xl mr-2">🍳</span>
-                <h3 className="text-xl font-bold">Cooking meme</h3>
-              </div>
-              <div className="flex flex-col items-center w-full p-4">
-                {memeLoading ? (
-                  <div className="w-full h-64 bg-gray-200 animate-pulse rounded"></div>
-                ) : (
-                  memeImage ? (
-                    <>
-                      <img src={memeImage} alt="Memedog is out..." className="max-w-full max-h-64 object-contain mb-4" />
-                      <div className="flex space-x-4">
-                        <button onClick={handleDownload} className="bg-black hover:bg-gray-800 text-white font-bold py-2 px-4 rounded">
-                          <FontAwesomeIcon icon={faDownload} className="mr-2" />
-                          下载
-                        </button>
-                      </div>
-                    </>
-                  ) : (
-                    <div className="w-full h-64 bg-gray-100 flex items-center justify-center text-gray-500">Cooking...</div>
-                  )
-                )}
-              </div>
-            </div>
+        <div className="flex flex-col">
+          <div className="mb-4">
+            <h3 className="result-title">🧠 知识图表</h3>
+            {loading ? (
+              <div className="h-64 bg-gray-200 animate-pulse rounded"></div>
+            ) : (
+              knowledgeGraphData && <KnowledgeGraph data={knowledgeGraphData} />
+            )}
           </div>
-          <div className="w-1/3 p-4 bg-white">
-            <h3 className="result-title">📚 Reference</h3>
-            <div className="space-y-2">
-              {loading ? (
-                <>
-                  <div className="h-16 bg-gray-200 animate-pulse rounded"></div>
-                  <div className="h-16 bg-gray-200 animate-pulse rounded"></div>
-                  <div className="h-16 bg-gray-200 animate-pulse rounded"></div>
-                </>
-              ) : (
-                searchResults.map((result, index) => (
-                  <div key={index} className="result-item bg-white p-2 rounded">
-                    <h4 className="result-title">{result.title}</h4>
-                    <p className="result-snippet">{result.snippet}</p>
-                  </div>
-                ))
-              )}
+          <div className="flex">
+            <div className="w-2/3 pr-4">
+              <div className="result-item mb-4">
+                <h3 className="result-title">😲 Answer</h3>
+                <div className="min-h-40 p-4">
+                  {loading ? (
+                    <div className="h-full bg-gray-200 animate-pulse rounded"></div>
+                  ) : (
+                    <p className="result-snippet">{aiAnswer}</p>
+                  )}
+                </div>
+              </div>
+              <div className="result-item flex flex-col items-center">
+                <div className="flex items-center mb-4">
+                  <span className="text-2xl mr-2">🍳</span>
+                  <h3 className="text-xl font-bold">Cooking meme</h3>
+                </div>
+                <div className="flex flex-col items-center w-full p-4">
+                  {memeLoading ? (
+                    <div className="w-full h-64 bg-gray-200 animate-pulse rounded"></div>
+                  ) : (
+                    memeImage ? (
+                      <>
+                        <img src={memeImage} alt="Memedog is out..." className="max-w-full max-h-64 object-contain mb-4" />
+                        <div className="flex space-x-4">
+                          <button onClick={handleDownload} className="bg-black hover:bg-gray-800 text-white font-bold py-2 px-4 rounded">
+                            <FontAwesomeIcon icon={faDownload} className="mr-2" />
+                            Download
+                          </button>
+                        </div>
+                      </>
+                    ) : (
+                      <div className="w-full h-64 bg-gray-100 flex items-center justify-center text-gray-500">Cooking...</div>
+                    )
+                  )}
+                </div>
+              </div>
+            </div>
+            <div className="w-1/3 p-4 bg-white">
+              <h3 className="result-title">📚 Reference</h3>
+              <div className="space-y-2">
+                {loading ? (
+                  <>
+                    <div className="h-16 bg-gray-200 animate-pulse rounded"></div>
+                    <div className="h-16 bg-gray-200 animate-pulse rounded"></div>
+                    <div className="h-16 bg-gray-200 animate-pulse rounded"></div>
+                  </>
+                ) : (
+                  searchResults.map((result, index) => (
+                    <div key={index} className="result-item bg-white p-2 rounded">
+                      <h4 className="result-title">{result.title}</h4>
+                      <p className="result-snippet">{result.snippet}</p>
+                    </div>
+                  ))
+                )}
+              </div>
             </div>
           </div>
         </div>
