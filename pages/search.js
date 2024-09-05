@@ -184,7 +184,9 @@ export default function Search() {
               ) : graphError ? (
                 <p className="text-red-500">{graphError}</p>
               ) : knowledgeGraphData ? (
-                <KnowledgeGraph data={knowledgeGraphData} />
+                <div style={{ height: 400, width: '100%' }}>
+                  <KnowledgeGraph data={knowledgeGraphData} />
+                </div>
               ) : (
                 <p>暂无知识图谱数据</p>
               )}

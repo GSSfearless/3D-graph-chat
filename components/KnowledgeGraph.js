@@ -1,7 +1,7 @@
 import dynamic from 'next/dynamic';
 import { useEffect, useState } from 'react';
 
-const ReactFlow = dynamic(() => import('react-flow-renderer').then(mod => mod.default), {
+const ReactFlow = dynamic(() => import('reactflow').then(mod => mod.default), {
   ssr: false,
   loading: () => <p>加载知识图谱中...</p>
 });
@@ -19,26 +19,15 @@ const KnowledgeGraph = ({ data }) => {
     return <div>无效的图表数据</div>;
   }
 
-  const elements = [
-    ...data.nodes.map((node) => ({
-      id: node.id,
-      type: 'default',
-      data: { label: node.label },
-      position: node.position || { x: Math.random() * 500, y: Math.random() * 500 },
-    })),
-    ...data.edges.map((edge) => ({
-      id: edge.id || `${edge.source}-${edge.target}`,
-      source: edge.source,
-      target: edge.target,
-      type: 'smoothstep',
-      animated: true,
-      label: edge.label,
-    })),
-  ];
+  console.log('Rendering graph with data:', data);
 
   return (
-    <div style={{ height: 400 }}>
-      <ReactFlow elements={elements} />
+    <div style={{ height: 400, width: '100%' }}>
+      <ReactFlow 
+        nodes={data.nodes}
+        edges={data.edges}
+        fitView
+      />
     </div>
   );
 };
