@@ -1,9 +1,11 @@
-import { Configuration, OpenAIApi } from 'openai';
+const OpenAI = require('openai');
 
-const configuration = new Configuration({
-  apiKey: process.env.OPENAI_API_KEY,
-});
-const openai = new OpenAIApi(configuration);
+
+const openai = new OpenAI({
+    organization: 'org-gLWuvsHwqOs4i3QAdK8nQ5zk',
+    project: 'proj_TRi4aW8PdBr9LBaE9W34pDPi',
+  });
+
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
