@@ -47,11 +47,19 @@ export default function Search() {
       setAiAnswer(chatData.answer);
 
       // 获取知识图表数据
+// 在handleSearch函数中修改获取知识图表数据的部分
       const graphResponse = await fetch('/api/knowledgeGraph', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ query: actualQuery }),
       });
+
+      if (!graphResponse.ok) {
+        const errorText = await graphResponse.text();
+        console.error('Knowledge Graph API Error:', graphResponse.status, errorText);
+        throw new Error(`知识图表API错误: ${graphResponse.status}`);
+      }
+
       const graphData = await graphResponse.json();
       setKnowledgeGraphData(graphData);
 

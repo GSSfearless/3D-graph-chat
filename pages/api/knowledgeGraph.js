@@ -12,6 +12,10 @@ export default async function handler(req, res) {
 
   const { query } = req.body;
 
+  if (!query) {
+    return res.status(400).json({ message: '缺少查询参数' });
+  }
+
   try {
     const completion = await openai.createChatCompletion({
       model: "gpt-3.5-turbo",
@@ -25,6 +29,6 @@ export default async function handler(req, res) {
     res.status(200).json(graphData);
   } catch (error) {
     console.error('Error:', error);
-    res.status(500).json({ message: '生成知识图表时出错' });
+    res.status(500).json({ message: '生成知识图表时出错', error: error.message });
   }
 }
