@@ -9,7 +9,7 @@ import '../styles/globals.css';
 
 const KnowledgeGraph = dynamic(() => import('../components/KnowledgeGraph'), {
   ssr: false,
-  loading: () => <p>加载知识图谱中...</p>
+  loading: () => <p>Loading knowledge graph...</p>
 });
 
 export default function Search() {
@@ -27,7 +27,7 @@ export default function Search() {
   const [graphError, setGraphError] = useState(null);
   const [memeError, setMemeError] = useState(null);
 
-  const defaultQuery = "宇宙和一切的答案是什么？";
+  const defaultQuery = "What is the answer to life, the universe, and everything?";
 
   const handleSearch = useCallback(async (searchQuery) => {
     setLoading(true);
@@ -37,7 +37,7 @@ export default function Search() {
     try {
       const actualQuery = searchQuery || defaultQuery;
       
-      // 获取搜索结果
+      // Get search results
       const searchResponse = await fetch('/api/rag-search', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -46,7 +46,7 @@ export default function Search() {
       const searchData = await searchResponse.json();
       setSearchResults(searchData);
 
-      // 获取AI回答
+      // Get AI answer
       const chatResponse = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -55,7 +55,7 @@ export default function Search() {
       const chatData = await chatResponse.json();
       setAiAnswer(chatData.answer);
 
-      // 获取知识图谱数据
+      // Get knowledge graph data
       try {
         const graphResponse = await fetch('/api/knowledgeGraph', {
           method: 'POST',
@@ -64,19 +64,19 @@ export default function Search() {
         });
 
         if (!graphResponse.ok) {
-          throw new Error(`知识图谱API错误: ${graphResponse.status}`);
+          throw new Error(`Knowledge graph API error: ${graphResponse.status}`);
         }
 
         const graphData = await graphResponse.json();
-        console.log('知识图谱数据:', graphData);
+        console.log('Knowledge graph data:', graphData);
         setKnowledgeGraphData(graphData);
       } catch (error) {
-        console.error('获取知识图谱时出错:', error);
-        setGraphError('无法加载知识图谱');
+        console.error('Error fetching knowledge graph:', error);
+        setGraphError('Unable to load knowledge graph');
         setKnowledgeGraphData(null);
       }
 
-      // 生成表情包
+      // Generate meme
       try {
         const memeResponse = await fetch('/api/meme-generator', {
           method: 'POST',
@@ -84,19 +84,19 @@ export default function Search() {
           body: JSON.stringify({ topic: actualQuery }),
         });
         if (!memeResponse.ok) {
-          throw new Error('表情包生成失败');
+          throw new Error('Meme generation failed');
         }
         const memeBlob = await memeResponse.blob();
         setMemeImage(URL.createObjectURL(memeBlob));
       } catch (error) {
-        console.error('生成表情包时出错:', error);
-        setMemeError('无法生成表情包');
+        console.error('Error generating meme:', error);
+        setMemeError('Unable to generate meme');
         setMemeImage('');
       }
 
       setQuery('');
     } catch (error) {
-      console.error('搜索过程中出错:', error);
+      console.error('Error during search process:', error);
     }
     setLoading(false);
     setMemeLoading(false);
@@ -144,7 +144,7 @@ export default function Search() {
           <div className="mb-4 relative">
             <input 
               type="text" 
-              placeholder="随便问问..." 
+              placeholder="Ask anything..." 
               className="w-full p-4 border-2 border-gray-300 rounded-full outline-none text-xl hover:border-gray-400 focus:border-gray-500 transition-all duration-300"
               value={query}
               onChange={handleChange}
@@ -152,15 +152,15 @@ export default function Search() {
             />
           </div>
           <Link href="/">
-            <a className="block bg-gray-300 text-center p-2 rounded hover:bg-gray-400 transition duration-300 text-2xl font-medium text-gray-600 ml-0">🏠 主页</a>
+            <a className="block bg-gray-300 text-center p-2 rounded hover:bg-gray-400 transition duration-300 text-2xl font-medium text-gray-600 ml-0">🏠 Home</a>
           </Link>
         </div>
         <div className="flex justify-between items-center mt-4">
           <Link href="/about">
-            <a className="text-gray-600 hover:text-gray-800">我们在招聘</a>
+            <a className="text-gray-600 hover:text-gray-800">We're hiring</a>
           </Link>
           <a href="https://discord.gg/G66pESH3gm" target="_blank" rel="noopener noreferrer" className="text-gray-600 hover:text-gray-800">
-          ❤️加入我们的Discord
+          ❤️Join our Discord
           </a>
         </div>
       </div>
@@ -168,7 +168,7 @@ export default function Search() {
         <div className="flex">
           <div className="w-2/3 pr-4">
             <div className="result-item mb-4">
-              <h3 className="result-title">😲 回答</h3>
+              <h3 className="result-title">😲 Answer</h3>
               <div className="min-h-40 p-4">
                 {loading ? (
                   <div className="h-full bg-gray-200 animate-pulse rounded"></div>
@@ -178,23 +178,23 @@ export default function Search() {
               </div>
             </div>
             <div className="mb-4">
-              <h3 className="result-title">🧠 知识图谱</h3>
+              <h3 className="result-title">🧠 Knowledge Graph</h3>
               {loading ? (
                 <div className="h-64 bg-gray-200 animate-pulse rounded"></div>
               ) : graphError ? (
                 <p className="text-red-500">{graphError}</p>
               ) : knowledgeGraphData ? (
-                <div style={{ height: 400, width: '100%' }}>
+                <div style={{ height: 400, width: '100%', border: '1px solid #ddd', borderRadius: '8px' }}>
                   <KnowledgeGraph data={knowledgeGraphData} />
                 </div>
               ) : (
-                <p>暂无知识图谱数据</p>
+                <p>No knowledge graph data available</p>
               )}
             </div>
             <div className="result-item flex flex-col items-center">
               <div className="flex items-center mb-4">
                 <span className="text-2xl mr-2">🍳</span>
-                <h3 className="text-xl font-bold">正在烹饪表情包</h3>
+                <h3 className="text-xl font-bold">Cooking up a meme</h3>
               </div>
               <div className="flex flex-col items-center w-full p-4">
                 {memeLoading ? (
@@ -203,22 +203,22 @@ export default function Search() {
                   <p className="text-red-500">{memeError}</p>
                 ) : memeImage ? (
                   <>
-                    <img src={memeImage} alt="表情包生成中..." className="max-w-full max-h-64 object-contain mb-4" />
+                    <img src={memeImage} alt="Generating meme..." className="max-w-full max-h-64 object-contain mb-4" />
                     <div className="flex space-x-4">
                       <button onClick={handleDownload} className="bg-black hover:bg-gray-800 text-white font-bold py-2 px-4 rounded">
                         <FontAwesomeIcon icon={faDownload} className="mr-2" />
-                        下载
+                        Download
                       </button>
                     </div>
                   </>
                 ) : (
-                  <div className="w-full h-64 bg-gray-100 flex items-center justify-center text-gray-500">烹饪中...</div>
+                  <div className="w-full h-64 bg-gray-100 flex items-center justify-center text-gray-500">Cooking...</div>
                 )}
               </div>
             </div>
           </div>
           <div className="w-1/3 p-4 bg-white">
-            <h3 className="result-title">📚 参考资料</h3>
+            <h3 className="result-title">📚 References</h3>
             <div className="space-y-2">
               {loading ? (
                 <>

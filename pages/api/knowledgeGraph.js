@@ -5,6 +5,47 @@ const openai = new OpenAI({
   project: 'proj_TRi4aW8PdBr9LBaE9W34pDPi',
 });
 
+function createPyramidLayout(nodes) {
+  const levels = Math.ceil(Math.sqrt(nodes.length));
+  const width = 800;
+  const height = 600;
+  const nodeWidth = 150;
+  const nodeHeight = 50;
+
+  return nodes.map((node, index) => {
+    const level = Math.floor(Math.sqrt(index));
+    const nodesInLevel = (level * 2) + 1;
+    const nodeIndex = index - (level * level);
+    
+    const x = (width / (nodesInLevel + 1) * (nodeIndex + 1)) - (nodeWidth / 2);
+    const y = (height / (levels + 1) * (level + 1)) - (nodeHeight / 2);
+
+    return {
+      ...node,
+      position: { x, y },
+      style: { width: nodeWidth, height: nodeHeight }
+    };
+  });
+}
+
+function createMindMapLayout(nodes) {
+  const centerX = 400;
+  const centerY = 300;
+  const radius = 250;
+
+  return nodes.map((node, index) => {
+    const angle = (index / nodes.length) * 2 * Math.PI;
+    const x = centerX + radius * Math.cos(angle);
+    const y = centerY + radius * Math.sin(angle);
+
+    return {
+      ...node,
+      position: { x, y },
+      style: { width: 150, height: 50 }
+    };
+  });
+}
+
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ message: 'Only POST requests are allowed' });
@@ -20,25 +61,27 @@ export default async function handler(req, res) {
     const completion = await openai.chat.completions.create({
       model: "gpt-3.5-turbo",
       messages: [
-        {role: "system", content: "You are an expert capable of breaking down complex concepts into structured knowledge graphs. Please provide a response in JSON format, including 'nodes' and 'edges' arrays. Each node should have 'id' and 'label' properties. Each edge should have 'source', 'target', and 'label' properties."},
+        {role: "system", content: "You are an expert capable of breaking down complex concepts into structured knowledge graphs. Please provide a response in JSON format, including 'nodes' and 'edges' arrays, and a 'type' field indicating whether the graph should be a 'pyramid' or 'mindmap'. Each node should have 'id' and 'label' properties. Each edge should have 'source', 'target', and 'label' properties."},
         {role: "user", content: `Please create a knowledge graph for the following question: ${query}`}
       ],
     });
 
     const rawGraphData = JSON.parse(completion.choices[0].message.content);
     
-    // 处理数据以确保格式正确
+    const layoutFunction = rawGraphData.type === 'pyramid' ? createPyramidLayout : createMindMapLayout;
+    
     const graphData = {
-      nodes: rawGraphData.nodes.map(node => ({
+      nodes: layoutFunction(rawGraphData.nodes.map(node => ({
         id: node.id,
         data: { label: node.label || node.id },
-        position: { x: Math.random() * 500, y: Math.random() * 500 }
-      })),
+      }))),
       edges: rawGraphData.edges.map(edge => ({
         id: `${edge.source}-${edge.target}`,
         source: edge.source,
         target: edge.target,
-        label: edge.label || ''
+        label: edge.label || '',
+        type: 'smoothstep',
+        animated: true,
       }))
     };
 

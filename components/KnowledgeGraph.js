@@ -1,7 +1,7 @@
 import dynamic from 'next/dynamic';
 import { useEffect, useState } from 'react';
 
-const ReactFlow = dynamic(() => import('reactflow').then(mod => mod.default), {
+const ReactFlow = dynamic(() => import('react-flow-renderer').then(mod => mod.default), {
   ssr: false,
   loading: () => <p>加载知识图谱中...</p>
 });
@@ -19,14 +19,21 @@ const KnowledgeGraph = ({ data }) => {
     return <div>无效的图表数据</div>;
   }
 
-  console.log('Rendering graph with data:', data);
+  const onLoad = (reactFlowInstance) => {
+    reactFlowInstance.fitView();
+  };
 
   return (
     <div style={{ height: 400, width: '100%' }}>
       <ReactFlow 
         nodes={data.nodes}
         edges={data.edges}
-        fitView
+        onLoad={onLoad}
+        nodesDraggable={false}
+        nodesConnectable={false}
+        zoomOnScroll={false}
+        panOnScroll={false}
+        zoomOnDoubleClick={false}
       />
     </div>
   );
