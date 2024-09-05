@@ -1,26 +1,27 @@
-import OpenAI from 'openai';
+const OpenAI = require('openai');
 
 const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
+  organization: 'org-gLWuvsHwqOs4i3QAdK8nQ5zk',
+  project: 'proj_TRi4aW8PdBr9LBaE9W34pDPi',
 });
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
-    return res.status(405).json({ message: '只允许POST请求' });
+    return res.status(405).json({ message: 'Only POST requests are allowed' });
   }
 
   const { query } = req.body;
 
   if (!query) {
-    return res.status(400).json({ message: '缺少查询参数' });
+    return res.status(400).json({ message: 'Missing query parameter' });
   }
 
   try {
     const completion = await openai.chat.completions.create({
       model: "gpt-3.5-turbo",
       messages: [
-        {role: "system", content: "你是一个专家，能够将复杂的概念分解成结构化的知识图表。请提供一个JSON格式的回答，包含节点和边的信息。"},
-        {role: "user", content: `请为以下问题创建一个知识图表：${query}`}
+        {role: "system", content: "You are an expert capable of breaking down complex concepts into structured knowledge graphs. Please provide a response in JSON format, including information about nodes and edges."},
+        {role: "user", content: `Please create a knowledge graph for the following question: ${query}`}
       ],
     });
 
@@ -28,6 +29,6 @@ export default async function handler(req, res) {
     res.status(200).json(graphData);
   } catch (error) {
     console.error('Error:', error);
-    res.status(500).json({ message: '生成知识图表时出错', error: error.message });
+    res.status(500).json({ message: 'Error generating knowledge graph', error: error.message });
   }
 }
