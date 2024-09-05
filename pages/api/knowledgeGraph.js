@@ -46,6 +46,27 @@ function createMindMapLayout(nodes) {
   });
 }
 
+function sanitizeJSON(str) {
+  // 移除可能导致 JSON 解析错误的字符
+  return str.replace(/[\n\r\t]/g, '')
+            .replace(/,\s*]/g, ']')
+            .replace(/,\s*}/g, '}');
+}
+
+function parseJSONSafely(str) {
+  try {
+    return JSON.parse(sanitizeJSON(str));
+  } catch (error) {
+    console.error('JSON parsing error:', error);
+    // 返回一个默认的图形结构
+    return {
+      type: 'mindmap',
+      nodes: [{ id: 'default', label: 'Default Node' }],
+      edges: []
+    };
+  }
+}
+
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ message: 'Only POST requests are allowed' });
@@ -66,7 +87,7 @@ export default async function handler(req, res) {
       ],
     });
 
-    const rawGraphData = JSON.parse(completion.choices[0].message.content);
+    const rawGraphData = parseJSONSafely(completion.choices[0].message.content);
     
     const layoutFunction = rawGraphData.type === 'pyramid' ? createPyramidLayout : createMindMapLayout;
     
