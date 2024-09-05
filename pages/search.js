@@ -50,7 +50,12 @@ export default function Search() {
       const memeResponse = await fetch('/api/meme-generator', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ topic: actualQuery }),
+        body: JSON.stringify({ 
+          topic: actualQuery,
+          maxTextLength: 50, // 限制文字长度
+          topPadding: 20,    // 顶部填充
+          bottomPadding: 20  // 底部填充
+        }),
       });
       if (!memeResponse.ok) {
         throw new Error('Memedog is out...');
