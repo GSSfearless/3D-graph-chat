@@ -1,6 +1,6 @@
 // pages/search.js
 
-import { faArrowUp, faDownload, faRankingStar, faShare } from '@fortawesome/free-solid-svg-icons';
+import { faArrowUp, faDownload } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
@@ -99,31 +99,6 @@ export default function Search() {
     document.body.removeChild(link);
   }
 
-  const handleRank = () => {
-    // 实现排名功能
-    router.push({
-      pathname: '/post',
-      query: { memeImage: memeImage }
-    });
-  }
-
-  const handleShare = () => {
-    // 实现分享功能
-    // 这里只是一个示例，实际实现可能需要使用特定的API
-    if (navigator.share) {
-      navigator.share({
-        title: 'Check out this meme!',
-        url: memeImage
-      }).then(() => {
-        console.log('Thanks for sharing!');
-      })
-      .catch(console.error);
-    } else {
-      // 如果浏览器不支持原生分享，可以提供其他分享选项
-      alert('分享功能暂不可用');
-    }
-  }
-
   return (
     <div className="flex flex-row min-h-screen">
       <div className="w-1/6 p-4 bg-gray-300 flex flex-col justify-between fixed h-full" style={{ fontFamily: 'Open Sans, sans-serif' }}>
@@ -154,68 +129,64 @@ export default function Search() {
           </a>
         </div>
       </div>
-      <div className="w-1/2 p-4 ml-[16.666667%]">
-        <div className="result-item mb-4">
-          <h3 className="result-title">😲 Answer</h3>
-          <div className="min-h-40 p-4">
-            {loading ? (
-              <div className="h-full bg-gray-200 animate-pulse rounded"></div>
-            ) : (
-              <p className="result-snippet">{aiAnswer}</p>
-            )}
+      <div className="w-5/6 p-4 ml-[16.666667%] overflow-y-auto">
+        <div className="flex">
+          <div className="w-2/3 pr-4">
+            <div className="result-item mb-4">
+              <h3 className="result-title">😲 Answer</h3>
+              <div className="min-h-40 p-4">
+                {loading ? (
+                  <div className="h-full bg-gray-200 animate-pulse rounded"></div>
+                ) : (
+                  <p className="result-snippet">{aiAnswer}</p>
+                )}
+              </div>
+            </div>
+            <div className="result-item flex flex-col items-center">
+              <div className="flex items-center mb-4">
+                <span className="text-2xl mr-2">🍳</span>
+                <h3 className="text-xl font-bold">Cooking meme</h3>
+              </div>
+              <div className="flex flex-col items-center w-full p-4">
+                {memeLoading ? (
+                  <div className="w-full h-64 bg-gray-200 animate-pulse rounded"></div>
+                ) : (
+                  memeImage ? (
+                    <>
+                      <img src={memeImage} alt="Memedog is out..." className="max-w-full max-h-64 object-contain mb-4" />
+                      <div className="flex space-x-4">
+                        <button onClick={handleDownload} className="bg-black hover:bg-gray-800 text-white font-bold py-2 px-4 rounded">
+                          <FontAwesomeIcon icon={faDownload} className="mr-2" />
+                          下载
+                        </button>
+                      </div>
+                    </>
+                  ) : (
+                    <div className="w-full h-64 bg-gray-100 flex items-center justify-center text-gray-500">Cooking...</div>
+                  )
+                )}
+              </div>
+            </div>
           </div>
-        </div>
-        <div className="result-item flex flex-col items-center">
-          <div className="flex items-center mb-4">
-            <span className="text-2xl mr-2">🍳</span>
-            <h3 className="text-xl font-bold">Cooking meme</h3>
-          </div>
-          <div className="flex flex-col items-center w-full h-[calc(100vh-300px)] p-4 overflow-auto">
-            {memeLoading ? (
-              <div className="w-full h-full bg-gray-200 animate-pulse rounded"></div>
-            ) : (
-              memeImage ? (
+          <div className="w-1/3 p-4 bg-white">
+            <h3 className="result-title">📚 Reference</h3>
+            <div className="space-y-2">
+              {loading ? (
                 <>
-                  <img src={memeImage} alt="Memedog is out..." className="max-w-full max-h-full object-contain mb-4" />
-                  <div className="flex space-x-4">
-                    <button onClick={handleDownload} className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
-                      <FontAwesomeIcon icon={faDownload} className="mr-2" />
-                      下载
-                    </button>
-                    <button onClick={handleRank} className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">
-                      <FontAwesomeIcon icon={faRankingStar} className="mr-2" />
-                      排名
-                    </button>
-                    <button onClick={handleShare} className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded">
-                      <FontAwesomeIcon icon={faShare} className="mr-2" />
-                      分享
-                    </button>
-                  </div>
+                  <div className="h-16 bg-gray-200 animate-pulse rounded"></div>
+                  <div className="h-16 bg-gray-200 animate-pulse rounded"></div>
+                  <div className="h-16 bg-gray-200 animate-pulse rounded"></div>
                 </>
               ) : (
-                <div className="w-full h-full bg-gray-100 flex items-center justify-center text-gray-500">Cooking...</div>
-              )
-            )}
+                searchResults.map((result, index) => (
+                  <div key={index} className="result-item bg-white p-2 rounded">
+                    <h4 className="result-title">{result.title}</h4>
+                    <p className="result-snippet">{result.snippet}</p>
+                  </div>
+                ))
+              )}
+            </div>
           </div>
-        </div>
-      </div>
-      <div className="w-1/3 p-4 bg-white">
-        <h3 className="result-title">📚 Reference</h3>
-        <div className="space-y-2">
-          {loading ? (
-            <>
-              <div className="h-16 bg-gray-200 animate-pulse rounded"></div>
-              <div className="h-16 bg-gray-200 animate-pulse rounded"></div>
-              <div className="h-16 bg-gray-200 animate-pulse rounded"></div>
-            </>
-          ) : (
-            searchResults.map((result, index) => (
-              <div key={index} className="result-item bg-white p-2 rounded">
-                <h4 className="result-title">{result.title}</h4>
-                <p className="result-snippet">{result.snippet}</p>
-              </div>
-            ))
-          )}
         </div>
       </div>
 
