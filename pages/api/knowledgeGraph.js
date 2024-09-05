@@ -1,9 +1,8 @@
-import { Configuration, OpenAIApi } from 'openai';
+import OpenAI from 'openai';
 
-const configuration = new Configuration({
+const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
-const openai = new OpenAIApi(configuration);
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -17,7 +16,7 @@ export default async function handler(req, res) {
   }
 
   try {
-    const completion = await openai.createChatCompletion({
+    const completion = await openai.chat.completions.create({
       model: "gpt-3.5-turbo",
       messages: [
         {role: "system", content: "你是一个专家，能够将复杂的概念分解成结构化的知识图表。请提供一个JSON格式的回答，包含节点和边的信息。"},
@@ -25,7 +24,7 @@ export default async function handler(req, res) {
       ],
     });
 
-    const graphData = JSON.parse(completion.data.choices[0].message.content);
+    const graphData = JSON.parse(completion.choices[0].message.content);
     res.status(200).json(graphData);
   } catch (error) {
     console.error('Error:', error);

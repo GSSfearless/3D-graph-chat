@@ -14,27 +14,26 @@ registerFont(path.resolve('./public/fonts/NotoSansSC-Regular.ttf'), { family: 'N
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     res.setHeader('Allow', ['POST']);
-    return res.status(405).end(`方法 ${req.method} 不被允许`);
+    return res.status(405).end(`Method ${req.method} Not Allowed`);
   }
 
   const { topic } = req.body;
 
   if (!topic) {
-    return res.status(400).json({ error: '主题是必需的' });
+    return res.status(400).json({ error: 'Topic is required' });
   }
 
   try {
-    // 步骤 1: 生成一个meme文本
-    const prompt = `生成一个有趣且适合家庭的meme关于${topic}。格式应为两行文本。`;
+    // Step 1: 生成一句包含上下句的meme
+    const prompt = `生成一句有趣且适合家庭的meme，包含上下句，关于${topic}。`;
     const gptResponse = await openai.chat.completions.create({
       model: 'gpt-3.5-turbo',
       messages: [{ role: 'user', content: prompt }],
     });
 
-    let meme = gptResponse.choices[0].message.content.trim();
-    let [topText, bottomText] = meme.split('\n');
+    const meme = gptResponse.choices[0].message.content.trim();
 
-    // 步骤 2: 创建meme图片
+    // Step 2: 创建meme图片
     const canvas = createCanvas(800, 800);
     const context = canvas.getContext('2d');
 
@@ -42,7 +41,7 @@ export default async function handler(req, res) {
     context.fillStyle = '#FFFFFF';
     context.fillRect(0, 0, canvas.width, canvas.height);
 
-    // 绘制边框
+    // 添加边框
     context.strokeStyle = '#000000';
     context.lineWidth = 10;
     context.strokeRect(5, 5, canvas.width - 10, canvas.height - 10);
@@ -55,23 +54,28 @@ export default async function handler(req, res) {
     const logoImage = await loadImage(logoImagePath);
 
     // 在中心绘制logo，保持原始比例
-    const logoSizeWidth = 300;
-    const logoSizeHeight = 328;
+    const logoSizeWidth = 150;
+    const logoSizeHeight = 164;
     const logoX = (canvas.width - logoSizeWidth) / 2;
     const logoY = (canvas.height - logoSizeHeight) / 2;
     context.drawImage(logoImage, logoX, logoY, logoSizeWidth, logoSizeHeight);
 
     // 绘制meme文本
-    const memeFont = 'bold 36px "Noto Sans SC"';
+    const memeFont = '24px "Noto Sans SC"'; // 使用更大的字体
     const memeColor = 'black';
 
     context.font = memeFont;
     context.fillStyle = memeColor;
     context.textAlign = 'center';
 
-    // 绘制上下文本
-    drawWrappedText(context, topText, canvas.width / 2, 100, canvas.width - 40);
-    drawWrappedText(context, bottomText, canvas.width / 2, canvas.height - 100, canvas.width - 40);
+    // 分割上下句
+    const [topText, bottomText] = meme.split('\n');
+
+    // 绘制上句
+    drawWrappedText(context, topText, canvas.width / 2, 50, canvas.width - 40);
+
+    // 绘制下句
+    drawWrappedText(context, bottomText, canvas.width / 2, canvas.height - 50, canvas.width - 40);
 
     const buffer = canvas.toBuffer('image/png');
 
@@ -103,7 +107,7 @@ function drawWrappedText(context, text, x, y, maxWidth) {
     if (testWidth > maxWidth && n > 0) {
       context.fillText(line, x, testY);
       line = words[n] + ' ';
-      testY += 40; // 增加行距
+      testY += 30; // 增加行距
     } else {
       line = testLine;
     }
