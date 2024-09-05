@@ -5,7 +5,7 @@ const ReactFlow = dynamic(() => import('react-flow-renderer'), { ssr: false });
 
 const KnowledgeGraph = ({ data }) => {
   if (!data || !data.nodes || !data.edges) {
-    return <div>无效的图表数据</div>;
+    return <div>Invalid graph data</div>;
   }
 
   const elements = data.nodes.map((node) => ({

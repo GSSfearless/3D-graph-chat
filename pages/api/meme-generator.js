@@ -53,15 +53,15 @@ export default async function handler(req, res) {
     const logoImagePath = path.join(logoDir, randomLogo);
     const logoImage = await loadImage(logoImagePath);
 
-    // 在中心绘制logo，保持原始比例
-    const logoSizeWidth = 150;
-    const logoSizeHeight = 164;
+    // 在中心绘制更大的logo，保持原始比例
+    const logoSizeWidth = 300;
+    const logoSizeHeight = 328;
     const logoX = (canvas.width - logoSizeWidth) / 2;
     const logoY = (canvas.height - logoSizeHeight) / 2;
     context.drawImage(logoImage, logoX, logoY, logoSizeWidth, logoSizeHeight);
 
     // 绘制meme文本
-    const memeFont = '24px "Noto Sans SC"'; // 使用更大的字体
+    const memeFont = '48px "Noto Sans SC"'; // 使用更大的字体
     const memeColor = 'black';
 
     context.font = memeFont;
@@ -72,10 +72,10 @@ export default async function handler(req, res) {
     const [topText, bottomText] = meme.split('\n');
 
     // 绘制上句
-    drawWrappedText(context, topText, canvas.width / 2, 50, canvas.width - 40);
+    drawWrappedText(context, topText, canvas.width / 2, 100, canvas.width - 80);
 
     // 绘制下句
-    drawWrappedText(context, bottomText, canvas.width / 2, canvas.height - 50, canvas.width - 40);
+    drawWrappedText(context, bottomText, canvas.width / 2, canvas.height - 100, canvas.width - 80);
 
     const buffer = canvas.toBuffer('image/png');
 
@@ -107,7 +107,7 @@ function drawWrappedText(context, text, x, y, maxWidth) {
     if (testWidth > maxWidth && n > 0) {
       context.fillText(line, x, testY);
       line = words[n] + ' ';
-      testY += 30; // 增加行距
+      testY += 60; // 增加行距
     } else {
       line = testLine;
     }
