@@ -157,7 +157,7 @@ export default function Search() {
         </div>
         <div className="flex justify-between items-center mt-4">
           <Link href="/about">
-            <a className="text-gray-600 hover:text-gray-800">We're hiring</a>
+            <a className="text-gray-600 hover:text-gray-800">We&apos;re hiring</a>
           </Link>
           <a href="https://discord.gg/G66pESH3gm" target="_blank" rel="noopener noreferrer" className="text-gray-600 hover:text-gray-800">
           ❤️Join our Discord
