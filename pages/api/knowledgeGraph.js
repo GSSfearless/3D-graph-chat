@@ -1,11 +1,8 @@
-const OpenAI = require('openai');
-
+import OpenAI from 'openai';
 
 const openai = new OpenAI({
-    organization: 'org-gLWuvsHwqOs4i3QAdK8nQ5zk',
-    project: 'proj_TRi4aW8PdBr9LBaE9W34pDPi',
-  });
-
+  apiKey: process.env.OPENAI_API_KEY,
+});
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -27,8 +24,7 @@ export default async function handler(req, res) {
       ],
     });
 
-
-    const graphData = JSON.parse(completion.data.choices[0].message.content);
+    const graphData = JSON.parse(completion.choices[0].message.content);
     res.status(200).json(graphData);
   } catch (error) {
     console.error('Error:', error);
