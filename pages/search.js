@@ -167,7 +167,7 @@ export default function Search() {
                       </div>
                     </>
                   ) : (
-                    <div className="w-full h-64 bg-gray-100 flex items-center justify-center text-gray-500">Cooking...</div>
+                    <div className="w-full h-80 bg-gray-100 flex items-center justify-center text-gray-500">Cooking...</div>
                   )
                 )}
               </div>
