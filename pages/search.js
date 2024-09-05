@@ -1,9 +1,11 @@
+import { faArrowUp, faDownload } from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { useCallback, useEffect, useState } from 'react';
 import 'tailwindcss/tailwind.css';
-import KnowledgeGraph from '../components/KnowledgeGraph';
 import '../styles/globals.css';
+import KnowledgeGraph from '../components/KnowledgeGraph';
 
 export default function Search() {
   const router = useRouter();
