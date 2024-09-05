@@ -68,6 +68,7 @@ export default function Search() {
         }
 
         const graphData = await graphResponse.json();
+        console.log('知识图谱数据:', graphData);
         setKnowledgeGraphData(graphData);
       } catch (error) {
         console.error('获取知识图谱时出错:', error);
@@ -182,8 +183,10 @@ export default function Search() {
                 <div className="h-64 bg-gray-200 animate-pulse rounded"></div>
               ) : graphError ? (
                 <p className="text-red-500">{graphError}</p>
+              ) : knowledgeGraphData ? (
+                <KnowledgeGraph data={knowledgeGraphData} />
               ) : (
-                knowledgeGraphData && <KnowledgeGraph data={knowledgeGraphData} />
+                <p>暂无知识图谱数据</p>
               )}
             </div>
             <div className="result-item flex flex-col items-center">
