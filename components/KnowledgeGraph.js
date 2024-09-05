@@ -1,7 +1,10 @@
 import dynamic from 'next/dynamic';
 import React from 'react';
 
-const ReactFlow = dynamic(() => import('react-flow-renderer'), { ssr: false });
+const ReactFlow = dynamic(() => import('react-flow-renderer'), { 
+  ssr: false,
+  loading: () => <p>Loading...</p>
+});
 
 const KnowledgeGraph = ({ data }) => {
   if (!data || !data.nodes || !data.edges) {
@@ -28,4 +31,6 @@ const KnowledgeGraph = ({ data }) => {
   );
 };
 
-export default KnowledgeGraph;
+export default dynamic(() => Promise.resolve(KnowledgeGraph), { 
+  ssr: false 
+});
