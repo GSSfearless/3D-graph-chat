@@ -34,6 +34,12 @@ export default async function handler(req, res) {
     let meme = gptResponse.choices[0].message.content.trim();
     let [topText, bottomText] = meme.split('\n');
 
+    // 确保有两行文本
+    if (!bottomText) {
+      bottomText = topText;
+      topText = '';
+    }
+
     // 步骤 2: 创建meme图片
     const canvas = createCanvas(800, 800);
     const context = canvas.getContext('2d');
@@ -70,8 +76,10 @@ export default async function handler(req, res) {
     context.textAlign = 'center';
 
     // 绘制上下文本
-    drawWrappedText(context, topText, canvas.width / 2, 100, canvas.width - 40);
-    drawWrappedText(context, bottomText, canvas.width / 2, canvas.height - 100, canvas.width - 40);
+    const topY = 80;
+    const bottomY = canvas.height - 80;
+    drawWrappedText(context, topText, canvas.width / 2, topY, canvas.width - 40, 'top');
+    drawWrappedText(context, bottomText, canvas.width / 2, bottomY, canvas.width - 40, 'bottom');
 
     const buffer = canvas.toBuffer('image/png');
 
@@ -88,25 +96,31 @@ export default async function handler(req, res) {
   }
 }
 
-function drawWrappedText(context, text, x, y, maxWidth) {
+function drawWrappedText(context, text, x, y, maxWidth, position) {
   context.textAlign = 'center';
-
   const words = text.split(' ');
-  let line = '';
-  let testY = y;
+  let lines = [];
+  let currentLine = words[0];
 
-  for (let n = 0; n < words.length; n++) {
-    const testLine = line + words[n] + ' ';
-    const metrics = context.measureText(testLine);
-    const testWidth = metrics.width;
-  
-    if (testWidth > maxWidth && n > 0) {
-      context.fillText(line, x, testY);
-      line = words[n] + ' ';
-      testY += 40; // 增加行距
+  for (let i = 1; i < words.length; i++) {
+    let testLine = currentLine + ' ' + words[i];
+    let metrics = context.measureText(testLine);
+    let testWidth = metrics.width;
+
+    if (testWidth > maxWidth) {
+      lines.push(currentLine);
+      currentLine = words[i];
     } else {
-      line = testLine;
+      currentLine = testLine;
     }
   }
-  context.fillText(line, x, testY);
+  lines.push(currentLine);
+
+  let lineHeight = 40;
+  let totalHeight = lines.length * lineHeight;
+  let startY = position === 'top' ? y : y - totalHeight;
+
+  for (let i = 0; i < lines.length; i++) {
+    context.fillText(lines[i], x, startY + (i * lineHeight));
+  }
 }
