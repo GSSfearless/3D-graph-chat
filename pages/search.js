@@ -53,8 +53,8 @@ export default function Search() {
         body: JSON.stringify({ 
           topic: actualQuery,
           maxTextLength: 50, // 限制文字长度
-          topPadding: 20,    // 顶部填充
-          bottomPadding: 20  // 底部填充
+          topPadding: 40,    // 增加顶部填充
+          bottomPadding: 40  // 增加底部填充
         }),
       });
       if (!memeResponse.ok) {
@@ -154,11 +154,11 @@ export default function Search() {
               </div>
               <div className="flex flex-col items-center w-full p-4">
                 {memeLoading ? (
-                  <div className="w-full h-64 bg-gray-200 animate-pulse rounded"></div>
+                  <div className="w-full h-80 bg-gray-200 animate-pulse rounded"></div>
                 ) : (
                   memeImage ? (
                     <>
-                      <img src={memeImage} alt="Memedog is out..." className="max-w-full max-h-64 object-contain mb-4" />
+                      <img src={memeImage} alt="Memedog is out..." className="max-w-full max-h-80 object-contain mb-4" />
                       <div className="flex space-x-4">
                         <button onClick={handleDownload} className="bg-black hover:bg-gray-800 text-white font-bold py-2 px-4 rounded">
                           <FontAwesomeIcon icon={faDownload} className="mr-2" />

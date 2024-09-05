@@ -14,113 +14,118 @@ registerFont(path.resolve('./public/fonts/NotoSansSC-Regular.ttf'), { family: 'N
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     res.setHeader('Allow', ['POST']);
-    return res.status(405).end(`方法 ${req.method} 不被允许`);
+    return res.status(405).end(`Method ${req.method} Not Allowed`);
   }
 
   const { topic } = req.body;
 
   if (!topic) {
-    return res.status(400).json({ error: '主题是必需的' });
+    return res.status(400).json({ error: 'Topic is required' });
   }
 
   try {
-    // 步骤 1: 生成一个meme文本
-    const prompt = `生成一个有趣且适合家庭的meme关于${topic}。格式应为两行文本。`;
+    // Step 1: Generate meme texts
+    const prompt = `Generate 4 funny and family-friendly memes about ${topic}.`;
     const gptResponse = await openai.chat.completions.create({
       model: 'gpt-3.5-turbo',
       messages: [{ role: 'user', content: prompt }],
     });
 
-    let meme = gptResponse.choices[0].message.content.trim();
-    let [topText, bottomText] = meme.split('\n');
+    let memes = gptResponse.choices[0].message.content.split('\n').filter(meme => meme.trim().length > 0);
 
-    // 确保有两行文本
-    if (!bottomText) {
-      bottomText = topText;
-      topText = '';
+    // 如果memes数量少于4个，填充缺失的部分
+    while (memes.length < 4) {
+      memes.push("No meme generated.");
     }
 
-    // 步骤 2: 创建meme图片
+    // Step 2: Create meme image
     const canvas = createCanvas(800, 800);
     const context = canvas.getContext('2d');
 
-    // 绘制白色背景
+    // Draw white background
     context.fillStyle = '#FFFFFF';
     context.fillRect(0, 0, canvas.width, canvas.height);
 
-    // 绘制边框
-    context.strokeStyle = '#000000';
-    context.lineWidth = 10;
-    context.strokeRect(5, 5, canvas.width - 10, canvas.height - 10);
-
-    // 加载随机logo图片
+    // Load random logo image from /doge_test directory
     const logoDir = path.resolve('./public/doge_raw');
     const logos = fs.readdirSync(logoDir);
     const randomLogo = logos[Math.floor(Math.random() * logos.length)];
     const logoImagePath = path.join(logoDir, randomLogo);
     const logoImage = await loadImage(logoImagePath);
 
-    // 在中心绘制logo，保持原始比例
-    const logoSizeWidth = 300;
-    const logoSizeHeight = 328;
+    // Draw logo in the center maintaining original proportions
+    const logoSizeWidth = 150;
+    const logoSizeHeight = 164;
     const logoX = (canvas.width - logoSizeWidth) / 2;
     const logoY = (canvas.height - logoSizeHeight) / 2;
     context.drawImage(logoImage, logoX, logoY, logoSizeWidth, logoSizeHeight);
 
-    // 绘制meme文本
-    const memeFont = 'bold 36px "Noto Sans SC"';
+    // Draw memes around the logo
+    const memeFont = '16px "Noto Sans SC"'; // 使用 Noto Sans SC 字体
     const memeColor = 'black';
 
     context.font = memeFont;
     context.fillStyle = memeColor;
     context.textAlign = 'center';
 
-    // 绘制上下文本
-    const topY = 80;
-    const bottomY = canvas.height - 80;
-    drawWrappedText(context, topText, canvas.width / 2, topY, canvas.width - 40, 'top');
-    drawWrappedText(context, bottomText, canvas.width / 2, bottomY, canvas.width - 40, 'bottom');
+    // 调整文本框位置，使其更靠近 Logo
+    const textPadding = 20;
+    const halfLogoHeight = logoSizeHeight / 2;
+    const canvasHalfHeight = canvas.height / 2;
+    
+    // 调整位置，确保高度位于视觉中心
+    const positions = [
+      { x: canvas.width / 2, y: logoY - halfLogoHeight - textPadding - 30 }, // 上方
+      { x: logoX + logoSizeWidth + textPadding + 70, y: canvasHalfHeight - halfLogoHeight }, // 右侧，增加距离并确保垂直居中
+      { x: canvas.width / 2, y: logoY + logoSizeHeight + textPadding + 30 }, // 下方
+      { x: logoX - textPadding - 70, y: canvasHalfHeight - halfLogoHeight } // 左侧，增加距离并确保垂直居中
+    ];
+
+    // 调整文本框宽度
+    const textMaxWidth = 200;
+
+    memes.forEach((meme, index) => {
+      // 检查是否存在位置和meme内容
+      if (positions[index] && meme) {
+        const { x, y } = positions[index];
+        drawWrappedText(context, meme, x, y, textMaxWidth);
+      }
+    });
 
     const buffer = canvas.toBuffer('image/png');
 
     res.setHeader('Content-Type', 'image/png');
     res.status(200).end(buffer, 'binary');
   } catch (error) {
-    console.error('生成meme时出错:', error);
+    console.error('Error generating meme:', error);
 
     if (error.response) {
-      res.status(500).json({ error: '生成meme失败', details: error.response.data });
+      res.status(500).json({ error: 'Failed to generate meme', details: error.response.data });
     } else {
-      res.status(500).json({ error: '生成meme失败', details: error.message });
+      res.status(500).json({ error: 'Failed to generate meme', details: error.message });
     }
   }
 }
 
-function drawWrappedText(context, text, x, y, maxWidth, position) {
+function drawWrappedText(context, text, x, y, maxWidth) {
   context.textAlign = 'center';
+
   const words = text.split(' ');
-  let lines = [];
-  let currentLine = words[0];
+  let line = '';
+  let testY = y;
 
-  for (let i = 1; i < words.length; i++) {
-    let testLine = currentLine + ' ' + words[i];
-    let metrics = context.measureText(testLine);
-    let testWidth = metrics.width;
-
-    if (testWidth > maxWidth) {
-      lines.push(currentLine);
-      currentLine = words[i];
+  for (let n = 0; n < words.length; n++) {
+    const testLine = line + words[n] + ' ';
+    const metrics = context.measureText(testLine);
+    const testWidth = metrics.width;
+  
+    if (testWidth > maxWidth && n > 0) {
+      context.fillText(line, x, testY);
+      line = words[n] + ' ';
+      testY += 20; // 行距
     } else {
-      currentLine = testLine;
+      line = testLine;
     }
   }
-  lines.push(currentLine);
-
-  let lineHeight = 40;
-  let totalHeight = lines.length * lineHeight;
-  let startY = position === 'top' ? y : y - totalHeight;
-
-  for (let i = 0; i < lines.length; i++) {
-    context.fillText(lines[i], x, startY + (i * lineHeight));
-  }
+  context.fillText(line, x, testY);
 }
