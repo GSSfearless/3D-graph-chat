@@ -24,85 +24,70 @@ export default async function handler(req, res) {
   }
 
   try {
-    // Step 1: Generate meme texts
-    const prompt = `Generate 4 funny and family-friendly memes about ${topic}.`;
+    // Step 1: 生成一句包含上下句的meme
+    const prompt = `生成一句有趣且适合家庭的meme，包含上下句，关于${topic}。`;
     const gptResponse = await openai.chat.completions.create({
       model: 'gpt-3.5-turbo',
       messages: [{ role: 'user', content: prompt }],
     });
 
-    let memes = gptResponse.choices[0].message.content.split('\n').filter(meme => meme.trim().length > 0);
+    const meme = gptResponse.choices[0].message.content.trim();
 
-    // 如果memes数量少于4个，填充缺失的部分
-    while (memes.length < 4) {
-      memes.push("No meme generated.");
-    }
-
-    // Step 2: Create meme image
+    // Step 2: 创建meme图片
     const canvas = createCanvas(800, 800);
     const context = canvas.getContext('2d');
 
-    // Draw white background
+    // 绘制白色背景
     context.fillStyle = '#FFFFFF';
     context.fillRect(0, 0, canvas.width, canvas.height);
 
-    // Load random logo image from /doge_test directory
+    // 添加边框
+    context.strokeStyle = '#000000';
+    context.lineWidth = 10;
+    context.strokeRect(5, 5, canvas.width - 10, canvas.height - 10);
+
+    // 加载随机logo图片
     const logoDir = path.resolve('./public/doge_raw');
     const logos = fs.readdirSync(logoDir);
     const randomLogo = logos[Math.floor(Math.random() * logos.length)];
     const logoImagePath = path.join(logoDir, randomLogo);
     const logoImage = await loadImage(logoImagePath);
 
-    // Draw logo in the center maintaining original proportions
+    // 在中心绘制logo，保持原始比例
     const logoSizeWidth = 150;
     const logoSizeHeight = 164;
     const logoX = (canvas.width - logoSizeWidth) / 2;
     const logoY = (canvas.height - logoSizeHeight) / 2;
     context.drawImage(logoImage, logoX, logoY, logoSizeWidth, logoSizeHeight);
 
-    // Draw memes around the logo
-    const memeFont = '16px "Noto Sans SC"'; // 使用 Noto Sans SC 字体
+    // 绘制meme文本
+    const memeFont = '24px "Noto Sans SC"'; // 使用更大的字体
     const memeColor = 'black';
 
     context.font = memeFont;
     context.fillStyle = memeColor;
     context.textAlign = 'center';
 
-    // 调整文本框位置，使其更靠近 Logo
-    const textPadding = 20;
-    const halfLogoHeight = logoSizeHeight / 2;
-    const canvasHalfHeight = canvas.height / 2;
-    
-    // 调整位置，确保高度位于视觉中心
-    const positions = [
-      { x: canvas.width / 2, y: logoY - halfLogoHeight - textPadding - 30 }, // 上方
-      { x: logoX + logoSizeWidth + textPadding + 70, y: canvasHalfHeight - halfLogoHeight }, // 右侧，增加距离并确保垂直居中
-      { x: canvas.width / 2, y: logoY + logoSizeHeight + textPadding + 30 }, // 下方
-      { x: logoX - textPadding - 70, y: canvasHalfHeight - halfLogoHeight } // 左侧，增加距离并确保垂直居中
-    ];
+    // 分割上下句
+    const [topText, bottomText] = meme.split('\n');
 
-    // 调整文本框宽度
-    const textMaxWidth = 200;
+    // 绘制上句
+    drawWrappedText(context, topText, canvas.width / 2, 50, canvas.width - 40);
 
-    memes.forEach((meme, index) => {
-      // 检查是否存在位置和meme内容
-      if (positions[index] && meme) {
-        const { x, y } = positions[index];
-        drawWrappedText(context, meme, x, y, textMaxWidth);
-      }
-    });
+    // 绘制下句
+    drawWrappedText(context, bottomText, canvas.width / 2, canvas.height - 50, canvas.width - 40);
 
     const buffer = canvas.toBuffer('image/png');
 
     res.setHeader('Content-Type', 'image/png');
     res.status(200).end(buffer, 'binary');
   } catch (error) {
-    console.error('Error generating meme:', error);
+    console.error('生成meme时出错:', error);
 
     if (error.response) {
-      res.status(500).json({ error: 'Failed to generate meme', details: error.response.data });
+      res.status(500).json({ error: '生成meme失败', details: error.response.data });
     } else {
-      res.status(500).json({ error: 'Failed to generate meme', details: error.message });
+      res.status(500).json({ error: '生成meme失败', details: error.message });
     }
   }
 }
@@ -122,7 +107,7 @@ function drawWrappedText(context, text, x, y, maxWidth) {
     if (testWidth > maxWidth && n > 0) {
       context.fillText(line, x, testY);
       line = words[n] + ' ';
-      testY += 20; // 行距
+      testY += 30; // 增加行距
     } else {
       line = testLine;
     }
