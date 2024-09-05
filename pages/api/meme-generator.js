@@ -14,17 +14,17 @@ registerFont(path.resolve('./public/fonts/NotoSansSC-Regular.ttf'), { family: 'N
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     res.setHeader('Allow', ['POST']);
-    return res.status(405).end(`Method ${req.method} Not Allowed`);
+    return res.status(405).end(`方法 ${req.method} 不被允许`);
   }
 
   const { topic } = req.body;
 
   if (!topic) {
-    return res.status(400).json({ error: 'Topic is required' });
+    return res.status(400).json({ error: '需要提供主题' });
   }
 
   try {
-    // Step 1: 生成一句包含上下句的meme
+    // 步骤1: 生成一句包含上下句的meme
     const prompt = `生成一句有趣且适合家庭的meme，包含上下句，关于${topic}。`;
     const gptResponse = await openai.chat.completions.create({
       model: 'gpt-3.5-turbo',
@@ -33,7 +33,7 @@ export default async function handler(req, res) {
 
     const meme = gptResponse.choices[0].message.content.trim();
 
-    // Step 2: 创建meme图片
+    // 步骤2: 创建meme图片
     const canvas = createCanvas(800, 800);
     const context = canvas.getContext('2d');
 
@@ -61,7 +61,7 @@ export default async function handler(req, res) {
     context.drawImage(logoImage, logoX, logoY, logoSizeWidth, logoSizeHeight);
 
     // 绘制meme文本
-    const memeFont = '48px "Noto Sans SC"'; // 使用更大的字体
+    const memeFont = '36px "Noto Sans SC"'; // 减小字体大小
     const memeColor = 'black';
 
     context.font = memeFont;
@@ -72,10 +72,10 @@ export default async function handler(req, res) {
     const [topText, bottomText] = meme.split('\n');
 
     // 绘制上句
-    drawWrappedText(context, topText, canvas.width / 2, 100, canvas.width - 80);
+    drawWrappedText(context, topText, canvas.width / 2, 50, canvas.width - 100);
 
     // 绘制下句
-    drawWrappedText(context, bottomText, canvas.width / 2, canvas.height - 100, canvas.width - 80);
+    drawWrappedText(context, bottomText, canvas.width / 2, canvas.height - 50, canvas.width - 100);
 
     const buffer = canvas.toBuffer('image/png');
 
@@ -83,31 +83,25 @@ export default async function handler(req, res) {
     res.status(200).end(buffer, 'binary');
   } catch (error) {
     console.error('生成meme时出错:', error);
-
-    if (error.response) {
-      res.status(500).json({ error: '生成meme失败', details: error.response.data });
-    } else {
-      res.status(500).json({ error: '生成meme失败', details: error.message });
-    }
+    res.status(500).json({ error: '生成meme失败', details: error.message });
   }
 }
 
 function drawWrappedText(context, text, x, y, maxWidth) {
-  context.textAlign = 'center';
-
-  const words = text.split(' ');
+  const words = text.split('');
   let line = '';
   let testY = y;
+  const lineHeight = 40;
 
   for (let n = 0; n < words.length; n++) {
-    const testLine = line + words[n] + ' ';
+    const testLine = line + words[n];
     const metrics = context.measureText(testLine);
     const testWidth = metrics.width;
   
     if (testWidth > maxWidth && n > 0) {
       context.fillText(line, x, testY);
-      line = words[n] + ' ';
-      testY += 60; // 增加行距
+      line = words[n];
+      testY += lineHeight;
     } else {
       line = testLine;
     }

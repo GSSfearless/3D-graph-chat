@@ -3,12 +3,12 @@ import React from 'react';
 
 const ReactFlow = dynamic(() => import('react-flow-renderer'), { 
   ssr: false,
-  loading: () => <p>Loading...</p>
+  loading: () => <p>加载中...</p>
 });
 
 const KnowledgeGraph = ({ data }) => {
   if (!data || !data.nodes || !data.edges) {
-    return <div>Invalid graph data</div>;
+    return <div>无效的图表数据</div>;
   }
 
   const elements = data.nodes.map((node) => ({
@@ -31,6 +31,4 @@ const KnowledgeGraph = ({ data }) => {
   );
 };
 
-export default dynamic(() => Promise.resolve(KnowledgeGraph), { 
-  ssr: false 
-});
+export default KnowledgeGraph;
