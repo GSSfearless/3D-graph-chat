@@ -1,4 +1,4 @@
-import { faArrowUp } from '@fortawesome/free-solid-svg-icons';
+import { faArrowUp, faArrowLeft } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
@@ -221,18 +221,24 @@ export default function Search() {
       {showLargeSearch && (
         <div className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm flex items-center justify-center z-50">
           <div className="w-full max-w-2xl p-4">
-            <div className="bg-white p-4 rounded-lg shadow-md mb-4 flex items-center border border-gray-300 transition-all duration-300" style={{ height: '8rem' }}>
+            <div className="bg-white p-4 rounded-lg shadow-md mb-4 flex items-center border border-gray-300 transition-all duration-300 relative" style={{ height: '8rem' }}>
+              <button 
+                className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                onClick={() => setShowLargeSearch(false)}
+              >
+                <FontAwesomeIcon icon={faArrowLeft} />
+              </button>
               <input 
                 type="text" 
                 placeholder="Just ask..." 
-                className="w-full p-4 border-none outline-none text-xl"
+                className="w-full p-4 border-none outline-none text-xl pl-12"
                 value={query}
                 onChange={handleChange}
                 onKeyPress={handleLargeSearchKeyPress}
                 autoFocus
               />
               <button 
-                className="bg-[#105C93] text-white rounded-full h-12 w-12 flex items-center justify-center absolute right-8 hover:bg-[#3A86C8] transition duration-300" 
+                className="bg-[#105C93] text-white rounded-full h-12 w-12 flex items-center justify-center absolute right-4 hover:bg-[#3A86C8] transition duration-300" 
                 style={{ top: 'calc(50% - 1.5rem)' }}
                 onClick={handleLargeSearch}
               >
