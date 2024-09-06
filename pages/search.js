@@ -129,10 +129,10 @@ export default function Search() {
           </div>
           <div className="text-gray-400 mx-2">|</div>
           <div className="flex items-center">
-            <span className="text-xs mr-2">Join our discord</span>
             <a href="https://discord.gg/G66pESH3gm" target="_blank" rel="noopener noreferrer" className="block bg-[#ECF5FD] text-center p-2 rounded hover:bg-[#B6DBF7] transition duration-300 text-2xl font-medium text-gray-600">
             💬
             </a>
+            <span className="text-xs ml-2">Join our discord</span>
           </div>
         </div>
       </div>
@@ -199,18 +199,9 @@ export default function Search() {
             <h3 className="result-title text-lg mb-2">📚 Reference</h3>
             <div className="space-y-1">
               {loading ? (
-                <>
-                  <div className="h-12 bg-gray-200 animate-pulse rounded"></div>
-                  <div className="h-12 bg-gray-200 animate-pulse rounded"></div>
-                  <div className="h-12 bg-gray-200 animate-pulse rounded"></div>
-                </>
+                <div className="h-12 bg-gray-200 animate-pulse rounded"></div>
               ) : (
-                <>
-                  <p className="text-xs text-gray-500">搜集了 {searchResults.length} 个网页</p>
-                  {searchResults.map((result, index) => (
-                    <p key={index} className="text-xs text-gray-500">{index + 1}. {result.title}</p>
-                  ))}
-                </>
+                <p className="text-xs text-gray-500">搜集了 {searchResults.length} 个网页</p>
               )}
             </div>
           </div>
