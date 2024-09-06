@@ -1,4 +1,4 @@
-import { faArrowUp, faDownload } from '@fortawesome/free-solid-svg-icons';
+import { faArrowUp } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
@@ -148,7 +148,7 @@ export default function Search() {
           <div className="mb-4 relative">
             <input 
               type="text" 
-              placeholder="问任何问题..." 
+              placeholder="Just Ask..." 
               className="w-full p-4 border-2 border-gray-300 rounded-full outline-none text-xl hover:border-gray-400 focus:border-gray-500 transition-all duration-300"
               value={query}
               onChange={handleChange}
@@ -156,15 +156,15 @@ export default function Search() {
             />
           </div>
           <Link href="/">
-            <a className="block bg-gray-300 text-center p-2 rounded hover:bg-[#DAECFB] transition duration-300 text-2xl font-medium text-gray-600 ml-0">🏠</a>
+            <a className="block bg-[#ECF5FD] text-center p-2 rounded hover:bg-[#DAECFB] transition duration-300 text-2xl font-medium text-gray-600 ml-0">🏠Homepage</a>
           </Link>
         </div>
         <div className="flex flex-col space-y-2">
           <Link href="/about">
-            <a className="block bg-gray-300 text-center p-2 rounded hover:bg-[#DAECFB] transition duration-300 text-2xl font-medium text-gray-600 ml-0">💼</a>
+            <a className="block bg-[#ECF5FD] text-center p-2 rounded hover:bg-[#DAECFB] transition duration-300 text-2xl font-medium text-gray-600 ml-0">💼We are hiring</a>
           </Link>
-          <a href="https://discord.gg/G66pESH3gm" target="_blank" rel="noopener noreferrer" className="block bg-gray-300 text-center p-2 rounded hover:bg-[#DAECFB] transition duration-300 text-2xl font-medium text-gray-600 ml-0">
-          💬
+          <a href="https://discord.gg/G66pESH3gm" target="_blank" rel="noopener noreferrer" className="block bg-[#ECF5FD] text-center p-2 rounded hover:bg-[#DAECFB] transition duration-300 text-2xl font-medium text-gray-600 ml-0">
+          💬Join Discord
           </a>
         </div>
       </div>
@@ -172,7 +172,7 @@ export default function Search() {
         <div className="flex">
           <div className="w-2/3 pr-4">
             <div className="result-item mb-4">
-              <h3 className="result-title text-4xl">📝</h3>
+              <h3 className="result-title text-4xl">📝Answer</h3>
               <div className="min-h-40 p-4">
                 {loading ? (
                   <div className="h-full bg-gray-200 animate-pulse rounded"></div>
@@ -182,7 +182,7 @@ export default function Search() {
               </div>
             </div>
             <div className="mb-4">
-              <h3 className="result-title text-4xl">🧠</h3>
+              <h3 className="result-title text-4xl">🧠Knowledge Graph</h3>
               {loading ? (
                 <div className="h-64 bg-gray-200 animate-pulse rounded"></div>
               ) : graphError ? (
@@ -223,7 +223,7 @@ export default function Search() {
             */}
           </div>
           <div className="w-1/3 p-4 bg-white">
-            <h3 className="result-title">📚 参考资料</h3>
+            <h3 className="result-title">📚 References</h3>
             <div className="space-y-2">
               {loading ? (
                 <>
