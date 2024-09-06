@@ -161,10 +161,10 @@ export default function Search() {
         </div>
         <div className="flex flex-col space-y-2">
           <Link href="/about">
-            <a className="block bg-[#ECF5FD] text-center p-2 rounded hover:bg-[#DAECFB] transition duration-300 text-2xl font-medium text-gray-600 ml-0">💼We are hiring</a>
+            <a className="block bg-[#ECF5FD] text-center p-2 rounded hover:bg-[#DAECFB] transition duration-300 text-2xl font-medium text-gray-600 ml-0">💼Hiring</a>
           </Link>
           <a href="https://discord.gg/G66pESH3gm" target="_blank" rel="noopener noreferrer" className="block bg-[#ECF5FD] text-center p-2 rounded hover:bg-[#DAECFB] transition duration-300 text-2xl font-medium text-gray-600 ml-0">
-          💬Join Discord
+          💬Discord
           </a>
         </div>
       </div>
@@ -255,7 +255,7 @@ export default function Search() {
             onKeyPress={handleKeyPress}
           />
           <button 
-            className="bg-black text-white rounded-full h-10 w-10 flex items-center justify-center absolute right-2 hover:bg-gray-800 transition duration-300" 
+            className="bg-[#47A7EB] text-white rounded-full h-10 w-10 flex items-center justify-center absolute right-2 hover:bg-[#3A86C8] transition duration-300" 
             onClick={handleButtonClick}
           >
             <FontAwesomeIcon icon={faArrowUp} />
