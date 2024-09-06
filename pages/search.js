@@ -23,6 +23,7 @@ export default function Search() {
   const [initialLoad, setInitialLoad] = useState(true);
   const [knowledgeGraphData, setKnowledgeGraphData] = useState(null);
   const [graphError, setGraphError] = useState(null);
+  const [showLargeSearch, setShowLargeSearch] = useState(false);
 
   const defaultQuery = "生命、宇宙以及一切的答案是什么？";
 
@@ -99,6 +100,19 @@ export default function Search() {
     handleSearch(query);
   }
 
+  const handleLargeSearch = () => {
+    if (query.trim() !== '') {
+      handleSearch(query);
+      setShowLargeSearch(false);
+    }
+  };
+
+  const handleLargeSearchKeyPress = (e) => {
+    if (e.key === 'Enter') {
+      handleLargeSearch();
+    }
+  };
+
   return (
     <div className="flex flex-row min-h-screen">
       <div className="w-1/6 p-4 bg-[#ECF5FD] flex flex-col justify-between fixed h-full" style={{ fontFamily: 'Open Sans, sans-serif' }}>
@@ -110,14 +124,13 @@ export default function Search() {
             <input 
               type="text" 
               placeholder="Just Ask..." 
-              className="w-full p-4 border-2 border-gray-300 rounded-full outline-none text-xl hover:border-gray-400 focus:border-gray-500 transition-all duration-300"
-              value={query}
-              onChange={handleChange}
-              onKeyPress={handleKeyPress}
+              className="w-full p-4 border-2 border-gray-300 rounded-full outline-none text-xl hover:border-gray-400 focus:border-gray-500 transition-all duration-300 cursor-pointer"
+              onClick={() => setShowLargeSearch(true)}
+              readOnly
             />
           </div>
           <Link href="/">
-            <a className="block bg-[#ECF5FD] text-left p-2 rounded hover:bg-[#B6DBF7] transition duration-300 text-xl font-medium text-gray-600 ml-0">🏠 Homepage</a>
+            <a className="block bg-[#ECF5FD] text-center p-2 rounded hover:bg-[#B6DBF7] transition duration-300 text-xl font-medium text-gray-600">🏠 Homepage</a>
           </Link>
         </div>
         <div className="flex justify-between items-center">
@@ -197,13 +210,38 @@ export default function Search() {
             </div>
           </div>
           <div className="w-1/3 p-4 bg-white">
-            <h3 className="result-title text-lg mb-2">📚 Reference</h3>
+            <h3 className="result-title text-lg mb-2">📚 Bookmark</h3>
             <div className="space-y-1">
               {/* 暂时留为空白 */}
             </div>
           </div>
         </div>
       </div>
+
+      {showLargeSearch && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm flex items-center justify-center z-50">
+          <div className="w-full max-w-2xl p-4">
+            <div className="bg-white p-4 rounded-lg shadow-md mb-4 flex items-center border border-gray-300 transition-all duration-300" style={{ height: '8rem' }}>
+              <input 
+                type="text" 
+                placeholder="Just ask..." 
+                className="w-full p-4 border-none outline-none text-xl"
+                value={query}
+                onChange={handleChange}
+                onKeyPress={handleLargeSearchKeyPress}
+                autoFocus
+              />
+              <button 
+                className="bg-[#105C93] text-white rounded-full h-12 w-12 flex items-center justify-center absolute right-8 hover:bg-[#3A86C8] transition duration-300" 
+                style={{ top: 'calc(50% - 1.5rem)' }}
+                onClick={handleLargeSearch}
+              >
+                <FontAwesomeIcon icon={faArrowUp} />
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className="fixed bottom-4 left-[calc(50%-110px)] transform -translate-x-1/2 w-full max-w-2xl">
         <div className="bg-white p-2 rounded-lg shadow-md flex items-center border-2 border-gray-300 transition-all duration-300" style={{ height: '4rem' }}>
