@@ -118,7 +118,7 @@ export default function Search() {
       <div className="w-1/6 p-4 bg-[#ECF5FD] flex flex-col justify-between fixed h-full" style={{ fontFamily: 'Open Sans, sans-serif' }}>
         <div>
           <Link href="/">
-            <a className="text-3xl font-extrabold mb-4 text-center block transition-all duration-300 hover:text-[#6CB6EF]" style={{ fontFamily: 'Comic Sans MS, cursive', fontWeight: '800', letterSpacing: '-1px', color: 'black' }}>Think-Graph</a>
+            <a className="text-3xl font-extrabold mb-4 text-center block transition-all duration-300 hover:text-[#6CB6EF]" style={{ fontFamily: 'Poppins, sans-serif', fontWeight: '800', letterSpacing: '-1px', color: 'black' }}>Think-Graph</a>
           </Link>
           <div className="mb-4 relative">
             <input 
@@ -149,7 +149,7 @@ export default function Search() {
           </div>
         </div>
       </div>
-      <div className="w-5/6 p-4 ml-[16.666667%] overflow-y-auto pb-20">
+      <div className="w-5/6 p-4 ml-[16.666667%] overflow-y-auto">
         <div className="flex">
           <div className="w-2/3 pr-4">
             <div className="result-item mb-4">
@@ -170,41 +170,39 @@ export default function Search() {
               ) : graphError ? (
                 <p className="text-red-500">{graphError}</p>
               ) : knowledgeGraphData ? (
-                <div className="h-[600px] overflow-y-auto border border-gray-300 rounded-lg">
-                  <div style={{ height: '100%', width: '100%' }}>
-                    <KnowledgeGraph 
-                      data={knowledgeGraphData} 
-                      options={{
-                        layout: {
-                          improvedLayout: true,
-                          hierarchical: false
-                        },
-                        edges: {
-                          smooth: {
-                            type: 'cubicBezier',
-                            forceDirection: 'horizontal',
-                            roundness: 0.4
-                          }
-                        },
-                        physics: {
-                          stabilization: true,
-                          barnesHut: {
-                            gravitationalConstant: -80000,
-                            springConstant: 0.001,
-                            springLength: 200
-                          }
-                        },
-                        nodes: {
-                          shape: 'box',
-                          margin: 10,
-                          widthConstraint: {
-                            minimum: 60,
-                            maximum: 120
-                          }
+                <div style={{ height: 400, width: '100%', border: '1px solid #ddd', borderRadius: '8px' }}>
+                  <KnowledgeGraph 
+                    data={knowledgeGraphData} 
+                    options={{
+                      layout: {
+                        improvedLayout: true,
+                        hierarchical: false
+                      },
+                      edges: {
+                        smooth: {
+                          type: 'cubicBezier',
+                          forceDirection: 'horizontal',
+                          roundness: 0.4
                         }
-                      }}
-                    />
-                  </div>
+                      },
+                      physics: {
+                        stabilization: true,
+                        barnesHut: {
+                          gravitationalConstant: -80000,
+                          springConstant: 0.001,
+                          springLength: 200
+                        }
+                      },
+                      nodes: {
+                        shape: 'box',
+                        margin: 10,
+                        widthConstraint: {
+                          minimum: 60,
+                          maximum: 120
+                        }
+                      }
+                    }}
+                  />
                 </div>
               ) : (
                 <p>没有可用的知识图谱数据</p>
@@ -251,7 +249,7 @@ export default function Search() {
         </div>
       )}
 
-      <div className="fixed bottom-4 left-1/2 transform -translate-x-1/2 w-full max-w-2xl z-10">
+      <div className="fixed bottom-4 left-[calc(50%-110px)] transform -translate-x-1/2 w-full max-w-2xl">
         <div className="bg-white p-2 rounded-lg shadow-md flex items-center border-2 border-gray-300 transition-all duration-300" style={{ height: '4rem' }}>
           <input 
             type="text" 
