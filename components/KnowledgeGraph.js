@@ -6,6 +6,15 @@ const ReactFlow = dynamic(() => import('react-flow-renderer').then(mod => mod.de
   loading: () => <p>加载知识图谱中...</p>
 });
 
+// 导入 Controls 和 Background 组件
+const Controls = dynamic(() => import('react-flow-renderer').then(mod => mod.Controls), {
+  ssr: false
+});
+
+const Background = dynamic(() => import('react-flow-renderer').then(mod => mod.Background), {
+  ssr: false
+});
+
 const KnowledgeGraph = ({ data }) => {
   const [mounted, setMounted] = useState(false);
 
