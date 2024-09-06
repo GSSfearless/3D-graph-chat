@@ -159,13 +159,19 @@ export default function Search() {
             <a className="block bg-[#ECF5FD] text-center p-2 rounded hover:bg-[#B6DBF7] transition duration-300 text-2xl font-medium text-gray-600 ml-0">🏠Homepage</a>
           </Link>
         </div>
-        <div className="flex flex-col space-y-2">
-          <Link href="/about">
-            <a className="block bg-[#ECF5FD] text-center p-2 rounded hover:bg-[#B6DBF7] transition duration-300 text-2xl font-medium text-gray-600 ml-0">💼</a>
-          </Link>
-          <a href="https://discord.gg/G66pESH3gm" target="_blank" rel="noopener noreferrer" className="block bg-[#ECF5FD] text-center p-2 rounded hover:bg-[#B6DBF7] transition duration-300 text-2xl font-medium text-gray-600 ml-0">
-          💬
-          </a>
+        <div className="flex justify-between items-center">
+          <div className="flex items-center">
+            <Link href="/about">
+              <a className="block bg-[#ECF5FD] text-center p-2 rounded hover:bg-[#B6DBF7] transition duration-300 text-2xl font-medium text-gray-600">💼</a>
+            </Link>
+            <span className="text-xs ml-2">We are hiring</span>
+          </div>
+          <div className="flex items-center">
+            <span className="text-xs mr-2">Join our discord</span>
+            <a href="https://discord.gg/G66pESH3gm" target="_blank" rel="noopener noreferrer" className="block bg-[#ECF5FD] text-center p-2 rounded hover:bg-[#B6DBF7] transition duration-300 text-2xl font-medium text-gray-600">
+            💬
+            </a>
+          </div>
         </div>
       </div>
       <div className="w-5/6 p-4 ml-[16.666667%] overflow-y-auto">
@@ -223,7 +229,7 @@ export default function Search() {
             */}
           </div>
           <div className="w-1/3 p-4 bg-white">
-            <h3 className="result-title">📚 References</h3>
+            <h3 className="result-title">📚 Source</h3>
             <div className="space-y-2">
               {loading ? (
                 <>
