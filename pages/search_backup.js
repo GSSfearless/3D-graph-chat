@@ -1,12 +1,16 @@
-// pages/search.js
-
 import { faArrowUp, faDownload } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { useCallback, useEffect, useState } from 'react';
-import 'tailwindcss/tailwind.css'; // 引入 Tailwind CSS
-import '../styles/globals.css'; // 修改导入路径
+import 'tailwindcss/tailwind.css';
+import '../styles/globals.css';
+
+const KnowledgeGraph = dynamic(() => import('../components/KnowledgeGraph'), {
+  ssr: false,
+  loading: () => <p>Loading knowledge graph...</p>
+});
 
 export default function Search() {
   const router = useRouter();
@@ -19,16 +23,21 @@ export default function Search() {
   const [loading, setLoading] = useState(false);
   const [initialLoad, setInitialLoad] = useState(true);
   const [memeLoading, setMemeLoading] = useState(false);
+  const [knowledgeGraphData, setKnowledgeGraphData] = useState(null);
+  const [graphError, setGraphError] = useState(null);
+  const [memeError, setMemeError] = useState(null);
 
-  const defaultQuery = "What is the answer to the universe and everything?";
+  const defaultQuery = "What is the answer to life, the universe, and everything?";
 
   const handleSearch = useCallback(async (searchQuery) => {
     setLoading(true);
     setMemeLoading(true);
+    setGraphError(null);
+    setMemeError(null);
     try {
       const actualQuery = searchQuery || defaultQuery;
       
-      // Fetch search results from /api/rag-search
+      // Get search results
       const searchResponse = await fetch('/api/rag-search', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -37,7 +46,7 @@ export default function Search() {
       const searchData = await searchResponse.json();
       setSearchResults(searchData);
 
-      // Fetch AI answer from /api/chat
+      // Get AI answer
       const chatResponse = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -46,31 +55,56 @@ export default function Search() {
       const chatData = await chatResponse.json();
       setAiAnswer(chatData.answer);
 
-      // 自动生成梗图
-      const memeResponse = await fetch('/api/meme-generator', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ topic: actualQuery }),
-      });
-      if (!memeResponse.ok) {
-        throw new Error('Memedog is out...');
-      }
-      const memeBlob = await memeResponse.blob();
-      setMemeImage(URL.createObjectURL(memeBlob));
+      // Get knowledge graph data
+      try {
+        const graphResponse = await fetch('/api/knowledgeGraph', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ query: actualQuery }),
+        });
 
-      // 清除搜索输入
+        if (!graphResponse.ok) {
+          throw new Error(`Knowledge graph API error: ${graphResponse.status}`);
+        }
+
+        const graphData = await graphResponse.json();
+        console.log('Knowledge graph data:', graphData);
+        setKnowledgeGraphData(graphData);
+      } catch (error) {
+        console.error('Error fetching knowledge graph:', error);
+        setGraphError('Unable to load knowledge graph');
+        setKnowledgeGraphData(null);
+      }
+
+      // Generate meme
+      try {
+        const memeResponse = await fetch('/api/meme-generator', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ topic: actualQuery }),
+        });
+        if (!memeResponse.ok) {
+          throw new Error('Meme generation failed');
+        }
+        const memeBlob = await memeResponse.blob();
+        setMemeImage(URL.createObjectURL(memeBlob));
+      } catch (error) {
+        console.error('Error generating meme:', error);
+        setMemeError('Unable to generate meme');
+        setMemeImage('');
+      }
+
       setQuery('');
     } catch (error) {
-      console.error('Error:', error);
-      setMemeImage('');
+      console.error('Error during search process:', error);
     }
     setLoading(false);
     setMemeLoading(false);
   }, []);
 
   useEffect(() => {
-    if (initialLoad) {
-      handleSearch(q || '');
+    if (initialLoad && q) {
+      handleSearch(q);
       setInitialLoad(false);
     }
   }, [initialLoad, q, handleSearch]);
@@ -90,13 +124,14 @@ export default function Search() {
   }
 
   const handleDownload = () => {
-    // 实现下载功能
-    const link = document.createElement('a');
-    link.href = memeImage;
-    link.download = 'meme.png';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    if (memeImage) {
+      const link = document.createElement('a');
+      link.href = memeImage;
+      link.download = 'meme.png';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
   }
 
   return (
@@ -104,12 +139,12 @@ export default function Search() {
       <div className="w-1/6 p-4 bg-gray-300 flex flex-col justify-between fixed h-full" style={{ fontFamily: 'Open Sans, sans-serif' }}>
         <div>
           <Link href="/">
-            <a className="text-3xl font-extrabold mb-4 text-center block transition-all duration-300 hover:opacity-80" style={{ fontFamily: 'Poppins, sans-serif', fontWeight: '800', letterSpacing: '-1px', color: 'black' }}>memedog</a>
+            <a className="text-3xl font-extrabold mb-4 text-center block transition-all duration-300 hover:opacity-80" style={{ fontFamily: 'Poppins, sans-serif', fontWeight: '800', letterSpacing: '-1px', color: 'black' }}>Think-Graph</a>
           </Link>
           <div className="mb-4 relative">
             <input 
               type="text" 
-              placeholder="Just ask..." 
+              placeholder="Ask anything..." 
               className="w-full p-4 border-2 border-gray-300 rounded-full outline-none text-xl hover:border-gray-400 focus:border-gray-500 transition-all duration-300"
               value={query}
               onChange={handleChange}
@@ -122,10 +157,10 @@ export default function Search() {
         </div>
         <div className="flex justify-between items-center mt-4">
           <Link href="/about">
-            <a className="text-gray-600 hover:text-gray-800">We are hiring</a>
+            <a className="text-gray-600 hover:text-gray-800">We&apos;re hiring</a>
           </Link>
           <a href="https://discord.gg/G66pESH3gm" target="_blank" rel="noopener noreferrer" className="text-gray-600 hover:text-gray-800">
-          ❤️Join our discord
+          ❤️Join our Discord
           </a>
         </div>
       </div>
@@ -142,34 +177,48 @@ export default function Search() {
                 )}
               </div>
             </div>
+            <div className="mb-4">
+              <h3 className="result-title">🧠 Knowledge Graph</h3>
+              {loading ? (
+                <div className="h-64 bg-gray-200 animate-pulse rounded"></div>
+              ) : graphError ? (
+                <p className="text-red-500">{graphError}</p>
+              ) : knowledgeGraphData ? (
+                <div style={{ height: 400, width: '100%', border: '1px solid #ddd', borderRadius: '8px' }}>
+                  <KnowledgeGraph data={knowledgeGraphData} />
+                </div>
+              ) : (
+                <p>No knowledge graph data available</p>
+              )}
+            </div>
             <div className="result-item flex flex-col items-center">
               <div className="flex items-center mb-4">
                 <span className="text-2xl mr-2">🍳</span>
-                <h3 className="text-xl font-bold">Cooking meme</h3>
+                <h3 className="text-xl font-bold">Cooking up a meme</h3>
               </div>
               <div className="flex flex-col items-center w-full p-4">
                 {memeLoading ? (
                   <div className="w-full h-64 bg-gray-200 animate-pulse rounded"></div>
+                ) : memeError ? (
+                  <p className="text-red-500">{memeError}</p>
+                ) : memeImage ? (
+                  <>
+                    <img src={memeImage} alt="Generating meme..." className="max-w-full max-h-64 object-contain mb-4" />
+                    <div className="flex space-x-4">
+                      <button onClick={handleDownload} className="bg-black hover:bg-gray-800 text-white font-bold py-2 px-4 rounded">
+                        <FontAwesomeIcon icon={faDownload} className="mr-2" />
+                        Download
+                      </button>
+                    </div>
+                  </>
                 ) : (
-                  memeImage ? (
-                    <>
-                      <img src={memeImage} alt="Memedog is out..." className="max-w-full max-h-64 object-contain mb-4" />
-                      <div className="flex space-x-4">
-                        <button onClick={handleDownload} className="bg-black hover:bg-gray-800 text-white font-bold py-2 px-4 rounded">
-                          <FontAwesomeIcon icon={faDownload} className="mr-2" />
-                          Download
-                        </button>
-                      </div>
-                    </>
-                  ) : (
-                    <div className="w-full h-64 bg-gray-100 flex items-center justify-center text-gray-500">Cooking...</div>
-                  )
+                  <div className="w-full h-64 bg-gray-100 flex items-center justify-center text-gray-500">Cooking...</div>
                 )}
               </div>
             </div>
           </div>
           <div className="w-1/3 p-4 bg-white">
-            <h3 className="result-title">📚 Reference</h3>
+            <h3 className="result-title">📚 References</h3>
             <div className="space-y-2">
               {loading ? (
                 <>

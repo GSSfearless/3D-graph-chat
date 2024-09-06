@@ -1,10 +1,10 @@
 import { faArrowUp, faDownload } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { useCallback, useEffect, useState } from 'react';
 import 'tailwindcss/tailwind.css';
-import dynamic from 'next/dynamic';
 import '../styles/globals.css';
 
 const KnowledgeGraph = dynamic(() => import('../components/KnowledgeGraph'), {
@@ -136,10 +136,10 @@ export default function Search() {
 
   return (
     <div className="flex flex-row min-h-screen">
-      <div className="w-1/6 p-4 bg-gray-300 flex flex-col justify-between fixed h-full" style={{ fontFamily: 'Open Sans, sans-serif' }}>
+      <div className="w-1/6 p-4 bg-[#D9EAFC] flex flex-col justify-between fixed h-full" style={{ fontFamily: 'Open Sans, sans-serif' }}>
         <div>
           <Link href="/">
-            <a className="text-3xl font-extrabold mb-4 text-center block transition-all duration-300 hover:opacity-80" style={{ fontFamily: 'Poppins, sans-serif', fontWeight: '800', letterSpacing: '-1px', color: 'black' }}>memedog</a>
+            <a className="text-3xl font-extrabold mb-4 text-center block transition-all duration-300 hover:opacity-80" style={{ fontFamily: 'Poppins, sans-serif', fontWeight: '800', letterSpacing: '-1px', color: 'black' }}>Think-Graph</a>
           </Link>
           <div className="mb-4 relative">
             <input 
@@ -152,15 +152,15 @@ export default function Search() {
             />
           </div>
           <Link href="/">
-            <a className="block bg-gray-300 text-center p-2 rounded hover:bg-gray-400 transition duration-300 text-2xl font-medium text-gray-600 ml-0">🏠 Home</a>
+            <a className="block bg-gray-300 text-center p-2 rounded hover:bg-gray-400 transition duration-300 text-2xl font-medium text-gray-600 ml-0">🏠</a>
           </Link>
         </div>
         <div className="flex justify-between items-center mt-4">
           <Link href="/about">
-            <a className="text-gray-600 hover:text-gray-800">We&apos;re hiring</a>
+            <a className="text-gray-600 hover:text-gray-800">🧑‍💼</a>
           </Link>
           <a href="https://discord.gg/G66pESH3gm" target="_blank" rel="noopener noreferrer" className="text-gray-600 hover:text-gray-800">
-          ❤️Join our Discord
+          💬🔗
           </a>
         </div>
       </div>
@@ -168,7 +168,7 @@ export default function Search() {
         <div className="flex">
           <div className="w-2/3 pr-4">
             <div className="result-item mb-4">
-              <h3 className="result-title">😲 Answer</h3>
+              <h3 className="result-title">📝</h3>
               <div className="min-h-40 p-4">
                 {loading ? (
                   <div className="h-full bg-gray-200 animate-pulse rounded"></div>
@@ -178,7 +178,7 @@ export default function Search() {
               </div>
             </div>
             <div className="mb-4">
-              <h3 className="result-title">🧠 Knowledge Graph</h3>
+              <h3 className="result-title">🧠</h3>
               {loading ? (
                 <div className="h-64 bg-gray-200 animate-pulse rounded"></div>
               ) : graphError ? (
@@ -194,7 +194,6 @@ export default function Search() {
             <div className="result-item flex flex-col items-center">
               <div className="flex items-center mb-4">
                 <span className="text-2xl mr-2">🍳</span>
-                <h3 className="text-xl font-bold">Cooking up a meme</h3>
               </div>
               <div className="flex flex-col items-center w-full p-4">
                 {memeLoading ? (

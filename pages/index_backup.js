@@ -24,13 +24,13 @@ export default function Home() {
     return (
         <div className="flex flex-col items-center justify-center min-h-screen p-4 bg-[#f8f9fa]">
             <h1 className="text-4xl font-semibold mb-8 text-center">
-                <span role="img" aria-label="funny dog">😏</span> Share Your Joy
+            Visulize your knowledge
             </h1>
             <div className="w-full max-w-2xl relative">
-                <div className="bg-white p-4 rounded-lg shadow-md mb-4 flex items-center border border-gray-300" style={{ height: '8rem' }}>
+                <div className="bg-white p-4 rounded-lg shadow-md mb-4 flex items-center border border-gray-300 transition-all duration-300" style={{ height: '8rem' }}>
                     <input 
                         type="text" 
-                        placeholder="Just ask..." 
+                        placeholder="Just ask memedog..." 
                         className="w-full p-4 border-none outline-none text-xl"
                         value={query}
                         onChange={(e) => setQuery(e.target.value)}
