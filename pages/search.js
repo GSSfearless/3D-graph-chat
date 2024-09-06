@@ -114,7 +114,7 @@ export default function Search() {
   };
 
   return (
-    <div className="flex flex-row min-h-screen">
+    <div className="flex flex-row min-h-screen relative pb-20">
       <div className="w-1/6 p-4 bg-[#ECF5FD] flex flex-col justify-between fixed h-full" style={{ fontFamily: 'Open Sans, sans-serif' }}>
         <div>
           <Link href="/">
@@ -149,7 +149,7 @@ export default function Search() {
           </div>
         </div>
       </div>
-      <div className="w-5/6 p-4 ml-[16.666667%] overflow-y-auto">
+      <div className="w-5/6 p-4 ml-[16.666667%] overflow-y-auto mb-16">
         <div className="flex">
           <div className="w-2/3 pr-4">
             <div className="result-item mb-4">
@@ -249,7 +249,7 @@ export default function Search() {
         </div>
       )}
 
-      <div className="fixed bottom-4 left-[calc(50%-110px)] transform -translate-x-1/2 w-full max-w-2xl">
+      <div className="fixed bottom-4 left-1/2 transform -translate-x-1/2 w-full max-w-2xl z-50">
         <div className="bg-white p-2 rounded-lg shadow-md flex items-center border-2 border-gray-300 transition-all duration-300" style={{ height: '4rem' }}>
           <input 
             type="text" 
@@ -260,7 +260,7 @@ export default function Search() {
             onKeyPress={handleKeyPress}
           />
           <button 
-            className="bg-[#105C93] text-white rounded-full h-10 w-10 flex items-center justify-center absolute right-2 hover:bg-[#3A86C8] transition duration-300" 
+            className="bg-[#105C93] text-white rounded-full h-10 w-10 flex items-center justify-center absolute right-4 hover:bg-[#3A86C8] transition duration-300" 
             onClick={handleButtonClick}
           >
             <FontAwesomeIcon icon={faArrowUp} />
