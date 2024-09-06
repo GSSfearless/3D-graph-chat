@@ -19,21 +19,16 @@ export default function Search() {
   const [query, setQuery] = useState('');
   const [searchResults, setSearchResults] = useState([]);
   const [aiAnswer, setAiAnswer] = useState('');
-  // const [memeImage, setMemeImage] = useState('');
   const [loading, setLoading] = useState(false);
   const [initialLoad, setInitialLoad] = useState(true);
-  // const [memeLoading, setMemeLoading] = useState(false);
   const [knowledgeGraphData, setKnowledgeGraphData] = useState(null);
   const [graphError, setGraphError] = useState(null);
-  // const [memeError, setMemeError] = useState(null);
 
   const defaultQuery = "生命、宇宙以及一切的答案是什么？";
 
   const handleSearch = useCallback(async (searchQuery) => {
     setLoading(true);
-    // setMemeLoading(true);
     setGraphError(null);
-    // setMemeError(null);
     try {
       const actualQuery = searchQuery || defaultQuery;
       
@@ -76,32 +71,11 @@ export default function Search() {
         setKnowledgeGraphData(null);
       }
 
-      // 生成表情包（已注释）
-      /*
-      try {
-        const memeResponse = await fetch('/api/meme-generator', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ topic: actualQuery }),
-        });
-        if (!memeResponse.ok) {
-          throw new Error('表情包生成失败');
-        }
-        const memeBlob = await memeResponse.blob();
-        setMemeImage(URL.createObjectURL(memeBlob));
-      } catch (error) {
-        console.error('生成表情包时出错:', error);
-        setMemeError('无法生成表情包');
-        setMemeImage('');
-      }
-      */
-
       setQuery('');
     } catch (error) {
       console.error('搜索过程中出错:', error);
     }
     setLoading(false);
-    // setMemeLoading(false);
   }, []);
 
   useEffect(() => {
@@ -125,19 +99,6 @@ export default function Search() {
     handleSearch(query);
   }
 
-  /*
-  const handleDownload = () => {
-    if (memeImage) {
-      const link = document.createElement('a');
-      link.href = memeImage;
-      link.download = 'meme.png';
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-    }
-  }
-  */
-
   return (
     <div className="flex flex-row min-h-screen">
       <div className="w-1/6 p-4 bg-[#ECF5FD] flex flex-col justify-between fixed h-full" style={{ fontFamily: 'Open Sans, sans-serif' }}>
@@ -156,7 +117,7 @@ export default function Search() {
             />
           </div>
           <Link href="/">
-            <a className="block bg-[#ECF5FD] text-center p-2 rounded hover:bg-[#B6DBF7] transition duration-300 text-2xl font-medium text-gray-600 ml-0">🏠Homepage</a>
+            <a className="block bg-[#ECF5FD] text-left p-2 rounded hover:bg-[#B6DBF7] transition duration-300 text-xl font-medium text-gray-600 ml-0">🏠Homepage</a>
           </Link>
         </div>
         <div className="flex justify-between items-center">
@@ -195,38 +156,43 @@ export default function Search() {
                 <p className="text-red-500">{graphError}</p>
               ) : knowledgeGraphData ? (
                 <div style={{ height: 400, width: '100%', border: '1px solid #ddd', borderRadius: '8px' }}>
-                  <KnowledgeGraph data={knowledgeGraphData} />
+                  <KnowledgeGraph 
+                    data={knowledgeGraphData} 
+                    options={{
+                      layout: {
+                        improvedLayout: true,
+                        hierarchical: false
+                      },
+                      edges: {
+                        smooth: {
+                          type: 'cubicBezier',
+                          forceDirection: 'horizontal',
+                          roundness: 0.4
+                        }
+                      },
+                      physics: {
+                        stabilization: true,
+                        barnesHut: {
+                          gravitationalConstant: -80000,
+                          springConstant: 0.001,
+                          springLength: 200
+                        }
+                      },
+                      nodes: {
+                        shape: 'box',
+                        margin: 10,
+                        widthConstraint: {
+                          minimum: 60,
+                          maximum: 120
+                        }
+                      }
+                    }}
+                  />
                 </div>
               ) : (
                 <p>没有可用的知识图谱数据</p>
               )}
             </div>
-            {/* 表情包生成功能已注释
-            <div className="result-item flex flex-col items-center">
-              <div className="flex items-center mb-4">
-                <span className="text-2xl mr-2">🍳</span>
-              </div>
-              <div className="flex flex-col items-center w-full p-4">
-                {memeLoading ? (
-                  <div className="w-full h-64 bg-gray-200 animate-pulse rounded"></div>
-                ) : memeError ? (
-                  <p className="text-red-500">{memeError}</p>
-                ) : memeImage ? (
-                  <>
-                    <img src={memeImage} alt="正在生成表情包..." className="max-w-full max-h-64 object-contain mb-4" />
-                    <div className="flex space-x-4">
-                      <button onClick={handleDownload} className="bg-black hover:bg-gray-800 text-white font-bold py-2 px-4 rounded">
-                        <FontAwesomeIcon icon={faDownload} className="mr-2" />
-                        下载
-                      </button>
-                    </div>
-                  </>
-                ) : (
-                  <div className="w-full h-64 bg-gray-100 flex items-center justify-center text-gray-500">正在烹饪...</div>
-                )}
-              </div>
-            </div>
-            */}
           </div>
           <div className="w-1/3 p-4 bg-white">
             <h3 className="result-title">📚 Source</h3>
