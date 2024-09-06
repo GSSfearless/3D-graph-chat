@@ -8,7 +8,7 @@ const openai = new OpenAI({
 function createPyramidLayout(nodes) {
   const levels = Math.ceil(Math.sqrt(nodes.length));
   const width = 800;
-  const height = 1000; // 从600改为1000
+  const height = 600; 
   const nodeWidth = 150;
   const nodeHeight = 50;
 
