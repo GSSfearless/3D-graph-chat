@@ -117,7 +117,7 @@ export default function Search() {
             />
           </div>
           <Link href="/">
-            <a className="block bg-[#ECF5FD] text-left p-2 rounded hover:bg-[#B6DBF7] transition duration-300 text-xl font-medium text-gray-600 ml-0">🏠Homepage</a>
+            <a className="block bg-[#ECF5FD] text-left p-2 rounded hover:bg-[#B6DBF7] transition duration-300 text-xl font-medium text-gray-600 ml-0">🏠 Homepage</a>
           </Link>
         </div>
         <div className="flex justify-between items-center">
