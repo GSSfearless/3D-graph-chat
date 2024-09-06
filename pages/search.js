@@ -143,7 +143,7 @@ export default function Search() {
       <div className="w-1/6 p-4 bg-[#ECF5FD] flex flex-col justify-between fixed h-full" style={{ fontFamily: 'Open Sans, sans-serif' }}>
         <div>
           <Link href="/">
-            <a className="text-3xl font-extrabold mb-4 text-center block transition-all duration-300 hover:opacity-80" style={{ fontFamily: 'Poppins, sans-serif', fontWeight: '800', letterSpacing: '-1px', color: 'black' }}>Think-Graph</a>
+            <a className="text-3xl font-extrabold mb-4 text-center block transition-all duration-300 hover:text-[#6CB6EF]" style={{ fontFamily: 'Poppins, sans-serif', fontWeight: '800', letterSpacing: '-1px', color: 'black' }}>Think-Graph</a>
           </Link>
           <div className="mb-4 relative">
             <input 
@@ -161,10 +161,10 @@ export default function Search() {
         </div>
         <div className="flex flex-col space-y-2">
           <Link href="/about">
-            <a className="block bg-[#ECF5FD] text-center p-2 rounded hover:bg-[#DAECFB] transition duration-300 text-2xl font-medium text-gray-600 ml-0">💼Hiring</a>
+            <a className="block bg-[#ECF5FD] text-center p-2 rounded hover:bg-[#DAECFB] transition duration-300 text-2xl font-medium text-gray-600 ml-0">💼</a>
           </Link>
           <a href="https://discord.gg/G66pESH3gm" target="_blank" rel="noopener noreferrer" className="block bg-[#ECF5FD] text-center p-2 rounded hover:bg-[#DAECFB] transition duration-300 text-2xl font-medium text-gray-600 ml-0">
-          💬Discord
+          💬
           </a>
         </div>
       </div>
@@ -255,7 +255,7 @@ export default function Search() {
             onKeyPress={handleKeyPress}
           />
           <button 
-            className="bg-[#47A7EB] text-white rounded-full h-10 w-10 flex items-center justify-center absolute right-2 hover:bg-[#3A86C8] transition duration-300" 
+            className="bg-[#105C93] text-white rounded-full h-10 w-10 flex items-center justify-center absolute right-2 hover:bg-[#3A86C8] transition duration-300" 
             onClick={handleButtonClick}
           >
             <FontAwesomeIcon icon={faArrowUp} />
