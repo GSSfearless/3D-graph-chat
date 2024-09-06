@@ -205,12 +205,12 @@ export default function Search() {
                   <div className="h-12 bg-gray-200 animate-pulse rounded"></div>
                 </>
               ) : (
-                searchResults.map((result, index) => (
-                  <div key={index} className="result-item bg-white p-1 rounded">
-                    <h4 className="result-title text-sm font-medium text-gray-600">{result.title}</h4>
-                    <p className="result-snippet text-xs text-gray-500">{result.snippet}</p>
-                  </div>
-                ))
+                <>
+                  <p className="text-xs text-gray-500">搜集了 {searchResults.length} 个网页</p>
+                  {searchResults.map((result, index) => (
+                    <p key={index} className="text-xs text-gray-500">{index + 1}. {result.title}</p>
+                  ))}
+                </>
               )}
             </div>
           </div>
