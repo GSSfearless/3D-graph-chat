@@ -123,14 +123,14 @@ export default function Search() {
         <div className="flex justify-between items-center">
           <div className="flex items-center">
             <Link href="/about">
-              <a className="block bg-[#ECF5FD] text-center p-2 rounded hover:bg-[#B6DBF7] transition duration-300 text-2xl font-medium text-gray-600">💼</a>
+              <a className="block bg-[#ECF5FD] text-center p-2 rounded hover:bg-[#B6DBF7] transition duration-300 text-2xl font-medium text-gray-600">🪐</a>
             </Link>
             <span className="text-xs ml-2">We are hiring</span>
           </div>
           <div className="text-gray-400 mx-2">|</div>
           <div className="flex items-center">
             <a href="https://discord.gg/G66pESH3gm" target="_blank" rel="noopener noreferrer" className="block bg-[#ECF5FD] text-center p-2 rounded hover:bg-[#B6DBF7] transition duration-300 text-2xl font-medium text-gray-600">
-            💬
+            🍻
             </a>
             <span className="text-xs ml-2">Join our discord</span>
           </div>
@@ -141,6 +141,7 @@ export default function Search() {
           <div className="w-2/3 pr-4">
             <div className="result-item mb-4">
               <h3 className="result-title text-4xl">📝Answer</h3>
+              <p className="text-xs text-gray-500 text-center mb-2">搜集了 {searchResults.length} 个网页</p>
               <div className="min-h-40 p-4">
                 {loading ? (
                   <div className="h-full bg-gray-200 animate-pulse rounded"></div>
@@ -148,7 +149,6 @@ export default function Search() {
                   <p className="result-snippet">{aiAnswer}</p>
                 )}
               </div>
-              <p className="text-xs text-gray-500 text-center">搜集了 {searchResults.length} 个网页</p>
             </div>
             <div className="mb-4">
               <h3 className="result-title text-4xl">🧠Knowledge Graph</h3>
@@ -157,7 +157,7 @@ export default function Search() {
               ) : graphError ? (
                 <p className="text-red-500">{graphError}</p>
               ) : knowledgeGraphData ? (
-                <div style={{ height: 700, width: '100%', border: '1px solid #ddd', borderRadius: '8px' }}>
+                <div style={{ height: 400, width: '100%', border: '1px solid #ddd', borderRadius: '8px' }}>
                   <KnowledgeGraph 
                     data={knowledgeGraphData} 
                     options={{
