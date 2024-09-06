@@ -127,6 +127,7 @@ export default function Search() {
             </Link>
             <span className="text-xs ml-2">We are hiring</span>
           </div>
+          <div className="text-gray-400 mx-2">|</div>
           <div className="flex items-center">
             <span className="text-xs mr-2">Join our discord</span>
             <a href="https://discord.gg/G66pESH3gm" target="_blank" rel="noopener noreferrer" className="block bg-[#ECF5FD] text-center p-2 rounded hover:bg-[#B6DBF7] transition duration-300 text-2xl font-medium text-gray-600">
@@ -195,19 +196,19 @@ export default function Search() {
             </div>
           </div>
           <div className="w-1/3 p-4 bg-white">
-            <h3 className="result-title">📚 Source</h3>
-            <div className="space-y-2">
+            <h3 className="result-title text-lg mb-2">📚 Reference</h3>
+            <div className="space-y-1">
               {loading ? (
                 <>
-                  <div className="h-16 bg-gray-200 animate-pulse rounded"></div>
-                  <div className="h-16 bg-gray-200 animate-pulse rounded"></div>
-                  <div className="h-16 bg-gray-200 animate-pulse rounded"></div>
+                  <div className="h-12 bg-gray-200 animate-pulse rounded"></div>
+                  <div className="h-12 bg-gray-200 animate-pulse rounded"></div>
+                  <div className="h-12 bg-gray-200 animate-pulse rounded"></div>
                 </>
               ) : (
                 searchResults.map((result, index) => (
-                  <div key={index} className="result-item bg-white p-2 rounded">
-                    <h4 className="result-title">{result.title}</h4>
-                    <p className="result-snippet">{result.snippet}</p>
+                  <div key={index} className="result-item bg-white p-1 rounded">
+                    <h4 className="result-title text-sm font-medium text-gray-600">{result.title}</h4>
+                    <p className="result-snippet text-xs text-gray-500">{result.snippet}</p>
                   </div>
                 ))
               )}
