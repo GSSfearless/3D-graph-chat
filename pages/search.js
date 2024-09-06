@@ -148,6 +148,7 @@ export default function Search() {
                   <p className="result-snippet">{aiAnswer}</p>
                 )}
               </div>
+              <p className="text-xs text-gray-500 text-center">搜集了 {searchResults.length} 个网页</p>
             </div>
             <div className="mb-4">
               <h3 className="result-title text-4xl">🧠Knowledge Graph</h3>
@@ -156,7 +157,7 @@ export default function Search() {
               ) : graphError ? (
                 <p className="text-red-500">{graphError}</p>
               ) : knowledgeGraphData ? (
-                <div style={{ height: 400, width: '100%', border: '1px solid #ddd', borderRadius: '8px' }}>
+                <div style={{ height: 700, width: '100%', border: '1px solid #ddd', borderRadius: '8px' }}>
                   <KnowledgeGraph 
                     data={knowledgeGraphData} 
                     options={{
@@ -198,11 +199,7 @@ export default function Search() {
           <div className="w-1/3 p-4 bg-white">
             <h3 className="result-title text-lg mb-2">📚 Reference</h3>
             <div className="space-y-1">
-              {loading ? (
-                <div className="h-12 bg-gray-200 animate-pulse rounded"></div>
-              ) : (
-                <p className="text-xs text-gray-500">搜集了 {searchResults.length} 个网页</p>
-              )}
+              {/* 暂时留为空白 */}
             </div>
           </div>
         </div>
