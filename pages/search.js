@@ -156,14 +156,14 @@ export default function Search() {
             />
           </div>
           <Link href="/">
-            <a className="block bg-[#ECF5FD] text-center p-2 rounded hover:bg-[#DAECFB] transition duration-300 text-2xl font-medium text-gray-600 ml-0">🏠Homepage</a>
+            <a className="block bg-[#ECF5FD] text-center p-2 rounded hover:bg-[#B6DBF7] transition duration-300 text-2xl font-medium text-gray-600 ml-0">🏠Homepage</a>
           </Link>
         </div>
         <div className="flex flex-col space-y-2">
           <Link href="/about">
-            <a className="block bg-[#ECF5FD] text-center p-2 rounded hover:bg-[#DAECFB] transition duration-300 text-2xl font-medium text-gray-600 ml-0">💼</a>
+            <a className="block bg-[#ECF5FD] text-center p-2 rounded hover:bg-[#B6DBF7] transition duration-300 text-2xl font-medium text-gray-600 ml-0">💼</a>
           </Link>
-          <a href="https://discord.gg/G66pESH3gm" target="_blank" rel="noopener noreferrer" className="block bg-[#ECF5FD] text-center p-2 rounded hover:bg-[#DAECFB] transition duration-300 text-2xl font-medium text-gray-600 ml-0">
+          <a href="https://discord.gg/G66pESH3gm" target="_blank" rel="noopener noreferrer" className="block bg-[#ECF5FD] text-center p-2 rounded hover:bg-[#B6DBF7] transition duration-300 text-2xl font-medium text-gray-600 ml-0">
           💬
           </a>
         </div>
