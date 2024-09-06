@@ -24,16 +24,17 @@ const KnowledgeGraph = ({ data }) => {
   };
 
   return (
-    <div style={{ height: 400, width: '100%' }}>
+    <div style={{ height: '100%', width: '100%' }}>
       <ReactFlow 
         nodes={data.nodes}
         edges={data.edges}
         onLoad={onLoad}
         nodesDraggable={false}
         nodesConnectable={false}
-        zoomOnScroll={false}
-        panOnScroll={false}
+        zoomOnScroll={true}
+        panOnScroll={true}
         zoomOnDoubleClick={false}
+        fitView
       />
     </div>
   );
