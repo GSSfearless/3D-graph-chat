@@ -70,10 +70,12 @@ export default async function handler(req, res) {
     res.status(200).json(responseData);
   } catch (error) {
     console.error('展开节点时出错:', error);
+    // 添加更详细的错误信息
     res.status(500).json({ 
       message: '展开节点时出错', 
       error: error.message,
-      stack: error.stack
+      stack: error.stack,
+      details: error.toString()
     });
   }
 }

@@ -134,7 +134,8 @@ export default function Search() {
       console.log('Response received:', response);
 
       if (!response.ok) {
-        throw new Error(`展开节点时出错: ${response.status}`);
+        const errorData = await response.json();
+        throw new Error(`展开节点时出错: ${response.status}, ${JSON.stringify(errorData)}`);
       }
 
       const expandedData = await response.json();
@@ -156,6 +157,7 @@ export default function Search() {
       });
     } catch (error) {
       console.error('展开节点时出错:', error);
+      // 可以在这里添加一个用户友好的错误提示
     } finally {
       setExpandingNode(null);
     }
