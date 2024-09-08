@@ -7,12 +7,12 @@ const openai = new OpenAI({
 
 function createPyramidLayout(nodes) {
   const levels = Math.ceil(Math.sqrt(nodes.length));
-  const width = 1000; // 增加宽度
-  const height = 800; // 增加高度
-  const nodeWidth = 150;
-  const nodeHeight = 50;
-  const horizontalSpacing = 200; // 增加水平间距
-  const verticalSpacing = 150; // 增加垂直间距
+  const width = 1200; // 增加宽度
+  const height = 1000; // 增加高度
+  const nodeWidth = 180;
+  const nodeHeight = 60;
+  const horizontalSpacing = 250; // 增加水平间距
+  const verticalSpacing = 200; // 增加垂直间距
 
   return nodes.map((node, index) => {
     const level = Math.floor(Math.sqrt(index));
@@ -31,9 +31,9 @@ function createPyramidLayout(nodes) {
 }
 
 function createMindMapLayout(nodes) {
-  const centerX = 500; // 增加中心点坐标
-  const centerY = 400;
-  const radius = 350; // 增加半径
+  const centerX = 600; // 增加中心点坐标
+  const centerY = 500;
+  const radius = 450; // 增加半径
 
   return nodes.map((node, index) => {
     const angle = (index / nodes.length) * 2 * Math.PI;
@@ -43,7 +43,7 @@ function createMindMapLayout(nodes) {
     return {
       ...node,
       position: { x, y },
-      style: { width: 150, height: 50 }
+      style: { width: 180, height: 60 }
     };
   });
 }
@@ -107,8 +107,8 @@ export default async function handler(req, res) {
         animated: true,
         labelStyle: { fill: '#888', fontWeight: 700 },
         labelBgStyle: { fill: '#fff', fillOpacity: 0.7 },
-        labelBgPadding: [8, 4],
-        labelBgBorderRadius: 4,
+        labelBgPadding: [4, 2],
+        labelBgBorderRadius: 2,
         style: { stroke: '#888' },
         markerEnd: {
           type: 'arrowclosed',
