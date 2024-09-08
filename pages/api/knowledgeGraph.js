@@ -84,8 +84,14 @@ export default async function handler(req, res) {
     const completion = await openai.chat.completions.create({
       model: "gpt-3.5-turbo",
       messages: [
-        {role: "system", content: "You are an expert capable of breaking down complex concepts into structured knowledge graphs. Please provide a response in JSON format, including 'nodes' and 'edges' arrays, and a 'type' field indicating whether the graph should be a 'pyramid' or 'mindmap'. Each node should have 'id' and 'label' properties. Each edge should have 'source', 'target', and 'label' properties."},
-        {role: "user", content: `Please create a knowledge graph for the following question: ${query}`}
+        {
+          role: "system", 
+          content: "你是一位专家，能够将复杂的概念分解为结构化的知识图谱。请提供一个 JSON 格式的响应，包括 'nodes' 和 'edges' 数组，以及一个 'type' 字段，指示图谱应该是 'pyramid' 还是 'mindmap'。每个节点应该有 'id' 和 'label' 属性。每个边应该有 'source'、'target'、'label' 和 'type' 属性。'type' 属性应该是以下之一：'strong'（表示强关系）、'weak'（表示弱关系）或 'default'（表示一般关系）。"
+        },
+        {
+          role: "user", 
+          content: `请为以下问题创建一个知识图谱：${query}`
+        }
       ],
     });
 
@@ -103,26 +109,22 @@ export default async function handler(req, res) {
         source: edge.source,
         target: edge.target,
         label: edge.label || '',
-        type: 'smoothstep',
+        type: 'custom', // 使用自定义边类型
+        data: { 
+          fullLabel: edge.label || '',
+          type: edge.type || 'default' // 使用 AI 生成的边类型
+        },
         animated: true,
         labelStyle: { fill: '#888', fontWeight: 700 },
         labelBgStyle: { fill: '#fff', fillOpacity: 0.7 },
         labelBgPadding: [8, 4],
         labelBgBorderRadius: 4,
-        style: { stroke: '#888' },
         markerEnd: {
           type: 'arrowclosed',
           color: '#888',
         },
       }))
     };
-
-    // 添加智能边路由
-    graphData.edges = graphData.edges.map(edge => ({
-      ...edge,
-      type: 'smoothstep',
-      style: { ...edge.style, strokeWidth: 2 },
-    }));
 
     console.log('Processed graph data:', graphData);
     res.status(200).json(graphData);
