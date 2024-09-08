@@ -39,46 +39,8 @@ const KnowledgeGraph = ({ data, onNodeClick }) => {
   return (
     <div style={{ height: '100%', width: '100%', fontFamily: 'Roboto, sans-serif' }}>
       <ReactFlow 
-        nodes={data.nodes.map(node => ({
-          ...node,
-          style: {
-            ...node.style,
-            fontSize: '14px',
-            fontWeight: 'bold',
-            textOverflow: 'ellipsis',
-            overflow: 'hidden',
-            whiteSpace: 'nowrap',
-            padding: '10px',
-            maxWidth: '200px',
-          }
-        }))}
-        edges={data.edges.map(edge => ({
-          ...edge,
-          style: { ...edge.style, strokeWidth: 2 },
-          labelStyle: { 
-            ...edge.labelStyle, 
-            fontSize: 12,
-            fill: '#888',
-            fontWeight: 700,
-          },
-          labelBgStyle: { 
-            ...edge.labelBgStyle, 
-            fill: '#fff', 
-            fillOpacity: 0.8,
-          },
-          labelBgPadding: [4, 2],
-          labelShowBg: true,
-          labelBgBorderRadius: 2,
-          label: '...',
-          data: { fullLabel: edge.label || '' },
-          type: 'smoothstep',
-          animated: true,
-          markerEnd: {
-            type: 'arrowclosed',
-            color: '#888',
-          },
-        }))}
-        onInit={onInit}
+        nodes={data.nodes}
+        edges={data.edges}
         onNodeClick={handleNodeClick}
         nodesDraggable={false}
         nodesConnectable={false}

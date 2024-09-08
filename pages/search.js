@@ -115,6 +115,11 @@ export default function Search() {
   };
 
   const handleNodeClick = async (node) => {
+    // 如果点击的是母节点（没有 source），则不执行任何操作
+    if (!node.source) {
+      return;
+    }
+
     setExpandingNode(node.id);
     try {
       const response = await fetch('/api/expandNode', {
