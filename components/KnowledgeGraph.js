@@ -36,7 +36,13 @@ const KnowledgeGraph = ({ data }) => {
     <div style={{ height: '100%', width: '100%' }}>
       <ReactFlow 
         nodes={data.nodes}
-        edges={data.edges}
+        edges={data.edges.map(edge => ({
+          ...edge,
+          style: { ...edge.style, strokeWidth: 2 },
+          labelStyle: { ...edge.labelStyle, fontSize: 14 }, // 增加字体大小
+          labelBgStyle: { ...edge.labelBgStyle, fill: '#fff', fillOpacity: 0.8 }, // 增加背景不透明度
+          labelBgPadding: [8, 6], // 增加背景内边距
+        }))}
         onInit={onInit}
         nodesDraggable={false}
         nodesConnectable={false}
