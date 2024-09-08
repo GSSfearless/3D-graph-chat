@@ -120,12 +120,6 @@ export default function Search() {
   const handleNodeClick = async (node) => {
     console.log('handleNodeClick called with node:', node);
     
-    // 如果点击的是母节点（没有 source），则不执行任何操作
-    if (!node.source && node.id !== 'root') {
-      console.log('Clicked node is a root node or has no source, not expanding');
-      return;
-    }
-
     console.log('Expanding node:', node.id);
     setExpandingNode(node.id);
 
@@ -174,6 +168,10 @@ export default function Search() {
       setGraphHistory(prev => prev.slice(0, -1));
     }
   };
+
+  useEffect(() => {
+    console.log('knowledgeGraphData updated:', knowledgeGraphData);
+  }, [knowledgeGraphData]);
 
   return (
     <div className="flex flex-row min-h-screen relative pb-20">
@@ -236,6 +234,7 @@ export default function Search() {
                   <KnowledgeGraph 
                     data={knowledgeGraphData} 
                     onNodeClick={handleNodeClick}
+                    key={JSON.stringify(knowledgeGraphData)}
                     options={{
                       layout: {
                         improvedLayout: true,
