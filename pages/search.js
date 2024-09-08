@@ -83,6 +83,7 @@ export default function Search() {
   }, []);
 
   useEffect(() => {
+    console.log('Search component mounted');
     if (initialLoad && q) {
       handleSearch(q);
       setInitialLoad(false);
