@@ -116,6 +116,7 @@ export default function Search() {
   };
 
   const handleNodeClick = async (node) => {
+    console.log('handleNodeClick called with node:', node); // 添加这行来调试
     // 如果点击的是母节点（没有 source），则不执行任何操作
     if (!node.source) {
       return;
