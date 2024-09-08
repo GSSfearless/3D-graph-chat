@@ -26,9 +26,9 @@ const KnowledgeGraph = ({ data, onNodeClick }) => {
     reactFlowInstance.fitView({ padding: 0.2 });
   }, []);
 
-  const handleNodeClick = (event, node) => {
+  const handleNodeClick = useCallback((event, node) => {
     onNodeClick(node);
-  };
+  }, [onNodeClick]);
 
   if (!mounted) return null;
 
@@ -42,6 +42,7 @@ const KnowledgeGraph = ({ data, onNodeClick }) => {
         nodes={data.nodes}
         edges={data.edges}
         onNodeClick={handleNodeClick}
+        onInit={onInit}
         nodesDraggable={false}
         nodesConnectable={false}
         zoomOnScroll={false}
@@ -57,7 +58,7 @@ const KnowledgeGraph = ({ data, onNodeClick }) => {
           default: (props) => (
             <div
               onMouseEnter={() => {
-                props.label = props.data.fullLabel;
+                props.label = props.data?.fullLabel || props.label;
                 props.labelStyle = { ...props.labelStyle, fontSize: 12 };
               }}
               onMouseLeave={() => {

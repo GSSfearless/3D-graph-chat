@@ -129,7 +129,8 @@ export default function Search() {
       });
 
       if (!response.ok) {
-        throw new Error(`展开节点时出错: ${response.status}`);
+        const errorData = await response.json();
+        throw new Error(`展开节点时出错: ${response.status}, ${errorData.message}`);
       }
 
       const expandedData = await response.json();
@@ -141,7 +142,7 @@ export default function Search() {
       }));
     } catch (error) {
       console.error('展开节点时出错:', error);
-      // 可以在这里添加错误处理逻辑，比如显示一个错误消息
+      setGraphError(`展开节点时出错: ${error.message}`);
     } finally {
       setExpandingNode(null);
     }
@@ -304,4 +305,5 @@ export default function Search() {
       </div>
     </div>
   );
+}
 }

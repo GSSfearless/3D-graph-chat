@@ -64,6 +64,10 @@ export default async function handler(req, res) {
     });
   } catch (error) {
     console.error('展开节点时出错:', error);
-    res.status(500).json({ message: '展开节点时出错', error: error.message });
+    res.status(500).json({ 
+      message: '展开节点时出错', 
+      error: error.message,
+      stack: error.stack
+    });
   }
 }
