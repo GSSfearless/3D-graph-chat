@@ -1,67 +1,19 @@
+import dynamic from 'next/dynamic';
 import { useEffect, useState, useCallback } from 'react';
-import ReactFlow, { 
-  Background, 
-  Controls, 
-  getBezierPath, 
-  getMarkerEnd,
-  Position
-} from 'react-flow-renderer';
 
-const MAX_LABEL_LENGTH = 10;
+const ReactFlow = dynamic(() => import('react-flow-renderer').then(mod => mod.default), {
+  ssr: false,
+  loading: () => <p>加载知识图谱中...</p>
+});
 
-const CustomEdge = ({ id, sourceX, sourceY, targetX, targetY, sourcePosition, targetPosition, data, style = {} }) => {
-  const [edgePath, labelX, labelY] = getBezierPath({
-    sourceX,
-    sourceY,
-    sourcePosition,
-    targetX,
-    targetY,
-    targetPosition,
-  });
+// 导入 Controls 和 Background 组件
+const Controls = dynamic(() => import('react-flow-renderer').then(mod => mod.Controls), {
+  ssr: false
+});
 
-  const [isHovered, setIsHovered] = useState(false);
-
-  const shortenedLabel = data.fullLabel.length > MAX_LABEL_LENGTH 
-    ? data.fullLabel.slice(0, MAX_LABEL_LENGTH) + '...' 
-    : data.fullLabel;
-
-  const edgeStyle = getEdgeStyle(data.type);
-
-  return (
-    <>
-      <path
-        id={id}
-        style={{ ...style, ...edgeStyle }}
-        className="react-flow__edge-path"
-        d={edgePath}
-        markerEnd={getMarkerEnd(edgeStyle.stroke, 'arrowclosed')}
-        onMouseEnter={() => setIsHovered(true)}
-        onMouseLeave={() => setIsHovered(false)}
-      />
-      {data.fullLabel && (
-        <text
-          x={labelX}
-          y={labelY}
-          textAnchor="middle"
-          style={{ fill: '#888', fontSize: 12, pointerEvents: 'none' }}
-        >
-          {isHovered ? data.fullLabel : shortenedLabel}
-        </text>
-      )}
-    </>
-  );
-};
-
-const getEdgeStyle = (edgeType) => {
-  switch (edgeType) {
-    case 'strong':
-      return { stroke: '#ff0000', strokeWidth: 2 };
-    case 'weak':
-      return { stroke: '#00ff00', strokeWidth: 1, strokeDasharray: '5,5' };
-    default:
-      return { stroke: '#888888', strokeWidth: 1 };
-  }
-};
+const Background = dynamic(() => import('react-flow-renderer').then(mod => mod.Background), {
+  ssr: false
+});
 
 const KnowledgeGraph = ({ data }) => {
   const [mounted, setMounted] = useState(false);
@@ -80,16 +32,42 @@ const KnowledgeGraph = ({ data }) => {
     return <div>无效的图表数据</div>;
   }
 
-  const edgeTypes = {
-    custom: CustomEdge,
-  };
-
   return (
     <div style={{ height: '100%', width: '100%' }}>
       <ReactFlow 
-        nodes={data.nodes}
-        edges={data.edges}
-        edgeTypes={edgeTypes}
+        nodes={data.nodes.map(node => ({
+          ...node,
+          style: {
+            ...node.style,
+            fontSize: '16px', // 增大Node中的文字字体
+            fontWeight: 'bold',
+          }
+        }))}
+        edges={data.edges.map(edge => ({
+          ...edge,
+          style: { ...edge.style, strokeWidth: 2 },
+          labelStyle: { 
+            ...edge.labelStyle, 
+            fontSize: 14,
+            fill: '#888',
+            fontWeight: 700,
+          },
+          labelBgStyle: { 
+            ...edge.labelBgStyle, 
+            fill: '#fff', 
+            fillOpacity: 0.8,
+          },
+          labelBgPadding: [8, 6],
+          labelShowBg: true,
+          labelBgBorderRadius: 4,
+          label: edge.label || '',
+          type: 'smoothstep',
+          animated: true,
+          markerEnd: {
+            type: 'arrowclosed',
+            color: '#888',
+          },
+        }))}
         onInit={onInit}
         nodesDraggable={false}
         nodesConnectable={false}
@@ -101,6 +79,7 @@ const KnowledgeGraph = ({ data }) => {
         maxZoom={4}
         defaultZoom={1}
         onlyRenderVisibleElements={true}
+        edgeUpdaterRadius={10} // 增加边的更新半径，有助于避免标签重叠
       >
         <Controls />
         <Background color="#aaa" gap={16} />
