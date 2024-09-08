@@ -6,6 +6,7 @@ import { useRouter } from 'next/router';
 import { useCallback, useEffect, useState } from 'react';
 import 'tailwindcss/tailwind.css';
 import '../styles/globals.css';
+import { createPyramidLayout, createMindMapLayout } from '../utils/graphLayouts';
 
 const KnowledgeGraph = dynamic(() => import('../components/KnowledgeGraph'), {
   ssr: false,
@@ -148,12 +149,14 @@ export default function Search() {
       
       setKnowledgeGraphData(prevData => {
         console.log('Updating knowledge graph data');
-        const newData = {
-          nodes: [...prevData.nodes, ...expandedData.nodes],
-          edges: [...prevData.edges, ...expandedData.edges],
-        };
-        console.log('New knowledge graph data:', newData);
-        return newData;
+        const newNodes = [...prevData.nodes, ...expandedData.nodes];
+        const newEdges = [...prevData.edges, ...expandedData.edges];
+        
+        // 重新计算整个图的布局
+        const layoutedData = relayoutGraph(newNodes, newEdges, prevData.type || 'mindmap');
+        
+        console.log('New knowledge graph data:', layoutedData);
+        return layoutedData;
       });
     } catch (error) {
       console.error('展开节点时出错:', error);
@@ -161,6 +164,17 @@ export default function Search() {
     } finally {
       setExpandingNode(null);
     }
+  };
+
+  const relayoutGraph = (nodes, edges, type) => {
+    const layoutFunction = type === 'pyramid' ? createPyramidLayout : createMindMapLayout;
+    const layoutedNodes = layoutFunction(nodes);
+    
+    return {
+      nodes: layoutedNodes,
+      edges: edges,
+      type: type
+    };
   };
 
   const handleUndo = () => {

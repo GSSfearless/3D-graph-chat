@@ -42,8 +42,11 @@ const KnowledgeGraph = ({ data, onNodeClick }) => {
   return (
     <div style={{ height: '100%', width: '100%', fontFamily: 'Roboto, sans-serif' }}>
       <ReactFlow 
-        key={JSON.stringify(data)}  // 添加这一行
-        nodes={data.nodes}
+        key={JSON.stringify(data)}
+        nodes={data.nodes.map(node => ({
+          ...node,
+          data: { ...node.data, label: node.data.label },
+        }))}
         edges={data.edges}
         onNodeClick={handleNodeClick}
         onInit={onInit}
