@@ -33,14 +33,19 @@ const KnowledgeGraph = ({ data }) => {
   }
 
   return (
-    <div style={{ height: '100%', width: '100%' }}>
+    <div style={{ height: '100%', width: '100%', fontFamily: 'Roboto, sans-serif' }}>
       <ReactFlow 
         nodes={data.nodes.map(node => ({
           ...node,
           style: {
             ...node.style,
-            fontSize: '16px', // 增大Node中的文字字体
+            fontSize: '14px',
             fontWeight: 'bold',
+            textOverflow: 'ellipsis',
+            overflow: 'hidden',
+            whiteSpace: 'nowrap',
+            padding: '10px',
+            maxWidth: '200px',
           }
         }))}
         edges={data.edges.map(edge => ({
@@ -48,7 +53,7 @@ const KnowledgeGraph = ({ data }) => {
           style: { ...edge.style, strokeWidth: 2 },
           labelStyle: { 
             ...edge.labelStyle, 
-            fontSize: 14,
+            fontSize: 12,
             fill: '#888',
             fontWeight: 700,
           },
@@ -57,10 +62,11 @@ const KnowledgeGraph = ({ data }) => {
             fill: '#fff', 
             fillOpacity: 0.8,
           },
-          labelBgPadding: [8, 6],
+          labelBgPadding: [4, 2],
           labelShowBg: true,
-          labelBgBorderRadius: 4,
-          label: edge.label || '',
+          labelBgBorderRadius: 2,
+          label: '...',
+          data: { fullLabel: edge.label || '' },
           type: 'smoothstep',
           animated: true,
           markerEnd: {
@@ -79,7 +85,23 @@ const KnowledgeGraph = ({ data }) => {
         maxZoom={4}
         defaultZoom={1}
         onlyRenderVisibleElements={true}
-        edgeUpdaterRadius={10} // 增加边的更新半径，有助于避免标签重叠
+        edgeUpdaterRadius={10}
+        edgeTypes={{
+          default: (props) => (
+            <div
+              onMouseEnter={() => {
+                props.label = props.data.fullLabel;
+                props.labelStyle = { ...props.labelStyle, fontSize: 12 };
+              }}
+              onMouseLeave={() => {
+                props.label = '...';
+                props.labelStyle = { ...props.labelStyle, fontSize: 12 };
+              }}
+            >
+              {props.children}
+            </div>
+          ),
+        }}
       >
         <Controls />
         <Background color="#aaa" gap={16} />
