@@ -1,95 +1,36 @@
 import dynamic from 'next/dynamic';
 import { useEffect, useState, useCallback } from 'react';
-import { getIntersectingNode, getBezierPath, getEdgeCenter } from 'react-flow-renderer';
 
-const MAX_LABEL_LENGTH = 10; // 最大标签长度
+const ReactFlow = dynamic(() => import('react-flow-renderer').then(mod => mod.default), {
+  ssr: false,
+  loading: () => <p>加载知识图谱中...</p>
+});
 
-const CustomEdge = ({ id, sourceX, sourceY, targetX, targetY, label, style = {}, markerEnd }) => {
-  const edgePath = getBezierPath({ sourceX, sourceY, targetX, targetY });
-  const [edgeCenterX, edgeCenterY] = getEdgeCenter({
-    sourceX,
-    sourceY,
-    targetX,
-    targetY,
-  });
+// 导入 Controls 和 Background 组件
+const Controls = dynamic(() => import('react-flow-renderer').then(mod => mod.Controls), {
+  ssr: false
+});
 
-  const [isHovered, setIsHovered] = useState(false);
-  const [labelPosition, setLabelPosition] = useState({ x: edgeCenterX, y: edgeCenterY });
-
-  useEffect(() => {
-    // 尝试在边的不同位置放置标签
-    const positions = [
-      { x: edgeCenterX, y: edgeCenterY },
-      { x: (sourceX + edgeCenterX) / 2, y: (sourceY + edgeCenterY) / 2 },
-      { x: (targetX + edgeCenterX) / 2, y: (targetY + edgeCenterY) / 2 },
-    ];
-
-    // 选择第一个不与节点重叠的位置
-    const suitablePosition = positions.find(pos => 
-      !getIntersectingNode(pos, nodes, { nodeWidth: 150, nodeHeight: 50 })
-    );
-
-    setLabelPosition(suitablePosition || { x: edgeCenterX, y: edgeCenterY });
-  }, [sourceX, sourceY, targetX, targetY, edgeCenterX, edgeCenterY]);
-
-  const shortenedLabel = label.length > MAX_LABEL_LENGTH 
-    ? label.slice(0, MAX_LABEL_LENGTH) + '...' 
-    : label;
-
-  return (
-    <>
-      <path
-        id={id}
-        style={style}
-        className="react-flow__edge-path"
-        d={edgePath}
-        markerEnd={markerEnd}
-        onMouseEnter={() => setIsHovered(true)}
-        onMouseLeave={() => setIsHovered(false)}
-      />
-      {label && (
-        <text
-          x={labelPosition.x}
-          y={labelPosition.y}
-          textAnchor="middle"
-          style={{ fill: '#888', fontSize: 12 }}
-        >
-          {isHovered ? label : shortenedLabel}
-        </text>
-      )}
-    </>
-  );
-};
+const Background = dynamic(() => import('react-flow-renderer').then(mod => mod.Background), {
+  ssr: false
+});
 
 const KnowledgeGraph = ({ data }) => {
-  const [processedEdges, setProcessedEdges] = useState([]);
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    if (data && data.nodes && data.edges) {
-      const updatedEdges = data.edges.map(edge => {
-        // 根据边的类型设置不同的样式
-        const edgeStyle = getEdgeStyle(edge.type);
-        return { ...edge, style: edgeStyle, type: 'custom' };
-      });
+    setMounted(true);
+  }, []);
 
-      setProcessedEdges(updatedEdges);
-    }
-  }, [data]);
+  const onInit = useCallback((reactFlowInstance) => {
+    reactFlowInstance.fitView({ padding: 0.2 });
+  }, []);
 
-  const getEdgeStyle = (edgeType) => {
-    switch (edgeType) {
-      case 'strong':
-        return { stroke: '#ff0000', strokeWidth: 2 };
-      case 'weak':
-        return { stroke: '#00ff00', strokeWidth: 1, strokeDasharray: '5,5' };
-      default:
-        return { stroke: '#888888', strokeWidth: 1 };
-    }
-  };
+  if (!mounted) return null;
 
-  const edgeTypes = {
-    custom: CustomEdge,
-  };
+  if (!data || !data.nodes || !data.edges) {
+    return <div>无效的图表数据</div>;
+  }
 
   return (
     <div style={{ height: '100%', width: '100%' }}>
@@ -102,8 +43,31 @@ const KnowledgeGraph = ({ data }) => {
             fontWeight: 'bold',
           }
         }))}
-        edges={processedEdges}
-        edgeTypes={edgeTypes}
+        edges={data.edges.map(edge => ({
+          ...edge,
+          style: { ...edge.style, strokeWidth: 2 },
+          labelStyle: { 
+            ...edge.labelStyle, 
+            fontSize: 14,
+            fill: '#888',
+            fontWeight: 700,
+          },
+          labelBgStyle: { 
+            ...edge.labelBgStyle, 
+            fill: '#fff', 
+            fillOpacity: 0.8,
+          },
+          labelBgPadding: [8, 6],
+          labelShowBg: true,
+          labelBgBorderRadius: 4,
+          label: edge.label || '',
+          type: 'smoothstep',
+          animated: true,
+          markerEnd: {
+            type: 'arrowclosed',
+            color: '#888',
+          },
+        }))}
         onInit={onInit}
         nodesDraggable={false}
         nodesConnectable={false}
