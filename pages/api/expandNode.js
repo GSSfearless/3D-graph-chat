@@ -37,8 +37,8 @@ export default async function handler(req, res) {
     const completion = await openai.chat.completions.create({
       model: "gpt-3.5-turbo",
       messages: [
-        {role: "system", content: "你是一个专家，能够深入解析复杂概念。请提供一个 JSON 格式的响应，包含 'nodes' 和 'edges' 数组。每个节点应该有 'id' 和 'label' 属性。每条边应该有 'source'、'target' 和 'label' 属性。"},
-        {role: "user", content: `请为以下概念创建一个更详细的知识图谱：${label}`}
+        {role: "system", content: "你是一个专家，能够深入解析复杂概念。请提供一个 JSON 格式的响应，包含 'nodes' 数组。每个节点应该有 'id' 和 'label' 属性。请只生成两个新节点，这两个节点应该是对给定概念的更详细解释或延伸。"},
+        {role: "user", content: `请为以下概念提供两个更详细的解释或相关概念：${label}`}
       ],
     });
 
@@ -48,15 +48,13 @@ export default async function handler(req, res) {
     const parentNode = { id: nodeId, position: { x: 0, y: 0 } };
     const layoutedNodes = createLayout(expandedData.nodes, parentNode);
 
-    // 添加到父节点的边
-    const newEdges = expandedData.edges.concat(
-      layoutedNodes.map(node => ({
-        id: `${nodeId}-${node.id}`,
-        source: nodeId,
-        target: node.id,
-        label: '详细',
-      }))
-    );
+    // 创建从父节点到新节点的边
+    const newEdges = layoutedNodes.map(node => ({
+      id: `${nodeId}-${node.id}`,
+      source: nodeId,
+      target: node.id,
+      label: '详细',
+    }));
 
     res.status(200).json({
       nodes: layoutedNodes,

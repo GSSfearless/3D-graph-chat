@@ -25,6 +25,7 @@ export default function Search() {
   const [graphError, setGraphError] = useState(null);
   const [showLargeSearch, setShowLargeSearch] = useState(false);
   const [expandingNode, setExpandingNode] = useState(null);
+  const [graphHistory, setGraphHistory] = useState([]);
 
   const defaultQuery = "生命、宇宙以及一切的答案是什么？";
 
@@ -134,6 +135,8 @@ export default function Search() {
 
       const expandedData = await response.json();
       
+      setGraphHistory(prev => [...prev, knowledgeGraphData]);
+      
       // 合并新的节点和边到现有的图谱数据中
       setKnowledgeGraphData(prevData => ({
         nodes: [...prevData.nodes, ...expandedData.nodes],
@@ -144,6 +147,14 @@ export default function Search() {
       // 可以在这里添加错误处理逻辑，比如显示一个错误消息
     } finally {
       setExpandingNode(null);
+    }
+  };
+
+  const handleUndo = () => {
+    if (graphHistory.length > 0) {
+      const previousState = graphHistory[graphHistory.length - 1];
+      setKnowledgeGraphData(previousState);
+      setGraphHistory(prev => prev.slice(0, -1));
     }
   };
 
@@ -238,6 +249,13 @@ export default function Search() {
                       }
                     }}
                   />
+                  <button 
+                    onClick={handleUndo} 
+                    disabled={graphHistory.length === 0}
+                    className="mt-2 px-4 py-2 bg-blue-500 text-white rounded disabled:bg-gray-300"
+                  >
+                    撤销上一步
+                  </button>
                 </div>
               ) : (
                 <p>没有可用的知识图谱数据</p>
