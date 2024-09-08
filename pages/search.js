@@ -24,6 +24,7 @@ export default function Search() {
   const [knowledgeGraphData, setKnowledgeGraphData] = useState(null);
   const [graphError, setGraphError] = useState(null);
   const [showLargeSearch, setShowLargeSearch] = useState(false);
+  const [expandingNode, setExpandingNode] = useState(null);
 
   const defaultQuery = "生命、宇宙以及一切的答案是什么？";
 
@@ -113,6 +114,34 @@ export default function Search() {
     }
   };
 
+  const handleNodeClick = async (node) => {
+    setExpandingNode(node.id);
+    try {
+      const response = await fetch('/api/expandNode', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ nodeId: node.id, label: node.data.label }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`展开节点时出错: ${response.status}`);
+      }
+
+      const expandedData = await response.json();
+      
+      // 合并新的节点和边到现有的图谱数据中
+      setKnowledgeGraphData(prevData => ({
+        nodes: [...prevData.nodes, ...expandedData.nodes],
+        edges: [...prevData.edges, ...expandedData.edges],
+      }));
+    } catch (error) {
+      console.error('展开节点时出错:', error);
+      // 可以在这里添加错误处理逻辑，比如显示一个错误消息
+    } finally {
+      setExpandingNode(null);
+    }
+  };
+
   return (
     <div className="flex flex-row min-h-screen relative pb-20">
       <div className="w-1/6 p-4 bg-[#ECF5FD] flex flex-col justify-between fixed h-full" style={{ fontFamily: 'Open Sans, sans-serif' }}>
@@ -165,7 +194,7 @@ export default function Search() {
             </div>
             <div className="mb-4">
               <h3 className="result-title text-4xl">🧠Knowledge Graph</h3>
-              {loading ? (
+              {loading || expandingNode ? (
                 <div className="h-64 bg-gray-200 animate-pulse rounded"></div>
               ) : graphError ? (
                 <p className="text-red-500">{graphError}</p>
@@ -173,6 +202,7 @@ export default function Search() {
                 <div style={{ height: '600px', width: '100%', border: '1px solid #ddd', borderRadius: '8px' }}>
                   <KnowledgeGraph 
                     data={knowledgeGraphData} 
+                    onNodeClick={handleNodeClick}
                     options={{
                       layout: {
                         improvedLayout: true,
