@@ -22,12 +22,33 @@ function createLayout(nodes, parentNode) {
   });
 }
 
+function sanitizeJSON(str) {
+  // 移除可能导致 JSON 解析错误的字符
+  return str.replace(/[\n\r\t]/g, '')
+            .replace(/,\s*]/g, ']')
+            .replace(/,\s*}/g, '}');
+}
+
+function parseJSONSafely(str) {
+  try {
+    return JSON.parse(sanitizeJSON(str));
+  } catch (error) {
+    console.error('JSON parsing error:', error);
+    // 返回一个默认的节点结构
+    return {
+      nodes: [
+        { id: 'default1', label: 'Default Node 1' },
+        { id: 'default2', label: 'Default Node 2' }
+      ]
+    };
+  }
+}
+
 function cleanOpenAIResponse(response) {
   // 移除可能的 Markdown 标记
   let cleaned = response.replace(/```json\n?/, '').replace(/```\n?/, '');
-  // 移除可能导致 JSON 解析错误的字符
-  cleaned = cleaned.replace(/[\n\r\t]/g, '').trim();
-  return cleaned;
+  // 使用 sanitizeJSON 函数
+  return sanitizeJSON(cleaned);
 }
 
 export default async function handler(req, res) {
@@ -58,15 +79,13 @@ export default async function handler(req, res) {
     const cleanedResponse = cleanOpenAIResponse(completion.choices[0].message.content);
     console.log('Cleaned response:', cleanedResponse);
 
-    let expandedData;
-    try {
-      expandedData = JSON.parse(cleanedResponse);
-    } catch (parseError) {
-      console.error('JSON parsing error:', parseError);
-      throw new Error('无法解析 OpenAI 响应');
-    }
-
+    let expandedData = parseJSONSafely(cleanedResponse);
     console.log('Parsed expanded data:', expandedData);
+
+    // 确保 expandedData 有正确的结构
+    if (!expandedData.nodes || !Array.isArray(expandedData.nodes)) {
+      throw new Error('OpenAI 响应格式不正确');
+    }
 
     // 为新节点创建布局
     const parentNode = { id: nodeId, position: { x: 0, y: 0 } };
