@@ -35,29 +35,13 @@ const KnowledgeGraph = ({ data }) => {
   return (
     <div style={{ height: '100%', width: '100%' }}>
       <ReactFlow 
-        nodes={data.nodes.map(node => ({
-          ...node,
-          style: { 
-            ...node.style, 
-            width: 180, 
-            height: 60, 
-            padding: 10,
-            fontSize: 12,
-            textAlign: 'center',
-            border: '1px solid #ddd',
-            borderRadius: '5px',
-            backgroundColor: '#f8f8f8'
-          }
-        }))}
+        nodes={data.nodes}
         edges={data.edges.map(edge => ({
           ...edge,
-          type: 'smoothstep',
           style: { ...edge.style, strokeWidth: 2 },
-          labelStyle: { ...edge.labelStyle, fontSize: 12, fill: '#888' },
-          labelBgStyle: { ...edge.labelBgStyle, fill: '#fff', fillOpacity: 0.8 },
-          labelBgPadding: [4, 2],
-          labelBgBorderRadius: 2,
-          arrowHeadType: 'arrowclosed',
+          labelStyle: { ...edge.labelStyle, fontSize: 14 }, // 增加字体大小
+          labelBgStyle: { ...edge.labelBgStyle, fill: '#fff', fillOpacity: 0.8 }, // 增加背景不透明度
+          labelBgPadding: [8, 6], // 增加背景内边距
         }))}
         onInit={onInit}
         nodesDraggable={false}
@@ -68,9 +52,8 @@ const KnowledgeGraph = ({ data }) => {
         panOnScrollMode="free"
         minZoom={0.1}
         maxZoom={4}
-        defaultZoom={0.8}
+        defaultZoom={1}
         onlyRenderVisibleElements={true}
-        fitView
       >
         <Controls />
         <Background color="#aaa" gap={16} />
