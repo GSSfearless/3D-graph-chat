@@ -29,10 +29,8 @@ const KnowledgeGraph = ({ data, onNodeClick }) => {
   }, []);
 
   const handleNodeClick = useCallback((event, node) => {
-    console.log('Node clicked:', node); // 添加这行来调试
-    if (node.source) {  // 只有子节点才能被点击
-      onNodeClick(node);
-    }
+    console.log('Node clicked in KnowledgeGraph:', node);
+    onNodeClick(node);
   }, [onNodeClick]);
 
   if (!mounted) return null;

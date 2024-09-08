@@ -23,6 +23,8 @@ function createLayout(nodes, parentNode) {
 }
 
 export default async function handler(req, res) {
+  console.log('expandNode API called with body:', req.body);
+
   if (req.method !== 'POST') {
     return res.status(405).json({ message: '只允许 POST 请求' });
   }
@@ -42,8 +44,11 @@ export default async function handler(req, res) {
       ],
     });
 
+    console.log('OpenAI API response:', completion.choices[0].message.content);
+
     const expandedData = JSON.parse(completion.choices[0].message.content);
-    
+    console.log('Parsed expanded data:', expandedData);
+
     // 为新节点创建布局
     const parentNode = { id: nodeId, position: { x: 0, y: 0 } };
     const layoutedNodes = createLayout(expandedData.nodes, parentNode);
@@ -56,10 +61,12 @@ export default async function handler(req, res) {
       label: '详细',
     }));
 
-    res.status(200).json({
+    const responseData = {
       nodes: layoutedNodes,
       edges: newEdges,
-    });
+    };
+    console.log('Sending response:', responseData);
+    res.status(200).json(responseData);
   } catch (error) {
     console.error('展开节点时出错:', error);
     res.status(500).json({ 

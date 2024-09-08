@@ -68,6 +68,7 @@ export default function Search() {
         const graphData = await graphResponse.json();
         console.log('知识图谱数据:', graphData);
         setKnowledgeGraphData(graphData);
+        console.log('Initial knowledge graph data:', graphData);
       } catch (error) {
         console.error('获取知识图谱时出错:', error);
         setGraphError('无法加载知识图谱');
@@ -116,36 +117,50 @@ export default function Search() {
   };
 
   const handleNodeClick = async (node) => {
-    console.log('handleNodeClick called with node:', node); // 添加这行来调试
+    console.log('handleNodeClick called with node:', node);
+    
     // 如果点击的是母节点（没有 source），则不执行任何操作
-    if (!node.source) {
+    if (!node.source && node.id !== 'root') {
+      console.log('Clicked node is a root node or has no source, not expanding');
       return;
     }
 
+    console.log('Expanding node:', node.id);
     setExpandingNode(node.id);
+
     try {
+      console.log('Sending request to /api/expandNode');
       const response = await fetch('/api/expandNode', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ nodeId: node.id, label: node.data.label }),
       });
 
+      console.log('Response received:', response);
+
       if (!response.ok) {
         throw new Error(`展开节点时出错: ${response.status}`);
       }
 
       const expandedData = await response.json();
+      console.log('Expanded data:', expandedData);
+
+      setGraphHistory(prev => {
+        console.log('Updating graph history');
+        return [...prev, knowledgeGraphData];
+      });
       
-      setGraphHistory(prev => [...prev, knowledgeGraphData]);
-      
-      // 合并新的节点和边到现有的图谱数据中
-      setKnowledgeGraphData(prevData => ({
-        nodes: [...prevData.nodes, ...expandedData.nodes],
-        edges: [...prevData.edges, ...expandedData.edges],
-      }));
+      setKnowledgeGraphData(prevData => {
+        console.log('Updating knowledge graph data');
+        const newData = {
+          nodes: [...prevData.nodes, ...expandedData.nodes],
+          edges: [...prevData.edges, ...expandedData.edges],
+        };
+        console.log('New knowledge graph data:', newData);
+        return newData;
+      });
     } catch (error) {
       console.error('展开节点时出错:', error);
-      // 可以在这里添加错误处理逻辑，比如显示一个错误消息
     } finally {
       setExpandingNode(null);
     }
