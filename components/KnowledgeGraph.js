@@ -35,13 +35,38 @@ const KnowledgeGraph = ({ data }) => {
   return (
     <div style={{ height: '100%', width: '100%' }}>
       <ReactFlow 
-        nodes={data.nodes}
+        nodes={data.nodes.map(node => ({
+          ...node,
+          style: {
+            ...node.style,
+            fontSize: '16px', // 增大Node中的文字字体
+            fontWeight: 'bold',
+          }
+        }))}
         edges={data.edges.map(edge => ({
           ...edge,
           style: { ...edge.style, strokeWidth: 2 },
-          labelStyle: { ...edge.labelStyle, fontSize: 14 }, // 增加字体大小
-          labelBgStyle: { ...edge.labelBgStyle, fill: '#fff', fillOpacity: 0.8 }, // 增加背景不透明度
-          labelBgPadding: [8, 6], // 增加背景内边距
+          labelStyle: { 
+            ...edge.labelStyle, 
+            fontSize: 14,
+            fill: '#888',
+            fontWeight: 700,
+          },
+          labelBgStyle: { 
+            ...edge.labelBgStyle, 
+            fill: '#fff', 
+            fillOpacity: 0.8,
+          },
+          labelBgPadding: [8, 6],
+          labelShowBg: true,
+          labelBgBorderRadius: 4,
+          label: edge.label || '',
+          type: 'smoothstep',
+          animated: true,
+          markerEnd: {
+            type: 'arrowclosed',
+            color: '#888',
+          },
         }))}
         onInit={onInit}
         nodesDraggable={false}
@@ -54,6 +79,7 @@ const KnowledgeGraph = ({ data }) => {
         maxZoom={4}
         defaultZoom={1}
         onlyRenderVisibleElements={true}
+        edgeUpdaterRadius={10} // 增加边的更新半径，有助于避免标签重叠
       >
         <Controls />
         <Background color="#aaa" gap={16} />
