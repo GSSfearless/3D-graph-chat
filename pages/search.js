@@ -17,7 +17,7 @@ export default function Search() {
   const { q } = router.query;
 
   const [query, setQuery] = useState('');
-  const [sidebarQuery, setSidebarQuery] = useState(''); // 新增：左侧搜索框的状态
+  const [largeSearchQuery, setLargeSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState([]);
   const [aiAnswer, setAiAnswer] = useState('');
   const [loading, setLoading] = useState(false);
@@ -86,19 +86,6 @@ export default function Search() {
     setLoading(false);
   }, [knowledgeGraphData]);
 
-  // 新增：处理左侧搜索框的变化
-  const handleSidebarQueryChange = (e) => {
-    setSidebarQuery(e.target.value);
-  }
-
-  // 新增：处理左侧搜索框的搜索
-  const handleSidebarSearch = () => {
-    if (sidebarQuery.trim() !== '') {
-      handleSearch(sidebarQuery);
-      setShowLargeSearch(false);
-    }
-  }
-
   useEffect(() => {
     console.log('Search component mounted');
     if (initialLoad && q) {
@@ -109,6 +96,10 @@ export default function Search() {
 
   const handleChange = (e) => {
     setQuery(e.target.value);
+  }
+
+  const handleLargeSearchChange = (e) => {
+    setLargeSearchQuery(e.target.value);
   }
 
   const handleKeyPress = (e) => {
@@ -122,9 +113,10 @@ export default function Search() {
   }
 
   const handleLargeSearch = () => {
-    if (query.trim() !== '') {
-      handleSearch(query);
+    if (largeSearchQuery.trim() !== '') {
+      handleSearch(largeSearchQuery);
       setShowLargeSearch(false);
+      setLargeSearchQuery('');
     }
   };
 
@@ -223,17 +215,10 @@ export default function Search() {
             <input 
               type="text" 
               placeholder="Just Ask..." 
-              className="w-full p-4 border-2 border-gray-300 rounded-full outline-none text-xl hover:border-gray-400 focus:border-gray-500 transition-all duration-300"
-              value={sidebarQuery}
-              onChange={handleSidebarQueryChange}
-              onKeyPress={(e) => e.key === 'Enter' && handleSidebarSearch()}
+              className="w-full p-4 border-2 border-gray-300 rounded-full outline-none text-xl hover:border-gray-400 focus:border-gray-500 transition-all duration-300 cursor-pointer"
+              onClick={() => setShowLargeSearch(true)}
+              readOnly
             />
-            <button 
-              className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-[#105C93] text-white rounded-full h-10 w-10 flex items-center justify-center hover:bg-[#3A86C8] transition duration-300"
-              onClick={handleSidebarSearch}
-            >
-              <FontAwesomeIcon icon={faArrowRight} />
-            </button>
           </div>
           <Link href="/">
             <a className="block bg-[#ECF5FD] text-center p-2 rounded hover:bg-[#B6DBF7] transition duration-300 text-xl font-medium text-gray-600">🏠 Homepage</a>
@@ -329,15 +314,15 @@ export default function Search() {
                 type="text" 
                 placeholder="Just ask..." 
                 className="w-full p-4 border-none outline-none text-xl pl-16"
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                onKeyPress={(e) => e.key === 'Enter' && handleSearch(query)}
+                value={largeSearchQuery}
+                onChange={handleLargeSearchChange}
+                onKeyPress={handleLargeSearchKeyPress}
                 autoFocus
               />
               <button 
                 className="bg-[#105C93] text-white rounded-full h-12 w-12 flex items-center justify-center absolute right-4 hover:bg-[#3A86C8] transition duration-300" 
                 style={{ top: 'calc(50% - 1.5rem)' }}
-                onClick={() => handleSearch(query)}
+                onClick={handleLargeSearch}
               >
                 <FontAwesomeIcon icon={faArrowRight} />
               </button>
