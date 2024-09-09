@@ -77,7 +77,7 @@ export default async function handler(req, res) {
     return res.status(405).json({ message: '只允许 POST 请求' });
   }
 
-  const { nodeId, label, parentPosition } = req.body;
+  const { nodeId, label, parentPosition, query } = req.body;
 
   if (!nodeId || !label) {
     return res.status(400).json({ message: '缺少必要的参数' });
@@ -89,7 +89,7 @@ export default async function handler(req, res) {
       model: "gpt-3.5-turbo",
       messages: [
         {role: "system", content: "你是一个专家，能够深入解析复杂概念。请提供一个 JSON 格式的响应，包含 'nodes' 数组。每个节点应该有 'id' 和 'label' 属性。请只生成两个新节点，这两个节点应该是对给定概念的更详细解释或延伸。"},
-        {role: "user", content: `请为以下概念提供两个更详细的解释或相关概念：${label}`}
+        {role: "user", content: `请为以下概念提供两个更详细的解释或相关概念，考虑到以下问题：${label}。问题：${query}`}
       ],
     });
 

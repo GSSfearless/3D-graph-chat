@@ -6,7 +6,6 @@ const ReactFlow = dynamic(() => import('react-flow-renderer').then(mod => mod.de
   loading: () => <p>加载知识图谱中...</p>
 });
 
-// 导入 Controls 和 Background 组件
 const Controls = dynamic(() => import('react-flow-renderer').then(mod => mod.Controls), {
   ssr: false
 });
@@ -16,8 +15,6 @@ const Background = dynamic(() => import('react-flow-renderer').then(mod => mod.B
 });
 
 const KnowledgeGraph = ({ data, onNodeClick, onNodeDragStop }) => {
-  console.log('KnowledgeGraph rendered with data:', data);
-
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -29,14 +26,20 @@ const KnowledgeGraph = ({ data, onNodeClick, onNodeDragStop }) => {
   }, []);
 
   const handleNodeClick = useCallback((event, node) => {
-    console.log('Node clicked in KnowledgeGraph:', node);
     onNodeClick(node);
   }, [onNodeClick]);
 
   const handleNodeDragStop = useCallback((event, node) => {
-    console.log('Node dragged in KnowledgeGraph:', node);
     onNodeDragStop(node);
   }, [onNodeDragStop]);
+
+  const nodeTypes = {
+    default: ({ data }) => (
+      <div className="bg-white border-2 border-gray-300 rounded p-2 hover:bg-gray-100 transition-colors duration-200 cursor-pointer">
+        {data.label}
+      </div>
+    ),
+  };
 
   if (!mounted) return null;
 
@@ -48,14 +51,12 @@ const KnowledgeGraph = ({ data, onNodeClick, onNodeDragStop }) => {
     <div style={{ height: '100%', width: '100%', fontFamily: 'Roboto, sans-serif' }}>
       <ReactFlow 
         key={JSON.stringify(data)}
-        nodes={data.nodes.map(node => ({
-          ...node,
-          data: { ...node.data, label: node.data.label },
-        }))}
+        nodes={data.nodes}
         edges={data.edges}
         onNodeClick={handleNodeClick}
         onNodeDragStop={handleNodeDragStop}
         onInit={onInit}
+        nodeTypes={nodeTypes}
         nodesDraggable={true}
         nodesConnectable={false}
         zoomOnScroll={false}
