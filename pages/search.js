@@ -13,9 +13,6 @@ const KnowledgeGraph = dynamic(() => import('../components/KnowledgeGraph'), {
 });
 
 function sanitizeHtml(html) {
-  if (typeof window === 'undefined') {
-    return html; // 在服务器端，直接返回原始 HTML
-  }
   const temp = document.createElement('div');
   temp.innerHTML = html;
   return temp.textContent || temp.innerText;
@@ -25,14 +22,25 @@ function renderMarkdown(text) {
   // 处理粗体
   text = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
   
+  // 处理下划线
+  text = text.replace(/__(.*?)__/g, '<u>$1</u>');
+  
   // 处理编号列表
   text = text.replace(/^\d+\.\s(.*)$/gm, '<li>$1</li>');
   text = text.replace(/<li>/g, '<ol><li>').replace(/<\/li>(?![\n\r]*<li>)/g, '</li></ol>');
   
+  // 处理无序列表
+  text = text.replace(/^-\s(.*)$/gm, '<li>$1</li>');
+  text = text.replace(/(?<!<\/ol>)<li>/g, '<ul><li>').replace(/<\/li>(?![\n\r]*<li>)(?!<\/ol>)/g, '</li></ul>');
+  
   // 处理小标题
   text = text.replace(/^###\s(.*)$/gm, '<h3>$1</h3>');
   
-  // 处理换行
+  // 处理段落和空行
+  text = text.replace(/\n\n/g, '</p><p>');
+  text = '<p>' + text + '</p>';
+  
+  // 处理单行换行
   text = text.replace(/\n/g, '<br>');
   
   return text;
@@ -46,6 +54,7 @@ export default function Search() {
   const [largeSearchQuery, setLargeSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState([]);
   const [aiAnswer, setAiAnswer] = useState('');
+  const [renderedAnswer, setRenderedAnswer] = useState('');
   const [loading, setLoading] = useState(false);
   const [initialLoad, setInitialLoad] = useState(true);
   const [knowledgeGraphData, setKnowledgeGraphData] = useState(null);
@@ -119,6 +128,12 @@ export default function Search() {
       setInitialLoad(false);
     }
   }, [initialLoad, q, handleSearch]);
+
+  useEffect(() => {
+    if (aiAnswer) {
+      setRenderedAnswer(sanitizeHtml(renderMarkdown(aiAnswer)));
+    }
+  }, [aiAnswer]);
 
   const handleChange = (e) => {
     setQuery(e.target.value);
@@ -230,14 +245,6 @@ export default function Search() {
     console.log('knowledgeGraphData updated:', knowledgeGraphData);
   }, [knowledgeGraphData]);
 
-  const [renderedAnswer, setRenderedAnswer] = useState('');
-
-  useEffect(() => {
-    if (aiAnswer) {
-      setRenderedAnswer(sanitizeHtml(renderMarkdown(aiAnswer)));
-    }
-  }, [aiAnswer]);
-
   return (
     <div className="flex flex-row min-h-screen relative pb-20">
       <div className="w-1/6 p-4 bg-[#ECF5FD] flex flex-col justify-between fixed h-full" style={{ fontFamily: 'Open Sans, sans-serif' }}>
@@ -323,7 +330,7 @@ export default function Search() {
                   <div className="h-full bg-gray-200 animate-pulse rounded"></div>
                 ) : (
                   <div 
-                    className="result-snippet"
+                    className="result-snippet prose prose-sm max-w-none"
                     dangerouslySetInnerHTML={{ __html: renderedAnswer }}
                   />
                 )}
