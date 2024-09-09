@@ -1,4 +1,4 @@
-import { faArrowLeft, faArrowRight, faArrowUp } from '@fortawesome/free-solid-svg-icons';
+import { faArrowRight, faArrowUp } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
@@ -312,15 +312,17 @@ export default function Search() {
           <div className="w-full max-w-2xl p-4">
             <div className="bg-white p-4 rounded-lg shadow-md mb-4 flex items-center border border-gray-300 transition-all duration-300 relative" style={{ height: '8rem' }}>
               <button 
-                className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors duration-200"
                 onClick={() => setShowLargeSearch(false)}
               >
-                <FontAwesomeIcon icon={faArrowLeft} />
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
               </button>
               <input 
                 type="text" 
                 placeholder="Just ask..." 
-                className="w-full p-4 border-none outline-none text-xl pl-12"
+                className="w-full p-4 border-none outline-none text-xl pl-16"
                 value={query}
                 onChange={handleChange}
                 onKeyPress={handleLargeSearchKeyPress}
