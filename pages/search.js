@@ -279,40 +279,38 @@ export default function Search() {
           <div className="w-3/4 pr-4">
             <div className="mb-4">
               <h3 className="result-title text-4xl mb-2 text-center">🧠Knowledge Graph</h3>
-              <div className="relative">
-                {loading || expandingNode ? (
-                  <div className="h-64 bg-gray-200 animate-pulse rounded"></div>
-                ) : graphError ? (
-                  <p className="text-red-500">{graphError}</p>
-                ) : knowledgeGraphData ? (
-                  <div style={{ height: '600px', width: '100%', border: '1px solid #ddd', borderRadius: '8px' }}>
-                    <KnowledgeGraph 
-                      data={knowledgeGraphData} 
-                      onNodeClick={handleNodeClick}
-                      onNodeDragStop={handleNodeDragStop}
-                    />
-                  </div>
-                ) : (
-                  <p>没有可用的知识图谱数据</p>
-                )}
-                <div className="absolute bottom-0 left-0 right-0 flex justify-center mt-4 pb-2">
-                  <button 
-                    onClick={handleUndo} 
-                    disabled={graphHistory.length === 0}
-                    className="text-2xl opacity-50 hover:opacity-100 transition-opacity disabled:opacity-30 mr-2"
-                    title="撤销上一步"
-                  >
-                    ↩️
-                  </button>
-                  <button 
-                    onClick={handleRedo} 
-                    disabled={graphFuture.length === 0}
-                    className="text-2xl opacity-50 hover:opacity-100 transition-opacity disabled:opacity-30"
-                    title="重做下一步"
-                  >
-                    ↪️
-                  </button>
+              {loading || expandingNode ? (
+                <div className="h-64 bg-gray-200 animate-pulse rounded"></div>
+              ) : graphError ? (
+                <p className="text-red-500">{graphError}</p>
+              ) : knowledgeGraphData ? (
+                <div style={{ height: '600px', width: '100%', border: '1px solid #ddd', borderRadius: '8px' }}>
+                  <KnowledgeGraph 
+                    data={knowledgeGraphData} 
+                    onNodeClick={handleNodeClick}
+                    onNodeDragStop={handleNodeDragStop}
+                  />
                 </div>
+              ) : (
+                <p>没有可用的知识图谱数据</p>
+              )}
+              <div className="flex justify-center mt-4">
+                <button 
+                  onClick={handleUndo} 
+                  disabled={graphHistory.length === 0}
+                  className="text-2xl opacity-50 hover:opacity-100 transition-opacity disabled:opacity-30 mr-2"
+                  title="撤销上一步"
+                >
+                  ↩️
+                </button>
+                <button 
+                  onClick={handleRedo} 
+                  disabled={graphFuture.length === 0}
+                  className="text-2xl opacity-50 hover:opacity-100 transition-opacity disabled:opacity-30"
+                  title="重做下一步"
+                >
+                  ↪️
+                </button>
               </div>
             </div>
           </div>
