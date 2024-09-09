@@ -5,15 +5,40 @@ const openai = new OpenAI({
   project: 'proj_TRi4aW8PdBr9LBaE9W34pDPi',
 });
 
-function createLayout(nodes, parentNode) {
-  const radius = 100; // 减小半径
+function isOverlapping(node1, node2) {
+  const margin = 20; // 节点间的最小间距
+  return Math.abs(node1.position.x - node2.position.x) < node1.style.width + margin &&
+         Math.abs(node1.position.y - node2.position.y) < node1.style.height + margin;
+}
+
+function createLayout(nodes, parentNode, existingNodes) {
+  const radius = 200;
   const angleStep = (2 * Math.PI) / nodes.length;
 
   return nodes.map((node, index) => {
-    const angle = index * angleStep;
-    const x = parentNode.position.x + radius * Math.cos(angle);
-    const y = parentNode.position.y + radius * Math.sin(angle);
+    let angle = index * angleStep;
+    let x, y;
+    let attempts = 0;
+    const maxAttempts = 20;
 
+    do {
+      x = parentNode.position.x + radius * Math.cos(angle);
+      y = parentNode.position.y + radius * Math.sin(angle);
+      attempts++;
+      angle += 0.1;
+
+      const newNode = {
+        ...node,
+        position: { x, y },
+        style: { width: 150, height: 50 }
+      };
+
+      if (!existingNodes.some(existingNode => isOverlapping(newNode, existingNode))) {
+        return newNode;
+      }
+    } while (attempts < maxAttempts);
+
+    // 如果无法找到不重叠的位置，返回最后一次尝试的位置
     return {
       ...node,
       position: { x, y },
@@ -92,7 +117,8 @@ export default async function handler(req, res) {
     }));
 
     const parentNode = { id: nodeId, position: parentPosition || { x: 0, y: 0 } };
-    const layoutedNodes = createLayout(processedNodes, parentNode);
+    const existingNodes = req.body.existingNodes || [];
+    const layoutedNodes = createLayout(processedNodes, parentNode, existingNodes);
 
     const newEdges = layoutedNodes.map(node => ({
       id: `${nodeId}-${node.id}`,

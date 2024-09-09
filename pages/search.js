@@ -6,7 +6,7 @@ import { useRouter } from 'next/router';
 import { useCallback, useEffect, useState } from 'react';
 import 'tailwindcss/tailwind.css';
 import '../styles/globals.css';
-import { createMindMapLayout, createPyramidLayout } from '../utils/graphLayouts';
+import { createMindMapLayout, createPyramidLayout, relayoutGraph } from '../utils/graphLayouts';
 
 const KnowledgeGraph = dynamic(() => import('../components/KnowledgeGraph'), {
   ssr: false,
@@ -147,11 +147,8 @@ export default function Search() {
         const newNodes = [...prevData.nodes, ...expandedData.nodes];
         const newEdges = [...prevData.edges, ...expandedData.edges];
         
-        return {
-          nodes: newNodes,
-          edges: newEdges,
-          type: prevData.type
-        };
+        // 使用全局重新布局函数
+        return relayoutGraph(newNodes, newEdges, prevData.type);
       });
     } catch (error) {
       console.error('展开节点时出错:', error);
