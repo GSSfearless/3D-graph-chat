@@ -214,7 +214,17 @@ export default function Search() {
         <div className="flex">
           <div className="w-3/4 pr-4">
             <div className="mb-4">
-              <h3 className="result-title text-4xl">🧠Knowledge Graph</h3>
+              <div className="flex items-center justify-between mb-2">
+                <h3 className="result-title text-4xl">🧠Knowledge Graph</h3>
+                <button 
+                  onClick={handleUndo} 
+                  disabled={graphHistory.length === 0}
+                  className="text-2xl opacity-50 hover:opacity-100 transition-opacity disabled:opacity-30"
+                  title="撤销上一步"
+                >
+                  ↩️
+                </button>
+              </div>
               {loading || expandingNode ? (
                 <div className="h-64 bg-gray-200 animate-pulse rounded"></div>
               ) : graphError ? (
@@ -254,13 +264,6 @@ export default function Search() {
                       }
                     }}
                   />
-                  <button 
-                    onClick={handleUndo} 
-                    disabled={graphHistory.length === 0}
-                    className="mt-2 px-4 py-2 bg-blue-500 text-white rounded disabled:bg-gray-300"
-                  >
-                    撤销上一步
-                  </button>
                 </div>
               ) : (
                 <p>没有可用的知识图谱数据</p>
