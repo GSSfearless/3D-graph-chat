@@ -130,7 +130,8 @@ export default function Search() {
         body: JSON.stringify({ 
           nodeId: node.id, 
           label: node.data.label,
-          parentPosition: node.position // 添加这一行
+          parentPosition: node.position,
+          existingNodes: knowledgeGraphData.nodes // 传递现有节点信息
         }),
       });
 
@@ -147,8 +148,11 @@ export default function Search() {
         const newNodes = [...prevData.nodes, ...expandedData.nodes];
         const newEdges = [...prevData.edges, ...expandedData.edges];
         
-        // 使用全局重新布局函数
-        return relayoutGraph(newNodes, newEdges, prevData.type);
+        return {
+          nodes: newNodes,
+          edges: newEdges,
+          type: prevData.type
+        };
       });
     } catch (error) {
       console.error('展开节点时出错:', error);
