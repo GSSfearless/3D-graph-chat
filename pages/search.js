@@ -212,18 +212,7 @@ export default function Search() {
       </div>
       <div className="w-5/6 p-4 ml-[16.666667%] overflow-y-auto mb-16">
         <div className="flex">
-          <div className="w-2/3 pr-4">
-            <div className="result-item mb-4">
-              <h3 className="result-title text-4xl">📝Answer</h3>
-              <p className="text-xs text-gray-500 text-center mb-2">搜集了 {searchResults.length} 个网页</p>
-              <div className="min-h-40 p-4">
-                {loading ? (
-                  <div className="h-full bg-gray-200 animate-pulse rounded"></div>
-                ) : (
-                  <p className="result-snippet">{aiAnswer}</p>
-                )}
-              </div>
-            </div>
+          <div className="w-3/4 pr-4">
             <div className="mb-4">
               <h3 className="result-title text-4xl">🧠Knowledge Graph</h3>
               {loading || expandingNode ? (
@@ -278,10 +267,17 @@ export default function Search() {
               )}
             </div>
           </div>
-          <div className="w-1/3 p-4 bg-white">
-            <h3 className="result-title text-lg mb-2">📚 Bookmark</h3>
-            <div className="space-y-1">
-              {/* 暂时留为空白 */}
+          <div className="w-1/4 p-4 bg-white">
+            <div className="result-item mb-4">
+              <h3 className="result-title text-4xl">📝Answer</h3>
+              <p className="text-xs text-gray-500 text-center mb-2">搜集了 {searchResults.length} 个网页</p>
+              <div className="min-h-40 p-4">
+                {loading ? (
+                  <div className="h-full bg-gray-200 animate-pulse rounded"></div>
+                ) : (
+                  <p className="result-snippet">{aiAnswer}</p>
+                )}
+              </div>
             </div>
           </div>
         </div>
