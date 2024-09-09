@@ -18,11 +18,20 @@ export default async function handler(req, res) {
   }
 
   const prompt = `
-  You are a large language AI assistant. You are given a user question, and please write a clean, concise and accurate answer to the question. You will be given a set of related contexts to the question, each starting with a reference number like [[x]], where x is a number. Please use the context and cite the context at the end of each sentence if applicable. Your answer must be correct, accurate, and written by an expert using an unbiased and professional tone. Please limit to 1024 tokens. Do not give any information that is not related to the question, and do not repeat. Say "information is missing on" followed by the related topic, if the given context does not provide sufficient information. Please cite the contexts with the reference numbers, in the format [x]. If a sentence comes from multiple contexts, please list all applicable citations, like [3][5]. Other than code and specific names and citations, your answer must be written in the same language as the question. Here are the set of contexts:
+  你是一个大型语言AI助手。请针对用户的问题提供一个简洁、准确的回答。你将获得一组与问题相关的上下文信息。你的回答必须正确、准确，并以专业和中立的语气撰写。请限制在1024个标记以内。不要提供与问题无关的信息，也不要重复。如果给定的上下文不提供足够的信息，请说"关于[相关主题]的信息不足"。
 
-  ${context.map((item, index) => `[[${index + 1}]] Title: ${item.title}\nSnippet: ${item.snippet}`).join('\n\n')}
+  请使用以下格式来组织你的回答：
+  1. 使用粗体（用**包围）来强调重要概念或关键词。
+  2. 使用编号列表来组织多个要点。
+  3. 如果适用，使用小标题来分隔不同的部分。
 
-  Remember, don't blindly repeat the contexts verbatim. And here is the user question:
+  不要引用任何上下文编号或来源。专注于提供信息丰富、结构清晰的回答。
+
+  以下是上下文信息集：
+
+  ${context.map((item, index) => `标题: ${item.title}\n摘要: ${item.snippet}`).join('\n\n')}
+
+  记住，不要盲目重复上下文。这里是用户的问题：
   "${query}"
   `;
 
@@ -35,16 +44,16 @@ export default async function handler(req, res) {
     const generatedAnswer = response.choices[0].message.content;
     res.status(200).json({ answer: generatedAnswer });
   } catch (error) {
-    console.error('Error generating answer:', error);
+    console.error('生成答案时出错:', error);
 
     if (error.response) {
-      console.error('Status:', error.response.status);
-      console.error('Headers:', error.response.headers);
-      console.error('Data:', error.response.data);
-      res.status(500).json({ error: 'Failed to generate answer', details: error.response.data });
+      console.error('状态:', error.response.status);
+      console.error('头部:', error.response.headers);
+      console.error('数据:', error.response.data);
+      res.status(500).json({ error: '生成答案失败', details: error.response.data });
     } else {
-      console.error('Error Message:', error.message);
-      res.status(500).json({ error: 'Failed to generate answer', details: error.message });
+      console.error('错误信息:', error.message);
+      res.status(500).json({ error: '生成答案失败', details: error.message });
     }
   }
 }

@@ -12,6 +12,29 @@ const KnowledgeGraph = dynamic(() => import('../components/KnowledgeGraph'), {
   loading: () => <p>正在加载知识图谱...</p>
 });
 
+function sanitizeHtml(html) {
+  const temp = document.createElement('div');
+  temp.innerHTML = html;
+  return temp.textContent || temp.innerText;
+}
+
+function renderMarkdown(text) {
+  // 处理粗体
+  text = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+  
+  // 处理编号列表
+  text = text.replace(/^\d+\.\s(.*)$/gm, '<li>$1</li>');
+  text = text.replace(/<li>/g, '<ol><li>').replace(/<\/li>(?![\n\r]*<li>)/g, '</li></ol>');
+  
+  // 处理小标题
+  text = text.replace(/^###\s(.*)$/gm, '<h3>$1</h3>');
+  
+  // 处理换行
+  text = text.replace(/\n/g, '<br>');
+  
+  return text;
+}
+
 export default function Search() {
   const router = useRouter();
   const { q } = router.query;
@@ -244,27 +267,7 @@ export default function Search() {
         <div className="flex">
           <div className="w-3/4 pr-4">
             <div className="mb-4">
-              <div className="flex items-center justify-center mb-2">
-                <h3 className="result-title text-4xl mr-4">🧠Knowledge Graph</h3>
-                <div className="flex items-center">
-                  <button 
-                    onClick={handleUndo} 
-                    disabled={graphHistory.length === 0}
-                    className="text-2xl opacity-50 hover:opacity-100 transition-opacity disabled:opacity-30 mr-2"
-                    title="撤销上一步"
-                  >
-                    ↩️
-                  </button>
-                  <button 
-                    onClick={handleRedo} 
-                    disabled={graphFuture.length === 0}
-                    className="text-2xl opacity-50 hover:opacity-100 transition-opacity disabled:opacity-30"
-                    title="重做下一步"
-                  >
-                    ↪️
-                  </button>
-                </div>
-              </div>
+              <h3 className="result-title text-4xl mb-2 text-center">🧠Knowledge Graph</h3>
               {loading || expandingNode ? (
                 <div className="h-64 bg-gray-200 animate-pulse rounded"></div>
               ) : graphError ? (
@@ -280,6 +283,24 @@ export default function Search() {
               ) : (
                 <p>没有可用的知识图谱数据</p>
               )}
+              <div className="flex justify-center mt-4">
+                <button 
+                  onClick={handleUndo} 
+                  disabled={graphHistory.length === 0}
+                  className="text-2xl opacity-50 hover:opacity-100 transition-opacity disabled:opacity-30 mr-2"
+                  title="撤销上一步"
+                >
+                  ↩️
+                </button>
+                <button 
+                  onClick={handleRedo} 
+                  disabled={graphFuture.length === 0}
+                  className="text-2xl opacity-50 hover:opacity-100 transition-opacity disabled:opacity-30"
+                  title="重做下一步"
+                >
+                  ↪️
+                </button>
+              </div>
             </div>
           </div>
           <div className="w-1/4 p-4 bg-white">
@@ -290,7 +311,10 @@ export default function Search() {
                 {loading ? (
                   <div className="h-full bg-gray-200 animate-pulse rounded"></div>
                 ) : (
-                  <p className="result-snippet">{aiAnswer}</p>
+                  <div 
+                    className="result-snippet"
+                    dangerouslySetInnerHTML={{ __html: sanitizeHtml(renderMarkdown(aiAnswer)) }}
+                  />
                 )}
               </div>
             </div>
