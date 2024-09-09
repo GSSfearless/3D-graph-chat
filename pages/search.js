@@ -6,7 +6,6 @@ import { useRouter } from 'next/router';
 import { useCallback, useEffect, useState } from 'react';
 import 'tailwindcss/tailwind.css';
 import '../styles/globals.css';
-import { createMindMapLayout, createPyramidLayout, relayoutGraph } from '../utils/graphLayouts';
 
 const KnowledgeGraph = dynamic(() => import('../components/KnowledgeGraph'), {
   ssr: false,
@@ -27,6 +26,7 @@ export default function Search() {
   const [showLargeSearch, setShowLargeSearch] = useState(false);
   const [expandingNode, setExpandingNode] = useState(null);
   const [graphHistory, setGraphHistory] = useState([]);
+  const [graphFuture, setGraphFuture] = useState([]);
 
   const defaultQuery = "生命、宇宙以及一切的答案是什么？";
 
@@ -68,6 +68,8 @@ export default function Search() {
 
         const graphData = await graphResponse.json();
         console.log('知识图谱数据:', graphData);
+        setGraphHistory(prev => [...prev, knowledgeGraphData]);
+        setGraphFuture([]);
         setKnowledgeGraphData(graphData);
         console.log('Initial knowledge graph data:', graphData);
       } catch (error) {
@@ -81,7 +83,7 @@ export default function Search() {
       console.error('搜索过程中出错:', error);
     }
     setLoading(false);
-  }, []);
+  }, [knowledgeGraphData]);
 
   useEffect(() => {
     console.log('Search component mounted');
@@ -143,6 +145,7 @@ export default function Search() {
       console.log('Expanded data:', expandedData);
 
       setGraphHistory(prev => [...prev, knowledgeGraphData]);
+      setGraphFuture([]); // 清空未来状态，因为创建了新的分支
       
       setKnowledgeGraphData(prevData => {
         const newNodes = [...prevData.nodes, ...expandedData.nodes];
@@ -162,13 +165,23 @@ export default function Search() {
     }
   };
 
-  const handleUndo = () => {
+  const handleUndo = useCallback(() => {
     if (graphHistory.length > 0) {
       const previousState = graphHistory[graphHistory.length - 1];
+      setGraphFuture(prev => [knowledgeGraphData, ...prev]);
       setKnowledgeGraphData(previousState);
       setGraphHistory(prev => prev.slice(0, -1));
     }
-  };
+  }, [graphHistory, knowledgeGraphData]);
+
+  const handleRedo = useCallback(() => {
+    if (graphFuture.length > 0) {
+      const nextState = graphFuture[0];
+      setGraphHistory(prev => [...prev, knowledgeGraphData]);
+      setKnowledgeGraphData(nextState);
+      setGraphFuture(prev => prev.slice(1));
+    }
+  }, [graphFuture, knowledgeGraphData]);
 
   useEffect(() => {
     console.log('knowledgeGraphData updated:', knowledgeGraphData);
@@ -214,17 +227,7 @@ export default function Search() {
         <div className="flex">
           <div className="w-3/4 pr-4">
             <div className="mb-4">
-              <div className="flex items-center justify-between mb-2">
-                <h3 className="result-title text-4xl">🧠Knowledge Graph</h3>
-                <button 
-                  onClick={handleUndo} 
-                  disabled={graphHistory.length === 0}
-                  className="text-2xl opacity-50 hover:opacity-100 transition-opacity disabled:opacity-30"
-                  title="撤销上一步"
-                >
-                  ↩️
-                </button>
-              </div>
+              <h3 className="result-title text-4xl mb-2">🧠Knowledge Graph</h3>
               {loading || expandingNode ? (
                 <div className="h-64 bg-gray-200 animate-pulse rounded"></div>
               ) : graphError ? (
@@ -268,6 +271,24 @@ export default function Search() {
               ) : (
                 <p>没有可用的知识图谱数据</p>
               )}
+              <div className="flex justify-center mt-4">
+                <button 
+                  onClick={handleUndo} 
+                  disabled={graphHistory.length === 0}
+                  className="text-2xl opacity-50 hover:opacity-100 transition-opacity disabled:opacity-30 mr-4"
+                  title="撤销上一步"
+                >
+                  ↩️
+                </button>
+                <button 
+                  onClick={handleRedo} 
+                  disabled={graphFuture.length === 0}
+                  className="text-2xl opacity-50 hover:opacity-100 transition-opacity disabled:opacity-30"
+                  title="重做下一步"
+                >
+                  ↪️
+                </button>
+              </div>
             </div>
           </div>
           <div className="w-1/4 p-4 bg-white">
