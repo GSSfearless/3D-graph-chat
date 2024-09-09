@@ -6,7 +6,7 @@ const openai = new OpenAI({
 });
 
 function createLayout(nodes, parentNode) {
-  const radius = 200;
+  const radius = 100; // 减小半径
   const angleStep = (2 * Math.PI) / nodes.length;
 
   return nodes.map((node, index) => {
@@ -34,13 +34,7 @@ function parseJSONSafely(str) {
     return JSON.parse(sanitizeJSON(str));
   } catch (error) {
     console.error('JSON parsing error:', error);
-    // 返回一个默认的节点结构
-    return {
-      nodes: [
-        { id: 'default1', label: 'Default Node 1' },
-        { id: 'default2', label: 'Default Node 2' }
-      ]
-    };
+    return null;
   }
 }
 
@@ -58,7 +52,7 @@ export default async function handler(req, res) {
     return res.status(405).json({ message: '只允许 POST 请求' });
   }
 
-  const { nodeId, label } = req.body;
+  const { nodeId, label, parentPosition } = req.body;
 
   if (!nodeId || !label) {
     return res.status(400).json({ message: '缺少必要的参数' });
@@ -82,25 +76,25 @@ export default async function handler(req, res) {
     let expandedData = parseJSONSafely(cleanedResponse);
     console.log('Parsed expanded data:', expandedData);
 
-    // 确保 expandedData 有正确的结构
-    if (!expandedData.nodes || !Array.isArray(expandedData.nodes)) {
-      throw new Error('OpenAI 响应格式不正确');
+    if (!expandedData || !expandedData.nodes || !Array.isArray(expandedData.nodes) || expandedData.nodes.length === 0) {
+      console.error('Invalid expandedData structure:', expandedData);
+      expandedData = {
+        nodes: [
+          { id: `${nodeId}-child-1`, label: `Aspect 1 of ${label}` },
+          { id: `${nodeId}-child-2`, label: `Aspect 2 of ${label}` }
+        ]
+      };
     }
 
-    // 为新节点创建布局
-    const parentNode = { id: nodeId, position: { x: 0, y: 0 } };
-    const layoutedNodes = createLayout(expandedData.nodes, parentNode);
-
-    // 修改这里，确保新节点包含正确的数据结构
-    const processedNodes = layoutedNodes.map(node => ({
-      id: node.id,
-      data: { label: node.label },
-      position: node.position,
-      style: node.style
+    const processedNodes = expandedData.nodes.map((node, index) => ({
+      id: node.id || `${nodeId}-child-${index + 1}`,
+      data: { label: node.label || `Aspect ${index + 1} of ${label}` },
     }));
 
-    // 创建从父节点到新节点的边
-    const newEdges = processedNodes.map(node => ({
+    const parentNode = { id: nodeId, position: parentPosition || { x: 0, y: 0 } };
+    const layoutedNodes = createLayout(processedNodes, parentNode);
+
+    const newEdges = layoutedNodes.map(node => ({
       id: `${nodeId}-${node.id}`,
       source: nodeId,
       target: node.id,
@@ -108,7 +102,7 @@ export default async function handler(req, res) {
     }));
 
     const responseData = {
-      nodes: processedNodes,
+      nodes: layoutedNodes,
       edges: newEdges,
     };
     console.log('Sending response:', responseData);

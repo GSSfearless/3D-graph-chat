@@ -1,4 +1,4 @@
-import { faArrowUp, faArrowLeft, faArrowRight } from '@fortawesome/free-solid-svg-icons';
+import { faArrowLeft, faArrowRight, faArrowUp } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
@@ -6,7 +6,7 @@ import { useRouter } from 'next/router';
 import { useCallback, useEffect, useState } from 'react';
 import 'tailwindcss/tailwind.css';
 import '../styles/globals.css';
-import { createPyramidLayout, createMindMapLayout } from '../utils/graphLayouts';
+import { createMindMapLayout, createPyramidLayout } from '../utils/graphLayouts';
 
 const KnowledgeGraph = dynamic(() => import('../components/KnowledgeGraph'), {
   ssr: false,
@@ -119,62 +119,46 @@ export default function Search() {
   };
 
   const handleNodeClick = async (node) => {
-    console.log('handleNodeClick called with node:', node);
-    
-    console.log('Expanding node:', node.id);
     setExpandingNode(node.id);
+    setGraphError(null);
 
     try {
       console.log('Sending request to /api/expandNode');
       const response = await fetch('/api/expandNode', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ nodeId: node.id, label: node.data.label }),
+        body: JSON.stringify({ 
+          nodeId: node.id, 
+          label: node.data.label,
+          parentPosition: node.position // 添加这一行
+        }),
       });
 
-      console.log('Response received:', response);
-
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(`展开节点时出错: ${response.status}, ${JSON.stringify(errorData)}`);
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
 
       const expandedData = await response.json();
       console.log('Expanded data:', expandedData);
 
-      setGraphHistory(prev => {
-        console.log('Updating graph history');
-        return [...prev, knowledgeGraphData];
-      });
+      setGraphHistory(prev => [...prev, knowledgeGraphData]);
       
       setKnowledgeGraphData(prevData => {
-        console.log('Updating knowledge graph data');
         const newNodes = [...prevData.nodes, ...expandedData.nodes];
         const newEdges = [...prevData.edges, ...expandedData.edges];
         
-        // 重新计算整个图的布局
-        const layoutedData = relayoutGraph(newNodes, newEdges, prevData.type || 'mindmap');
-        
-        console.log('New knowledge graph data:', layoutedData);
-        return layoutedData;
+        return {
+          nodes: newNodes,
+          edges: newEdges,
+          type: prevData.type
+        };
       });
     } catch (error) {
       console.error('展开节点时出错:', error);
-      // 可以在这里添加一个用户友好的错误提示
+      setGraphError('展开节点时出错: ' + error.message);
     } finally {
       setExpandingNode(null);
     }
-  };
-
-  const relayoutGraph = (nodes, edges, type) => {
-    const layoutFunction = type === 'pyramid' ? createPyramidLayout : createMindMapLayout;
-    const layoutedNodes = layoutFunction(nodes);
-    
-    return {
-      nodes: layoutedNodes,
-      edges: edges,
-      type: type
-    };
   };
 
   const handleUndo = () => {
@@ -250,7 +234,6 @@ export default function Search() {
                   <KnowledgeGraph 
                     data={knowledgeGraphData} 
                     onNodeClick={handleNodeClick}
-                    key={JSON.stringify(knowledgeGraphData)}
                     options={{
                       layout: {
                         improvedLayout: true,
