@@ -125,6 +125,17 @@ export default async function handler(req, res) {
       source: nodeId,
       target: node.id,
       label: '详细',
+      type: 'smoothstep',
+      animated: true,
+      labelStyle: { fill: '#888', fontWeight: 700 },
+      labelBgStyle: { fill: '#fff', fillOpacity: 0.7 },
+      labelBgPadding: [8, 4],
+      labelBgBorderRadius: 4,
+      style: { stroke: '#888', strokeWidth: 2 },
+      markerEnd: {
+        type: 'arrowclosed',
+        color: '#888',
+      },
     }));
 
     const responseData = {
