@@ -236,13 +236,13 @@ export default function Search() {
         <div className="flex">
           <div className="w-3/4 pr-4">
             <div className="mb-4">
-              <div className="flex items-center justify-between mb-2">
-                <h3 className="result-title text-4xl">🧠Knowledge Graph</h3>
-                <div>
+              <div className="flex items-center justify-center mb-2">
+                <h3 className="result-title text-4xl mr-4">🧠Knowledge Graph</h3>
+                <div className="flex items-center">
                   <button 
                     onClick={handleUndo} 
                     disabled={graphHistory.length === 0}
-                    className="text-2xl opacity-50 hover:opacity-100 transition-opacity disabled:opacity-30 mr-4"
+                    className="text-2xl opacity-50 hover:opacity-100 transition-opacity disabled:opacity-30 mr-2"
                     title="撤销上一步"
                   >
                     ↩️
