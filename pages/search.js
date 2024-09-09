@@ -13,6 +13,9 @@ const KnowledgeGraph = dynamic(() => import('../components/KnowledgeGraph'), {
 });
 
 function sanitizeHtml(html) {
+  if (typeof window === 'undefined') {
+    return html; // 在服务器端，直接返回原始 HTML
+  }
   const temp = document.createElement('div');
   temp.innerHTML = html;
   return temp.textContent || temp.innerText;
@@ -227,6 +230,14 @@ export default function Search() {
     console.log('knowledgeGraphData updated:', knowledgeGraphData);
   }, [knowledgeGraphData]);
 
+  const [renderedAnswer, setRenderedAnswer] = useState('');
+
+  useEffect(() => {
+    if (aiAnswer) {
+      setRenderedAnswer(sanitizeHtml(renderMarkdown(aiAnswer)));
+    }
+  }, [aiAnswer]);
+
   return (
     <div className="flex flex-row min-h-screen relative pb-20">
       <div className="w-1/6 p-4 bg-[#ECF5FD] flex flex-col justify-between fixed h-full" style={{ fontFamily: 'Open Sans, sans-serif' }}>
@@ -313,7 +324,7 @@ export default function Search() {
                 ) : (
                   <div 
                     className="result-snippet"
-                    dangerouslySetInnerHTML={{ __html: sanitizeHtml(renderMarkdown(aiAnswer)) }}
+                    dangerouslySetInnerHTML={{ __html: renderedAnswer }}
                   />
                 )}
               </div>
