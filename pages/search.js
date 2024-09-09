@@ -15,33 +15,22 @@ const KnowledgeGraph = dynamic(() => import('../components/KnowledgeGraph'), {
 function sanitizeHtml(html) {
   const temp = document.createElement('div');
   temp.innerHTML = html;
-  return temp.textContent || temp.innerText;
+  return temp.innerHTML; // 使用 innerHTML 而不是 textContent
 }
 
 function renderMarkdown(text) {
+  // 处理小标题
+  text = text.replace(/^###\s(.*)$/gm, '<h3>$1</h3>');
+  
   // 处理粗体
   text = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-  
-  // 处理下划线
-  text = text.replace(/__(.*?)__/g, '<u>$1</u>');
   
   // 处理编号列表
   text = text.replace(/^\d+\.\s(.*)$/gm, '<li>$1</li>');
   text = text.replace(/<li>/g, '<ol><li>').replace(/<\/li>(?![\n\r]*<li>)/g, '</li></ol>');
   
-  // 处理无序列表
-  text = text.replace(/^-\s(.*)$/gm, '<li>$1</li>');
-  text = text.replace(/(?<!<\/ol>)<li>/g, '<ul><li>').replace(/<\/li>(?![\n\r]*<li>)(?!<\/ol>)/g, '</li></ul>');
-  
-  // 处理小标题
-  text = text.replace(/^###\s(.*)$/gm, '<h3>$1</h3>');
-  
-  // 处理段落和空行
-  text = text.replace(/\n\n/g, '</p><p>');
-  text = '<p>' + text + '</p>';
-  
-  // 处理单行换行
-  text = text.replace(/\n/g, '<br>');
+  // 处理段落
+  text = text.split('\n').map(paragraph => `<p>${paragraph}</p>`).join('');
   
   return text;
 }
@@ -131,7 +120,9 @@ export default function Search() {
 
   useEffect(() => {
     if (aiAnswer) {
-      setRenderedAnswer(sanitizeHtml(renderMarkdown(aiAnswer)));
+      const markdown = renderMarkdown(aiAnswer);
+      const sanitized = sanitizeHtml(markdown);
+      setRenderedAnswer(sanitized);
     }
   }, [aiAnswer]);
 
