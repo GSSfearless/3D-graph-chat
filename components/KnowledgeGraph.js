@@ -15,7 +15,7 @@ const Background = dynamic(() => import('react-flow-renderer').then(mod => mod.B
   ssr: false
 });
 
-const KnowledgeGraph = ({ data, onNodeClick }) => {
+const KnowledgeGraph = ({ data, onNodeClick, onNodeDragStop }) => {
   console.log('KnowledgeGraph rendered with data:', data);
 
   const [mounted, setMounted] = useState(false);
@@ -33,6 +33,11 @@ const KnowledgeGraph = ({ data, onNodeClick }) => {
     onNodeClick(node);
   }, [onNodeClick]);
 
+  const handleNodeDragStop = useCallback((event, node) => {
+    console.log('Node dragged in KnowledgeGraph:', node);
+    onNodeDragStop(node);
+  }, [onNodeDragStop]);
+
   if (!mounted) return null;
 
   if (!data || !data.nodes || !data.edges) {
@@ -49,8 +54,9 @@ const KnowledgeGraph = ({ data, onNodeClick }) => {
         }))}
         edges={data.edges}
         onNodeClick={handleNodeClick}
+        onNodeDragStop={handleNodeDragStop}
         onInit={onInit}
-        nodesDraggable={false}
+        nodesDraggable={true}
         nodesConnectable={false}
         zoomOnScroll={false}
         zoomOnPinch={true}

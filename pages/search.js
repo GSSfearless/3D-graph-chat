@@ -165,6 +165,15 @@ export default function Search() {
     }
   };
 
+  const handleNodeDragStop = useCallback((node) => {
+    setKnowledgeGraphData(prevData => {
+      const updatedNodes = prevData.nodes.map(n => 
+        n.id === node.id ? { ...n, position: node.position } : n
+      );
+      return { ...prevData, nodes: updatedNodes };
+    });
+  }, []);
+
   const handleUndo = useCallback(() => {
     if (graphHistory.length > 0) {
       const previousState = graphHistory[graphHistory.length - 1];
@@ -227,7 +236,27 @@ export default function Search() {
         <div className="flex">
           <div className="w-3/4 pr-4">
             <div className="mb-4">
-              <h3 className="result-title text-4xl mb-2">🧠Knowledge Graph</h3>
+              <div className="flex items-center justify-between mb-2">
+                <h3 className="result-title text-4xl">🧠Knowledge Graph</h3>
+                <div>
+                  <button 
+                    onClick={handleUndo} 
+                    disabled={graphHistory.length === 0}
+                    className="text-2xl opacity-50 hover:opacity-100 transition-opacity disabled:opacity-30 mr-4"
+                    title="撤销上一步"
+                  >
+                    ↩️
+                  </button>
+                  <button 
+                    onClick={handleRedo} 
+                    disabled={graphFuture.length === 0}
+                    className="text-2xl opacity-50 hover:opacity-100 transition-opacity disabled:opacity-30"
+                    title="重做下一步"
+                  >
+                    ↪️
+                  </button>
+                </div>
+              </div>
               {loading || expandingNode ? (
                 <div className="h-64 bg-gray-200 animate-pulse rounded"></div>
               ) : graphError ? (
@@ -237,58 +266,12 @@ export default function Search() {
                   <KnowledgeGraph 
                     data={knowledgeGraphData} 
                     onNodeClick={handleNodeClick}
-                    options={{
-                      layout: {
-                        improvedLayout: true,
-                        hierarchical: false
-                      },
-                      edges: {
-                        smooth: {
-                          type: 'cubicBezier',
-                          forceDirection: 'horizontal',
-                          roundness: 0.4
-                        }
-                      },
-                      physics: {
-                        stabilization: true,
-                        barnesHut: {
-                          gravitationalConstant: -80000,
-                          springConstant: 0.001,
-                          springLength: 200
-                        }
-                      },
-                      nodes: {
-                        shape: 'box',
-                        margin: 10,
-                        widthConstraint: {
-                          minimum: 60,
-                          maximum: 120
-                        }
-                      }
-                    }}
+                    onNodeDragStop={handleNodeDragStop}
                   />
                 </div>
               ) : (
                 <p>没有可用的知识图谱数据</p>
               )}
-              <div className="flex justify-center mt-4">
-                <button 
-                  onClick={handleUndo} 
-                  disabled={graphHistory.length === 0}
-                  className="text-2xl opacity-50 hover:opacity-100 transition-opacity disabled:opacity-30 mr-4"
-                  title="撤销上一步"
-                >
-                  ↩️
-                </button>
-                <button 
-                  onClick={handleRedo} 
-                  disabled={graphFuture.length === 0}
-                  className="text-2xl opacity-50 hover:opacity-100 transition-opacity disabled:opacity-30"
-                  title="重做下一步"
-                >
-                  ↪️
-                </button>
-              </div>
             </div>
           </div>
           <div className="w-1/4 p-4 bg-white">
