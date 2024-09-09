@@ -166,13 +166,15 @@ export default function Search() {
   };
 
   const handleNodeDragStop = useCallback((node) => {
+    setGraphHistory(prev => [...prev, knowledgeGraphData]);
+    setGraphFuture([]); // 清空未来状态
     setKnowledgeGraphData(prevData => {
       const updatedNodes = prevData.nodes.map(n => 
         n.id === node.id ? { ...n, position: node.position } : n
       );
       return { ...prevData, nodes: updatedNodes };
     });
-  }, []);
+  }, [knowledgeGraphData]);
 
   const handleUndo = useCallback(() => {
     if (graphHistory.length > 0) {
