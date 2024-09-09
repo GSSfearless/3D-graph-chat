@@ -52,8 +52,6 @@ export default function Search() {
   const [expandingNode, setExpandingNode] = useState(null);
   const [graphHistory, setGraphHistory] = useState([]);
   const [graphFuture, setGraphFuture] = useState([]);
-  const [selectedNode, setSelectedNode] = useState(null);
-  const [defaultQuestion, setDefaultQuestion] = useState('');
 
   const defaultQuery = "生命、宇宙以及一切的答案是什么？";
 
@@ -146,45 +144,11 @@ export default function Search() {
     handleSearch(query);
   }
 
-  const handleLargeSearch = async () => {
+  const handleLargeSearch = () => {
     if (largeSearchQuery.trim() !== '') {
-      setLoading(true);
-      try {
-        // 获取AI回答
-        const chatResponse = await fetch('/api/chat', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ context: searchResults, query: largeSearchQuery }),
-        });
-        const chatData = await chatResponse.json();
-        setAiAnswer(chatData.answer);
-
-        // 展开知识图谱
-        const expandResponse = await fetch('/api/expandNode', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ 
-            nodeId: selectedNode.id, 
-            label: selectedNode.data.label,
-            parentPosition: selectedNode.position,
-            existingNodes: knowledgeGraphData.nodes,
-            query: largeSearchQuery
-          }),
-        });
-        const expandData = await expandResponse.json();
-        
-        setKnowledgeGraphData(prevData => ({
-          nodes: [...prevData.nodes, ...expandData.nodes],
-          edges: [...prevData.edges, ...expandData.edges],
-          type: prevData.type
-        }));
-
-        setShowLargeSearch(false);
-        setLargeSearchQuery('');
-      } catch (error) {
-        console.error('搜索过程中出错:', error);
-      }
-      setLoading(false);
+      handleSearch(largeSearchQuery);
+      setShowLargeSearch(false);
+      setLargeSearchQuery('');
     }
   };
 
@@ -194,22 +158,50 @@ export default function Search() {
     }
   };
 
-  const handleNodeClick = useCallback(async (node) => {
-    setSelectedNode(node);
+  const handleNodeClick = async (node) => {
+    setExpandingNode(node.id);
+    setGraphError(null);
+
     try {
-      const response = await fetch('/api/generateQuestion', {
+      console.log('Sending request to /api/expandNode');
+      const response = await fetch('/api/expandNode', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ nodeLabel: node.data.label }),
+        body: JSON.stringify({ 
+          nodeId: node.id, 
+          label: node.data.label,
+          parentPosition: node.position,
+          existingNodes: knowledgeGraphData.nodes // 传递现有节点信息
+        }),
       });
-      const data = await response.json();
-      setDefaultQuestion(data.question);
-      setShowLargeSearch(true);
-      setLargeSearchQuery(data.question);
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const expandedData = await response.json();
+      console.log('Expanded data:', expandedData);
+
+      setGraphHistory(prev => [...prev, knowledgeGraphData]);
+      setGraphFuture([]); // 清空未来状态，因为创建了新的分支
+      
+      setKnowledgeGraphData(prevData => {
+        const newNodes = [...prevData.nodes, ...expandedData.nodes];
+        const newEdges = [...prevData.edges, ...expandedData.edges];
+        
+        return {
+          nodes: newNodes,
+          edges: newEdges,
+          type: prevData.type
+        };
+      });
     } catch (error) {
-      console.error('生成问题时出错:', error);
+      console.error('展开节点时出错:', error);
+      setGraphError('展开节点时出错: ' + error.message);
+    } finally {
+      setExpandingNode(null);
     }
-  }, []);
+  };
 
   const handleNodeDragStop = useCallback((node) => {
     setGraphHistory(prev => [...prev, knowledgeGraphData]);
