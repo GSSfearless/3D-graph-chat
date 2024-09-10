@@ -82,7 +82,7 @@ export default async function handler(req, res) {
 
   try {
     const completion = await openai.chat.completions.create({
-      model: "gpt-4",
+      model: "gpt-3.5-turbo",
       messages: [
         {role: "system", content: "You are an expert capable of breaking down complex concepts into structured knowledge graphs. Please provide a response in JSON format, including 'nodes' and 'edges' arrays, and a 'type' field indicating whether the graph should be a 'pyramid' or 'mindmap'. Each node should have 'id' and 'label' properties. Each edge should have 'source', 'target', and 'label' properties."},
         {role: "user", content: `Please create a knowledge graph for the following question: ${query}`}
