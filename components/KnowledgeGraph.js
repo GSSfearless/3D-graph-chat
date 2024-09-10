@@ -19,10 +19,37 @@ const KnowledgeGraph = ({ data, onNodeClick, onNodeDragStop }) => {
   console.log('KnowledgeGraph rendered with data:', data);
 
   const [mounted, setMounted] = useState(false);
+  const [visibleElements, setVisibleElements] = useState({ nodes: [], edges: [] });
+  const [loadingProgress, setLoadingProgress] = useState(0);
 
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  useEffect(() => {
+    if (data && data.nodes && data.edges) {
+      const totalElements = data.nodes.length + data.edges.length;
+      let renderedElements = 0;
+
+      const renderNextElement = () => {
+        if (renderedElements < totalElements) {
+          const element = data.nodes[renderedElements] || data.edges[renderedElements];
+          setVisibleElements(prev => {
+            if ('source' in element) {
+              return { ...prev, edges: [...prev.edges, element] };
+            } else {
+              return { ...prev, nodes: [...prev.nodes, element] };
+            }
+          });
+          renderedElements++;
+          setLoadingProgress((renderedElements / totalElements) * 100);
+          setTimeout(renderNextElement, 100);
+        }
+      };
+
+      renderNextElement();
+    }
+  }, [data]);
 
   const onInit = useCallback((reactFlowInstance) => {
     reactFlowInstance.fitView({ padding: 0.2 });
@@ -44,15 +71,47 @@ const KnowledgeGraph = ({ data, onNodeClick, onNodeDragStop }) => {
     return <div>无效的图表数据</div>;
   }
 
+  const optimizeRenderOrder = useCallback((nodes, edges) => {
+    const centralNode = nodes.find(node => node.id === 'central'); // 假设有一个中心节点
+    const orderedNodes = [centralNode];
+    const orderedEdges = [];
+
+    const addConnectedNodes = (nodeId) => {
+      const connectedEdges = edges.filter(edge => edge.source === nodeId || edge.target === nodeId);
+      connectedEdges.forEach(edge => {
+        if (!orderedEdges.includes(edge)) {
+          orderedEdges.push(edge);
+          const connectedNodeId = edge.source === nodeId ? edge.target : edge.source;
+          const connectedNode = nodes.find(node => node.id === connectedNodeId);
+          if (!orderedNodes.includes(connectedNode)) {
+            orderedNodes.push(connectedNode);
+            addConnectedNodes(connectedNodeId);
+          }
+        }
+      });
+    };
+
+    addConnectedNodes(centralNode.id);
+
+    return [...orderedNodes, ...orderedEdges];
+  }, []);
+
+  useEffect(() => {
+    if (data && data.nodes && data.edges) {
+      const renderQueue = optimizeRenderOrder(data.nodes, data.edges);
+      // ... 使用优化后的渲染队列进行渲染
+    }
+  }, [data, optimizeRenderOrder]);
+
   return (
     <div style={{ height: '100%', width: '100%', fontFamily: 'Roboto, sans-serif' }}>
       <ReactFlow 
         key={JSON.stringify(data)}
-        nodes={data.nodes.map(node => ({
+        nodes={visibleElements.nodes.map(node => ({
           ...node,
           data: { ...node.data, label: node.data.label },
         }))}
-        edges={data.edges}
+        edges={visibleElements.edges}
         onNodeClick={handleNodeClick}
         onNodeDragStop={handleNodeDragStop}
         onInit={onInit}
@@ -71,6 +130,11 @@ const KnowledgeGraph = ({ data, onNodeClick, onNodeDragStop }) => {
         <Controls />
         <Background color="#aaa" gap={16} />
       </ReactFlow>
+      {loadingProgress < 100 && (
+        <div className="loading-indicator">
+          加载进度: {Math.round(loadingProgress)}%
+        </div>
+      )}
     </div>
   );
 };
