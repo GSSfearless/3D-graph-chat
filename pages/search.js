@@ -56,6 +56,7 @@ export default function Search() {
   const [expandingNode, setExpandingNode] = useState(null);
   const [graphHistory, setGraphHistory] = useState([]);
   const [graphFuture, setGraphFuture] = useState([]);
+  const [hasPreviousGraph, setHasPreviousGraph] = useState(false);
 
   const defaultQuery = "生命、宇宙以及一切的答案是什么？";
 
@@ -208,7 +209,11 @@ export default function Search() {
   };
 
   const handleNodeDragStop = useCallback((node) => {
-    setGraphHistory(prev => [...prev, knowledgeGraphData]);
+    setGraphHistory(prev => {
+      const newHistory = [...prev, knowledgeGraphData];
+      setHasPreviousGraph(newHistory.length > 0);
+      return newHistory;
+    });
     setGraphFuture([]); // 清空未来状态
     setKnowledgeGraphData(prevData => {
       const updatedNodes = prevData.nodes.map(n => 
@@ -223,14 +228,22 @@ export default function Search() {
       const previousState = graphHistory[graphHistory.length - 1];
       setGraphFuture(prev => [knowledgeGraphData, ...prev]);
       setKnowledgeGraphData(previousState);
-      setGraphHistory(prev => prev.slice(0, -1));
+      setGraphHistory(prev => {
+        const newHistory = prev.slice(0, -1);
+        setHasPreviousGraph(newHistory.length > 0);
+        return newHistory;
+      });
     }
   }, [graphHistory, knowledgeGraphData]);
 
   const handleRedo = useCallback(() => {
     if (graphFuture.length > 0) {
       const nextState = graphFuture[0];
-      setGraphHistory(prev => [...prev, knowledgeGraphData]);
+      setGraphHistory(prev => {
+        const newHistory = [...prev, knowledgeGraphData];
+        setHasPreviousGraph(true);
+        return newHistory;
+      });
       setKnowledgeGraphData(nextState);
       setGraphFuture(prev => prev.slice(1));
     }
@@ -299,7 +312,7 @@ export default function Search() {
               <div className="flex justify-center mt-4">
                 <button 
                   onClick={handleUndo} 
-                  disabled={graphHistory.length === 0}
+                  disabled={!hasPreviousGraph}
                   className="text-2xl opacity-50 hover:opacity-100 transition-opacity disabled:opacity-30 mr-2"
                   title="撤销上一步"
                 >
