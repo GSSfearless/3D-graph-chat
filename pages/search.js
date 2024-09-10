@@ -62,6 +62,7 @@ export default function Search() {
   const [isCollecting, setIsCollecting] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [processingStep, setProcessingStep] = useState(0);
+  const [streamedAnswer, setStreamedAnswer] = useState('');
 
   const defaultQuery = "What is the answer to life, the universe, and everything?";
 
@@ -98,13 +99,27 @@ export default function Search() {
       };
 
       // Get AI answer
+      setStreamedAnswer('');
       const chatResponse = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ context: searchResults, query: searchQuery }),
       });
-      const chatData = await chatResponse.json();
-      setAiAnswer(chatData.answer);
+
+      if (!chatResponse.ok) {
+        throw new Error(`HTTP error! status: ${chatResponse.status}`);
+      }
+
+      const reader = chatResponse.body.getReader();
+      const decoder = new TextDecoder();
+      let done = false;
+
+      while (!done) {
+        const { value, done: doneReading } = await reader.read();
+        done = doneReading;
+        const chunkValue = decoder.decode(value);
+        setStreamedAnswer((prev) => prev + chunkValue);
+      }
 
       // Get knowledge graph data
       try {
@@ -166,12 +181,12 @@ export default function Search() {
   }, [initialLoad, q, handleSearch]);
 
   useEffect(() => {
-    if (aiAnswer) {
-      const markdown = renderMarkdown(aiAnswer);
+    if (streamedAnswer) {
+      const markdown = renderMarkdown(streamedAnswer);
       const sanitized = sanitizeHtml(markdown);
       setRenderedAnswer(sanitized);
     }
-  }, [aiAnswer]);
+  }, [streamedAnswer]);
 
   const handleChange = (e) => {
     setQuery(e.target.value);
