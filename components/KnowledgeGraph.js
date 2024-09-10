@@ -1,5 +1,5 @@
 import dynamic from 'next/dynamic';
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useMemo } from 'react';
 
 const ReactFlow = dynamic(() => import('react-flow-renderer').then(mod => mod.default), {
   ssr: false,
@@ -26,53 +26,8 @@ const KnowledgeGraph = ({ data, onNodeClick, onNodeDragStop }) => {
     setMounted(true);
   }, []);
 
-  useEffect(() => {
-    if (data && data.nodes && data.edges) {
-      const totalElements = data.nodes.length + data.edges.length;
-      let renderedElements = 0;
-
-      const renderNextElement = () => {
-        if (renderedElements < totalElements) {
-          const element = data.nodes[renderedElements] || data.edges[renderedElements];
-          setVisibleElements(prev => {
-            if ('source' in element) {
-              return { ...prev, edges: [...prev.edges, element] };
-            } else {
-              return { ...prev, nodes: [...prev.nodes, element] };
-            }
-          });
-          renderedElements++;
-          setLoadingProgress((renderedElements / totalElements) * 100);
-          setTimeout(renderNextElement, 100);
-        }
-      };
-
-      renderNextElement();
-    }
-  }, [data]);
-
-  const onInit = useCallback((reactFlowInstance) => {
-    reactFlowInstance.fitView({ padding: 0.2 });
-  }, []);
-
-  const handleNodeClick = useCallback((event, node) => {
-    console.log('Node clicked in KnowledgeGraph:', node);
-    onNodeClick(node);
-  }, [onNodeClick]);
-
-  const handleNodeDragStop = useCallback((event, node) => {
-    console.log('Node dragged in KnowledgeGraph:', node);
-    onNodeDragStop(node);
-  }, [onNodeDragStop]);
-
-  if (!mounted) return null;
-
-  if (!data || !data.nodes || !data.edges) {
-    return <div>无效的图表数据</div>;
-  }
-
   const optimizeRenderOrder = useCallback((nodes, edges) => {
-    const centralNode = nodes.find(node => node.id === 'central'); // 假设有一个中心节点
+    const centralNode = nodes.find(node => node.id === 'central') || nodes[0];
     const orderedNodes = [centralNode];
     const orderedEdges = [];
 
@@ -83,7 +38,7 @@ const KnowledgeGraph = ({ data, onNodeClick, onNodeDragStop }) => {
           orderedEdges.push(edge);
           const connectedNodeId = edge.source === nodeId ? edge.target : edge.source;
           const connectedNode = nodes.find(node => node.id === connectedNodeId);
-          if (!orderedNodes.includes(connectedNode)) {
+          if (connectedNode && !orderedNodes.includes(connectedNode)) {
             orderedNodes.push(connectedNode);
             addConnectedNodes(connectedNodeId);
           }
@@ -99,19 +54,64 @@ const KnowledgeGraph = ({ data, onNodeClick, onNodeDragStop }) => {
   useEffect(() => {
     if (data && data.nodes && data.edges) {
       const renderQueue = optimizeRenderOrder(data.nodes, data.edges);
-      // ... 使用优化后的渲染队列进行渲染
+      const totalElements = renderQueue.length;
+      let renderedElements = 0;
+
+      const renderNextElement = () => {
+        if (renderedElements < totalElements) {
+          const element = renderQueue[renderedElements];
+          setVisibleElements(prev => {
+            if ('source' in element) {
+              return { ...prev, edges: [...prev.edges, element] };
+            } else {
+              return { ...prev, nodes: [...prev.nodes, element] };
+            }
+          });
+          renderedElements++;
+          setLoadingProgress((renderedElements / totalElements) * 100);
+          setTimeout(renderNextElement, 100);
+        }
+      };
+
+      renderNextElement();
     }
   }, [data, optimizeRenderOrder]);
+
+  const onInit = useCallback((reactFlowInstance) => {
+    reactFlowInstance.fitView({ padding: 0.2 });
+  }, []);
+
+  const handleNodeClick = useCallback((event, node) => {
+    console.log('Node clicked in KnowledgeGraph:', node);
+    onNodeClick(node);
+  }, [onNodeClick]);
+
+  const handleNodeDragStop = useCallback((event, node) => {
+    console.log('Node dragged in KnowledgeGraph:', node);
+    onNodeDragStop(node);
+  }, [onNodeDragStop]);
+
+  const flowElements = useMemo(() => {
+    if (!data || !data.nodes || !data.edges) {
+      return { nodes: [], edges: [] };
+    }
+    return {
+      nodes: visibleElements.nodes.map(node => ({
+        ...node,
+        data: { ...node.data, label: node.data.label },
+      })),
+      edges: visibleElements.edges
+    };
+  }, [data, visibleElements]);
+
+  if (!mounted) return null;
 
   return (
     <div style={{ height: '100%', width: '100%', fontFamily: 'Roboto, sans-serif' }}>
       <ReactFlow 
         key={JSON.stringify(data)}
-        nodes={visibleElements.nodes.map(node => ({
-          ...node,
-          data: { ...node.data, label: node.data.label },
-        }))}
-        edges={visibleElements.edges}
+        nodes={flowElements.nodes}
+        edges={flowElements.edges}
         onNodeClick={handleNodeClick}
         onNodeDragStop={handleNodeDragStop}
         onInit={onInit}
