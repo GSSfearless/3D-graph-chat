@@ -1,5 +1,3 @@
-import { createParser } from 'eventsource-parser';
-
 export async function OpenAIStream(payload) {
   const encoder = new TextEncoder();
   const decoder = new TextDecoder();
@@ -17,34 +15,46 @@ export async function OpenAIStream(payload) {
 
   const stream = new ReadableStream({
     async start(controller) {
-      function onParse(event) {
-        if (event.type === 'event') {
-          const data = event.data;
-          if (data === '[DONE]') {
-            controller.close();
-            return;
-          }
-          try {
-            const json = JSON.parse(data);
-            const text = json.choices[0].delta?.content || '';
-            if (counter < 2 && (text.match(/\n/) || []).length) {
-              return;
+      const reader = res.body.getReader();
+      let buffer = '';
+      
+      try {
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          
+          buffer += decoder.decode(value, { stream: true });
+          const lines = buffer.split('\n');
+          
+          for (let i = 0; i < lines.length - 1; i++) {
+            const line = lines[i].trim();
+            if (line.startsWith('data: ')) {
+              const data = line.slice(6);
+              if (data === '[DONE]') {
+                controller.close();
+                return;
+              }
+              try {
+                const json = JSON.parse(data);
+                const text = json.choices[0].delta?.content || '';
+                if (counter < 2 && (text.match(/\n/) || []).length) {
+                  continue;
+                }
+                const queue = encoder.encode(text);
+                controller.enqueue(queue);
+                counter++;
+              } catch (e) {
+                controller.error(e);
+              }
             }
-            const queue = encoder.encode(text);
-            controller.enqueue(queue);
-            counter++;
-          } catch (e) {
-            controller.error(e);
           }
+          buffer = lines[lines.length - 1];
         }
-      }
-
-      const parser = createParser(onParse);
-      for await (const chunk of res.body) {
-        parser.feed(decoder.decode(chunk));
+      } catch (e) {
+        controller.error(e);
       }
     },
   });
 
   return stream;
-}b
+}
