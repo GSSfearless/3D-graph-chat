@@ -15,7 +15,29 @@ const KnowledgeGraph = dynamic(() => import('../components/KnowledgeGraph'), {
 function sanitizeHtml(html) {
   const temp = document.createElement('div');
   temp.innerHTML = html;
-  return temp.innerHTML; // Use innerHTML instead of textContent
+  const allowedTags = ['h3', 'strong', 'ul', 'li', 'p'];
+  const allowedAttributes = {};
+  
+  function sanitizeNode(node) {
+    if (node.nodeType === Node.ELEMENT_NODE) {
+      if (!allowedTags.includes(node.tagName.toLowerCase())) {
+        const text = document.createTextNode(node.textContent);
+        node.parentNode.replaceChild(text, node);
+      } else {
+        for (let i = node.attributes.length - 1; i >= 0; i--) {
+          const attr = node.attributes[i];
+          if (!(node.tagName.toLowerCase() in allowedAttributes) || 
+              !allowedAttributes[node.tagName.toLowerCase()].includes(attr.name)) {
+            node.removeAttribute(attr.name);
+          }
+        }
+        Array.from(node.childNodes).forEach(sanitizeNode);
+      }
+    }
+  }
+  
+  Array.from(temp.childNodes).forEach(sanitizeNode);
+  return temp.innerHTML;
 }
 
 function renderMarkdown(text) {
@@ -25,16 +47,17 @@ function renderMarkdown(text) {
   // Handle bold
   text = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
   
-  // Handle ordered lists
-  let listCounter = 0;
-  text = text.replace(/^\d+\.\s(.*)$/gm, (match, p1) => {
-    listCounter++;
-    return `<li value="${listCounter}">${p1}</li>`;
-  });
-  text = text.replace(/<li/g, '<ol><li').replace(/<\/li>(?![\n\r]*<li>)/g, '</li></ol>');
+  // Handle unordered lists
+  text = text.replace(/^-\s(.*)$/gm, '<li>$1</li>');
+  text = text.replace(/(<li>.*<\/li>(\n|$))+/g, '<ul>$&</ul>');
   
-  // Handle paragraphs
-  text = text.split('\n').map(paragraph => `<p>${paragraph}</p>`).join('');
+  // Handle paragraphs (excluding list items)
+  text = text.split('\n').map(line => {
+    if (!line.startsWith('<h3>') && !line.startsWith('<li>') && line.trim() !== '') {
+      return `<p>${line}</p>`;
+    }
+    return line;
+  }).join('\n');
   
   return text;
 }
