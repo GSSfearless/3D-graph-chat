@@ -1,5 +1,5 @@
 import dynamic from 'next/dynamic';
-import { useEffect, useState, useCallback, useMemo } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 
 const ReactFlow = dynamic(() => import('react-flow-renderer').then(mod => mod.default), {
   ssr: false,
@@ -26,40 +26,14 @@ const KnowledgeGraph = ({ data, onNodeClick, onNodeDragStop }) => {
     setMounted(true);
   }, []);
 
-  const optimizeRenderOrder = useCallback((nodes, edges) => {
-    const centralNode = nodes.find(node => node.id === 'central') || nodes[0];
-    const orderedNodes = [centralNode];
-    const orderedEdges = [];
-
-    const addConnectedNodes = (nodeId) => {
-      const connectedEdges = edges.filter(edge => edge.source === nodeId || edge.target === nodeId);
-      connectedEdges.forEach(edge => {
-        if (!orderedEdges.includes(edge)) {
-          orderedEdges.push(edge);
-          const connectedNodeId = edge.source === nodeId ? edge.target : edge.source;
-          const connectedNode = nodes.find(node => node.id === connectedNodeId);
-          if (connectedNode && !orderedNodes.includes(connectedNode)) {
-            orderedNodes.push(connectedNode);
-            addConnectedNodes(connectedNodeId);
-          }
-        }
-      });
-    };
-
-    addConnectedNodes(centralNode.id);
-
-    return [...orderedNodes, ...orderedEdges];
-  }, []);
-
   useEffect(() => {
     if (data && data.nodes && data.edges) {
-      const renderQueue = optimizeRenderOrder(data.nodes, data.edges);
-      const totalElements = renderQueue.length;
+      const totalElements = data.nodes.length + data.edges.length;
       let renderedElements = 0;
 
       const renderNextElement = () => {
         if (renderedElements < totalElements) {
-          const element = renderQueue[renderedElements];
+          const element = data.nodes[renderedElements] || data.edges[renderedElements];
           setVisibleElements(prev => {
             if ('source' in element) {
               return { ...prev, edges: [...prev.edges, element] };
@@ -75,7 +49,7 @@ const KnowledgeGraph = ({ data, onNodeClick, onNodeDragStop }) => {
 
       renderNextElement();
     }
-  }, [data, optimizeRenderOrder]);
+  }, [data]);
 
   const onInit = useCallback((reactFlowInstance) => {
     reactFlowInstance.fitView({ padding: 0.2 });
@@ -91,27 +65,53 @@ const KnowledgeGraph = ({ data, onNodeClick, onNodeDragStop }) => {
     onNodeDragStop(node);
   }, [onNodeDragStop]);
 
-  const flowElements = useMemo(() => {
-    if (!data || !data.nodes || !data.edges) {
-      return { nodes: [], edges: [] };
-    }
-    return {
-      nodes: visibleElements.nodes.map(node => ({
-        ...node,
-        data: { ...node.data, label: node.data.label },
-      })),
-      edges: visibleElements.edges
-    };
-  }, [data, visibleElements]);
-
   if (!mounted) return null;
+
+  if (!data || !data.nodes || !data.edges) {
+    return <div>无效的图表数据</div>;
+  }
+
+  const optimizeRenderOrder = useCallback((nodes, edges) => {
+    const centralNode = nodes.find(node => node.id === 'central'); // 假设有一个中心节点
+    const orderedNodes = [centralNode];
+    const orderedEdges = [];
+
+    const addConnectedNodes = (nodeId) => {
+      const connectedEdges = edges.filter(edge => edge.source === nodeId || edge.target === nodeId);
+      connectedEdges.forEach(edge => {
+        if (!orderedEdges.includes(edge)) {
+          orderedEdges.push(edge);
+          const connectedNodeId = edge.source === nodeId ? edge.target : edge.source;
+          const connectedNode = nodes.find(node => node.id === connectedNodeId);
+          if (!orderedNodes.includes(connectedNode)) {
+            orderedNodes.push(connectedNode);
+            addConnectedNodes(connectedNodeId);
+          }
+        }
+      });
+    };
+
+    addConnectedNodes(centralNode.id);
+
+    return [...orderedNodes, ...orderedEdges];
+  }, []);
+
+  useEffect(() => {
+    if (data && data.nodes && data.edges) {
+      const renderQueue = optimizeRenderOrder(data.nodes, data.edges);
+      // ... 使用优化后的渲染队列进行渲染
+    }
+  }, [data, optimizeRenderOrder]);
 
   return (
     <div style={{ height: '100%', width: '100%', fontFamily: 'Roboto, sans-serif' }}>
       <ReactFlow 
         key={JSON.stringify(data)}
-        nodes={flowElements.nodes}
-        edges={flowElements.edges}
+        nodes={visibleElements.nodes.map(node => ({
+          ...node,
+          data: { ...node.data, label: node.data.label },
+        }))}
+        edges={visibleElements.edges}
         onNodeClick={handleNodeClick}
         onNodeDragStop={handleNodeDragStop}
         onInit={onInit}
