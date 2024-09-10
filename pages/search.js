@@ -57,7 +57,6 @@ export default function Search() {
   const [graphHistory, setGraphHistory] = useState([]);
   const [graphFuture, setGraphFuture] = useState([]);
   const [hasPreviousGraph, setHasPreviousGraph] = useState(false);
-  const [graphLoadingProgress, setGraphLoadingProgress] = useState(0);
 
   const defaultQuery = "What is the answer to life, the universe, and everything?";
 
@@ -305,11 +304,7 @@ export default function Search() {
                     data={knowledgeGraphData} 
                     onNodeClick={handleNodeClick}
                     onNodeDragStop={handleNodeDragStop}
-                    onLoadingProgress={setGraphLoadingProgress}
                   />
-                  {graphLoadingProgress < 100 && (
-                    <div className="loading-bar" style={{ width: `${graphLoadingProgress}%` }}></div>
-                  )}
                 </div>
               ) : (
                 <p>No knowledge graph data available</p>
