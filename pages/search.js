@@ -39,37 +39,50 @@ function renderMarkdown(text) {
   return text;
 }
 
-// Add this new component
-const LoadingAnimation = () => {
+const LoadingAnimation = ({ searchResults }) => {
   const [loadingText, setLoadingText] = useState('');
   const loadingSteps = [
-    '> Initializing Retrieval-Augmented Generation (RAG) system...',
-    '> Performing dense vector retrieval...',
-    '> Calculating document relevance scores...',
-    '> Applying semantic similarity ranking...',
-    '> Extracting key contextual information...',
-    '> Integrating retrieval results...',
+    '> Initializing RAG system...',
+    '> Performing vector retrieval...',
+    '> Calculating relevance scores...',
+    '> Applying semantic ranking...',
+    '> Extracting key information...',
+    '> Integrating results...',
     '> Generating knowledge graph...',
     '> Preparing AI response...'
   ];
 
   useEffect(() => {
     let currentStep = 0;
+    let currentChar = 0;
     const interval = setInterval(() => {
       if (currentStep < loadingSteps.length) {
-        setLoadingText(prev => prev + '\n' + loadingSteps[currentStep]);
+        setLoadingText(prev => {
+          const nextChar = loadingSteps[currentStep][currentChar];
+          if (nextChar) {
+            currentChar++;
+            return prev + nextChar;
+          } else {
+            currentStep++;
+            currentChar = 0;
+            return prev + '\n';
+          }
+        });
+      } else if (currentStep < loadingSteps.length + searchResults.length) {
+        const pageTitle = searchResults[currentStep - loadingSteps.length].title;
+        setLoadingText(prev => prev + `> Reading: "${pageTitle}"\n`);
         currentStep++;
       } else {
         clearInterval(interval);
       }
-    }, 1000);
+    }, 30); // Adjust this value to control the scrolling speed
 
     return () => clearInterval(interval);
-  }, []);
+  }, [searchResults]);
 
   return (
-    <div className="bg-black text-white p-4 rounded-lg shadow-md font-mono text-sm h-64 overflow-y-auto">
-      <pre className="whitespace-pre-wrap">
+    <div className="bg-black text-white p-4 rounded-lg shadow-md font-mono text-sm h-64 overflow-hidden">
+      <pre className="whitespace-pre animate-typewriter">
         {loadingText}
         <span className="animate-pulse text-[#6CB6EF]">▋</span>
       </pre>
@@ -371,9 +384,9 @@ export default function Search() {
             <div className="result-item mb-4">
               <h3 className="result-title text-4xl">📝Answer</h3>
               <p className="text-xs text-gray-500 text-center mb-2">Collected {searchResults.length} web pages</p>
-              <div className="min-h-40 p-4">
+              <div className="min-h-64 p-4">
                 {loading ? (
-                  <LoadingAnimation />
+                  <LoadingAnimation searchResults={searchResults} />
                 ) : (
                   <div 
                     className="result-snippet prose prose-sm max-w-none"
