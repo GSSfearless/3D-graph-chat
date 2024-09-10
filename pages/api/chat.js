@@ -44,7 +44,7 @@ export default async function handler(req) {
   `;
 
   const payload = {
-    model: 'gpt-3.5-turbo',
+    model: 'gpt-4',
     messages: [{ role: 'user', content: prompt }],
     temperature: 0.7,
     top_p: 1,
