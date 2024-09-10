@@ -16,17 +16,22 @@ export default async function handler(req) {
 
   Please strictly use the following format to organize your answer:
   1. Use double asterisks (**) to surround important concepts or keywords to indicate bold. For example: **important concept**.
-  2. Use numbers and dots to create numbered lists. Each new point should start on a new line.
+  2. Use a hyphen (-) followed by a space to create bulleted lists. Each new point should start on a new line.
   3. Use three hash symbols (###) to create subheadings, ensuring the subheading is on its own line.
   4. Use a single line break to separate paragraphs.
 
   Example format:
-  ### Main Concepts
-  1. **First point**
-  2. **Second point**
+  ### Key Points
+  - **First important concept**
+  - **Second important concept**
+  - **Third important concept**
 
   ### Detailed Explanation
-  Here is some additional explanation.
+  - Explanation of the first concept
+    - Additional details
+    - More information
+  - Explanation of the second concept
+  - Explanation of the third concept
 
   Do not reference any context numbers or sources. Focus on providing an informative and well-structured answer.
 
