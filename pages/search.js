@@ -39,6 +39,15 @@ function renderMarkdown(text) {
   return text;
 }
 
+// New component for loading animation
+const AnimatedDots = () => (
+  <span className="animate-pulse">
+    <span className="opacity-0 animate-dot1">.</span>
+    <span className="opacity-0 animate-dot2">.</span>
+    <span className="opacity-0 animate-dot3">.</span>
+  </span>
+);
+
 export default function Search() {
   const router = useRouter();
   const { q } = router.query;
@@ -57,6 +66,7 @@ export default function Search() {
   const [graphHistory, setGraphHistory] = useState([]);
   const [graphFuture, setGraphFuture] = useState([]);
   const [hasPreviousGraph, setHasPreviousGraph] = useState(false);
+  const [currentWebpage, setCurrentWebpage] = useState('');
 
   const defaultQuery = "What is the answer to life, the universe, and everything?";
 
@@ -65,6 +75,12 @@ export default function Search() {
     setGraphError(null);
     try {
       const actualQuery = searchQuery || defaultQuery;
+      
+      // Simulate webpage loading process
+      for (let i = 0; i < 5; i++) {
+        setCurrentWebpage(`正在分析网页 ${i + 1}/5`);
+        await new Promise(resolve => setTimeout(resolve, 1000));
+      }
       
       // Get search results
       const searchResponse = await fetch('/api/rag-search', {
@@ -113,6 +129,7 @@ export default function Search() {
       console.error('Error during search:', error);
     }
     setLoading(false);
+    setCurrentWebpage('');
   }, [knowledgeGraphData]);
 
   useEffect(() => {
@@ -333,6 +350,27 @@ export default function Search() {
             <div className="result-item mb-4">
               <h3 className="result-title text-4xl">📝Answer</h3>
               <p className="text-xs text-gray-500 text-center mb-2">Collected {searchResults.length} web pages</p>
+              
+              {/* New sci-fi style webpage loading display area */}
+              <div className="h-16 bg-gradient-to-r from-blue-900 to-purple-900 rounded-lg p-2 mb-4 overflow-hidden">
+                <div className="text-cyan-300 font-mono text-sm">
+                  {loading ? (
+                    <>
+                      <span className="text-green-400">[系统]</span> {currentWebpage}
+                      <AnimatedDots />
+                    </>
+                  ) : (
+                    <span className="text-green-400">[系统] 准备就绪</span>
+                  )}
+                </div>
+                <div className="w-full h-2 bg-gray-700 rounded-full mt-2">
+                  <div 
+                    className="h-full bg-cyan-400 rounded-full transition-all duration-500 ease-out"
+                    style={{ width: loading ? '100%' : '0%' }}
+                  ></div>
+                </div>
+              </div>
+
               <div className="min-h-40 p-4">
                 {loading ? (
                   <div className="h-full bg-gray-200 animate-pulse rounded"></div>
