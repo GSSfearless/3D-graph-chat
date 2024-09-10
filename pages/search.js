@@ -9,23 +9,23 @@ import '../styles/globals.css';
 
 const KnowledgeGraph = dynamic(() => import('../components/KnowledgeGraph'), {
   ssr: false,
-  loading: () => <p>正在加载知识图谱...</p>
+  loading: () => <p>Loading knowledge graph...</p>
 });
 
 function sanitizeHtml(html) {
   const temp = document.createElement('div');
   temp.innerHTML = html;
-  return temp.innerHTML; // 使用 innerHTML 而不是 textContent
+  return temp.innerHTML; // Use innerHTML instead of textContent
 }
 
 function renderMarkdown(text) {
-  // 处理小标题
+  // Handle headings
   text = text.replace(/^###\s(.*)$/gm, '<h3>$1</h3>');
   
-  // 处理粗体
+  // Handle bold
   text = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
   
-  // 处理编号列表
+  // Handle ordered lists
   let listCounter = 0;
   text = text.replace(/^\d+\.\s(.*)$/gm, (match, p1) => {
     listCounter++;
@@ -33,7 +33,7 @@ function renderMarkdown(text) {
   });
   text = text.replace(/<li/g, '<ol><li').replace(/<\/li>(?![\n\r]*<li>)/g, '</li></ol>');
   
-  // 处理段落
+  // Handle paragraphs
   text = text.split('\n').map(paragraph => `<p>${paragraph}</p>`).join('');
   
   return text;
@@ -58,7 +58,7 @@ export default function Search() {
   const [graphFuture, setGraphFuture] = useState([]);
   const [hasPreviousGraph, setHasPreviousGraph] = useState(false);
 
-  const defaultQuery = "生命、宇宙以及一切的答案是什么？";
+  const defaultQuery = "What is the answer to life, the universe, and everything?";
 
   const handleSearch = useCallback(async (searchQuery) => {
     setLoading(true);
@@ -66,7 +66,7 @@ export default function Search() {
     try {
       const actualQuery = searchQuery || defaultQuery;
       
-      // 获取搜索结果
+      // Get search results
       const searchResponse = await fetch('/api/rag-search', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -75,7 +75,7 @@ export default function Search() {
       const searchData = await searchResponse.json();
       setSearchResults(searchData);
 
-      // 获取AI回答
+      // Get AI answer
       const chatResponse = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -84,7 +84,7 @@ export default function Search() {
       const chatData = await chatResponse.json();
       setAiAnswer(chatData.answer);
 
-      // 获取知识图谱数据
+      // Get knowledge graph data
       try {
         const graphResponse = await fetch('/api/knowledgeGraph', {
           method: 'POST',
@@ -93,24 +93,24 @@ export default function Search() {
         });
 
         if (!graphResponse.ok) {
-          throw new Error(`知识图谱API错误: ${graphResponse.status}`);
+          throw new Error(`Knowledge graph API error: ${graphResponse.status}`);
         }
 
         const graphData = await graphResponse.json();
-        console.log('知识图谱数据:', graphData);
+        console.log('Knowledge graph data:', graphData);
         setGraphHistory(prev => [...prev, knowledgeGraphData]);
         setGraphFuture([]);
         setKnowledgeGraphData(graphData);
         console.log('Initial knowledge graph data:', graphData);
       } catch (error) {
-        console.error('获取知识图谱时出错:', error);
-        setGraphError('无法加载知识图谱');
+        console.error('Error fetching knowledge graph:', error);
+        setGraphError('Unable to load knowledge graph');
         setKnowledgeGraphData(null);
       }
 
       setQuery('');
     } catch (error) {
-      console.error('搜索过程中出错:', error);
+      console.error('Error during search:', error);
     }
     setLoading(false);
   }, [knowledgeGraphData]);
@@ -176,7 +176,7 @@ export default function Search() {
           nodeId: node.id, 
           label: node.data.label,
           parentPosition: node.position,
-          existingNodes: knowledgeGraphData.nodes // 传递现有节点信息
+          existingNodes: knowledgeGraphData.nodes // Pass existing node information
         }),
       });
 
@@ -188,7 +188,7 @@ export default function Search() {
       console.log('Expanded data:', expandedData);
 
       setGraphHistory(prev => [...prev, knowledgeGraphData]);
-      setGraphFuture([]); // 清空未来状态，因为创建了新的分支
+      setGraphFuture([]); // Clear future states as a new branch is created
       
       setKnowledgeGraphData(prevData => {
         const newNodes = [...prevData.nodes, ...expandedData.nodes];
@@ -201,8 +201,8 @@ export default function Search() {
         };
       });
     } catch (error) {
-      console.error('展开节点时出错:', error);
-      setGraphError('展开节点时出错: ' + error.message);
+      console.error('Error expanding node:', error);
+      setGraphError('Error expanding node: ' + error.message);
     } finally {
       setExpandingNode(null);
     }
@@ -214,7 +214,7 @@ export default function Search() {
       setHasPreviousGraph(newHistory.length > 0);
       return newHistory;
     });
-    setGraphFuture([]); // 清空未来状态
+    setGraphFuture([]); // Clear future states
     setKnowledgeGraphData(prevData => {
       const updatedNodes = prevData.nodes.map(n => 
         n.id === node.id ? { ...n, position: node.position } : n
@@ -307,14 +307,14 @@ export default function Search() {
                   />
                 </div>
               ) : (
-                <p>没有可用的知识图谱数据</p>
+                <p>No knowledge graph data available</p>
               )}
               <div className="flex justify-center mt-4">
                 <button 
                   onClick={handleUndo} 
                   disabled={!hasPreviousGraph}
                   className="text-2xl opacity-50 hover:opacity-100 transition-opacity disabled:opacity-30 mr-2"
-                  title="撤销上一步"
+                  title="Undo last action"
                 >
                   ↩️
                 </button>
@@ -322,7 +322,7 @@ export default function Search() {
                   onClick={handleRedo} 
                   disabled={graphFuture.length === 0}
                   className="text-2xl opacity-50 hover:opacity-100 transition-opacity disabled:opacity-30"
-                  title="重做下一步"
+                  title="Redo next action"
                 >
                   ↪️
                 </button>
@@ -332,7 +332,7 @@ export default function Search() {
           <div className="w-1/4 p-4 bg-white">
             <div className="result-item mb-4">
               <h3 className="result-title text-4xl">📝Answer</h3>
-              <p className="text-xs text-gray-500 text-center mb-2">搜集了 {searchResults.length} 个网页</p>
+              <p className="text-xs text-gray-500 text-center mb-2">Collected {searchResults.length} web pages</p>
               <div className="min-h-40 p-4">
                 {loading ? (
                   <div className="h-full bg-gray-200 animate-pulse rounded"></div>
