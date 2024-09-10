@@ -26,8 +26,12 @@ function renderMarkdown(text) {
   text = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
   
   // 处理编号列表
-  text = text.replace(/^\d+\.\s(.*)$/gm, '<li>$1</li>');
-  text = text.replace(/<li>/g, '<ol><li>').replace(/<\/li>(?![\n\r]*<li>)/g, '</li></ol>');
+  let listCounter = 0;
+  text = text.replace(/^\d+\.\s(.*)$/gm, (match, p1) => {
+    listCounter++;
+    return `<li value="${listCounter}">${p1}</li>`;
+  });
+  text = text.replace(/<li/g, '<ol><li').replace(/<\/li>(?![\n\r]*<li>)/g, '</li></ol>');
   
   // 处理段落
   text = text.split('\n').map(paragraph => `<p>${paragraph}</p>`).join('');
