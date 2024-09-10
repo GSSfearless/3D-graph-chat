@@ -349,22 +349,20 @@ export default function Search() {
           <div className="w-1/4 p-4 bg-white">
             <div className="result-item mb-4">
               <h3 className="result-title text-4xl">📝Answer</h3>
-              <div className="relative">
-                <p className="text-xs text-gray-500 text-center mb-2">
-                  {isCollecting 
-                    ? `Collecting web pages... ${collectedPages}/${totalPages}`
-                    : `Collected ${searchResults.length} web pages`
-                  }
-                </p>
-                {isCollecting && (
-                  <div className="absolute left-0 bottom-0 w-full h-1 bg-gray-200 overflow-hidden">
-                    <div 
-                      className="h-full bg-gray-400 transition-all duration-300 ease-out"
-                      style={{ width: `${(collectedPages / totalPages) * 100}%` }}
-                    ></div>
-                  </div>
-                )}
-              </div>
+              <p className="text-xs text-gray-500 text-center mb-2">
+                {isCollecting 
+                  ? `Collecting web pages... ${collectedPages}/${totalPages}`
+                  : `Collected ${searchResults.length} web pages`
+                }
+              </p>
+              {isCollecting && (
+                <div className="w-full h-2 bg-gray-200 mb-4">
+                  <div 
+                    className="h-full bg-gray-400 transition-all duration-300 ease-out"
+                    style={{ width: `${(collectedPages / totalPages) * 100}%` }}
+                  ></div>
+                </div>
+              )}
               <div className="min-h-40 p-4">
                 {loading ? (
                   <div className="h-full bg-gray-200 animate-pulse rounded"></div>
