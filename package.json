@@ -28,7 +28,8 @@
     "react-flow-renderer": "^10.3.17",
     "reactflow": "^11.11.4",
     "sharp": "^0.33.5",
-    "@tailwindcss/typography": "^0.5.15"
+    "@tailwindcss/typography": "^0.5.15",
+    "ai": "^3.3.30"
   },
   "devDependencies": {
     "@types/node": "^20",
