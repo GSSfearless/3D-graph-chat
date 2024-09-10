@@ -3,7 +3,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
-import { useCallback, useEffect, useState } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import 'tailwindcss/tailwind.css';
 import '../styles/globals.css';
 
@@ -57,29 +57,46 @@ export default function Search() {
   const [graphHistory, setGraphHistory] = useState([]);
   const [graphFuture, setGraphFuture] = useState([]);
   const [hasPreviousGraph, setHasPreviousGraph] = useState(false);
+  const [collectedPages, setCollectedPages] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
+  const [isCollecting, setIsCollecting] = useState(false);
 
   const defaultQuery = "What is the answer to life, the universe, and everything?";
 
   const handleSearch = useCallback(async (searchQuery) => {
     setLoading(true);
+    setIsCollecting(true);
+    setCollectedPages(0);
+    setTotalPages(0);
     setGraphError(null);
+    setSearchResults([]);
+
     try {
-      const actualQuery = searchQuery || defaultQuery;
+      const eventSource = new EventSource(`/api/rag-search?query=${encodeURIComponent(searchQuery)}`);
       
-      // Get search results
-      const searchResponse = await fetch('/api/rag-search', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ query: actualQuery }),
-      });
-      const searchData = await searchResponse.json();
-      setSearchResults(searchData);
+      eventSource.onmessage = (event) => {
+        const data = JSON.parse(event.data);
+        if (data.done) {
+          eventSource.close();
+          setIsCollecting(false);
+        } else {
+          setCollectedPages(data.progress);
+          setTotalPages(data.total);
+          setSearchResults(prev => [...prev, data.result]);
+        }
+      };
+
+      eventSource.onerror = (error) => {
+        console.error('EventSource failed:', error);
+        eventSource.close();
+        setIsCollecting(false);
+      };
 
       // Get AI answer
       const chatResponse = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ context: searchData, query: actualQuery }),
+        body: JSON.stringify({ context: searchResults, query: searchQuery }),
       });
       const chatData = await chatResponse.json();
       setAiAnswer(chatData.answer);
@@ -89,7 +106,7 @@ export default function Search() {
         const graphResponse = await fetch('/api/knowledgeGraph', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ query: actualQuery }),
+          body: JSON.stringify({ query: searchQuery }),
         });
 
         if (!graphResponse.ok) {
@@ -332,7 +349,22 @@ export default function Search() {
           <div className="w-1/4 p-4 bg-white">
             <div className="result-item mb-4">
               <h3 className="result-title text-4xl">📝Answer</h3>
-              <p className="text-xs text-gray-500 text-center mb-2">Collected {searchResults.length} web pages</p>
+              <div className="relative">
+                <p className="text-xs text-gray-500 text-center mb-2">
+                  {isCollecting 
+                    ? `Collecting web pages... ${collectedPages}/${totalPages}`
+                    : `Collected ${searchResults.length} web pages`
+                  }
+                </p>
+                {isCollecting && (
+                  <div className="absolute left-0 bottom-0 w-full h-1 bg-gray-200 overflow-hidden">
+                    <div 
+                      className="h-full bg-gray-400 transition-all duration-300 ease-out"
+                      style={{ width: `${(collectedPages / totalPages) * 100}%` }}
+                    ></div>
+                  </div>
+                )}
+              </div>
               <div className="min-h-40 p-4">
                 {loading ? (
                   <div className="h-full bg-gray-200 animate-pulse rounded"></div>
