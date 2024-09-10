@@ -63,8 +63,22 @@ export default function Search() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [processingStep, setProcessingStep] = useState(0);
   const [streamedAnswer, setStreamedAnswer] = useState('');
+  const [loadingMessage, setLoadingMessage] = useState('🎨 Preparing the canvas...');
 
   const defaultQuery = "What is the answer to life, the universe, and everything?";
+
+  const loadingMessages = [
+    '🎨 Preparing the canvas...',
+    '🧚 Awakening knowledge fairies...',
+    '🏰 Constructing mind palace...',
+    '🌌 Connecting knowledge constellation...',
+    '🧠 Activating brain neurons...',
+    '🗺️ Drawing wisdom blueprint...',
+    '🔓 Unlocking knowledge vault...',
+    '🧙‍♀️ Summoning wisdom goddess...',
+    '💡 Illuminating thought lighthouse...',
+    '🚀 Launching knowledge engine...'
+  ];
 
   const handleSearch = useCallback(async (searchQuery) => {
     setLoading(true);
@@ -171,6 +185,20 @@ export default function Search() {
     }
     return () => clearInterval(interval);
   }, [isProcessing]);
+
+  useEffect(() => {
+    let interval;
+    if (loading || expandingNode) {
+      interval = setInterval(() => {
+        setLoadingMessage(prevMessage => {
+          const currentIndex = loadingMessages.indexOf(prevMessage);
+          const nextIndex = (currentIndex + 1) % loadingMessages.length;
+          return loadingMessages[nextIndex];
+        });
+      }, 1000);
+    }
+    return () => clearInterval(interval);
+  }, [loading, expandingNode]);
 
   useEffect(() => {
     console.log('Search component mounted');
@@ -352,7 +380,12 @@ export default function Search() {
             <div className="mb-4">
               <h3 className="result-title text-4xl mb-2 text-center">🧠Knowledge Graph</h3>
               {loading || expandingNode ? (
-                <div className="h-64 bg-gray-200 animate-pulse rounded"></div>
+                <div className="h-64 bg-gray-100 rounded flex items-center justify-center">
+                  <div className="text-center">
+                    <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-blue-500 mx-auto mb-4"></div>
+                    <p className="text-lg font-semibold text-gray-600">{loadingMessage}</p>
+                  </div>
+                </div>
               ) : graphError ? (
                 <p className="text-red-500">{graphError}</p>
               ) : knowledgeGraphData ? (
