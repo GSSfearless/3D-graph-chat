@@ -57,12 +57,14 @@ export default function Search() {
   const [graphHistory, setGraphHistory] = useState([]);
   const [graphFuture, setGraphFuture] = useState([]);
   const [hasPreviousGraph, setHasPreviousGraph] = useState(false);
+  const [scrollingText, setScrollingText] = useState('');
 
   const defaultQuery = "What is the answer to life, the universe, and everything?";
 
   const handleSearch = useCallback(async (searchQuery) => {
     setLoading(true);
     setGraphError(null);
+    setScrollingText(''); // 重置滚动文本
     try {
       const actualQuery = searchQuery || defaultQuery;
       
@@ -74,6 +76,9 @@ export default function Search() {
       });
       const searchData = await searchResponse.json();
       setSearchResults(searchData);
+
+      // 设置滚动文本
+      setScrollingText(searchData.map(item => item.snippet).join(' '));
 
       // Get AI answer
       const chatResponse = await fetch('/api/chat', {
@@ -333,6 +338,11 @@ export default function Search() {
             <div className="result-item mb-4">
               <h3 className="result-title text-4xl">📝Answer</h3>
               <p className="text-xs text-gray-500 text-center mb-2">Collected {searchResults.length} web pages</p>
+              <div className="h-5 bg-white overflow-hidden mb-2">
+                <div className="whitespace-nowrap animate-scrolling-text">
+                  {scrollingText}
+                </div>
+              </div>
               <div className="min-h-40 p-4">
                 {loading ? (
                   <div className="h-full bg-gray-200 animate-pulse rounded"></div>

@@ -127,3 +127,17 @@ body {
   font-size: 20px; /* 设置箭头图标大小 */
   color: #ffffff;
 }
+
+@keyframes scrolling {
+  0% {
+    transform: translateX(100%);
+  }
+  100% {
+    transform: translateX(-100%);
+  }
+}
+
+.animate-scrolling-text {
+  display: inline-block;
+  animation: scrolling 8s linear infinite;
+}
