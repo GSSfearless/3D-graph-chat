@@ -39,44 +39,6 @@ function renderMarkdown(text) {
   return text;
 }
 
-// Add this new component
-const LoadingAnimation = () => {
-  const [loadingText, setLoadingText] = useState('');
-  const loadingSteps = [
-    '> Initializing Retrieval-Augmented Generation (RAG) system...',
-    '> Performing dense vector retrieval...',
-    '> Calculating document relevance scores...',
-    '> Applying semantic similarity ranking...',
-    '> Extracting key contextual information...',
-    '> Integrating retrieval results...',
-    '> Generating knowledge graph...',
-    '> Preparing AI response...'
-  ];
-
-  useEffect(() => {
-    let currentStep = 0;
-    const interval = setInterval(() => {
-      if (currentStep < loadingSteps.length) {
-        setLoadingText(prev => prev + '\n' + loadingSteps[currentStep]);
-        currentStep++;
-      } else {
-        clearInterval(interval);
-      }
-    }, 1000);
-
-    return () => clearInterval(interval);
-  }, []);
-
-  return (
-    <div className="bg-black text-white p-4 rounded-lg shadow-md font-mono text-sm h-64 overflow-y-auto">
-      <pre className="whitespace-pre-wrap">
-        {loadingText}
-        <span className="animate-pulse text-[#6CB6EF]">▋</span>
-      </pre>
-    </div>
-  );
-};
-
 export default function Search() {
   const router = useRouter();
   const { q } = router.query;
@@ -373,7 +335,7 @@ export default function Search() {
               <p className="text-xs text-gray-500 text-center mb-2">Collected {searchResults.length} web pages</p>
               <div className="min-h-40 p-4">
                 {loading ? (
-                  <LoadingAnimation />
+                  <div className="h-full bg-gray-200 animate-pulse rounded"></div>
                 ) : (
                   <div 
                     className="result-snippet prose prose-sm max-w-none"
