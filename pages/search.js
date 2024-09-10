@@ -6,7 +6,6 @@ import { useRouter } from 'next/router';
 import { useCallback, useEffect, useState } from 'react';
 import 'tailwindcss/tailwind.css';
 import '../styles/globals.css';
-import WebCollectionAnimation from '../components/WebCollectionAnimation';
 
 const KnowledgeGraph = dynamic(() => import('../components/KnowledgeGraph'), {
   ssr: false,
@@ -58,22 +57,12 @@ export default function Search() {
   const [graphHistory, setGraphHistory] = useState([]);
   const [graphFuture, setGraphFuture] = useState([]);
   const [hasPreviousGraph, setHasPreviousGraph] = useState(false);
-  const [isCollectingWebPages, setIsCollectingWebPages] = useState(false);
-  const [collectedWebPagesCount, setCollectedWebPagesCount] = useState(0);
 
   const defaultQuery = "生命、宇宙以及一切的答案是什么？";
 
   const handleSearch = useCallback(async (searchQuery) => {
     setLoading(true);
     setGraphError(null);
-    setIsCollectingWebPages(true);
-    setCollectedWebPagesCount(0);
-
-    // 模拟网页收集过程
-    const collectionInterval = setInterval(() => {
-      setCollectedWebPagesCount(prev => prev + 1);
-    }, 500);
-
     try {
       const actualQuery = searchQuery || defaultQuery;
       
@@ -122,9 +111,6 @@ export default function Search() {
       setQuery('');
     } catch (error) {
       console.error('搜索过程中出错:', error);
-    } finally {
-      clearInterval(collectionInterval);
-      setIsCollectingWebPages(false);
     }
     setLoading(false);
   }, [knowledgeGraphData]);
@@ -413,11 +399,6 @@ export default function Search() {
           </button>
         </div>
       </div>
-
-      <WebCollectionAnimation 
-        isCollecting={isCollectingWebPages} 
-        collectedCount={collectedWebPagesCount} 
-      />
     </div>
   );
 }
