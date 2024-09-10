@@ -60,12 +60,15 @@ export default function Search() {
   const [collectedPages, setCollectedPages] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
   const [isCollecting, setIsCollecting] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [processingStep, setProcessingStep] = useState(0);
 
   const defaultQuery = "What is the answer to life, the universe, and everything?";
 
   const handleSearch = useCallback(async (searchQuery) => {
     setLoading(true);
     setIsCollecting(true);
+    setIsProcessing(false);
     setCollectedPages(0);
     setTotalPages(0);
     setGraphError(null);
@@ -79,6 +82,7 @@ export default function Search() {
         if (data.done) {
           eventSource.close();
           setIsCollecting(false);
+          setIsProcessing(true);
         } else {
           setCollectedPages(data.progress);
           setTotalPages(data.total);
@@ -90,6 +94,7 @@ export default function Search() {
         console.error('EventSource failed:', error);
         eventSource.close();
         setIsCollecting(false);
+        setIsProcessing(false);
       };
 
       // Get AI answer
@@ -125,12 +130,32 @@ export default function Search() {
         setKnowledgeGraphData(null);
       }
 
+      // After all processing is complete
+      setIsProcessing(false);
       setQuery('');
     } catch (error) {
       console.error('Error during search:', error);
+      setIsProcessing(false);
     }
     setLoading(false);
-  }, [knowledgeGraphData]);
+  }, []);
+
+  const processingMessages = [
+    "Performing Retrieval-Augmented Generation (RAG)...",
+    "Analyzing information with Large Language Model (LLM)...",
+    "Integrating search results and generating answer...",
+    "AI processing retrieved information..."
+  ];
+
+  useEffect(() => {
+    let interval;
+    if (isProcessing) {
+      interval = setInterval(() => {
+        setProcessingStep((prev) => (prev + 1) % processingMessages.length);
+      }, 2000); // Switch every 2 seconds
+    }
+    return () => clearInterval(interval);
+  }, [isProcessing]);
 
   useEffect(() => {
     console.log('Search component mounted');
@@ -352,14 +377,20 @@ export default function Search() {
               <p className="text-xs text-gray-500 text-center mb-2">
                 {isCollecting 
                   ? `Collecting web pages... ${collectedPages}/${totalPages}`
-                  : `Collected ${searchResults.length} web pages`
+                  : isProcessing
+                    ? processingMessages[processingStep]
+                    : `Collected ${searchResults.length} web pages`
                 }
               </p>
-              {isCollecting && (
+              {(isCollecting || isProcessing) && (
                 <div className="w-full h-2 bg-gray-200 mb-4">
                   <div 
                     className="h-full bg-gray-400 transition-all duration-300 ease-out"
-                    style={{ width: `${(collectedPages / totalPages) * 100}%` }}
+                    style={{ 
+                      width: isCollecting 
+                        ? `${(collectedPages / totalPages) * 100}%`
+                        : '100%'
+                    }}
                   ></div>
                 </div>
               )}
