@@ -57,17 +57,12 @@ export default function Search() {
   const [graphHistory, setGraphHistory] = useState([]);
   const [graphFuture, setGraphFuture] = useState([]);
   const [hasPreviousGraph, setHasPreviousGraph] = useState(false);
-  const [streamedAnswer, setStreamedAnswer] = useState('');
-  const [streamedGraph, setStreamedGraph] = useState({ nodes: [], edges: [] });
 
   const defaultQuery = "What is the answer to life, the universe, and everything?";
 
   const handleSearch = useCallback(async (searchQuery) => {
     setLoading(true);
     setGraphError(null);
-    setStreamedAnswer('');
-    setStreamedGraph({ nodes: [], edges: [] });
-
     try {
       const actualQuery = searchQuery || defaultQuery;
       
@@ -80,64 +75,45 @@ export default function Search() {
       const searchData = await searchResponse.json();
       setSearchResults(searchData);
 
-      // Get AI answer (streaming)
+      // Get AI answer
       const chatResponse = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ context: searchData, query: actualQuery }),
       });
+      const chatData = await chatResponse.json();
+      setAiAnswer(chatData.answer);
 
-      const reader = chatResponse.body.getReader();
-      const decoder = new TextDecoder();
-      let done = false;
-      let accumulatedAnswer = '';
+      // Get knowledge graph data
+      try {
+        const graphResponse = await fetch('/api/knowledgeGraph', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ query: actualQuery }),
+        });
 
-      while (!done) {
-        const { value, done: doneReading } = await reader.read();
-        done = doneReading;
-        const chunkValue = decoder.decode(value);
-        accumulatedAnswer += chunkValue;
-        setStreamedAnswer(accumulatedAnswer);
-      }
-
-      // Get knowledge graph data (streaming)
-      const graphResponse = await fetch('/api/knowledgeGraph', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ query: actualQuery }),
-      });
-
-      const graphReader = graphResponse.body.getReader();
-      let graphDone = false;
-      let accumulatedGraph = { nodes: [], edges: [] };
-
-      while (!graphDone) {
-        const { value, done: doneReading } = await graphReader.read();
-        graphDone = doneReading;
-        const chunkValue = decoder.decode(value);
-        const parts = chunkValue.split('---');
-        
-        for (const part of parts) {
-          if (part.trim()) {
-            const data = JSON.parse(part);
-            if (data.node) {
-              accumulatedGraph.nodes.push(data.node);
-            } else if (data.edge) {
-              accumulatedGraph.edges.push(data.edge);
-            }
-            setStreamedGraph({ ...accumulatedGraph });
-          }
+        if (!graphResponse.ok) {
+          throw new Error(`Knowledge graph API error: ${graphResponse.status}`);
         }
+
+        const graphData = await graphResponse.json();
+        console.log('Knowledge graph data:', graphData);
+        setGraphHistory(prev => [...prev, knowledgeGraphData]);
+        setGraphFuture([]);
+        setKnowledgeGraphData(graphData);
+        console.log('Initial knowledge graph data:', graphData);
+      } catch (error) {
+        console.error('Error fetching knowledge graph:', error);
+        setGraphError('Unable to load knowledge graph');
+        setKnowledgeGraphData(null);
       }
 
-      setKnowledgeGraphData(accumulatedGraph);
       setQuery('');
     } catch (error) {
       console.error('Error during search:', error);
-      setGraphError('Error loading data');
     }
     setLoading(false);
-  }, []);
+  }, [knowledgeGraphData]);
 
   useEffect(() => {
     console.log('Search component mounted');
@@ -318,14 +294,14 @@ export default function Search() {
           <div className="w-3/4 pr-4">
             <div className="mb-4">
               <h3 className="result-title text-4xl mb-2 text-center">🧠Knowledge Graph</h3>
-              {loading ? (
+              {loading || expandingNode ? (
                 <div className="h-64 bg-gray-200 animate-pulse rounded"></div>
               ) : graphError ? (
                 <p className="text-red-500">{graphError}</p>
-              ) : streamedGraph.nodes.length > 0 ? (
+              ) : knowledgeGraphData ? (
                 <div style={{ height: '600px', width: '100%', border: '1px solid #ddd', borderRadius: '8px' }}>
                   <KnowledgeGraph 
-                    data={streamedGraph} 
+                    data={knowledgeGraphData} 
                     onNodeClick={handleNodeClick}
                     onNodeDragStop={handleNodeDragStop}
                   />
@@ -363,7 +339,7 @@ export default function Search() {
                 ) : (
                   <div 
                     className="result-snippet prose prose-sm max-w-none"
-                    dangerouslySetInnerHTML={{ __html: renderMarkdown(streamedAnswer) }}
+                    dangerouslySetInnerHTML={{ __html: renderedAnswer }}
                   />
                 )}
               </div>
