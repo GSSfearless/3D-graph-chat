@@ -127,24 +127,3 @@ body {
   font-size: 20px; /* 设置箭头图标大小 */
   color: #ffffff;
 }
-
-@keyframes dot {
-  0%, 20% { opacity: 0; }
-  50% { opacity: 1; }
-  100% { opacity: 0; }
-}
-
-.animate-dot1 {
-  animation: dot 1.5s infinite;
-  animation-delay: 0s;
-}
-
-.animate-dot2 {
-  animation: dot 1.5s infinite;
-  animation-delay: 0.5s;
-}
-
-.animate-dot3 {
-  animation: dot 1.5s infinite;
-  animation-delay: 1s;
-}
