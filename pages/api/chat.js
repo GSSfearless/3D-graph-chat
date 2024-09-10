@@ -11,30 +11,37 @@ export default async function handler(req, res) {
     return res.status(405).end(`Method ${req.method} Not Allowed`);
   }
 
-  const { context, query, graphData } = req.body;
+  const { context, query } = req.body;
 
-  if (!context || !query || !graphData) {
-    return res.status(400).json({ error: 'Context, query, and graphData are required' });
+  if (!context || !query) {
+    return res.status(400).json({ error: 'Context and query are required' });
   }
 
   const prompt = `
-  You are an AI assistant with expertise in explaining complex concepts. Using the provided knowledge graph, create a concise and accurate explanation of the user's query. Your response should be in English and use Markdown formatting.
+  你是一个大型语言AI助手。请针对用户的问题提供一个简洁、准确的回答。你将获得一组与问题相关的上下文信息。你的回答必须正确、准确，并以专业和中立的语气撰写。请限制在1024个标记以内。不要提供与问题无关的信息，也不要重复。"。
 
-  Follow these guidelines:
-  1. Use double asterisks (**) to highlight important concepts or keywords in bold.
-  2. Use numbered lists to organize main points.
-  3. Use three hash symbols (###) to create subheadings on separate lines.
-  4. Use single line breaks to separate paragraphs.
+  请严格使用以下格式来组织你的回答：
+  1. 使用双星号（**）包围重要概念或关键词来表示粗体。例如：**重要概念**。
+  2. 使用数字和点来创建编号列表。每个新点应该另起一行。
+  3. 使用三个井号（###）来创建小标题，确保小标题单独占一行。
+  4. 使用单个换行符来分隔段落。
 
-  Knowledge Graph Structure:
-  ${JSON.stringify(graphData, null, 2)}
+  示例格式：
+  ### 主要概念
+  1. **第一个要点**
+  2. **第二个要点**
 
-  Context Information:
-  ${context.map((item, index) => `${item.title}\n${item.snippet}`).join('\n\n')}
+  ### 详细解释
+  这里是一些额外的解释。
 
-  User Query: "${query}"
+  不要引用任何上下文编号或来源。专注于提供信息丰富、结构清晰的回答。
 
-  Provide a structured explanation based on the knowledge graph, incorporating relevant context information.
+  以下是上下文信息集：
+
+  ${context.map((item, index) => `标题: ${item.title}\n摘要: ${item.snippet}`).join('\n\n')}
+
+  记住，不要盲目重复上下文。这里是用户的问题：
+  "${query}"
   `;
 
   try {
@@ -46,7 +53,7 @@ export default async function handler(req, res) {
     const generatedAnswer = response.choices[0].message.content;
     res.status(200).json({ answer: generatedAnswer });
   } catch (error) {
-    console.error('Error generating answer:', error);
+    console.error('生成答案时出错:', error);
 
     if (error.response) {
       console.error('状态:', error.response.status);
