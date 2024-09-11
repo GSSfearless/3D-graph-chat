@@ -400,7 +400,7 @@ export default function Search() {
       <div className="w-5/6 p-4 ml-[16.666667%] overflow-y-auto mb-16">
         <div className="flex">
           <div className="w-3/4 pr-4">
-            <div className="mb-4 relative">
+            <div className="mb-4">
               <h3 className="result-title text-4xl mb-2 text-center">🧠Knowledge Graph</h3>
               {loading || expandingNode ? (
                 <div className="h-64 bg-gray-100 rounded flex items-center justify-center">
@@ -412,34 +412,34 @@ export default function Search() {
               ) : graphError ? (
                 <p className="text-red-500">{graphError}</p>
               ) : knowledgeGraphData ? (
-                <div style={{ height: '600px', width: '100%', border: '1px solid #ddd', borderRadius: '8px', position: 'relative' }}>
+                <div style={{ height: '600px', width: '100%', border: '1px solid #ddd', borderRadius: '8px' }}>
                   <KnowledgeGraph 
                     data={knowledgeGraphData} 
                     onNodeClick={handleNodeClick}
                     onNodeDragStop={handleNodeDragStop}
                   />
-                  <div className="absolute bottom-4 left-4 flex">
-                    <button 
-                      onClick={handleUndo} 
-                      disabled={!hasPreviousGraph}
-                      className="text-2xl opacity-50 hover:opacity-100 transition-opacity disabled:opacity-30 mr-2"
-                      title="Undo last action"
-                    >
-                      ↩️
-                    </button>
-                    <button 
-                      onClick={handleRedo} 
-                      disabled={graphFuture.length === 0}
-                      className="text-2xl opacity-50 hover:opacity-100 transition-opacity disabled:opacity-30"
-                      title="Redo next action"
-                    >
-                      ↪️
-                    </button>
-                  </div>
                 </div>
               ) : (
                 <p>No knowledge graph data available</p>
               )}
+              <div className="flex justify-center mt-4">
+                <button 
+                  onClick={handleUndo} 
+                  disabled={!hasPreviousGraph}
+                  className="text-2xl opacity-50 hover:opacity-100 transition-opacity disabled:opacity-30 mr-2"
+                  title="Undo last action"
+                >
+                  ↩️
+                </button>
+                <button 
+                  onClick={handleRedo} 
+                  disabled={graphFuture.length === 0}
+                  className="text-2xl opacity-50 hover:opacity-100 transition-opacity disabled:opacity-30"
+                  title="Redo next action"
+                >
+                  ↪️
+                </button>
+              </div>
             </div>
           </div>
           <div className="w-1/4 p-4 bg-white">
