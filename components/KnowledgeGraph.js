@@ -3,7 +3,7 @@ import { useEffect, useState, useCallback } from 'react';
 
 const ReactFlow = dynamic(() => import('react-flow-renderer').then(mod => mod.default), {
   ssr: false,
-  loading: () => <p>Loading knowledge graph...</p>
+  loading: () => <p>加载知识图谱中...</p>
 });
 
 // 导入 Controls 和 Background 组件
@@ -15,11 +15,10 @@ const Background = dynamic(() => import('react-flow-renderer').then(mod => mod.B
   ssr: false
 });
 
-const KnowledgeGraph = ({ data, onNodeClick, onNodeDragStop, onRelatedSearch }) => {
+const KnowledgeGraph = ({ data, onNodeClick, onNodeDragStop }) => {
   console.log('KnowledgeGraph rendered with data:', data);
 
   const [mounted, setMounted] = useState(false);
-  const [highlightedElements, setHighlightedElements] = useState({ nodes: [], edges: [] });
 
   useEffect(() => {
     setMounted(true);
@@ -39,35 +38,11 @@ const KnowledgeGraph = ({ data, onNodeClick, onNodeDragStop, onRelatedSearch }) 
     onNodeDragStop(node);
   }, [onNodeDragStop]);
 
-  const handleNodeMouseEnter = useCallback((event, node) => {
-    const relatedEdges = data.edges.filter(edge => edge.source === node.id || edge.target === node.id);
-    const relatedNodeIds = new Set(relatedEdges.flatMap(edge => [edge.source, edge.target]));
-    const relatedNodes = data.nodes.filter(n => relatedNodeIds.has(n.id));
-    setHighlightedElements({ nodes: relatedNodes, edges: relatedEdges });
-  }, [data]);
-
-  const handleNodeMouseLeave = useCallback(() => {
-    setHighlightedElements({ nodes: [], edges: [] });
-  }, []);
-
-  const handleRelatedSearch = useCallback((node) => {
-    onRelatedSearch(node);
-  }, [onRelatedSearch]);
-
   if (!mounted) return null;
 
   if (!data || !data.nodes || !data.edges) {
     return <div>无效的图表数据</div>;
   }
-
-  const nodeTypes = {
-    custom: ({ data }) => (
-      <div className="custom-node">
-        <div>{data.label}</div>
-        <button onClick={() => handleRelatedSearch(data)} className="related-search-btn">🔍</button>
-      </div>
-    ),
-  };
 
   return (
     <div style={{ height: '100%', width: '100%', fontFamily: 'Roboto, sans-serif' }}>
@@ -75,27 +50,12 @@ const KnowledgeGraph = ({ data, onNodeClick, onNodeDragStop, onRelatedSearch }) 
         key={JSON.stringify(data)}
         nodes={data.nodes.map(node => ({
           ...node,
-          type: 'custom',
-          data: { 
-            ...node.data, 
-            label: node.data.label,
-            isHighlighted: highlightedElements.nodes.some(n => n.id === node.id),
-          },
+          data: { ...node.data, label: node.data.label },
         }))}
-        edges={data.edges.map(edge => ({
-          ...edge,
-          style: {
-            ...edge.style,
-            stroke: highlightedElements.edges.some(e => e.id === edge.id) ? '#ff0000' : '#888',
-            strokeWidth: highlightedElements.edges.some(e => e.id === edge.id) ? 3 : 1,
-          },
-        }))}
+        edges={data.edges}
         onNodeClick={handleNodeClick}
         onNodeDragStop={handleNodeDragStop}
-        onNodeMouseEnter={handleNodeMouseEnter}
-        onNodeMouseLeave={handleNodeMouseLeave}
         onInit={onInit}
-        nodeTypes={nodeTypes}
         nodesDraggable={true}
         nodesConnectable={false}
         zoomOnScroll={false}
