@@ -127,13 +127,3 @@ body {
   font-size: 20px; /* 设置箭头图标大小 */
   color: #ffffff;
 }
-
-.blur-effect > *:not(.react-flow__renderer) {
-  filter: blur(4px);
-  transition: filter 0.3s ease-in-out;
-}
-
-.blur-effect .react-flow__renderer > *:not(.react-flow__node-custom) {
-  filter: blur(4px);
-  transition: filter 0.3s ease-in-out;
-}
