@@ -19,10 +19,15 @@ const KnowledgeGraph = ({ data, onNodeClick, onNodeDragStop }) => {
   console.log('KnowledgeGraph rendered with data:', data);
 
   const [mounted, setMounted] = useState(false);
+  const [nodes, setNodes] = useState(data.nodes);
+  const [edges, setEdges] = useState(data.edges);
+  const [hoveredNode, setHoveredNode] = useState(null);
 
   useEffect(() => {
     setMounted(true);
-  }, []);
+    setNodes(data.nodes);
+    setEdges(data.edges);
+  }, [data]);
 
   const onInit = useCallback((reactFlowInstance) => {
     reactFlowInstance.fitView({ padding: 0.2 });
@@ -38,6 +43,36 @@ const KnowledgeGraph = ({ data, onNodeClick, onNodeDragStop }) => {
     onNodeDragStop(node);
   }, [onNodeDragStop]);
 
+  const handleNodeMouseEnter = useCallback((event, node) => {
+    setHoveredNode(node);
+    setNodes((nds) =>
+      nds.map((n) => {
+        if (n.id === node.id || edges.some(e => (e.source === node.id && e.target === n.id) || (e.target === node.id && e.source === n.id))) {
+          return { ...n, style: { ...n.style, backgroundColor: '#ffa500', color: '#000' } };
+        }
+        return { ...n, style: { ...n.style, opacity: 0.3 } };
+      })
+    );
+    setEdges((eds) =>
+      eds.map((e) => {
+        if (e.source === node.id || e.target === node.id) {
+          return { ...e, style: { ...e.style, stroke: '#ffa500', strokeWidth: 3 } };
+        }
+        return { ...e, style: { ...e.style, opacity: 0.3 } };
+      })
+    );
+  }, [edges]);
+
+  const handleNodeMouseLeave = useCallback(() => {
+    setHoveredNode(null);
+    setNodes((nds) =>
+      nds.map((n) => ({ ...n, style: { ...n.style, backgroundColor: '#fff', color: '#000', opacity: 1 } }))
+    );
+    setEdges((eds) =>
+      eds.map((e) => ({ ...e, style: { ...e.style, stroke: '#888', strokeWidth: 2, opacity: 1 } }))
+    );
+  }, []);
+
   if (!mounted) return null;
 
   if (!data || !data.nodes || !data.edges) {
@@ -47,14 +82,12 @@ const KnowledgeGraph = ({ data, onNodeClick, onNodeDragStop }) => {
   return (
     <div style={{ height: '100%', width: '100%', fontFamily: 'Roboto, sans-serif' }}>
       <ReactFlow 
-        key={JSON.stringify(data)}
-        nodes={data.nodes.map(node => ({
-          ...node,
-          data: { ...node.data, label: node.data.label },
-        }))}
-        edges={data.edges}
+        nodes={nodes}
+        edges={edges}
         onNodeClick={handleNodeClick}
         onNodeDragStop={handleNodeDragStop}
+        onNodeMouseEnter={handleNodeMouseEnter}
+        onNodeMouseLeave={handleNodeMouseLeave}
         onInit={onInit}
         nodesDraggable={true}
         nodesConnectable={false}
