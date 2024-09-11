@@ -6,6 +6,7 @@ import { useRouter } from 'next/router';
 import { useState, useCallback, useEffect } from 'react';
 import 'tailwindcss/tailwind.css';
 import '../styles/globals.css';
+import NodeDetailsPanel from '../components/NodeDetailsPanel';
 
 const KnowledgeGraph = dynamic(() => import('../components/KnowledgeGraph'), {
   ssr: false,
@@ -87,6 +88,7 @@ export default function Search() {
   const [processingStep, setProcessingStep] = useState(0);
   const [streamedAnswer, setStreamedAnswer] = useState('');
   const [loadingMessage, setLoadingMessage] = useState('🎨 Preparing the canvas...');
+  const [selectedNode, setSelectedNode] = useState(null);
 
   const defaultQuery = "What is the answer to life, the universe, and everything?";
 
@@ -271,50 +273,10 @@ export default function Search() {
     }
   };
 
-  const handleNodeClick = async (node) => {
-    setExpandingNode(node.id);
-    setGraphError(null);
-
-    try {
-      console.log('Sending request to /api/expandNode');
-      const response = await fetch('/api/expandNode', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          nodeId: node.id, 
-          label: node.data.label,
-          parentPosition: node.position,
-          existingNodes: knowledgeGraphData.nodes // Pass existing node information
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const expandedData = await response.json();
-      console.log('Expanded data:', expandedData);
-
-      setGraphHistory(prev => [...prev, knowledgeGraphData]);
-      setGraphFuture([]); // Clear future states as a new branch is created
-      
-      setKnowledgeGraphData(prevData => {
-        const newNodes = [...prevData.nodes, ...expandedData.nodes];
-        const newEdges = [...prevData.edges, ...expandedData.edges];
-        
-        return {
-          nodes: newNodes,
-          edges: newEdges,
-          type: prevData.type
-        };
-      });
-    } catch (error) {
-      console.error('Error expanding node:', error);
-      setGraphError('Error expanding node: ' + error.message);
-    } finally {
-      setExpandingNode(null);
-    }
-  };
+  const handleNodeClick = useCallback((event, node) => {
+    console.log('Node clicked in KnowledgeGraph:', node);
+    setSelectedNode(node);
+  }, []);
 
   const handleNodeDragStop = useCallback((node) => {
     setGraphHistory(prev => {
@@ -443,39 +405,43 @@ export default function Search() {
             </div>
           </div>
           <div className="w-1/4 p-4 bg-white">
-            <div className="result-item mb-4">
-              <h3 className="result-title text-4xl">📝Answer</h3>
-              <p className="text-xs text-gray-500 text-center mb-2">
-                {isCollecting 
-                  ? `Collecting web pages... ${collectedPages}/${totalPages}`
-                  : isProcessing
-                    ? processingMessages[processingStep]
-                    : `Collected ${searchResults.length} web pages`
-                }
-              </p>
-              {(isCollecting || isProcessing) && (
-                <div className="w-full h-2 bg-gray-200 mb-4">
-                  <div 
-                    className="h-full bg-gray-400 transition-all duration-300 ease-out"
-                    style={{ 
-                      width: isCollecting 
-                        ? `${(collectedPages / totalPages) * 100}%`
-                        : '100%'
-                    }}
-                  ></div>
-                </div>
-              )}
-              <div className="min-h-40 p-4">
-                {loading ? (
-                  <div className="h-full bg-gray-200 animate-pulse rounded"></div>
-                ) : (
-                  <div 
-                    className="result-snippet prose prose-sm max-w-none"
-                    dangerouslySetInnerHTML={{ __html: renderedAnswer }}
-                  />
+            {selectedNode ? (
+              <NodeDetailsPanel node={selectedNode} onClose={() => setSelectedNode(null)} />
+            ) : (
+              <div className="result-item mb-4">
+                <h3 className="result-title text-4xl">📝Answer</h3>
+                <p className="text-xs text-gray-500 text-center mb-2">
+                  {isCollecting 
+                    ? `Collecting web pages... ${collectedPages}/${totalPages}`
+                    : isProcessing
+                      ? processingMessages[processingStep]
+                      : `Collected ${searchResults.length} web pages`
+                  }
+                </p>
+                {(isCollecting || isProcessing) && (
+                  <div className="w-full h-2 bg-gray-200 mb-4">
+                    <div 
+                      className="h-full bg-gray-400 transition-all duration-300 ease-out"
+                      style={{ 
+                        width: isCollecting 
+                          ? `${(collectedPages / totalPages) * 100}%`
+                          : '100%'
+                      }}
+                    ></div>
+                  </div>
                 )}
+                <div className="min-h-40 p-4">
+                  {loading ? (
+                    <div className="h-full bg-gray-200 animate-pulse rounded"></div>
+                  ) : (
+                    <div 
+                      className="result-snippet prose prose-sm max-w-none"
+                      dangerouslySetInnerHTML={{ __html: renderedAnswer }}
+                    />
+                  )}
+                </div>
               </div>
-            </div>
+            )}
           </div>
         </div>
       </div>
