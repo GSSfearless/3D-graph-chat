@@ -362,7 +362,7 @@ export default function Search() {
   }, [knowledgeGraphData]);
 
   return (
-    <div className="flex flex-row min-h-screen relative pb-20">
+    <div className="flex flex-row min-h-screen relative pb-24">
       <div className="w-1/6 p-4 bg-[#ECF5FD] flex flex-col justify-between fixed h-full" style={{ fontFamily: 'Open Sans, sans-serif' }}>
         <div>
           <Link href="/">
@@ -403,7 +403,7 @@ export default function Search() {
             <div className="mb-4">
               <h3 className="result-title text-4xl mb-2 text-center">🧠Knowledge Graph</h3>
               {loading || expandingNode ? (
-                <div className="h-64 bg-gray-100 rounded flex items-center justify-center">
+                <div className="h-[750px] bg-gray-100 rounded flex items-center justify-center">
                   <div className="text-center">
                     <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-blue-500 mx-auto mb-4"></div>
                     <p className="text-lg font-semibold text-gray-600">{loadingMessage}</p>
@@ -412,7 +412,7 @@ export default function Search() {
               ) : graphError ? (
                 <p className="text-red-500">{graphError}</p>
               ) : knowledgeGraphData ? (
-                <div style={{ height: '600px', width: '100%', border: '1px solid #ddd', borderRadius: '8px' }}>
+                <div style={{ height: '750px', width: '100%', border: '1px solid #ddd', borderRadius: '8px' }}>
                   <KnowledgeGraph 
                     data={knowledgeGraphData} 
                     onNodeClick={handleNodeClick}
