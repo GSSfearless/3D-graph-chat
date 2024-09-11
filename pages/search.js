@@ -87,6 +87,7 @@ export default function Search() {
   const [processingStep, setProcessingStep] = useState(0);
   const [streamedAnswer, setStreamedAnswer] = useState('');
   const [loadingMessage, setLoadingMessage] = useState('🎨 Preparing the canvas...');
+  const [showBottomSearch, setShowBottomSearch] = useState(true);
 
   const defaultQuery = "What is the answer to life, the universe, and everything?";
 
@@ -373,7 +374,10 @@ export default function Search() {
               type="text" 
               placeholder="Just Ask..." 
               className="w-full p-4 border-2 border-gray-300 rounded-full outline-none text-xl hover:border-gray-400 focus:border-gray-500 transition-all duration-300 cursor-pointer"
-              onClick={() => setShowLargeSearch(true)}
+              onClick={() => {
+                setShowLargeSearch(true);
+                setShowBottomSearch(false);
+              }}
               readOnly
             />
           </div>
@@ -513,24 +517,26 @@ export default function Search() {
         </div>
       )}
 
-      <div className="fixed bottom-4 left-1/2 transform -translate-x-1/2 w-full max-w-2xl z-50">
-        <div className="bg-white p-2 rounded-lg shadow-md flex items-center border-2 border-gray-300 transition-all duration-300" style={{ height: '4rem' }}>
-          <input 
-            type="text" 
-            placeholder={defaultQuery}
-            className="w-full p-2 border-none outline-none text-xl"
-            value={query}
-            onChange={handleChange}
-            onKeyPress={handleKeyPress}
-          />
-          <button 
-            className="bg-[#105C93] text-white rounded-full h-10 w-10 flex items-center justify-center absolute right-4 hover:bg-[#3A86C8] transition duration-300" 
-            onClick={handleButtonClick}
-          >
-            <FontAwesomeIcon icon={faArrowUp} />
-          </button>
+      {showBottomSearch && (
+        <div className="fixed bottom-4 left-1/2 transform -translate-x-1/2 w-full max-w-2xl z-50">
+          <div className="bg-white p-2 rounded-lg shadow-md flex items-center border-2 border-gray-300 transition-all duration-300" style={{ height: '4rem' }}>
+            <input 
+              type="text" 
+              placeholder={defaultQuery}
+              className="w-full p-2 border-none outline-none text-xl"
+              value={query}
+              onChange={handleChange}
+              onKeyPress={handleKeyPress}
+            />
+            <button 
+              className="bg-[#105C93] text-white rounded-full h-10 w-10 flex items-center justify-center absolute right-4 hover:bg-[#3A86C8] transition duration-300" 
+              onClick={handleButtonClick}
+            >
+              <FontAwesomeIcon icon={faArrowUp} />
+            </button>
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }
