@@ -6,6 +6,7 @@ import { useRouter } from 'next/router';
 import { useState, useCallback, useEffect } from 'react';
 import 'tailwindcss/tailwind.css';
 import '../styles/globals.css';
+import RelatedQuestions from '../components/RelatedQuestions';
 
 const KnowledgeGraph = dynamic(() => import('../components/KnowledgeGraph'), {
   ssr: false,
@@ -86,21 +87,23 @@ export default function Search() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [processingStep, setProcessingStep] = useState(0);
   const [streamedAnswer, setStreamedAnswer] = useState('');
-  const [loadingMessage, setLoadingMessage] = useState('🎨 Preparing the canvas...');
+  const [loadingMessage, setLoadingMessage] = useState('Preparing the canvas...');
+  const [hoveredNode, setHoveredNode] = useState(null);
+  const [relatedQuestions, setRelatedQuestions] = useState([]);
 
   const defaultQuery = "What is the answer to life, the universe, and everything?";
 
   const loadingMessages = [
-    '🎨 Preparing the canvas...',
-    '🧚 Awakening knowledge fairies...',
-    '🏰 Constructing mind palace...',
-    '🌌 Connecting knowledge constellation...',
-    '🧠 Activating brain neurons...',
-    '🗺️ Drawing wisdom blueprint...',
-    '🔓 Unlocking knowledge vault...',
-    '🧙‍♀️ Summoning wisdom goddess...',
-    '💡 Illuminating thought lighthouse...',
-    '🚀 Launching knowledge engine...'
+    'Preparing the canvas...',
+    'Awakening knowledge fairies...',
+    'Constructing mind palace...',
+    'Connecting knowledge constellation...',
+    'Activating brain neurons...',
+    'Drawing wisdom blueprint...',
+    'Unlocking knowledge vault...',
+    'Summoning wisdom goddess...',
+    'Illuminating thought lighthouse...',
+    'Launching knowledge engine...'
   ];
 
   const handleSearch = useCallback(async (searchQuery) => {
@@ -357,12 +360,35 @@ export default function Search() {
     }
   }, [graphFuture, knowledgeGraphData]);
 
+  const handleNodeMouseEnter = useCallback(async (node) => {
+    setHoveredNode(node);
+    try {
+      const response = await fetch('/api/relatedQuestions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ topic: node.data.label }),
+      });
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      const questions = await response.json();
+      setRelatedQuestions(questions);
+    } catch (error) {
+      console.error('Error fetching related questions:', error);
+    }
+  }, []);
+
+  const handleNodeMouseLeave = useCallback(() => {
+    setHoveredNode(null);
+    setRelatedQuestions([]);
+  }, []);
+
   useEffect(() => {
     console.log('knowledgeGraphData updated:', knowledgeGraphData);
   }, [knowledgeGraphData]);
 
   return (
-    <div className="flex flex-row min-h-screen relative pb-20">
+    <div className={`flex flex-row min-h-screen relative pb-20 ${hoveredNode ? 'blur-effect' : ''}`}>
       <div className="w-1/6 p-4 bg-[#ECF5FD] flex flex-col justify-between fixed h-full" style={{ fontFamily: 'Open Sans, sans-serif' }}>
         <div>
           <Link href="/">
@@ -401,7 +427,7 @@ export default function Search() {
         <div className="flex">
           <div className="w-3/4 pr-4">
             <div className="mb-4">
-              <h3 className="result-title text-4xl mb-2 text-center">🧠Knowledge Graph</h3>
+              <h3 className="result-title text-4xl mb-2 text-center">Knowledge Graph</h3>
               {loading || expandingNode ? (
                 <div className="h-64 bg-gray-100 rounded flex items-center justify-center">
                   <div className="text-center">
@@ -417,6 +443,8 @@ export default function Search() {
                     data={knowledgeGraphData} 
                     onNodeClick={handleNodeClick}
                     onNodeDragStop={handleNodeDragStop}
+                    onNodeMouseEnter={handleNodeMouseEnter}
+                    onNodeMouseLeave={handleNodeMouseLeave}
                   />
                 </div>
               ) : (
@@ -444,7 +472,7 @@ export default function Search() {
           </div>
           <div className="w-1/4 p-4 bg-white">
             <div className="result-item mb-4">
-              <h3 className="result-title text-4xl">📝Answer</h3>
+              <h3 className="result-title text-4xl">Answer</h3>
               <p className="text-xs text-gray-500 text-center mb-2">
                 {isCollecting 
                   ? `Collecting web pages... ${collectedPages}/${totalPages}`
@@ -531,6 +559,10 @@ export default function Search() {
           </button>
         </div>
       </div>
+
+      {hoveredNode && (
+        <RelatedQuestions questions={relatedQuestions} />
+      )}
     </div>
   );
 }
