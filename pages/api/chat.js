@@ -33,7 +33,7 @@ export default async function handler(req) {
   - Explanation of the second concept
   - Explanation of the third concept
 
-  Do not reference any context numbers or sources. Focus on providing an informative and well-structured answer.
+  Do not use more than three hash symbols (###) for headings. Do not reference any context numbers or sources. Focus on providing an informative and well-structured answer.
 
   Here is the set of context information:
 
