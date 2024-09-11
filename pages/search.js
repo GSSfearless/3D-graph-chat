@@ -87,6 +87,7 @@ export default function Search() {
   const [processingStep, setProcessingStep] = useState(0);
   const [streamedAnswer, setStreamedAnswer] = useState('');
   const [loadingMessage, setLoadingMessage] = useState('🎨 Preparing the canvas...');
+  const [selectedNode, setSelectedNode] = useState(null);
 
   const defaultQuery = "What is the answer to life, the universe, and everything?";
 
@@ -272,6 +273,7 @@ export default function Search() {
   };
 
   const handleNodeClick = async (node) => {
+    setSelectedNode(node);
     setExpandingNode(node.id);
     setGraphError(null);
 
@@ -314,6 +316,11 @@ export default function Search() {
     } finally {
       setExpandingNode(null);
     }
+  };
+
+  const handleRelatedSearch = async (node) => {
+    setQuery(node.data.label);
+    handleSearch(node.data.label);
   };
 
   const handleNodeDragStop = useCallback((node) => {
@@ -417,6 +424,7 @@ export default function Search() {
                     data={knowledgeGraphData} 
                     onNodeClick={handleNodeClick}
                     onNodeDragStop={handleNodeDragStop}
+                    onRelatedSearch={handleRelatedSearch}
                   />
                 </div>
               ) : (
@@ -476,6 +484,19 @@ export default function Search() {
                 )}
               </div>
             </div>
+            {selectedNode && (
+              <div className="result-item mb-4">
+                <h3 className="result-title text-2xl">🔍Node Details</h3>
+                <p className="font-bold">{selectedNode.data.label}</p>
+                <p className="text-sm">{selectedNode.data.description || "No detailed description available."}</p>
+                <button 
+                  onClick={() => handleRelatedSearch(selectedNode)}
+                  className="mt-2 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition duration-300"
+                >
+                  Related Search
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </div>

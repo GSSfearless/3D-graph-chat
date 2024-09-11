@@ -74,13 +74,13 @@ export default async function handler(req, res) {
   console.log('expandNode API called with body:', req.body);
 
   if (req.method !== 'POST') {
-    return res.status(405).json({ message: '只允许 POST 请求' });
+    return res.status(405).json({ message: 'Only POST requests are allowed' });
   }
 
-  const { nodeId, label, parentPosition } = req.body;
+  const { nodeId, label, parentPosition, existingNodes, isRelatedSearch } = req.body;
 
   if (!nodeId || !label) {
-    return res.status(400).json({ message: '缺少必要的参数' });
+    return res.status(400).json({ message: 'Missing required parameters' });
   }
 
   try {
@@ -88,8 +88,11 @@ export default async function handler(req, res) {
     const completion = await openai.chat.completions.create({
       model: "gpt-3.5-turbo",
       messages: [
-        {role: "system", content: "你是一个专家，能够深入解析复杂概念。请提供一个 JSON 格式的响应，包含 'nodes' 数组。每个节点应该有 'id' 和 'label' 属性。请只生成两个新节点，这两个节点应该是对给定概念的更详细解释或延伸。"},
-        {role: "user", content: `请为以下概念提供两个更详细的解释或相关概念：${label}`}
+        {role: "system", content: "You are an expert capable of breaking down complex concepts into structured knowledge graphs. Please provide a response in JSON format, including 'nodes' array. Each node should have 'id' and 'label' properties. If this is a related search, provide more diverse and broader concepts."},
+        {role: "user", content: isRelatedSearch 
+          ? `Please provide related concepts for: ${label}` 
+          : `Please provide more detailed explanations or related concepts for: ${label}`
+        }
       ],
     });
 
@@ -117,14 +120,13 @@ export default async function handler(req, res) {
     }));
 
     const parentNode = { id: nodeId, position: parentPosition || { x: 0, y: 0 } };
-    const existingNodes = req.body.existingNodes || [];
     const layoutedNodes = createLayout(processedNodes, parentNode, existingNodes);
 
     const newEdges = layoutedNodes.map(node => ({
       id: `${nodeId}-${node.id}`,
       source: nodeId,
       target: node.id,
-      label: '详细',
+      label: 'related',
       type: 'smoothstep',
       animated: true,
       labelStyle: { fill: '#888', fontWeight: 700 },
@@ -145,10 +147,9 @@ export default async function handler(req, res) {
     console.log('Sending response:', responseData);
     res.status(200).json(responseData);
   } catch (error) {
-    console.error('展开节点时出错:', error);
-    // 添加更详细的错误信息
+    console.error('Error expanding node:', error);
     res.status(500).json({ 
-      message: '展开节点时出错', 
+      message: 'Error expanding node', 
       error: error.message,
       stack: error.stack,
       details: error.toString()
