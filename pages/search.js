@@ -278,6 +278,43 @@ export default function Search() {
     }
   };
 
+  const generateNodeExplanation = useCallback(async (nodeId, label) => {
+    try {
+      const response = await fetch('/api/nodeExplanation', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          nodeId, 
+          label, 
+          graphData: knowledgeGraphData 
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      return data.explanation;
+    } catch (error) {
+      console.error('Error generating node explanation:', error);
+      return `Unable to generate explanation for "${label}".`;
+    }
+  }, [knowledgeGraphData]);
+
+  useEffect(() => {
+    if (knowledgeGraphData) {
+      const generateExplanations = async () => {
+        const explanations = {};
+        for (const node of knowledgeGraphData.nodes) {
+          explanations[node.id] = await generateNodeExplanation(node.id, node.data.label);
+        }
+        setNodeExplanations(explanations);
+      };
+      generateExplanations();
+    }
+  }, [knowledgeGraphData, generateNodeExplanation]);
+
   const handleNodeClick = useCallback(async (node) => {
     setSelectedNodeId(node.id);
     if (node.id === knowledgeGraphData.nodes[0].id) {
@@ -291,19 +328,9 @@ export default function Search() {
       setIsCollecting(true);
 
       try {
-        const response = await fetch('/api/nodeExplanation', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ nodeId: node.id, label: node.data.label, graphData: knowledgeGraphData }),
-        });
-
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-
-        const data = await response.json();
-        setNodeExplanations(prev => ({...prev, [node.id]: data.explanation}));
-        setStreamedAnswer(data.explanation);
+        const explanation = await generateNodeExplanation(node.id, node.data.label);
+        setNodeExplanations(prev => ({...prev, [node.id]: explanation}));
+        setStreamedAnswer(explanation);
       } catch (error) {
         console.error('Error fetching node explanation:', error);
       } finally {
@@ -314,7 +341,7 @@ export default function Search() {
       // If explanation exists, just set it
       setStreamedAnswer(nodeExplanations[node.id]);
     }
-  }, [knowledgeGraphData, nodeExplanations]);
+  }, [knowledgeGraphData, nodeExplanations, generateNodeExplanation]);
 
   const handleNodeDragStop = useCallback((node) => {
     setGraphHistory(prev => {
@@ -359,17 +386,6 @@ export default function Search() {
 
   useEffect(() => {
     console.log('knowledgeGraphData updated:', knowledgeGraphData);
-  }, [knowledgeGraphData]);
-
-  useEffect(() => {
-    if (knowledgeGraphData) {
-      // Generate fixed explanations for all nodes
-      const explanations = {};
-      knowledgeGraphData.nodes.forEach(node => {
-        explanations[node.id] = generateNodeExplanation(node.data.label);
-      });
-      setNodeExplanations(explanations);
-    }
   }, [knowledgeGraphData]);
 
   return (
