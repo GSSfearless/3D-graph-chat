@@ -24,16 +24,35 @@ export default async function handler(req, res) {
       });
 
     const prompt = `
-      Provide a detailed explanation for the concept "${label}" in the context of a knowledge graph.
-      Related concepts: ${relatedNodes.map(node => node.data.label).join(', ')}.
-      
-      Please structure your response as follows:
-      1. A brief definition or explanation of "${label}".
-      2. How "${label}" relates to or interacts with the following concepts: ${relatedNodes.map(node => node.data.label).join(', ')}.
-      3. Any important sub-concepts or aspects of "${label}" that are relevant to understanding it fully.
+    You are a large language AI assistant. Please provide a concise and accurate explanation for the concept "${label}" in the context of a knowledge graph. Your explanation must be correct, accurate, and written in a professional and neutral tone. Please limit it to about 200 words. Do not provide information unrelated to the concept, and do not repeat yourself.
 
-      Format your response using markdown, with appropriate headers, bullet points, and emphasis where needed.
-      Limit your response to about 200 words.
+    Please strictly use the following format to organize your answer:
+    1. Use double asterisks (**) to surround important concepts or keywords to indicate bold. For example: **important concept**.
+    2. Use a bullet point (•) followed by a space to create bulleted lists. Each new point should start on a new line.
+    3. Use three hash symbols (###) to create subheadings, ensuring the subheading is on its own line.
+    4. Use a single line break to separate paragraphs.
+
+    Example format:
+    ### Key Points
+    • **First important concept**
+    • **Second important concept**
+    • **Third important concept**
+
+    ### Detailed Explanation
+    • Explanation of the first concept
+      • Additional details
+      • More information
+    • Explanation of the second concept
+    • Explanation of the third concept
+
+    Do not use more than three hash symbols (###) for headings. Focus on providing an informative and well-structured explanation.
+
+    Related concepts: ${relatedNodes.map(node => node.data.label).join(', ')}.
+    
+    Please structure your response as follows:
+    1. A brief definition or explanation of "${label}".
+    2. How "${label}" relates to or interacts with the related concepts.
+    3. Any important sub-concepts or aspects of "${label}" that are relevant to understanding it fully.
     `;
 
     const completion = await openai.chat.completions.create({

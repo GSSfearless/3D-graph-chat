@@ -48,7 +48,7 @@ function renderMarkdown(text) {
   text = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
   
   // Handle unordered lists
-  text = text.replace(/^-\s(.*)$/gm, '<li>$1</li>');
+  text = text.replace(/•\s(.*)$/gm, '<li>$1</li>');
   text = text.replace(/(<li>.*<\/li>(\n|$))+/g, '<ul>$&</ul>');
   
   // Handle paragraphs (excluding list items)
@@ -329,7 +329,7 @@ export default function Search() {
       // If explanation exists, just set it
       setStreamedAnswer(nodeExplanations[node.id]);
     }
-  }, [knowledgeGraphData, nodeExplanations, generateNodeExplanation]);
+  }, [knowledgeGraphData, nodeExplanations, generateNodeExplanation, initialAnswerRef]);
 
   const handleNodeDragStop = useCallback((node) => {
     setGraphHistory(prev => {
