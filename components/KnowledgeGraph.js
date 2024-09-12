@@ -3,7 +3,7 @@ import { useEffect, useState, useCallback } from 'react';
 
 const ReactFlow = dynamic(() => import('react-flow-renderer').then(mod => mod.default), {
   ssr: false,
-  loading: () => <p>加载知识图谱中...</p>
+  loading: () => <p>Loading knowledge graph...</p>
 });
 
 // 导入 Controls 和 Background 组件
@@ -76,7 +76,7 @@ const KnowledgeGraph = ({ data, onNodeClick, onNodeDragStop }) => {
   if (!mounted) return null;
 
   if (!data || !data.nodes || !data.edges) {
-    return <div>无效的图表数据</div>;
+    return <div>Invalid graph data</div>;
   }
 
   return (

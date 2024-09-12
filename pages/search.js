@@ -302,19 +302,6 @@ export default function Search() {
     }
   }, [knowledgeGraphData]);
 
-  useEffect(() => {
-    if (knowledgeGraphData) {
-      const generateExplanations = async () => {
-        const explanations = {};
-        for (const node of knowledgeGraphData.nodes) {
-          explanations[node.id] = await generateNodeExplanation(node.id, node.data.label);
-        }
-        setNodeExplanations(explanations);
-      };
-      generateExplanations();
-    }
-  }, [knowledgeGraphData, generateNodeExplanation]);
-
   const handleNodeClick = useCallback(async (node) => {
     setSelectedNodeId(node.id);
     if (node.id === knowledgeGraphData.nodes[0].id) {
@@ -333,6 +320,7 @@ export default function Search() {
         setStreamedAnswer(explanation);
       } catch (error) {
         console.error('Error fetching node explanation:', error);
+        setStreamedAnswer('Failed to load explanation. Please try again.');
       } finally {
         setIsLoadingNodeExplanation(false);
         setIsCollecting(false);
@@ -474,21 +462,17 @@ export default function Search() {
               <h3 className="result-title text-4xl">📝Answer</h3>
               <p className="text-xs text-gray-500 text-center mb-2">
                 {isLoadingNodeExplanation 
-                  ? `Collecting web pages... ${collectedPages}/${totalPages}`
+                  ? `Generating explanation...`
                   : isProcessing
                     ? processingMessages[processingStep]
-                    : `Collected ${searchResults.length} web pages`
+                    : `Click on a node to see its explanation`
                 }
               </p>
-              {(isLoadingNodeExplanation || isProcessing) && (
+              {isLoadingNodeExplanation && (
                 <div className="w-full h-2 bg-gray-200 mb-4">
                   <div 
                     className="h-full bg-gray-400 transition-all duration-300 ease-out"
-                    style={{ 
-                      width: isLoadingNodeExplanation 
-                        ? `${(collectedPages / totalPages) * 100}%`
-                        : '100%'
-                    }}
+                    style={{ width: '100%' }}
                   ></div>
                 </div>
               )}
