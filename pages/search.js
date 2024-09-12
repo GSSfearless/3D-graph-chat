@@ -305,7 +305,7 @@ export default function Search() {
   const handleNodeClick = useCallback(async (node) => {
     setSelectedNodeId(node.id);
     if (node.id === knowledgeGraphData.nodes[0].id) {
-      // If it's the root node, show the initial answer
+      // If it's the root node, always show the initial answer
       setStreamedAnswer(initialAnswerRef.current);
     } else if (!nodeExplanations[node.id]) {
       // If it's a child node and explanation doesn't exist, fetch it
