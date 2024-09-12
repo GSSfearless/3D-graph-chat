@@ -87,6 +87,8 @@ export default function Search() {
   const [processingStep, setProcessingStep] = useState(0);
   const [streamedAnswer, setStreamedAnswer] = useState('');
   const [loadingMessage, setLoadingMessage] = useState('🎨 Preparing the canvas...');
+  const [nodeExplanations, setNodeExplanations] = useState({});
+  const [selectedNodeId, setSelectedNodeId] = useState(null);
 
   const defaultQuery = "What is the answer to life, the universe, and everything?";
 
@@ -271,49 +273,18 @@ export default function Search() {
     }
   };
 
-  const handleNodeClick = async (node) => {
-    setExpandingNode(node.id);
-    setGraphError(null);
-
-    try {
-      console.log('Sending request to /api/expandNode');
-      const response = await fetch('/api/expandNode', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          nodeId: node.id, 
-          label: node.data.label,
-          parentPosition: node.position,
-          existingNodes: knowledgeGraphData.nodes // Pass existing node information
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const expandedData = await response.json();
-      console.log('Expanded data:', expandedData);
-
-      setGraphHistory(prev => [...prev, knowledgeGraphData]);
-      setGraphFuture([]); // Clear future states as a new branch is created
-      
-      setKnowledgeGraphData(prevData => {
-        const newNodes = [...prevData.nodes, ...expandedData.nodes];
-        const newEdges = [...prevData.edges, ...expandedData.edges];
-        
-        return {
-          nodes: newNodes,
-          edges: newEdges,
-          type: prevData.type
-        };
-      });
-    } catch (error) {
-      console.error('Error expanding node:', error);
-      setGraphError('Error expanding node: ' + error.message);
-    } finally {
-      setExpandingNode(null);
+  const handleNodeClick = useCallback((node) => {
+    setSelectedNodeId(node.id);
+    if (!nodeExplanations[node.id]) {
+      // Generate an explanation if it doesn't exist
+      const explanation = generateNodeExplanation(node.data.label);
+      setNodeExplanations(prev => ({...prev, [node.id]: explanation}));
     }
+  }, [nodeExplanations]);
+
+  const generateNodeExplanation = (label) => {
+    // You can implement more complex logic here, such as calling an API for explanations
+    return `This is a detailed explanation about "${label}". This explanation is fixed and won't change.`;
   };
 
   const handleNodeDragStop = useCallback((node) => {
@@ -359,6 +330,17 @@ export default function Search() {
 
   useEffect(() => {
     console.log('knowledgeGraphData updated:', knowledgeGraphData);
+  }, [knowledgeGraphData]);
+
+  useEffect(() => {
+    if (knowledgeGraphData) {
+      // Generate fixed explanations for all nodes
+      const explanations = {};
+      knowledgeGraphData.nodes.forEach(node => {
+        explanations[node.id] = generateNodeExplanation(node.data.label);
+      });
+      setNodeExplanations(explanations);
+    }
   }, [knowledgeGraphData]);
 
   return (
@@ -466,8 +448,10 @@ export default function Search() {
                 </div>
               )}
               <div className="min-h-40 p-4">
-                {loading ? (
-                  <div className="h-full bg-gray-200 animate-pulse rounded"></div>
+                {selectedNodeId ? (
+                  <div className="result-snippet prose prose-sm max-w-none">
+                    {nodeExplanations[selectedNodeId]}
+                  </div>
                 ) : (
                   <div 
                     className="result-snippet prose prose-sm max-w-none"
