@@ -276,33 +276,41 @@ export default function Search() {
     setGraphError(null);
 
     try {
-      // Get node details
-      const detailsResponse = await fetch('/api/nodeDetails', {
+      console.log('Sending request to /api/expandNode');
+      const response = await fetch('/api/expandNode', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ nodeId: node.id, label: node.data.label }),
+        body: JSON.stringify({ 
+          nodeId: node.id, 
+          label: node.data.label,
+          parentPosition: node.position,
+          existingNodes: knowledgeGraphData.nodes // Pass existing node information
+        }),
       });
 
-      if (!detailsResponse.ok) {
-        throw new Error(`HTTP error! status: ${detailsResponse.status}`);
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
 
-      const detailsData = await detailsResponse.json();
+      const expandedData = await response.json();
+      console.log('Expanded data:', expandedData);
 
-      // Update knowledge graph data, including new node details
-      setKnowledgeGraphData(prevData => ({
-        ...prevData,
-        nodes: prevData.nodes.map(n => 
-          n.id === node.id ? { ...n, data: { ...n.data, ...detailsData } } : n
-        ),
-      }));
-
-      // Node expansion logic...
-      // ...
-
+      setGraphHistory(prev => [...prev, knowledgeGraphData]);
+      setGraphFuture([]); // Clear future states as a new branch is created
+      
+      setKnowledgeGraphData(prevData => {
+        const newNodes = [...prevData.nodes, ...expandedData.nodes];
+        const newEdges = [...prevData.edges, ...expandedData.edges];
+        
+        return {
+          nodes: newNodes,
+          edges: newEdges,
+          type: prevData.type
+        };
+      });
     } catch (error) {
-      console.error('Error handling node click:', error);
-      setGraphError('Error handling node click: ' + error.message);
+      console.error('Error expanding node:', error);
+      setGraphError('Error expanding node: ' + error.message);
     } finally {
       setExpandingNode(null);
     }
