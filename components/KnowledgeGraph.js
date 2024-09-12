@@ -1,5 +1,6 @@
 import dynamic from 'next/dynamic';
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
+import NodeDetailsPanel from './NodeDetailsPanel';
 
 const ReactFlow = dynamic(() => import('react-flow-renderer').then(mod => mod.default), {
   ssr: false,
@@ -22,21 +23,74 @@ const KnowledgeGraph = ({ data, onNodeClick, onNodeDragStop }) => {
   const [nodes, setNodes] = useState(data.nodes);
   const [edges, setEdges] = useState(data.edges);
   const [hoveredNode, setHoveredNode] = useState(null);
+  const [selectedNode, setSelectedNode] = useState(null);
+  const [nodeDetails, setNodeDetails] = useState({});
+  const nodeDetailsRef = useRef({});
 
   useEffect(() => {
     setMounted(true);
     setNodes(data.nodes);
     setEdges(data.edges);
+    // Preload all node details
+    preloadNodeDetails(data.nodes);
   }, [data]);
+
+  const preloadNodeDetails = async (nodes) => {
+    const details = {};
+    for (const node of nodes) {
+      if (!nodeDetailsRef.current[node.id]) {
+        try {
+          const response = await fetch('/api/nodeDetails', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ nodeId: node.id, label: node.data.label }),
+          });
+          if (response.ok) {
+            const detailData = await response.json();
+            details[node.id] = detailData;
+          }
+        } catch (error) {
+          console.error('Error preloading node details:', error);
+        }
+      }
+    }
+    setNodeDetails(prevDetails => ({ ...prevDetails, ...details }));
+    nodeDetailsRef.current = { ...nodeDetailsRef.current, ...details };
+  };
 
   const onInit = useCallback((reactFlowInstance) => {
     reactFlowInstance.fitView({ padding: 0.2 });
   }, []);
 
   const handleNodeClick = useCallback((event, node) => {
-    console.log('Node clicked in KnowledgeGraph:', node);
+    const cachedDetails = nodeDetailsRef.current[node.id];
+    if (cachedDetails) {
+      setSelectedNode({ ...node, data: { ...node.data, ...cachedDetails } });
+    } else {
+      setSelectedNode(node);
+      // If somehow the details are not cached, fetch them
+      fetchNodeDetails(node);
+    }
     onNodeClick(node);
   }, [onNodeClick]);
+
+  const fetchNodeDetails = async (node) => {
+    try {
+      const response = await fetch('/api/nodeDetails', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ nodeId: node.id, label: node.data.label }),
+      });
+      if (response.ok) {
+        const detailData = await response.json();
+        setNodeDetails(prevDetails => ({ ...prevDetails, [node.id]: detailData }));
+        nodeDetailsRef.current[node.id] = detailData;
+        setSelectedNode({ ...node, data: { ...node.data, ...detailData } });
+      }
+    } catch (error) {
+      console.error('Error fetching node details:', error);
+    }
+  };
 
   const handleNodeDragStop = useCallback((event, node) => {
     console.log('Node dragged in KnowledgeGraph:', node);
@@ -104,6 +158,10 @@ const KnowledgeGraph = ({ data, onNodeClick, onNodeDragStop }) => {
         <Controls />
         <Background color="#aaa" gap={16} />
       </ReactFlow>
+      <NodeDetailsPanel 
+        node={selectedNode} 
+        onClose={() => setSelectedNode(null)} 
+      />
     </div>
   );
 };
