@@ -89,8 +89,6 @@ export default function Search() {
   const [loadingMessage, setLoadingMessage] = useState('🎨 Preparing the canvas...');
   const [nodeExplanations, setNodeExplanations] = useState({});
   const [selectedNodeId, setSelectedNodeId] = useState(null);
-  const [initialAnswer, setInitialAnswer] = useState('');
-  const [selectedNode, setSelectedNode] = useState(null);
 
   const defaultQuery = "What is the answer to life, the universe, and everything?";
 
@@ -186,10 +184,6 @@ export default function Search() {
         setKnowledgeGraphData(null);
       }
 
-      // Store the initial answer
-      setInitialAnswer(renderedAnswer);
-      setSelectedNode(null);
-
       // After all processing is complete
       setIsProcessing(false);
       setQuery('');
@@ -279,39 +273,14 @@ export default function Search() {
     }
   };
 
-  const handleNodeClick = useCallback(async (node) => {
-    setSelectedNode(node);
-    if (node.id === knowledgeGraphData.nodes[0].id) {
-      // If it's the root node, show the initial answer
-      setRenderedAnswer(initialAnswer);
-    } else {
-      // For child nodes, perform a new search and summarize
-      setLoading(true);
-      try {
-        const response = await fetch('/api/nodeSearch', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ 
-            nodeLabel: node.data.label, 
-            rootTopic: knowledgeGraphData.nodes[0].data.label 
-          }),
-        });
-
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-
-        const result = await response.json();
-        const markdown = renderMarkdown(result.summary);
-        const sanitized = sanitizeHtml(markdown);
-        setRenderedAnswer(sanitized);
-      } catch (error) {
-        console.error('Error fetching node information:', error);
-        setRenderedAnswer('Error fetching node information.');
-      }
-      setLoading(false);
+  const handleNodeClick = useCallback((node) => {
+    setSelectedNodeId(node.id);
+    if (!nodeExplanations[node.id]) {
+      // Generate an explanation if it doesn't exist
+      const explanation = generateNodeExplanation(node.data.label);
+      setNodeExplanations(prev => ({...prev, [node.id]: explanation}));
     }
-  }, [knowledgeGraphData, initialAnswer]);
+  }, [nodeExplanations]);
 
   const generateNodeExplanation = (label) => {
     // You can implement more complex logic here, such as calling an API for explanations
@@ -479,8 +448,10 @@ export default function Search() {
                 </div>
               )}
               <div className="min-h-40 p-4">
-                {loading ? (
-                  <div className="h-full bg-gray-200 animate-pulse rounded"></div>
+                {selectedNodeId ? (
+                  <div className="result-snippet prose prose-sm max-w-none">
+                    {nodeExplanations[selectedNodeId]}
+                  </div>
                 ) : (
                   <div 
                     className="result-snippet prose prose-sm max-w-none"
