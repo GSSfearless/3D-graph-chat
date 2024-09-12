@@ -3,7 +3,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useMemo } from 'react';
 import 'tailwindcss/tailwind.css';
 import '../styles/globals.css';
 
@@ -89,6 +89,7 @@ export default function Search() {
   const [loadingMessage, setLoadingMessage] = useState('🎨 Preparing the canvas...');
   const [nodeExplanations, setNodeExplanations] = useState({});
   const [selectedNodeId, setSelectedNodeId] = useState(null);
+  const [initialAnswer, setInitialAnswer] = useState('');
 
   const defaultQuery = "What is the answer to life, the universe, and everything?";
 
@@ -160,6 +161,8 @@ export default function Search() {
         setStreamedAnswer((prev) => prev + chunkValue);
       }
 
+      setInitialAnswer(streamedAnswer);
+
       // Get knowledge graph data
       try {
         const graphResponse = await fetch('/api/knowledgeGraph', {
@@ -178,6 +181,10 @@ export default function Search() {
         setGraphFuture([]);
         setKnowledgeGraphData(graphData);
         console.log('Initial knowledge graph data:', graphData);
+
+        // Generate explanations for all nodes
+        const explanations = await generateNodeExplanations(graphData.nodes);
+        setNodeExplanations(explanations);
       } catch (error) {
         console.error('Error fetching knowledge graph:', error);
         setGraphError('Unable to load knowledge graph');
@@ -193,6 +200,22 @@ export default function Search() {
     }
     setLoading(false);
   }, []);
+
+  const generateNodeExplanations = async (nodes) => {
+    const explanations = {};
+    for (const node of nodes) {
+      const response = await fetch('/api/nodeExplanation', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ nodeId: node.id, label: node.data.label, nodes: nodes }),
+      });
+      if (response.ok) {
+        const explanation = await response.text();
+        explanations[node.id] = explanation;
+      }
+    }
+    return explanations;
+  };
 
   const processingMessages = [
     "Performing Retrieval-Augmented Generation (RAG)...",
@@ -275,17 +298,14 @@ export default function Search() {
 
   const handleNodeClick = useCallback((node) => {
     setSelectedNodeId(node.id);
-    if (!nodeExplanations[node.id]) {
-      // Generate an explanation if it doesn't exist
-      const explanation = generateNodeExplanation(node.data.label);
-      setNodeExplanations(prev => ({...prev, [node.id]: explanation}));
-    }
-  }, [nodeExplanations]);
+  }, []);
 
-  const generateNodeExplanation = (label) => {
-    // You can implement more complex logic here, such as calling an API for explanations
-    return `This is a detailed explanation about "${label}". This explanation is fixed and won't change.`;
-  };
+  const displayedAnswer = useMemo(() => {
+    if (selectedNodeId === null) {
+      return initialAnswer;
+    }
+    return nodeExplanations[selectedNodeId] || 'Loading explanation...';
+  }, [selectedNodeId, initialAnswer, nodeExplanations]);
 
   const handleNodeDragStop = useCallback((node) => {
     setGraphHistory(prev => {
@@ -330,17 +350,6 @@ export default function Search() {
 
   useEffect(() => {
     console.log('knowledgeGraphData updated:', knowledgeGraphData);
-  }, [knowledgeGraphData]);
-
-  useEffect(() => {
-    if (knowledgeGraphData) {
-      // Generate fixed explanations for all nodes
-      const explanations = {};
-      knowledgeGraphData.nodes.forEach(node => {
-        explanations[node.id] = generateNodeExplanation(node.data.label);
-      });
-      setNodeExplanations(explanations);
-    }
   }, [knowledgeGraphData]);
 
   return (
@@ -448,16 +457,10 @@ export default function Search() {
                 </div>
               )}
               <div className="min-h-40 p-4">
-                {selectedNodeId ? (
-                  <div className="result-snippet prose prose-sm max-w-none">
-                    {nodeExplanations[selectedNodeId]}
-                  </div>
-                ) : (
-                  <div 
-                    className="result-snippet prose prose-sm max-w-none"
-                    dangerouslySetInnerHTML={{ __html: renderedAnswer }}
-                  />
-                )}
+                <div 
+                  className="result-snippet prose prose-sm max-w-none"
+                  dangerouslySetInnerHTML={{ __html: displayedAnswer }}
+                />
               </div>
             </div>
           </div>
