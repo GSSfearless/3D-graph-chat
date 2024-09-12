@@ -3,7 +3,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import 'tailwindcss/tailwind.css';
 import '../styles/globals.css';
 
@@ -89,6 +89,8 @@ export default function Search() {
   const [loadingMessage, setLoadingMessage] = useState('🎨 Preparing the canvas...');
   const [nodeExplanations, setNodeExplanations] = useState({});
   const [selectedNodeId, setSelectedNodeId] = useState(null);
+  const [isLoadingNodeExplanation, setIsLoadingNodeExplanation] = useState(false);
+  const initialAnswerRef = useRef('');
 
   const defaultQuery = "What is the answer to life, the universe, and everything?";
 
@@ -159,6 +161,9 @@ export default function Search() {
         const chunkValue = decoder.decode(value);
         setStreamedAnswer((prev) => prev + chunkValue);
       }
+
+      // Store the initial answer
+      initialAnswerRef.current = streamedAnswer;
 
       // Get knowledge graph data
       try {
@@ -273,19 +278,43 @@ export default function Search() {
     }
   };
 
-  const handleNodeClick = useCallback((node) => {
+  const handleNodeClick = useCallback(async (node) => {
     setSelectedNodeId(node.id);
-    if (!nodeExplanations[node.id]) {
-      // Generate an explanation if it doesn't exist
-      const explanation = generateNodeExplanation(node.data.label);
-      setNodeExplanations(prev => ({...prev, [node.id]: explanation}));
-    }
-  }, [nodeExplanations]);
+    if (node.id === knowledgeGraphData.nodes[0].id) {
+      // If it's the root node, show the initial answer
+      setStreamedAnswer(initialAnswerRef.current);
+    } else if (!nodeExplanations[node.id]) {
+      // If it's a child node and explanation doesn't exist, fetch it
+      setIsLoadingNodeExplanation(true);
+      setCollectedPages(0);
+      setTotalPages(0);
+      setIsCollecting(true);
 
-  const generateNodeExplanation = (label) => {
-    // You can implement more complex logic here, such as calling an API for explanations
-    return `This is a detailed explanation about "${label}". This explanation is fixed and won't change.`;
-  };
+      try {
+        const response = await fetch('/api/nodeExplanation', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ nodeId: node.id, label: node.data.label, graphData: knowledgeGraphData }),
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const data = await response.json();
+        setNodeExplanations(prev => ({...prev, [node.id]: data.explanation}));
+        setStreamedAnswer(data.explanation);
+      } catch (error) {
+        console.error('Error fetching node explanation:', error);
+      } finally {
+        setIsLoadingNodeExplanation(false);
+        setIsCollecting(false);
+      }
+    } else {
+      // If explanation exists, just set it
+      setStreamedAnswer(nodeExplanations[node.id]);
+    }
+  }, [knowledgeGraphData, nodeExplanations]);
 
   const handleNodeDragStop = useCallback((node) => {
     setGraphHistory(prev => {
@@ -428,19 +457,19 @@ export default function Search() {
             <div className="result-item mb-4">
               <h3 className="result-title text-4xl">📝Answer</h3>
               <p className="text-xs text-gray-500 text-center mb-2">
-                {isCollecting 
+                {isLoadingNodeExplanation 
                   ? `Collecting web pages... ${collectedPages}/${totalPages}`
                   : isProcessing
                     ? processingMessages[processingStep]
                     : `Collected ${searchResults.length} web pages`
                 }
               </p>
-              {(isCollecting || isProcessing) && (
+              {(isLoadingNodeExplanation || isProcessing) && (
                 <div className="w-full h-2 bg-gray-200 mb-4">
                   <div 
                     className="h-full bg-gray-400 transition-all duration-300 ease-out"
                     style={{ 
-                      width: isCollecting 
+                      width: isLoadingNodeExplanation 
                         ? `${(collectedPages / totalPages) * 100}%`
                         : '100%'
                     }}
@@ -448,16 +477,10 @@ export default function Search() {
                 </div>
               )}
               <div className="min-h-40 p-4">
-                {selectedNodeId ? (
-                  <div className="result-snippet prose prose-sm max-w-none">
-                    {nodeExplanations[selectedNodeId]}
-                  </div>
-                ) : (
-                  <div 
-                    className="result-snippet prose prose-sm max-w-none"
-                    dangerouslySetInnerHTML={{ __html: renderedAnswer }}
-                  />
-                )}
+                <div 
+                  className="result-snippet prose prose-sm max-w-none"
+                  dangerouslySetInnerHTML={{ __html: renderedAnswer }}
+                />
               </div>
             </div>
           </div>
