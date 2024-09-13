@@ -41,7 +41,7 @@ function sanitizeHtml(html) {
 }
 
 function renderMarkdown(text) {
-  // Handle headings
+  // Handle headings (only h3)
   text = text.replace(/^###\s(.*)$/gm, '<h3>$1</h3>');
   
   // Handle bold
@@ -51,9 +51,9 @@ function renderMarkdown(text) {
   text = text.replace(/•\s(.*)$/gm, '<li>$1</li>');
   text = text.replace(/(<li>.*<\/li>(\n|$))+/g, '<ul>$&</ul>');
   
-  // Handle paragraphs (excluding list items)
+  // Handle paragraphs (excluding list items and headings)
   text = text.split('\n').map(line => {
-    if (!line.startsWith('<h3>') && !line.startsWith('<li>') && line.trim() !== '') {
+    if (!line.startsWith('<h3>') && !line.startsWith('<li>') && !line.startsWith('<ul>') && line.trim() !== '') {
       return `<p>${line}</p>`;
     }
     return line;

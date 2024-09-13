@@ -29,7 +29,7 @@ export default async function handler(req, res) {
     Please strictly use the following format to organize your answer:
     1. Use double asterisks (**) to surround important concepts or keywords to indicate bold. For example: **important concept**.
     2. Use a bullet point (•) followed by a space to create bulleted lists. Each new point should start on a new line.
-    3. Use three hash symbols (###) to create subheadings, ensuring the subheading is on its own line.
+    3. Use three hash symbols (###) to create subheadings, ensuring the subheading is on its own line. Do not use more than three hash symbols.
     4. Use a single line break to separate paragraphs.
 
     Example format:
@@ -48,7 +48,7 @@ export default async function handler(req, res) {
     Do not use more than three hash symbols (###) for headings. Focus on providing an informative and well-structured explanation.
 
     Related concepts: ${relatedNodes.map(node => node.data.label).join(', ')}.
-    
+
     Please structure your response as follows:
     1. A brief definition or explanation of "${label}".
     2. How "${label}" relates to or interacts with the related concepts.
