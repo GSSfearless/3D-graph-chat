@@ -122,7 +122,6 @@ export default function Search() {
     setTotalPages(0);
     setGraphError(null);
     setSearchResults([]);
-    setStreamedAnswer('');
 
     try {
       const eventSource = new EventSource(`/api/rag-search?query=${encodeURIComponent(searchQuery)}`);
@@ -137,7 +136,6 @@ export default function Search() {
           setCollectedPages(data.progress);
           setTotalPages(data.total);
           setSearchResults(prev => [...prev, data.result]);
-          setStreamedAnswer(prev => `${prev}Collected information from ${data.progress} out of ${data.total} pages.\n`);
         }
       };
 
@@ -149,6 +147,7 @@ export default function Search() {
       };
 
       // Get AI answer
+      setStreamedAnswer('');
       const chatResponse = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -474,11 +473,15 @@ export default function Search() {
                     : `Click on a node to see its explanation`
                 }
               </p>
-              {isCollecting && (
+              {(isCollecting || isProcessing) && (
                 <div className="w-full h-2 bg-gray-200 mb-4">
                   <div 
-                    className="h-full bg-blue-500 transition-all duration-300 ease-out"
-                    style={{ width: `${(collectedPages / totalPages) * 100}%` }}
+                    className="h-full bg-gray-400 transition-all duration-300 ease-out"
+                    style={{ 
+                      width: `${isCollecting 
+                        ? (collectedPages / totalPages) * 100
+                        : ((processingStep + 1) / processingMessages.length) * 100}%` 
+                    }}
                   ></div>
                 </div>
               )}
