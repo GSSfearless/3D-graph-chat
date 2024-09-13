@@ -307,38 +307,17 @@ export default function Search() {
     if (node.id === knowledgeGraphData.nodes[0].id) {
       // If it's the root node, always show the initial answer
       setStreamedAnswer(initialAnswerRef.current);
-    } else {
-      // If it's a child node, clear the answer and fetch the explanation
-      setStreamedAnswer('');
+    } else if (!nodeExplanations[node.id]) {
+      // If it's a child node and explanation doesn't exist, fetch it
       setIsLoadingNodeExplanation(true);
       setCollectedPages(0);
       setTotalPages(0);
       setIsCollecting(true);
 
       try {
-        const response = await fetch('/api/nodeExplanation', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ 
-            nodeId: node.id, 
-            label: node.data.label, 
-            graphData: knowledgeGraphData 
-          }),
-        });
-
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-
-        const reader = response.body.getReader();
-        const decoder = new TextDecoder();
-
-        while (true) {
-          const { value, done } = await reader.read();
-          if (done) break;
-          const chunkValue = decoder.decode(value);
-          setStreamedAnswer(prev => prev + chunkValue);
-        }
+        const explanation = await generateNodeExplanation(node.id, node.data.label);
+        setNodeExplanations(prev => ({...prev, [node.id]: explanation}));
+        setStreamedAnswer(explanation);
       } catch (error) {
         console.error('Error fetching node explanation:', error);
         setStreamedAnswer('Failed to load explanation. Please try again.');
@@ -346,8 +325,11 @@ export default function Search() {
         setIsLoadingNodeExplanation(false);
         setIsCollecting(false);
       }
+    } else {
+      // If explanation exists, just set it
+      setStreamedAnswer(nodeExplanations[node.id]);
     }
-  }, [knowledgeGraphData, initialAnswerRef]);
+  }, [knowledgeGraphData, nodeExplanations, generateNodeExplanation, initialAnswerRef]);
 
   const handleNodeDragStop = useCallback((node) => {
     setGraphHistory(prev => {
@@ -480,12 +462,10 @@ export default function Search() {
               <h3 className="result-title text-4xl">📝Answer</h3>
               <p className="text-xs text-gray-500 text-center mb-2">
                 {isLoadingNodeExplanation 
-                  ? `正在生成节点解释...`
+                  ? `Generating explanation...`
                   : isProcessing
                     ? processingMessages[processingStep]
-                    : selectedNodeId
-                      ? `正在显示 "${knowledgeGraphData.nodes.find(n => n.id === selectedNodeId)?.data.label}" 的解释`
-                      : `点击知识图谱中的节点以查看其解释。根节点显示初始答案，子节点显示详细解释。`
+                    : `Click on a node to see its explanation`
                 }
               </p>
               {isLoadingNodeExplanation && (
