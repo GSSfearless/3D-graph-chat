@@ -319,16 +319,20 @@ export default function Search() {
           const explanation = await generateNodeExplanation(node.id, node.data.label);
           setNodeExplanations(prev => ({...prev, [node.id]: explanation}));
           setStreamedAnswer(explanation);
+          setTotalPages(1); // Assuming we collect one page for each node explanation
         } catch (error) {
           console.error('Error fetching node explanation:', error);
           setStreamedAnswer('Failed to load explanation. Please try again.');
         } finally {
           setIsLoadingNodeExplanation(false);
           setIsCollecting(false);
+          setCollectedPages(1); // Set collected pages to 1 after fetching
         }
       } else {
         // If explanation exists, just set it
         setStreamedAnswer(nodeExplanations[node.id]);
+        setTotalPages(1);
+        setCollectedPages(1);
       }
     } else {
       console.error('Knowledge graph data is incomplete or missing');
@@ -466,11 +470,11 @@ export default function Search() {
             <div className="result-item mb-4">
               <h3 className="result-title text-4xl">📝Answer</h3>
               <p className="text-xs text-gray-500 text-center mb-2">
-                {isLoadingNodeExplanation 
-                  ? `Generating explanation...`
+                {isLoadingNodeExplanation || isCollecting
+                  ? `Collected ${collectedPages} web pages`
                   : isProcessing
                     ? processingMessages[processingStep]
-                    : `Click on a node to see its explanation`
+                    : `Collected ${totalPages} web pages`
                 }
               </p>
               {(isCollecting || isProcessing) && (
