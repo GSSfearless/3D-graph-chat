@@ -198,10 +198,14 @@ export default function Search() {
 
       // After all processing is complete
       setIsProcessing(false);
+      setIsCollecting(false);
       setQuery('');
+      setCollectedPages(0);
+      setTotalPages(0);
     } catch (error) {
       console.error('Error during search:', error);
       setIsProcessing(false);
+      setIsCollecting(false);
     }
     setLoading(false);
   }, []);
@@ -304,39 +308,47 @@ export default function Search() {
 
   const handleNodeClick = useCallback(async (node) => {
     setSelectedNodeId(node.id);
+    setIsLoadingNodeExplanation(true);
+    setCollectedPages(0);
+    setTotalPages(0);
+    setIsCollecting(true);
+
     if (knowledgeGraphData && knowledgeGraphData.nodes && knowledgeGraphData.nodes.length > 0) {
       if (node.id === knowledgeGraphData.nodes[0].id) {
         // If it's the root node, always show the initial answer
         setStreamedAnswer(initialAnswerRef.current);
-      } else if (!nodeExplanations[node.id]) {
-        // If it's a child node and explanation doesn't exist, fetch it
-        setIsLoadingNodeExplanation(true);
+        setIsLoadingNodeExplanation(false);
+        setIsCollecting(false);
         setCollectedPages(0);
         setTotalPages(0);
-        setIsCollecting(true);
-
+      } else if (!nodeExplanations[node.id]) {
+        // If it's a child node and explanation doesn't exist, fetch it
         try {
           const explanation = await generateNodeExplanation(node.id, node.data.label);
           setNodeExplanations(prev => ({...prev, [node.id]: explanation}));
           setStreamedAnswer(explanation);
-          setTotalPages(1); // Assuming we collect one page for each node explanation
+          setTotalPages(1);
+          setCollectedPages(1);
         } catch (error) {
           console.error('Error fetching node explanation:', error);
           setStreamedAnswer('Failed to load explanation. Please try again.');
         } finally {
           setIsLoadingNodeExplanation(false);
           setIsCollecting(false);
-          setCollectedPages(1); // Set collected pages to 1 after fetching
         }
       } else {
         // If explanation exists, just set it
         setStreamedAnswer(nodeExplanations[node.id]);
         setTotalPages(1);
         setCollectedPages(1);
+        setIsLoadingNodeExplanation(false);
+        setIsCollecting(false);
       }
     } else {
       console.error('Knowledge graph data is incomplete or missing');
       setStreamedAnswer('Unable to load node information. Please try again.');
+      setIsLoadingNodeExplanation(false);
+      setIsCollecting(false);
     }
   }, [knowledgeGraphData, nodeExplanations, generateNodeExplanation, initialAnswerRef]);
 
@@ -474,16 +486,18 @@ export default function Search() {
                   ? `Collected ${collectedPages} web pages`
                   : isProcessing
                     ? processingMessages[processingStep]
-                    : `Collected ${totalPages} web pages`
+                    : totalPages > 0
+                      ? `Collected ${totalPages} web pages`
+                      : 'Click on a node to see its explanation'
                 }
               </p>
-              {(isCollecting || isProcessing) && (
+              {(isCollecting || isProcessing || isLoadingNodeExplanation) && (
                 <div className="w-full h-2 bg-gray-200 mb-4">
                   <div 
                     className="h-full bg-gray-400 transition-all duration-300 ease-out"
                     style={{ 
-                      width: `${isCollecting 
-                        ? (collectedPages / totalPages) * 100
+                      width: `${isCollecting || isLoadingNodeExplanation
+                        ? (collectedPages / Math.max(totalPages, 1)) * 100
                         : ((processingStep + 1) / processingMessages.length) * 100}%` 
                     }}
                   ></div>
