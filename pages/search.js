@@ -178,17 +178,11 @@ export default function Search() {
         }
 
         const graphData = await graphResponse.json();
-        if (graphData && graphData.nodes && Array.isArray(graphData.nodes)) {
-          console.log('Knowledge graph data:', graphData);
-          setGraphHistory(prev => [...prev, knowledgeGraphData]);
-          setGraphFuture([]);
-          setKnowledgeGraphData(graphData);
-          console.log('Initial knowledge graph data:', graphData);
-        } else {
-          console.error('Invalid knowledge graph data structure:', graphData);
-          setGraphError('Invalid knowledge graph data structure');
-          setKnowledgeGraphData(null);
-        }
+        console.log('Knowledge graph data:', graphData);
+        setGraphHistory(prev => [...prev, knowledgeGraphData]);
+        setGraphFuture([]);
+        setKnowledgeGraphData(graphData);
+        console.log('Initial knowledge graph data:', graphData);
       } catch (error) {
         console.error('Error fetching knowledge graph:', error);
         setGraphError('Unable to load knowledge graph');
@@ -309,10 +303,6 @@ export default function Search() {
   }, [knowledgeGraphData]);
 
   const handleNodeClick = useCallback(async (node) => {
-    if (!knowledgeGraphData || !knowledgeGraphData.nodes) {
-      console.error('Knowledge graph data is not available');
-      return;
-    }
     setSelectedNodeId(node.id);
     if (node.id === knowledgeGraphData.nodes[0].id) {
       // If it's the root node, always show the initial answer
@@ -342,10 +332,6 @@ export default function Search() {
   }, [knowledgeGraphData, nodeExplanations, generateNodeExplanation, initialAnswerRef]);
 
   const handleNodeDragStop = useCallback((node) => {
-    if (!knowledgeGraphData) {
-      console.error('Knowledge graph data is not available');
-      return;
-    }
     setGraphHistory(prev => {
       const newHistory = [...prev, knowledgeGraphData];
       setHasPreviousGraph(newHistory.length > 0);
