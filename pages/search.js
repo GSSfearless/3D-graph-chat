@@ -107,6 +107,13 @@ export default function Search() {
     '🚀 Launching knowledge engine...'
   ];
 
+  const processingMessages = [
+    "Performing Retrieval-Augmented Generation (RAG)...",
+    "Analyzing information with Large Language Model (LLM)...",
+    "Integrating search results and generating answer...",
+    "AI processing retrieved information..."
+  ];
+
   const handleSearch = useCallback(async (searchQuery) => {
     setLoading(true);
     setIsCollecting(true);
@@ -198,13 +205,6 @@ export default function Search() {
     }
     setLoading(false);
   }, []);
-
-  const processingMessages = [
-    "Performing Retrieval-Augmented Generation (RAG)...",
-    "Analyzing information with Large Language Model (LLM)...",
-    "Integrating search results and generating answer...",
-    "AI processing retrieved information..."
-  ];
 
   useEffect(() => {
     let interval;
@@ -473,11 +473,15 @@ export default function Search() {
                     : `Click on a node to see its explanation`
                 }
               </p>
-              {isLoadingNodeExplanation && (
+              {(isCollecting || isProcessing) && (
                 <div className="w-full h-2 bg-gray-200 mb-4">
                   <div 
                     className="h-full bg-gray-400 transition-all duration-300 ease-out"
-                    style={{ width: '100%' }}
+                    style={{ 
+                      width: `${isCollecting 
+                        ? (collectedPages / totalPages) * 100
+                        : ((processingStep + 1) / processingMessages.length) * 100}%` 
+                    }}
                   ></div>
                 </div>
               )}
