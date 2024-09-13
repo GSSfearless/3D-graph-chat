@@ -8,6 +8,8 @@ export function createPyramidLayout(nodes) {
   const verticalSpacing = 150; // 增加垂直间距
 
   return nodes.map((node, index) => {
+    const { width: nodeWidth, height: nodeHeight } = calculateNodeSize(node.data.label);
+    
     const level = Math.floor(Math.sqrt(index));
     const nodesInLevel = (level * 2) + 1;
     const nodeIndex = index - (level * level);
@@ -15,9 +17,13 @@ export function createPyramidLayout(nodes) {
     const x = (width / (nodesInLevel + 1) * (nodeIndex + 1)) - (nodeWidth / 2);
     const y = verticalSpacing * (level + 1) - (nodeHeight / 2);
 
+    // 为每个节点添加一个偏移量,以避免边标签重叠
+    const offsetX = (index % 2 === 0 ? 1 : -1) * 20; 
+    const offsetY = 20;
+
     return {
       ...node,
-      position: { x, y },
+      position: { x: x + offsetX, y: y + offsetY },
       style: { width: nodeWidth, height: nodeHeight }
     };
   });
@@ -50,4 +56,13 @@ export function relayoutGraph(nodes, edges, type) {
     edges: edges,
     type: type
   };
+}
+
+function calculateNodeSize(label) {
+  const baseWidth = 100;
+  const baseHeight = 40;
+  const charWidth = 8; // 估计每个字符的宽度
+  
+  const width = Math.max(baseWidth, label.length * charWidth);
+  return { width, height: baseHeight };
 }

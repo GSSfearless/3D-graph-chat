@@ -30,7 +30,7 @@ const KnowledgeGraph = ({ data, onNodeClick, onNodeDragStop }) => {
   }, [data]);
 
   const onInit = useCallback((reactFlowInstance) => {
-    reactFlowInstance.fitView({ padding: 0.2 });
+    reactFlowInstance.fitView({ padding: 0.2, includeHiddenNodes: false });
   }, []);
 
   const handleNodeClick = useCallback((event, node) => {
