@@ -298,19 +298,8 @@ export default function Search() {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 
-      const reader = response.body.getReader();
-      const decoder = new TextDecoder();
-      let explanation = '';
-
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        const chunk = decoder.decode(value);
-        explanation += chunk;
-        setStreamedAnswer(prev => prev + chunk);
-      }
-
-      return explanation;
+      const data = await response.json();
+      return data.explanation;
     } catch (error) {
       console.error('Error generating node explanation:', error);
       return `Unable to generate explanation for "${label}".`;
@@ -323,7 +312,6 @@ export default function Search() {
     setCollectedPages(0);
     setTotalPages(0);
     setIsCollecting(true);
-    setStreamedAnswer(''); // 重置流式答案
 
     if (knowledgeGraphData && knowledgeGraphData.nodes && knowledgeGraphData.nodes.length > 0) {
       if (node.id === knowledgeGraphData.nodes[0].id) {
@@ -338,6 +326,7 @@ export default function Search() {
         try {
           const explanation = await generateNodeExplanation(node.id, node.data.label);
           setNodeExplanations(prev => ({...prev, [node.id]: explanation}));
+          setStreamedAnswer(explanation);
           setTotalPages(1);
           setCollectedPages(1);
         } catch (error) {
