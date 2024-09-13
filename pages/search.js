@@ -305,43 +305,29 @@ export default function Search() {
   const handleNodeClick = useCallback(async (node) => {
     setSelectedNodeId(node.id);
     if (node.id === knowledgeGraphData.nodes[0].id) {
-      // If it's the root node, show the initial answer
+      // If it's the root node, always show the initial answer
       setStreamedAnswer(initialAnswerRef.current);
-    } else {
-      // Clear the answer area and show loading message
-      setStreamedAnswer('');
-      setRenderedAnswer('<p>Loading explanation...</p>');
+    } else if (!nodeExplanations[node.id]) {
+      // If it's a child node and explanation doesn't exist, fetch it
       setIsLoadingNodeExplanation(true);
       setCollectedPages(0);
       setTotalPages(0);
       setIsCollecting(true);
 
-      if (!nodeExplanations[node.id]) {
-        // If explanation doesn't exist, fetch it
-        try {
-          setRenderedAnswer('<p>Step 1: Analyzing node context...</p>');
-          await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate delay
-
-          setRenderedAnswer('<p>Step 1: Analyzing node context...</p><p>Step 2: Generating detailed explanation...</p>');
-          const explanation = await generateNodeExplanation(node.id, node.data.label);
-          
-          setRenderedAnswer('<p>Step 1: Analyzing node context...</p><p>Step 2: Generating detailed explanation...</p><p>Step 3: Formatting response...</p>');
-          await new Promise(resolve => setTimeout(resolve, 500)); // Simulate delay
-
-          setNodeExplanations(prev => ({...prev, [node.id]: explanation}));
-          setStreamedAnswer(explanation);
-        } catch (error) {
-          console.error('Error fetching node explanation:', error);
-          setStreamedAnswer('Failed to load explanation. Please try again.');
-        }
-      } else {
-        // If explanation exists, show it after a brief loading period
-        await new Promise(resolve => setTimeout(resolve, 500)); // Simulate delay
-        setStreamedAnswer(nodeExplanations[node.id]);
+      try {
+        const explanation = await generateNodeExplanation(node.id, node.data.label);
+        setNodeExplanations(prev => ({...prev, [node.id]: explanation}));
+        setStreamedAnswer(explanation);
+      } catch (error) {
+        console.error('Error fetching node explanation:', error);
+        setStreamedAnswer('Failed to load explanation. Please try again.');
+      } finally {
+        setIsLoadingNodeExplanation(false);
+        setIsCollecting(false);
       }
-
-      setIsLoadingNodeExplanation(false);
-      setIsCollecting(false);
+    } else {
+      // If explanation exists, just set it
+      setStreamedAnswer(nodeExplanations[node.id]);
     }
   }, [knowledgeGraphData, nodeExplanations, generateNodeExplanation, initialAnswerRef]);
 
