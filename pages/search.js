@@ -483,14 +483,17 @@ export default function Search() {
           </div>
           <div className="w-1/4 p-4 bg-white">
             <div className="result-item mb-4">
-              <h3 className="result-title text-4xl">📝Answer</h3>
+              <h3 className="result-title text-4xl mb-2">📝Answer</h3>
               {viewingChildNode && (
-                <button
-                  onClick={handleReturnToInitialResult}
-                  className="mb-2 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition duration-300"
-                >
-                  🔙 Return to initial result
-                </button>
+                <div className="flex justify-center mb-2">
+                  <button
+                    onClick={handleReturnToInitialResult}
+                    className="text-3xl hover:scale-110 transition-transform duration-200 focus:outline-none"
+                    title="Return to initial result"
+                  >
+                    🔙
+                  </button>
+                </div>
               )}
               <p className="text-xs text-gray-500 text-center mb-2">
                 {isLoadingNodeExplanation || isCollecting
