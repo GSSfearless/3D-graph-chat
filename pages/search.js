@@ -310,9 +310,7 @@ export default function Search() {
   const handleNodeClick = useCallback(async (node) => {
     setSelectedNodeId(node.id);
     setIsLoadingNodeExplanation(true);
-    setCollectedPages(0);
-    setTotalPages(0);
-    setIsCollecting(true);
+    setLoadingMessage('Loading explanation...');
 
     if (knowledgeGraphData && knowledgeGraphData.nodes && knowledgeGraphData.nodes.length > 0) {
       if (node.id === knowledgeGraphData.nodes[0].id) {
@@ -328,8 +326,6 @@ export default function Search() {
             const explanation = await generateNodeExplanation(node.id, node.data.label);
             setNodeExplanations(prev => ({...prev, [node.id]: explanation}));
             setStreamedAnswer(explanation);
-            setTotalPages(1);
-            setCollectedPages(1);
           } catch (error) {
             console.error('Error fetching node explanation:', error);
             setStreamedAnswer('Failed to load explanation. Please try again.');
@@ -337,8 +333,6 @@ export default function Search() {
         } else {
           // If explanation exists, just set it
           setStreamedAnswer(nodeExplanations[node.id]);
-          setTotalPages(1);
-          setCollectedPages(1);
         }
       }
     } else {
@@ -347,7 +341,7 @@ export default function Search() {
     }
   
     setIsLoadingNodeExplanation(false);
-    setIsCollecting(false);
+    setLoadingMessage('');
   }, [knowledgeGraphData, nodeExplanations, generateNodeExplanation, initialAnswerRef]);
 
   const handleNodeDragStop = useCallback((node) => {
@@ -495,34 +489,22 @@ export default function Search() {
                   </button>
                 </div>
               )}
-              <p className="text-xs text-gray-500 text-center mb-2">
-                {isLoadingNodeExplanation || isCollecting
-                  ? `Collected ${collectedPages} web pages`
-                  : isProcessing
-                    ? processingMessages[processingStep]
-                    : totalPages > 0
-                      ? `Collected ${totalPages} web pages`
-                      : 'Click on a node to see its explanation'
-                }
-              </p>
-              {(isCollecting || isProcessing || isLoadingNodeExplanation) && (
-                <div className="w-full h-2 bg-gray-200 mb-4">
+              {isLoadingNodeExplanation ? (
+                <div className="animate-pulse">
+                  <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
+                  <div className="h-4 bg-gray-200 rounded w-1/2 mb-2"></div>
+                  <div className="h-4 bg-gray-200 rounded w-5/6 mb-2"></div>
+                  <div className="h-4 bg-gray-200 rounded w-2/3 mb-2"></div>
+                  <p className="text-sm text-gray-500 text-center mt-2">{loadingMessage}</p>
+                </div>
+              ) : (
+                <div className="min-h-40 p-4">
                   <div 
-                    className="h-full bg-gray-400 transition-all duration-300 ease-out"
-                    style={{ 
-                      width: `${isCollecting || isLoadingNodeExplanation
-                        ? (collectedPages / Math.max(totalPages, 1)) * 100
-                        : ((processingStep + 1) / processingMessages.length) * 100}%` 
-                    }}
-                  ></div>
+                    className="result-snippet prose prose-sm max-w-none"
+                    dangerouslySetInnerHTML={{ __html: renderedAnswer }}
+                  />
                 </div>
               )}
-              <div className="min-h-40 p-4">
-                <div 
-                  className="result-snippet prose prose-sm max-w-none"
-                  dangerouslySetInnerHTML={{ __html: renderedAnswer }}
-                />
-              </div>
             </div>
           </div>
         </div>
