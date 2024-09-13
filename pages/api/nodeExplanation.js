@@ -1,14 +1,18 @@
-import { OpenAIStream } from '../../utils/OpenAIStream';
+import OpenAI from 'openai';
 
-export const config = {
-  runtime: 'edge',
-};
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY,
+});
 
-export default async function handler(req) {
-  const { nodeId, label, graphData } = await req.json();
+export default async function handler(req, res) {
+  if (req.method !== 'POST') {
+    return res.status(405).json({ message: 'Method Not Allowed' });
+  }
+
+  const { nodeId, label, graphData } = req.body;
 
   if (!nodeId || !label || !graphData) {
-    return new Response('Missing required parameters', { status: 400 });
+    return res.status(400).json({ message: 'Missing required parameters' });
   }
 
   try {
@@ -51,22 +55,17 @@ export default async function handler(req) {
     3. Any important sub-concepts or aspects of "${label}" that are relevant to understanding it fully.
     `;
 
-    const payload = {
-      model: 'gpt-3.5-turbo',
-      messages: [{ role: 'user', content: prompt }],
-      temperature: 0.7,
-      top_p: 1,
-      frequency_penalty: 0,
-      presence_penalty: 0,
+    const completion = await openai.chat.completions.create({
+      model: "gpt-3.5-turbo",
+      messages: [{ role: "user", content: prompt }],
       max_tokens: 300,
-      stream: true,
-      n: 1,
-    };
+    });
 
-    const stream = await OpenAIStream(payload);
-    return new Response(stream);
+    const explanation = completion.choices[0].message.content;
+
+    res.status(200).json({ explanation });
   } catch (error) {
     console.error('Error generating node explanation:', error);
-    return new Response('Error generating explanation', { status: 500 });
+    res.status(500).json({ message: 'Error generating explanation', error: error.message });
   }
 }
