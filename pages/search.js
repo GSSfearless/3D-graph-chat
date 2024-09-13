@@ -91,6 +91,7 @@ export default function Search() {
   const [selectedNodeId, setSelectedNodeId] = useState(null);
   const [isLoadingNodeExplanation, setIsLoadingNodeExplanation] = useState(false);
   const initialAnswerRef = useRef('');
+  const [viewingChildNode, setViewingChildNode] = useState(false);
 
   const defaultQuery = "What is the answer to life, the universe, and everything?";
 
@@ -317,39 +318,36 @@ export default function Search() {
       if (node.id === knowledgeGraphData.nodes[0].id) {
         // If it's the root node, always show the initial answer
         setStreamedAnswer(initialAnswerRef.current);
-        setIsLoadingNodeExplanation(false);
-        setIsCollecting(false);
-        setCollectedPages(0);
-        setTotalPages(0);
-      } else if (!nodeExplanations[node.id]) {
-        // If it's a child node and explanation doesn't exist, fetch it
-        try {
-          const explanation = await generateNodeExplanation(node.id, node.data.label);
-          setNodeExplanations(prev => ({...prev, [node.id]: explanation}));
-          setStreamedAnswer(explanation);
+        setViewingChildNode(false);
+      } else {
+        // If it's a child node
+        setViewingChildNode(true);
+        if (!nodeExplanations[node.id]) {
+          // If explanation doesn't exist, fetch it
+          try {
+            const explanation = await generateNodeExplanation(node.id, node.data.label);
+            setNodeExplanations(prev => ({...prev, [node.id]: explanation}));
+            setStreamedAnswer(explanation);
+            setTotalPages(1);
+            setCollectedPages(1);
+          } catch (error) {
+            console.error('Error fetching node explanation:', error);
+            setStreamedAnswer('Failed to load explanation. Please try again.');
+          }
+        } else {
+          // If explanation exists, just set it
+          setStreamedAnswer(nodeExplanations[node.id]);
           setTotalPages(1);
           setCollectedPages(1);
-        } catch (error) {
-          console.error('Error fetching node explanation:', error);
-          setStreamedAnswer('Failed to load explanation. Please try again.');
-        } finally {
-          setIsLoadingNodeExplanation(false);
-          setIsCollecting(false);
         }
-      } else {
-        // If explanation exists, just set it
-        setStreamedAnswer(nodeExplanations[node.id]);
-        setTotalPages(1);
-        setCollectedPages(1);
-        setIsLoadingNodeExplanation(false);
-        setIsCollecting(false);
       }
     } else {
       console.error('Knowledge graph data is incomplete or missing');
       setStreamedAnswer('Unable to load node information. Please try again.');
-      setIsLoadingNodeExplanation(false);
-      setIsCollecting(false);
     }
+  
+    setIsLoadingNodeExplanation(false);
+    setIsCollecting(false);
   }, [knowledgeGraphData, nodeExplanations, generateNodeExplanation, initialAnswerRef]);
 
   const handleNodeDragStop = useCallback((node) => {
@@ -392,6 +390,11 @@ export default function Search() {
       setGraphFuture(prev => prev.slice(1));
     }
   }, [graphFuture, knowledgeGraphData]);
+
+  const handleReturnToInitialResult = useCallback(() => {
+    setStreamedAnswer(initialAnswerRef.current);
+    setViewingChildNode(false);
+  }, [initialAnswerRef]);
 
   useEffect(() => {
     console.log('knowledgeGraphData updated:', knowledgeGraphData);
@@ -481,6 +484,14 @@ export default function Search() {
           <div className="w-1/4 p-4 bg-white">
             <div className="result-item mb-4">
               <h3 className="result-title text-4xl">📝Answer</h3>
+              {viewingChildNode && (
+                <button
+                  onClick={handleReturnToInitialResult}
+                  className="mb-2 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition duration-300"
+                >
+                  🔙 Return to initial result
+                </button>
+              )}
               <p className="text-xs text-gray-500 text-center mb-2">
                 {isLoadingNodeExplanation || isCollecting
                   ? `Collected ${collectedPages} web pages`
