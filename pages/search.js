@@ -304,30 +304,35 @@ export default function Search() {
 
   const handleNodeClick = useCallback(async (node) => {
     setSelectedNodeId(node.id);
-    if (node.id === knowledgeGraphData.nodes[0].id) {
-      // If it's the root node, always show the initial answer
-      setStreamedAnswer(initialAnswerRef.current);
-    } else if (!nodeExplanations[node.id]) {
-      // If it's a child node and explanation doesn't exist, fetch it
-      setIsLoadingNodeExplanation(true);
-      setCollectedPages(0);
-      setTotalPages(0);
-      setIsCollecting(true);
+    if (knowledgeGraphData && knowledgeGraphData.nodes && knowledgeGraphData.nodes.length > 0) {
+      if (node.id === knowledgeGraphData.nodes[0].id) {
+        // If it's the root node, always show the initial answer
+        setStreamedAnswer(initialAnswerRef.current);
+      } else if (!nodeExplanations[node.id]) {
+        // If it's a child node and explanation doesn't exist, fetch it
+        setIsLoadingNodeExplanation(true);
+        setCollectedPages(0);
+        setTotalPages(0);
+        setIsCollecting(true);
 
-      try {
-        const explanation = await generateNodeExplanation(node.id, node.data.label);
-        setNodeExplanations(prev => ({...prev, [node.id]: explanation}));
-        setStreamedAnswer(explanation);
-      } catch (error) {
-        console.error('Error fetching node explanation:', error);
-        setStreamedAnswer('Failed to load explanation. Please try again.');
-      } finally {
-        setIsLoadingNodeExplanation(false);
-        setIsCollecting(false);
+        try {
+          const explanation = await generateNodeExplanation(node.id, node.data.label);
+          setNodeExplanations(prev => ({...prev, [node.id]: explanation}));
+          setStreamedAnswer(explanation);
+        } catch (error) {
+          console.error('Error fetching node explanation:', error);
+          setStreamedAnswer('Failed to load explanation. Please try again.');
+        } finally {
+          setIsLoadingNodeExplanation(false);
+          setIsCollecting(false);
+        }
+      } else {
+        // If explanation exists, just set it
+        setStreamedAnswer(nodeExplanations[node.id]);
       }
     } else {
-      // If explanation exists, just set it
-      setStreamedAnswer(nodeExplanations[node.id]);
+      console.error('Knowledge graph data is incomplete or missing');
+      setStreamedAnswer('Unable to load node information. Please try again.');
     }
   }, [knowledgeGraphData, nodeExplanations, generateNodeExplanation, initialAnswerRef]);
 
@@ -426,7 +431,7 @@ export default function Search() {
                 </div>
               ) : graphError ? (
                 <p className="text-red-500">{graphError}</p>
-              ) : knowledgeGraphData ? (
+              ) : knowledgeGraphData && knowledgeGraphData.nodes && knowledgeGraphData.nodes.length > 0 ? (
                 <div style={{ height: '600px', width: '100%', border: '1px solid #ddd', borderRadius: '8px' }}>
                   <KnowledgeGraph 
                     data={knowledgeGraphData} 
