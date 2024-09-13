@@ -55,27 +55,15 @@ export default async function handler(req, res) {
     3. Any important sub-concepts or aspects of "${label}" that are relevant to understanding it fully.
     `;
 
-    res.writeHead(200, {
-      'Content-Type': 'text/event-stream',
-      'Cache-Control': 'no-cache',
-      'Connection': 'keep-alive',
-    });
-
-    const stream = await openai.chat.completions.create({
+    const completion = await openai.chat.completions.create({
       model: "gpt-3.5-turbo",
       messages: [{ role: "user", content: prompt }],
-      stream: true,
+      max_tokens: 300,
     });
 
-    for await (const chunk of stream) {
-      const content = chunk.choices[0]?.delta?.content || '';
-      if (content) {
-        res.write(`data: ${JSON.stringify({ content })}\n\n`);
-      }
-    }
+    const explanation = completion.choices[0].message.content;
 
-    res.write(`data: ${JSON.stringify({ done: true })}\n\n`);
-    res.end();
+    res.status(200).json({ explanation });
   } catch (error) {
     console.error('Error generating node explanation:', error);
     res.status(500).json({ message: 'Error generating explanation', error: error.message });
