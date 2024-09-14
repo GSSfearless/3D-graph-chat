@@ -64,6 +64,16 @@ const KnowledgeGraph = ({ data, onNodeClick, onNodeDragStop, onNodeDelete }) => 
     onNodeClick(node);
   }, [onNodeClick]);
 
+  const handleNodeDragStart = useCallback((event, node) => {
+    // You can add any logic here for when dragging starts
+  }, []);
+
+  const handleNodeDrag = useCallback((event, node) => {
+    setNodes((nds) =>
+      nds.map((n) => (n.id === node.id ? { ...n, position: node.position } : n))
+    );
+  }, [setNodes]);
+
   const handleNodeDragStop = useCallback((event, node) => {
     console.log('Node dragged in KnowledgeGraph:', node);
     onNodeDragStop(node);
@@ -117,8 +127,9 @@ const KnowledgeGraph = ({ data, onNodeClick, onNodeDragStop, onNodeDelete }) => 
         nodes={nodes}
         edges={edges}
         onNodeClick={handleNodeClick}
+        onNodeDragStart={handleNodeDragStart}
+        onNodeDrag={handleNodeDrag}
         onNodeDragStop={handleNodeDragStop}
-        onNodeDelete={handleNodeDelete}
         onNodeMouseEnter={handleNodeMouseEnter}
         onNodeMouseLeave={handleNodeMouseLeave}
         onInit={onInit}
