@@ -24,6 +24,8 @@ const KnowledgeGraph = ({ data, onNodeClick, onNodeDragStop, layout }) => {
   const [edges, setEdges] = useState(data.edges);
   const [hoveredNode, setHoveredNode] = useState(null);
 
+  const MAX_NODES = 50; // 设置一个合理的最大节点数
+
   useEffect(() => {
     setMounted(true);
     setNodes(data.nodes);
@@ -33,20 +35,34 @@ const KnowledgeGraph = ({ data, onNodeClick, onNodeDragStop, layout }) => {
   useEffect(() => {
     if (data && data.nodes && data.edges) {
       let layoutedNodes;
-      switch (layout) {
-        case 'pyramid':
-          layoutedNodes = createPyramidLayout(data.nodes);
-          break;
-        case 'mindMap':
-          layoutedNodes = createMindMapLayout(data.nodes);
-          break;
-        case 'radialTree':
-        default:
-          layoutedNodes = createRadialTreeLayout(data.nodes, data.edges);
-          break;
+      try {
+        // 限制节点数量
+        const limitedNodes = data.nodes.slice(0, MAX_NODES);
+        const limitedEdges = data.edges.filter(edge => 
+          limitedNodes.some(node => node.id === edge.source) && 
+          limitedNodes.some(node => node.id === edge.target)
+        );
+
+        switch (layout) {
+          case 'pyramid':
+            layoutedNodes = createPyramidLayout(limitedNodes);
+            break;
+          case 'mindMap':
+            layoutedNodes = createMindMapLayout(limitedNodes);
+            break;
+          case 'radialTree':
+          default:
+            layoutedNodes = createRadialTreeLayout(limitedNodes, limitedEdges);
+            break;
+        }
+        setNodes(layoutedNodes);
+        setEdges(limitedEdges);
+      } catch (error) {
+        console.error('Error in layout calculation:', error);
+        // 如果布局计算失败，至少显示原始节点
+        setNodes(data.nodes.slice(0, MAX_NODES));
+        setEdges(data.edges);
       }
-      setNodes(layoutedNodes);
-      setEdges(data.edges);
     }
   }, [data, layout]);
 

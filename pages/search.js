@@ -183,19 +183,21 @@ export default function Search() {
         });
 
         if (!graphResponse.ok) {
-          throw new Error(`Knowledge graph API error: ${graphResponse.status}`);
+          throw new Error(`HTTP error! status: ${graphResponse.status}`);
         }
 
         const graphData = await graphResponse.json();
-        console.log('Knowledge graph data:', graphData);
-        setGraphHistory(prev => [...prev, knowledgeGraphData]);
-        setGraphFuture([]);
-        setKnowledgeGraphData(graphData);
-        console.log('Initial knowledge graph data:', graphData);
+        
+        // 确保 graphData 有正确的结构
+        if (graphData && graphData.nodes && graphData.edges) {
+          setKnowledgeGraphData(graphData);
+        } else {
+          console.error('Invalid graph data structure:', graphData);
+          setGraphError('Invalid graph data structure');
+        }
       } catch (error) {
         console.error('Error fetching knowledge graph:', error);
-        setGraphError('Unable to load knowledge graph');
-        setKnowledgeGraphData(null);
+        setGraphError('Failed to load knowledge graph');
       }
 
       // After all processing is complete

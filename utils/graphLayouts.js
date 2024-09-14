@@ -63,30 +63,37 @@ export function createRadialTreeLayout(nodes, edges) {
   const radius = 250;
 
   function layoutNode(node, angle, distance, level) {
+    if (!node) return; // 添加这行来防止处理未定义的节点
+
     const x = centerX + Math.cos(angle) * distance;
     const y = centerY + Math.sin(angle) * distance;
     const children = childrenMap.get(node.id) || [];
     const childAngleStep = (Math.PI * 2) / Math.max(children.length, 1);
 
     node.position = { x, y };
+    node.data = node.data || {}; // 确保 node.data 存在
     node.data.level = level;
 
     children.forEach((childId, index) => {
       const childNode = nodes.find(n => n.id === childId);
-      const childAngle = angle + childAngleStep * index;
-      const childDistance = distance + radius / (level + 1);
-      layoutNode(childNode, childAngle, childDistance, level + 1);
+      if (childNode && childNode !== node) { // 添加这个检查来防止自引用
+        const childAngle = angle + childAngleStep * index;
+        const childDistance = distance + radius / (level + 1);
+        layoutNode(childNode, childAngle, childDistance, level + 1);
+      }
     });
   }
 
-  layoutNode(rootNode, 0, 0, 0);
+  if (rootNode) {
+    layoutNode(rootNode, 0, 0, 0);
+  }
 
   return nodes.map(node => ({
     ...node,
     style: {
       width: 150,
       height: 50,
-      backgroundColor: getNodeColor(node.data.level),
+      backgroundColor: getNodeColor(node.data?.level || 0),
     },
   }));
 }
