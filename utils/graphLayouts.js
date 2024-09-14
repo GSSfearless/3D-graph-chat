@@ -8,25 +8,41 @@ const NODE_COLORS = [
   'linear-gradient(135deg, #F3E5F5 0%, #E1BEE7 100%)'
 ];
 
+function centerLayout(nodes) {
+  const minX = Math.min(...nodes.map(node => node.position.x));
+  const maxX = Math.max(...nodes.map(node => node.position.x));
+  const minY = Math.min(...nodes.map(node => node.position.y));
+  const maxY = Math.max(...nodes.map(node => node.position.y));
+
+  const centerX = (minX + maxX) / 2;
+  const centerY = (minY + maxY) / 2;
+
+  const offsetX = 600 - centerX;
+  const offsetY = 450 - centerY;
+
+  return nodes.map(node => ({
+    ...node,
+    position: {
+      x: node.position.x + offsetX,
+      y: node.position.y + offsetY
+    }
+  }));
+}
+
 export function createPyramidLayout(nodes) {
   const levels = Math.ceil(Math.sqrt(nodes.length));
-  const width = 1200; // 增加宽度
-  const height = 900; // 增加高度
-  const baseNodeWidth = 150;
-  const baseNodeHeight = 50;
-  const horizontalSpacing = 50; // 减小基础水平间距
-  const verticalSpacing = 100; // 减小基础垂直间距
+  const width = 1200;
+  const height = 900;
+  const horizontalSpacing = 50;
+  const verticalSpacing = 100;
 
   const layoutedNodes = nodes.map((node, index) => {
     const level = Math.floor(Math.sqrt(index));
     const nodesInLevel = (level * 2) + 1;
     const nodeIndex = index - (level * level);
     
-    const nodeWidth = Math.max(baseNodeWidth, node.data.label.length * 10); // 根据文本长度调整宽度
-    const nodeHeight = baseNodeHeight;
-
-    const levelWidth = nodesInLevel * nodeWidth + (nodesInLevel - 1) * horizontalSpacing;
-    const x = (width - levelWidth) / 2 + (nodeWidth + horizontalSpacing) * nodeIndex;
+    const levelWidth = nodesInLevel * NODE_WIDTH + (nodesInLevel - 1) * horizontalSpacing;
+    const x = (width - levelWidth) / 2 + (NODE_WIDTH + horizontalSpacing) * nodeIndex;
     const y = verticalSpacing * (level + 1);
 
     return {
@@ -70,7 +86,7 @@ export function createMindMapLayout(nodes) {
         style: { 
           width: NODE_WIDTH, 
           height: NODE_HEIGHT,
-          backgroundColor: NODE_COLORS[index % NODE_COLORS.length],
+          background: NODE_COLORS[index % NODE_COLORS.length],
           borderRadius: '8px',
           border: '1px solid #ddd',
           padding: '5px',
@@ -86,12 +102,12 @@ export function createMindMapLayout(nodes) {
   const layoutedNodes = [
     {
       ...rootNode,
-      position: { x: centerX - 75, y: centerY - 25 },
+      position: { x: centerX - NODE_WIDTH / 2, y: centerY - NODE_HEIGHT / 2 },
       style: { 
-        width: 150, 
-        height: 50,
-        backgroundColor: '#FFFAE5',
-        borderRadius: '25px',
+        width: NODE_WIDTH, 
+        height: NODE_HEIGHT,
+        background: NODE_COLORS[0],
+        borderRadius: '8px',
         border: '2px solid #FFD700',
         padding: '5px',
         fontSize: '14px',
@@ -120,7 +136,7 @@ export function createRadialTreeLayout(nodes, edges) {
   const centerY = 450;
   const baseRadius = 200;
   const radiusStep = 150;
-  const minAngle = 0.3; // 最小角度间隔
+  const minAngle = 0.3;
 
   function layoutNode(node, angle, distance, level) {
     if (!node) return;
@@ -134,7 +150,7 @@ export function createRadialTreeLayout(nodes, edges) {
     node.style = {
       width: NODE_WIDTH,
       height: NODE_HEIGHT,
-      backgroundColor: NODE_COLORS[level % NODE_COLORS.length],
+      background: NODE_COLORS[level % NODE_COLORS.length],
       borderRadius: '8px',
       border: '1px solid #ddd',
       padding: '5px',
@@ -155,13 +171,7 @@ export function createRadialTreeLayout(nodes, edges) {
     layoutNode(rootNode, 0, 0, 0);
   }
 
-  const layoutedNodes = nodes;
-  return centerLayout(layoutedNodes);
-}
-
-function getNodeColor(level) {
-  const colors = ['#FFA07A', '#98FB98', '#87CEFA', '#DDA0DD', '#F0E68C'];
-  return colors[level % colors.length];
+  return centerLayout(nodes);
 }
 
 export function relayoutGraph(nodes, edges, layoutType) {
@@ -193,34 +203,4 @@ export function relayoutGraph(nodes, edges, layoutType) {
       },
     })),
   };
-}
-
-function calculateNodeSize(label) {
-  const baseWidth = 100;
-  const baseHeight = 40;
-  const charWidth = 8; // 估计每个字符的宽度
-  
-  const width = Math.max(baseWidth, label.length * charWidth);
-  return { width, height: baseHeight };
-}
-
-function centerLayout(nodes) {
-  const minX = Math.min(...nodes.map(node => node.position.x));
-  const maxX = Math.max(...nodes.map(node => node.position.x));
-  const minY = Math.min(...nodes.map(node => node.position.y));
-  const maxY = Math.max(...nodes.map(node => node.position.y));
-
-  const centerX = (minX + maxX) / 2;
-  const centerY = (minY + maxY) / 2;
-
-  const offsetX = 600 - centerX;
-  const offsetY = 450 - centerY;
-
-  return nodes.map(node => ({
-    ...node,
-    position: {
-      x: node.position.x + offsetX,
-      y: node.position.y + offsetY
-    }
-  }));
 }

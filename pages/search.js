@@ -396,20 +396,8 @@ export default function Search() {
   const handleLayoutChange = useCallback((newLayout) => {
     setCurrentLayout(newLayout);
     if (knowledgeGraphData) {
-      let newGraphData;
-      switch (newLayout) {
-        case 'pyramid':
-          newGraphData = createPyramidLayout(knowledgeGraphData.nodes);
-          break;
-        case 'mindMap':
-          newGraphData = createMindMapLayout(knowledgeGraphData.nodes);
-          break;
-        case 'radialTree':
-        default:
-          newGraphData = createRadialTreeLayout(knowledgeGraphData.nodes, knowledgeGraphData.edges);
-          break;
-      }
-      setKnowledgeGraphData({ ...knowledgeGraphData, nodes: newGraphData });
+      const newGraphData = relayoutGraph(knowledgeGraphData.nodes, knowledgeGraphData.edges, newLayout);
+      setKnowledgeGraphData(newGraphData);
     }
   }, [knowledgeGraphData]);
 
