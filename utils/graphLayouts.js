@@ -47,14 +47,70 @@ export function createMindMapLayout(nodes) {
   });
 }
 
-export function relayoutGraph(nodes, edges, type) {
-  const layoutFunction = type === 'pyramid' ? createPyramidLayout : createMindMapLayout;
-  const layoutedNodes = layoutFunction(nodes);
+export function createRadialTreeLayout(nodes, edges) {
+  const rootNode = nodes.find(node => !edges.some(edge => edge.target === node.id));
+  const childrenMap = new Map();
+
+  edges.forEach(edge => {
+    if (!childrenMap.has(edge.source)) {
+      childrenMap.set(edge.source, []);
+    }
+    childrenMap.get(edge.source).push(edge.target);
+  });
+
+  const centerX = 500;
+  const centerY = 500;
+  const radius = 250;
+
+  function layoutNode(node, angle, distance, level) {
+    const x = centerX + Math.cos(angle) * distance;
+    const y = centerY + Math.sin(angle) * distance;
+    const children = childrenMap.get(node.id) || [];
+    const childAngleStep = (Math.PI * 2) / Math.max(children.length, 1);
+
+    node.position = { x, y };
+    node.data.level = level;
+
+    children.forEach((childId, index) => {
+      const childNode = nodes.find(n => n.id === childId);
+      const childAngle = angle + childAngleStep * index;
+      const childDistance = distance + radius / (level + 1);
+      layoutNode(childNode, childAngle, childDistance, level + 1);
+    });
+  }
+
+  layoutNode(rootNode, 0, 0, 0);
+
+  return nodes.map(node => ({
+    ...node,
+    style: {
+      width: 150,
+      height: 50,
+      backgroundColor: getNodeColor(node.data.level),
+    },
+  }));
+}
+
+function getNodeColor(level) {
+  const colors = ['#FFA07A', '#98FB98', '#87CEFA', '#DDA0DD', '#F0E68C'];
+  return colors[level % colors.length];
+}
+
+export function relayoutGraph(nodes, edges) {
+  const layoutedNodes = createRadialTreeLayout(nodes, edges);
   
   return {
     nodes: layoutedNodes,
-    edges: edges,
-    type: type
+    edges: edges.map(edge => ({
+      ...edge,
+      type: 'smoothstep',
+      animated: true,
+      style: { stroke: '#888', strokeWidth: 2 },
+      markerEnd: {
+        type: 'arrowclosed',
+        color: '#888',
+      },
+    })),
   };
 }
 
