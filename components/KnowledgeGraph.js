@@ -1,6 +1,7 @@
 import dynamic from 'next/dynamic';
 import { useEffect, useState, useCallback } from 'react';
 import { createPyramidLayout, createMindMapLayout, createRadialTreeLayout } from '../utils/graphLayouts';
+import { useZoomPanHelper } from 'react-flow-renderer';
 
 const ReactFlow = dynamic(() => import('react-flow-renderer').then(mod => mod.default), {
   ssr: false,
@@ -66,14 +67,12 @@ const KnowledgeGraph = ({ data, onNodeClick, onNodeDragStop, layout }) => {
     }
   }, [data, layout]);
 
-  const onInit = useCallback((reactFlowInstance) => {
-    reactFlowInstance.fitView({ padding: 0.2, includeHiddenNodes: false });
-  }, []);
+  const { fitView } = useZoomPanHelper();
 
   const handleNodeClick = useCallback((event, node) => {
-    console.log('Node clicked in KnowledgeGraph:', node);
+    fitView({ padding: 0.2, includeHiddenNodes: false, duration: 800 });
     onNodeClick(node);
-  }, [onNodeClick]);
+  }, [fitView, onNodeClick]);
 
   const handleNodeDragStop = useCallback((event, node) => {
     console.log('Node dragged in KnowledgeGraph:', node);
