@@ -1,6 +1,5 @@
 import dynamic from 'next/dynamic';
 import { useEffect, useState, useCallback, useMemo } from 'react';
-import { Handle, Position } from 'react-flow-renderer';
 import { createPyramidLayout, createMindMapLayout, createRadialTreeLayout } from '../utils/graphLayouts';
 
 const ReactFlow = dynamic(() => import('react-flow-renderer').then(mod => mod.default), {
@@ -16,71 +15,6 @@ const Controls = dynamic(() => import('react-flow-renderer').then(mod => mod.Con
 const Background = dynamic(() => import('react-flow-renderer').then(mod => mod.Background), {
   ssr: false
 });
-
-const CustomNode = ({ data, id, onDelete, xPos, yPos }) => {
-  const [isDragging, setIsDragging] = useState(false);
-
-  const handleDelete = (event) => {
-    event.stopPropagation();
-    onDelete(id);
-  };
-
-  return (
-    <>
-      <Handle type="target" position={Position.Top} />
-      <div
-        style={{ 
-          padding: '10px', 
-          borderRadius: '8px',
-          width: '180px',
-          fontSize: '12px',
-          textAlign: 'center',
-          border: '1px solid #ddd',
-          backgroundColor: data.style?.background || '#fff',
-          position: 'relative'
-        }}
-        onMouseDown={() => setIsDragging(true)}
-        onMouseUp={() => setIsDragging(false)}
-      >
-        {data.label}
-        <button
-          onClick={handleDelete}
-          style={{
-            position: 'absolute',
-            top: '-10px',
-            right: '-10px',
-            background: 'red',
-            color: 'white',
-            border: 'none',
-            borderRadius: '50%',
-            width: '20px',
-            height: '20px',
-            fontSize: '12px',
-            cursor: 'pointer'
-          }}
-        >
-          X
-        </button>
-        {isDragging && (
-          <div style={{
-            position: 'absolute',
-            bottom: '-20px',
-            left: '50%',
-            transform: 'translateX(-50%)',
-            background: 'rgba(0,0,0,0.7)',
-            color: 'white',
-            padding: '2px 5px',
-            borderRadius: '3px',
-            fontSize: '10px'
-          }}>
-            x: {Math.round(xPos)}, y: {Math.round(yPos)}
-          </div>
-        )}
-      </div>
-      <Handle type="source" position={Position.Bottom} />
-    </>
-  );
-};
 
 const KnowledgeGraph = ({ data, onNodeClick, onNodeDragStop, onNodeDelete }) => {
   console.log('KnowledgeGraph rendered with data:', data);
