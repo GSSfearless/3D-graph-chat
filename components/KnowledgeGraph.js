@@ -7,7 +7,6 @@ const ReactFlow = dynamic(() => import('react-flow-renderer').then(mod => mod.de
   loading: () => <p>Loading knowledge graph...</p>
 });
 
-// 导入 Controls 和 Background 组件
 const Controls = dynamic(() => import('react-flow-renderer').then(mod => mod.Controls), {
   ssr: false
 });
@@ -16,15 +15,52 @@ const Background = dynamic(() => import('react-flow-renderer').then(mod => mod.B
   ssr: false
 });
 
-const KnowledgeGraph = ({ data, onNodeClick, onNodeDragStop, onNodeDelete }) => {
-  console.log('KnowledgeGraph rendered with data:', data);
+const CustomNode = ({ data, id, onDelete }) => {
+  const handleDelete = (event) => {
+    event.stopPropagation();
+    onDelete(id);
+  };
 
+  return (
+    <div style={{ 
+      padding: '10px', 
+      borderRadius: '8px',
+      width: '180px',
+      fontSize: '12px',
+      textAlign: 'center',
+      border: '1px solid #ddd',
+      backgroundColor: data.style.background
+    }}>
+      {data.label}
+      <button
+        onClick={handleDelete}
+        style={{
+          position: 'absolute',
+          top: '-10px',
+          right: '-10px',
+          background: 'red',
+          color: 'white',
+          border: 'none',
+          borderRadius: '50%',
+          width: '20px',
+          height: '20px',
+          fontSize: '12px',
+          cursor: 'pointer'
+        }}
+      >
+        X
+      </button>
+    </div>
+  );
+};
+
+const KnowledgeGraph = ({ data, onNodeClick, onNodeDragStop, onNodeDelete }) => {
   const [mounted, setMounted] = useState(false);
   const [nodes, setNodes] = useState(data.nodes);
   const [edges, setEdges] = useState(data.edges);
   const [hoveredNode, setHoveredNode] = useState(null);
 
-  const MAX_NODES = 50; // 设置一个合理的最大节点数
+  const MAX_NODES = 50;
 
   useEffect(() => {
     setMounted(true);
@@ -35,20 +71,17 @@ const KnowledgeGraph = ({ data, onNodeClick, onNodeDragStop, onNodeDelete }) => 
   useEffect(() => {
     if (data && data.nodes && data.edges) {
       try {
-        // 限制节点数量
         const limitedNodes = data.nodes.slice(0, MAX_NODES);
         const limitedEdges = data.edges.filter(edge => 
           limitedNodes.some(node => node.id === edge.source) && 
           limitedNodes.some(node => node.id === edge.target)
         );
 
-        // 始终使用金字塔布局
         const { nodes: layoutedNodes, edges: layoutedEdges } = relayoutGraph(limitedNodes, limitedEdges, 'pyramid');
         setNodes(layoutedNodes);
         setEdges(layoutedEdges);
       } catch (error) {
         console.error('Error in layout calculation:', error);
-        // 如果布局计算失败，至少显示原始节点
         setNodes(data.nodes.slice(0, MAX_NODES));
         setEdges(data.edges);
       }
@@ -60,19 +93,15 @@ const KnowledgeGraph = ({ data, onNodeClick, onNodeDragStop, onNodeDelete }) => 
   }, []);
 
   const handleNodeClick = useCallback((event, node) => {
-    console.log('Node clicked in KnowledgeGraph:', node);
     onNodeClick(node);
   }, [onNodeClick]);
 
   const handleNodeDragStop = useCallback((event, node) => {
-    console.log('Node dragged in KnowledgeGraph:', node);
     onNodeDragStop(node);
   }, [onNodeDragStop]);
 
-  const handleNodeDelete = useCallback((event, node) => {
-    event.stopPropagation(); // Prevent triggering onNodeClick
-    console.log('Node deleted in KnowledgeGraph:', node);
-    onNodeDelete(node);
+  const handleNodeDelete = useCallback((nodeId) => {
+    onNodeDelete(nodeId);
   }, [onNodeDelete]);
 
   const handleNodeMouseEnter = useCallback((event, node) => {
@@ -111,17 +140,21 @@ const KnowledgeGraph = ({ data, onNodeClick, onNodeDragStop, onNodeDelete }) => 
     return <div>Invalid graph data</div>;
   }
 
+  const nodeTypes = {
+    custom: (nodeProps) => <CustomNode {...nodeProps} onDelete={handleNodeDelete} />
+  };
+
   return (
     <div style={{ height: '100%', width: '100%', fontFamily: 'Roboto, sans-serif' }}>
       <ReactFlow 
-        nodes={nodes}
+        nodes={nodes.map(node => ({ ...node, type: 'custom' }))}
         edges={edges}
         onNodeClick={handleNodeClick}
         onNodeDragStop={handleNodeDragStop}
-        onNodeDelete={handleNodeDelete}
         onNodeMouseEnter={handleNodeMouseEnter}
         onNodeMouseLeave={handleNodeMouseLeave}
         onInit={onInit}
+        nodeTypes={nodeTypes}
         nodesDraggable={true}
         nodesConnectable={false}
         zoomOnScroll={false}
