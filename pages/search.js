@@ -362,6 +362,20 @@ export default function Search() {
     });
   }, [knowledgeGraphData]);
 
+  const handleNodeDelete = useCallback((node) => {
+    setGraphHistory(prev => {
+      const newHistory = [...prev, knowledgeGraphData];
+      setHasPreviousGraph(newHistory.length > 0);
+      return newHistory;
+    });
+    setGraphFuture([]); // Clear future states
+    setKnowledgeGraphData(prevData => {
+      const updatedNodes = prevData.nodes.filter(n => n.id !== node.id);
+      const updatedEdges = prevData.edges.filter(e => e.source !== node.id && e.target !== node.id);
+      return { nodes: updatedNodes, edges: updatedEdges };
+    });
+  }, [knowledgeGraphData]);
+
   const handleUndo = useCallback(() => {
     if (graphHistory.length > 0) {
       const previousState = graphHistory[graphHistory.length - 1];
@@ -461,6 +475,7 @@ export default function Search() {
                     data={knowledgeGraphData} 
                     onNodeClick={handleNodeClick}
                     onNodeDragStop={handleNodeDragStop}
+                    onNodeDelete={handleNodeDelete}
                     layout={currentLayout}
                   />
                 </div>

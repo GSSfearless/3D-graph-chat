@@ -16,7 +16,7 @@ const Background = dynamic(() => import('react-flow-renderer').then(mod => mod.B
   ssr: false
 });
 
-const KnowledgeGraph = ({ data, onNodeClick, onNodeDragStop }) => {
+const KnowledgeGraph = ({ data, onNodeClick, onNodeDragStop, onNodeDelete }) => {
   console.log('KnowledgeGraph rendered with data:', data);
 
   const [mounted, setMounted] = useState(false);
@@ -69,6 +69,12 @@ const KnowledgeGraph = ({ data, onNodeClick, onNodeDragStop }) => {
     onNodeDragStop(node);
   }, [onNodeDragStop]);
 
+  const handleNodeDelete = useCallback((event, node) => {
+    event.stopPropagation(); // Prevent triggering onNodeClick
+    console.log('Node deleted in KnowledgeGraph:', node);
+    onNodeDelete(node);
+  }, [onNodeDelete]);
+
   const handleNodeMouseEnter = useCallback((event, node) => {
     setHoveredNode(node);
     setNodes((nds) =>
@@ -112,6 +118,7 @@ const KnowledgeGraph = ({ data, onNodeClick, onNodeDragStop }) => {
         edges={edges}
         onNodeClick={handleNodeClick}
         onNodeDragStop={handleNodeDragStop}
+        onNodeDelete={handleNodeDelete}
         onNodeMouseEnter={handleNodeMouseEnter}
         onNodeMouseLeave={handleNodeMouseLeave}
         onInit={onInit}
