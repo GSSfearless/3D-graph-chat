@@ -1,4 +1,4 @@
-export function createPyramidLayout(nodes, edges) {
+export function createPyramidLayout(nodes) {
   const levels = Math.ceil(Math.sqrt(nodes.length));
   const width = 1200; // 增加宽度
   const height = 900; // 增加高度
@@ -9,30 +9,35 @@ export function createPyramidLayout(nodes, edges) {
 
   const colors = ['#E6F3FF', '#CCE7FF', '#B3DBFF', '#99CFFF', '#80C3FF']; // 层级颜色
 
-  return {
-    nodes: nodes.map((node, index) => {
-      const level = Math.floor(Math.sqrt(index));
-      const nodesInLevel = (level * 2) + 1;
-      const nodeIndex = index - (level * level);
-      
-      const nodeWidth = Math.max(baseNodeWidth, node.data.label.length * 10); // 根据文本长度调整宽度
-      const nodeHeight = baseNodeHeight;
+  return nodes.map((node, index) => {
+    const level = Math.floor(Math.sqrt(index));
+    const nodesInLevel = (level * 2) + 1;
+    const nodeIndex = index - (level * level);
+    
+    const nodeWidth = Math.max(baseNodeWidth, node.data.label.length * 10); // 根据文本长度调整宽度
+    const nodeHeight = baseNodeHeight;
 
-      const levelWidth = nodesInLevel * nodeWidth + (nodesInLevel - 1) * horizontalSpacing;
-      const x = (width - levelWidth) / 2 + (nodeWidth + horizontalSpacing) * nodeIndex;
-      const y = verticalSpacing * (level + 1);
+    const levelWidth = nodesInLevel * nodeWidth + (nodesInLevel - 1) * horizontalSpacing;
+    const x = (width - levelWidth) / 2 + (nodeWidth + horizontalSpacing) * nodeIndex;
+    const y = verticalSpacing * (level + 1);
 
-      return {
-        ...node,
-        position: { x, y },
-        style: getNodeStyle(node, level)
-      };
-    }),
-    edges
-  };
+    return {
+      ...node,
+      position: { x, y },
+      style: { 
+        width: nodeWidth, 
+        height: nodeHeight,
+        backgroundColor: colors[level % colors.length],
+        borderRadius: '8px',
+        border: '1px solid #ddd',
+        padding: '5px',
+        fontSize: '12px'
+      }
+    };
+  });
 }
 
-export function createMindMapLayout(nodes, edges) {
+export function createMindMapLayout(nodes) {
   const centerX = 600;
   const centerY = 450;
   const baseRadius = 250;
@@ -52,7 +57,15 @@ export function createMindMapLayout(nodes, edges) {
       return {
         ...node,
         position: { x, y },
-        style: getNodeStyle(node, index)
+        style: { 
+          width: 120, 
+          height: 40,
+          backgroundColor: isLeft ? '#FFE5E5' : '#E5F2FF',
+          borderRadius: '20px',
+          border: '1px solid #ddd',
+          padding: '5px',
+          fontSize: '12px'
+        }
       };
     });
   }
@@ -60,18 +73,24 @@ export function createMindMapLayout(nodes, edges) {
   const leftLayout = layoutBranch(leftNodes, -Math.PI / 3, Math.PI / 3, true);
   const rightLayout = layoutBranch(rightNodes, -Math.PI / 3, Math.PI / 3, false);
 
-  return {
-    nodes: [
-      {
-        ...rootNode,
-        position: { x: centerX - 75, y: centerY - 25 },
-        style: getNodeStyle(rootNode, 0)
-      },
-      ...leftLayout,
-      ...rightLayout
-    ],
-    edges
-  };
+  return [
+    {
+      ...rootNode,
+      position: { x: centerX - 75, y: centerY - 25 },
+      style: { 
+        width: 150, 
+        height: 50,
+        backgroundColor: '#FFFAE5',
+        borderRadius: '25px',
+        border: '2px solid #FFD700',
+        padding: '5px',
+        fontSize: '14px',
+        fontWeight: 'bold'
+      }
+    },
+    ...leftLayout,
+    ...rightLayout
+  ];
 }
 
 export function createRadialTreeLayout(nodes, edges) {
@@ -124,10 +143,7 @@ export function createRadialTreeLayout(nodes, edges) {
     layoutNode(rootNode, 0, 0, 0);
   }
 
-  return {
-    nodes: layoutedNodes,
-    edges
-  };
+  return nodes;
 }
 
 function getNodeColor(level) {
@@ -160,17 +176,4 @@ function calculateNodeSize(label) {
   
   const width = Math.max(baseWidth, label.length * charWidth);
   return { width, height: baseHeight };
-}
-
-// 统一的节点样式函数
-function getNodeStyle(node, level) {
-  return {
-    width: 150,
-    height: 50,
-    backgroundColor: getNodeColor(level),
-    borderRadius: '8px',
-    border: '1px solid #ddd',
-    padding: '5px',
-    fontSize: '12px'
-  };
 }
