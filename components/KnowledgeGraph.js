@@ -1,7 +1,6 @@
 import dynamic from 'next/dynamic';
 import { useEffect, useState, useCallback } from 'react';
 import { createPyramidLayout, createMindMapLayout, createRadialTreeLayout } from '../utils/graphLayouts';
-import { Handle, Position } from 'react-flow-renderer';
 
 const ReactFlow = dynamic(() => import('react-flow-renderer').then(mod => mod.default), {
   ssr: false,
@@ -17,19 +16,7 @@ const Background = dynamic(() => import('react-flow-renderer').then(mod => mod.B
   ssr: false
 });
 
-const CustomNode = ({ data, id }) => (
-  <div className="custom-node">
-    {data.label}
-    <Handle type="target" position={Position.Top} />
-    <Handle type="source" position={Position.Bottom} />
-  </div>
-);
-
-const nodeTypes = {
-  custom: CustomNode,
-};
-
-const KnowledgeGraph = ({ data, onNodeClick, onNodeDragStop, onDeleteNode }) => {
+const KnowledgeGraph = ({ data, onNodeClick, onNodeDragStop }) => {
   console.log('KnowledgeGraph rendered with data:', data);
 
   const [mounted, setMounted] = useState(false);
@@ -112,14 +99,6 @@ const KnowledgeGraph = ({ data, onNodeClick, onNodeDragStop, onDeleteNode }) => 
     );
   }, []);
 
-  const onNodeContextMenu = useCallback(
-    (event, node) => {
-      event.preventDefault();
-      onDeleteNode(node.id);
-    },
-    [onDeleteNode]
-  );
-
   if (!mounted) return null;
 
   if (!data || !data.nodes || !data.edges) {
@@ -135,9 +114,7 @@ const KnowledgeGraph = ({ data, onNodeClick, onNodeDragStop, onDeleteNode }) => 
         onNodeDragStop={handleNodeDragStop}
         onNodeMouseEnter={handleNodeMouseEnter}
         onNodeMouseLeave={handleNodeMouseLeave}
-        onNodeContextMenu={onNodeContextMenu}
         onInit={onInit}
-        nodeTypes={nodeTypes}
         nodesDraggable={true}
         nodesConnectable={false}
         zoomOnScroll={false}
