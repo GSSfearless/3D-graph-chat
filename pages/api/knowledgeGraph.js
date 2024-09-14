@@ -96,7 +96,11 @@ export default async function handler(req, res) {
     const graphData = {
       nodes: layoutFunction(rawGraphData.nodes.map(node => ({
         id: node.id,
-        data: { label: node.label || node.id },
+        data: { 
+          label: node.label || node.id,
+          notes: '', // 添加笔记字段
+          links: [], // 添加链接字段
+        },
       }))),
       edges: rawGraphData.edges.map(edge => ({
         id: `${edge.source}-${edge.target}`,
