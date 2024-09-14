@@ -16,7 +16,7 @@ const Background = dynamic(() => import('react-flow-renderer').then(mod => mod.B
   ssr: false
 });
 
-const KnowledgeGraph = ({ data, onNodeClick, onNodeDragStop, layout }) => {
+const KnowledgeGraph = ({ data, onNodeClick, onNodeDragStop }) => {
   console.log('KnowledgeGraph rendered with data:', data);
 
   const [mounted, setMounted] = useState(false);
@@ -34,7 +34,6 @@ const KnowledgeGraph = ({ data, onNodeClick, onNodeDragStop, layout }) => {
 
   useEffect(() => {
     if (data && data.nodes && data.edges) {
-      let layoutedNodes;
       try {
         // 限制节点数量
         const limitedNodes = data.nodes.slice(0, MAX_NODES);
@@ -43,20 +42,10 @@ const KnowledgeGraph = ({ data, onNodeClick, onNodeDragStop, layout }) => {
           limitedNodes.some(node => node.id === edge.target)
         );
 
-        switch (layout) {
-          case 'pyramid':
-            layoutedNodes = createPyramidLayout(limitedNodes);
-            break;
-          case 'mindMap':
-            layoutedNodes = createMindMapLayout(limitedNodes);
-            break;
-          case 'radialTree':
-          default:
-            layoutedNodes = createRadialTreeLayout(limitedNodes, limitedEdges);
-            break;
-        }
+        // 始终使用金字塔布局
+        const { nodes: layoutedNodes, edges: layoutedEdges } = relayoutGraph(limitedNodes, limitedEdges, 'pyramid');
         setNodes(layoutedNodes);
-        setEdges(limitedEdges);
+        setEdges(layoutedEdges);
       } catch (error) {
         console.error('Error in layout calculation:', error);
         // 如果布局计算失败，至少显示原始节点
@@ -64,7 +53,7 @@ const KnowledgeGraph = ({ data, onNodeClick, onNodeDragStop, layout }) => {
         setEdges(data.edges);
       }
     }
-  }, [data, layout]);
+  }, [data]);
 
   const onInit = useCallback((reactFlowInstance) => {
     reactFlowInstance.fitView({ padding: 0.2, includeHiddenNodes: false });

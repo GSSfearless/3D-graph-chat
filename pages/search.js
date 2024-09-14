@@ -484,6 +484,8 @@ export default function Search() {
                 >
                   ↪️
                 </button>
+                {/* 注释掉布局切换按钮 */}
+                {/*
                 <button
                   onClick={() => handleLayoutChange('pyramid')}
                   className={`text-2xl opacity-50 hover:opacity-100 transition-opacity mr-2 ${currentLayout === 'pyramid' ? 'opacity-100' : ''}`}
@@ -505,6 +507,7 @@ export default function Search() {
                 >
                   🌞
                 </button>
+                */}
               </div>
             </div>
           </div>
