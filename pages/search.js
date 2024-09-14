@@ -6,7 +6,6 @@ import { useRouter } from 'next/router';
 import { useState, useCallback, useEffect, useRef } from 'react';
 import 'tailwindcss/tailwind.css';
 import '../styles/globals.css';
-import { TransitionGroup, CSSTransition } from 'react-transition-group';
 
 const KnowledgeGraph = dynamic(() => import('../components/KnowledgeGraph'), {
   ssr: false,
@@ -94,7 +93,6 @@ export default function Search() {
   const initialAnswerRef = useRef('');
   const [viewingChildNode, setViewingChildNode] = useState(false);
   const [currentLayout, setCurrentLayout] = useState('radialTree');
-  const knowledgeGraphRef = useRef(null);
 
   const defaultQuery = "What is the answer to life, the universe, and everything?";
 
@@ -411,27 +409,12 @@ export default function Search() {
           newGraphData = createRadialTreeLayout(knowledgeGraphData.nodes, knowledgeGraphData.edges);
           break;
       }
-      setKnowledgeGraphData(prevData => ({
-        ...prevData,
-        nodes: newGraphData.map((node, index) => ({
-          ...node,
-          position: {
-            x: prevData.nodes[index]?.position?.x || node.position.x,
-            y: prevData.nodes[index]?.position?.y || node.position.y,
-          },
-        })),
-      }));
+      setKnowledgeGraphData({ ...knowledgeGraphData, nodes: newGraphData });
     }
   }, [knowledgeGraphData]);
 
   useEffect(() => {
     console.log('knowledgeGraphData updated:', knowledgeGraphData);
-  }, [knowledgeGraphData]);
-
-  useEffect(() => {
-    if (knowledgeGraphData && knowledgeGraphRef.current) {
-      knowledgeGraphRef.current.fitView({ padding: 0.2 });
-    }
   }, [knowledgeGraphData]);
 
   return (
@@ -485,23 +468,14 @@ export default function Search() {
               ) : graphError ? (
                 <p className="text-red-500">{graphError}</p>
               ) : knowledgeGraphData && knowledgeGraphData.nodes && knowledgeGraphData.nodes.length > 0 ? (
-                <TransitionGroup>
-                  <CSSTransition
-                    key={currentLayout}
-                    classNames="fade"
-                    timeout={300}
-                  >
-                    <div style={{ height: '600px', width: '100%', border: '1px solid #ddd', borderRadius: '8px' }}>
-                      <KnowledgeGraph 
-                        ref={knowledgeGraphRef}
-                        data={knowledgeGraphData} 
-                        onNodeClick={handleNodeClick}
-                        onNodeDragStop={handleNodeDragStop}
-                        layout={currentLayout}
-                      />
-                    </div>
-                  </CSSTransition>
-                </TransitionGroup>
+                <div style={{ height: '600px', width: '100%', border: '1px solid #ddd', borderRadius: '8px' }}>
+                  <KnowledgeGraph 
+                    data={knowledgeGraphData} 
+                    onNodeClick={handleNodeClick}
+                    onNodeDragStop={handleNodeDragStop}
+                    layout={currentLayout}
+                  />
+                </div>
               ) : (
                 <p>No knowledge graph data available</p>
               )}

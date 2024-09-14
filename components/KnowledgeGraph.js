@@ -1,7 +1,6 @@
 import dynamic from 'next/dynamic';
 import { useEffect, useState, useCallback } from 'react';
 import { createPyramidLayout, createMindMapLayout, createRadialTreeLayout } from '../utils/graphLayouts';
-import ReactFlow, { useNodesState, useEdgesState, useReactFlow } from 'react-flow-renderer';
 
 const ReactFlow = dynamic(() => import('react-flow-renderer').then(mod => mod.default), {
   ssr: false,
@@ -21,11 +20,9 @@ const KnowledgeGraph = ({ data, onNodeClick, onNodeDragStop, layout }) => {
   console.log('KnowledgeGraph rendered with data:', data);
 
   const [mounted, setMounted] = useState(false);
-  const [nodes, setNodes, onNodesChange] = useNodesState(data.nodes);
-  const [edges, setEdges, onEdgesChange] = useEdgesState(data.edges);
+  const [nodes, setNodes] = useState(data.nodes);
+  const [edges, setEdges] = useState(data.edges);
   const [hoveredNode, setHoveredNode] = useState(null);
-  const [viewState, setViewState] = useState(null);
-  const { fitView } = useReactFlow();
 
   const MAX_NODES = 50; // 设置一个合理的最大节点数
 
@@ -33,8 +30,7 @@ const KnowledgeGraph = ({ data, onNodeClick, onNodeDragStop, layout }) => {
     setMounted(true);
     setNodes(data.nodes);
     setEdges(data.edges);
-    setTimeout(() => fitView({ padding: 0.2 }), 0);
-  }, [data, layout, setNodes, setEdges, fitView]);
+  }, [data]);
 
   useEffect(() => {
     if (data && data.nodes && data.edges) {
@@ -73,23 +69,6 @@ const KnowledgeGraph = ({ data, onNodeClick, onNodeDragStop, layout }) => {
   const onInit = useCallback((reactFlowInstance) => {
     reactFlowInstance.fitView({ padding: 0.2, includeHiddenNodes: false });
   }, []);
-
-  const onMoveEnd = useCallback((_, viewState) => {
-    setViewState(viewState);
-  }, []);
-
-  useEffect(() => {
-    if (viewState) {
-      const timer = setTimeout(() => {
-        const flow = document.querySelector('.react-flow');
-        if (flow) {
-          const { zoom, x, y } = viewState;
-          flow.__reactFlowInstance.setViewport({ zoom, x, y });
-        }
-      }, 0);
-      return () => clearTimeout(timer);
-    }
-  }, [layout, viewState]);
 
   const handleNodeClick = useCallback((event, node) => {
     console.log('Node clicked in KnowledgeGraph:', node);
@@ -137,35 +116,16 @@ const KnowledgeGraph = ({ data, onNodeClick, onNodeDragStop, layout }) => {
     return <div>Invalid graph data</div>;
   }
 
-  const [dimensions, setDimensions] = useState({ width: '100%', height: '600px' });
-
-  useEffect(() => {
-    function updateDimensions() {
-      const width = window.innerWidth * 0.8; // 80% 的窗口宽度
-      const height = window.innerHeight * 0.7; // 70% 的窗口高度
-      setDimensions({ width: `${width}px`, height: `${height}px` });
-    }
-
-    window.addEventListener('resize', updateDimensions);
-    updateDimensions();
-
-    return () => window.removeEventListener('resize', updateDimensions);
-  }, []);
-
   return (
-    <div style={{ width: dimensions.width, height: dimensions.height }}>
+    <div style={{ height: '100%', width: '100%', fontFamily: 'Roboto, sans-serif' }}>
       <ReactFlow 
         nodes={nodes}
         edges={edges}
-        onNodesChange={onNodesChange}
-        onEdgesChange={onEdgesChange}
         onNodeClick={handleNodeClick}
         onNodeDragStop={handleNodeDragStop}
         onNodeMouseEnter={handleNodeMouseEnter}
         onNodeMouseLeave={handleNodeMouseLeave}
         onInit={onInit}
-        onMoveEnd={onMoveEnd}
-        defaultViewport={viewState}
         nodesDraggable={true}
         nodesConnectable={false}
         zoomOnScroll={false}
@@ -177,8 +137,6 @@ const KnowledgeGraph = ({ data, onNodeClick, onNodeDragStop, layout }) => {
         defaultZoom={1}
         onlyRenderVisibleElements={true}
         edgeUpdaterRadius={10}
-        fitView
-        style={{ width: '100%', height: '100%' }}
       >
         <Controls />
         <Background color="#aaa" gap={16} />

@@ -9,21 +9,32 @@ export function createPyramidLayout(nodes) {
 
   const colors = ['#E6F3FF', '#CCE7FF', '#B3DBFF', '#99CFFF', '#80C3FF']; // 层级颜色
 
-  const baseNodeStyle = {
-    width: 150,
-    height: 50,
-    backgroundColor: '#ffffff',
-    borderRadius: '8px',
-    border: '1px solid #ddd',
-    padding: '5px',
-    fontSize: '12px',
-  };
+  return nodes.map((node, index) => {
+    const level = Math.floor(Math.sqrt(index));
+    const nodesInLevel = (level * 2) + 1;
+    const nodeIndex = index - (level * level);
+    
+    const nodeWidth = Math.max(baseNodeWidth, node.data.label.length * 10); // 根据文本长度调整宽度
+    const nodeHeight = baseNodeHeight;
 
-  return nodes.map((node, index) => ({
-    ...node,
-    position: { x, y },
-    style: { ...baseNodeStyle, backgroundColor: colors[level % colors.length] },
-  }));
+    const levelWidth = nodesInLevel * nodeWidth + (nodesInLevel - 1) * horizontalSpacing;
+    const x = (width - levelWidth) / 2 + (nodeWidth + horizontalSpacing) * nodeIndex;
+    const y = verticalSpacing * (level + 1);
+
+    return {
+      ...node,
+      position: { x, y },
+      style: { 
+        width: nodeWidth, 
+        height: nodeHeight,
+        backgroundColor: colors[level % colors.length],
+        borderRadius: '8px',
+        border: '1px solid #ddd',
+        padding: '5px',
+        fontSize: '12px'
+      }
+    };
+  });
 }
 
 export function createMindMapLayout(nodes) {
@@ -46,7 +57,15 @@ export function createMindMapLayout(nodes) {
       return {
         ...node,
         position: { x, y },
-        style: baseNodeStyle,
+        style: { 
+          width: 120, 
+          height: 40,
+          backgroundColor: isLeft ? '#FFE5E5' : '#E5F2FF',
+          borderRadius: '20px',
+          border: '1px solid #ddd',
+          padding: '5px',
+          fontSize: '12px'
+        }
       };
     });
   }
@@ -87,32 +106,33 @@ export function createRadialTreeLayout(nodes, edges) {
 
   const centerX = 600;
   const centerY = 450;
-  const baseRadius = Math.min(centerX, centerY) * 0.8; // 使用较小的值来确保图形在视图内
-  const radiusStep = baseRadius / (Math.log(nodes.length) + 1); // 根据节点总数动态调整步长
+  const baseRadius = 200;
+  const radiusStep = 150;
   const minAngle = 0.3; // 最小角度间隔
 
   function layoutNode(node, angle, distance, level) {
-    const { width, height } = calculateNodeSize(node.data.label);
-    const x = centerX + Math.cos(angle) * (distance + width / 2);
-    const y = centerY + Math.sin(angle) * (distance + height / 2);
+    if (!node) return;
+
+    const x = centerX + Math.cos(angle) * distance;
+    const y = centerY + Math.sin(angle) * distance;
+    const children = childrenMap.get(node.id) || [];
+    const childAngleStep = Math.max((Math.PI * 2) / Math.pow(2, level + 1), minAngle);
 
     node.position = { x, y };
     node.style = {
-      ...baseNodeStyle,
-      width,
-      height,
-      backgroundColor: getNodeColor(level),
+      width: Math.max(100 - level * 10, 50),
+      height: Math.max(50 - level * 5, 30),
+      backgroundColor: `hsl(${(level * 30) % 360}, 70%, 80%)`,
+      borderRadius: '50%',
+      border: '1px solid #ddd',
+      padding: '5px',
+      fontSize: `${14 - level}px`
     };
-
-    const childCount = childrenMap.get(node.id) || [];
-    const angleSpread = Math.min(Math.PI / 2, 2 * Math.PI / Math.pow(2, level));
-    const startAngle = angle - angleSpread / 2;
-    const endAngle = angle + angleSpread / 2;
 
     children.forEach((childId, index) => {
       const childNode = nodes.find(n => n.id === childId);
       if (childNode && childNode !== node) {
-        const childAngle = startAngle + (endAngle - startAngle) * (index + 0.5) / childCount;
+        const childAngle = angle - Math.PI / 2 + childAngleStep * (index + 0.5);
         const childDistance = distance + radiusStep;
         layoutNode(childNode, childAngle, childDistance, level + 1);
       }
