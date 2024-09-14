@@ -92,6 +92,7 @@ export default function Search() {
   const [isLoadingNodeExplanation, setIsLoadingNodeExplanation] = useState(false);
   const initialAnswerRef = useRef('');
   const [viewingChildNode, setViewingChildNode] = useState(false);
+  const [currentLayout, setCurrentLayout] = useState('radialTree');
 
   const defaultQuery = "What is the answer to life, the universe, and everything?";
 
@@ -390,6 +391,26 @@ export default function Search() {
     setViewingChildNode(false);
   }, [initialAnswerRef]);
 
+  const handleLayoutChange = useCallback((newLayout) => {
+    setCurrentLayout(newLayout);
+    if (knowledgeGraphData) {
+      let newGraphData;
+      switch (newLayout) {
+        case 'pyramid':
+          newGraphData = createPyramidLayout(knowledgeGraphData.nodes);
+          break;
+        case 'mindMap':
+          newGraphData = createMindMapLayout(knowledgeGraphData.nodes);
+          break;
+        case 'radialTree':
+        default:
+          newGraphData = createRadialTreeLayout(knowledgeGraphData.nodes, knowledgeGraphData.edges);
+          break;
+      }
+      setKnowledgeGraphData({ ...knowledgeGraphData, nodes: newGraphData });
+    }
+  }, [knowledgeGraphData]);
+
   useEffect(() => {
     console.log('knowledgeGraphData updated:', knowledgeGraphData);
   }, [knowledgeGraphData]);
@@ -450,6 +471,7 @@ export default function Search() {
                     data={knowledgeGraphData} 
                     onNodeClick={handleNodeClick}
                     onNodeDragStop={handleNodeDragStop}
+                    layout={currentLayout}
                   />
                 </div>
               ) : (
@@ -467,10 +489,31 @@ export default function Search() {
                 <button 
                   onClick={handleRedo} 
                   disabled={graphFuture.length === 0}
-                  className="text-2xl opacity-50 hover:opacity-100 transition-opacity disabled:opacity-30"
+                  className="text-2xl opacity-50 hover:opacity-100 transition-opacity disabled:opacity-30 mr-2"
                   title="Redo next action"
                 >
                   ↪️
+                </button>
+                <button
+                  onClick={() => handleLayoutChange('pyramid')}
+                  className={`text-2xl opacity-50 hover:opacity-100 transition-opacity mr-2 ${currentLayout === 'pyramid' ? 'opacity-100' : ''}`}
+                  title="Pyramid layout"
+                >
+                  🔺
+                </button>
+                <button
+                  onClick={() => handleLayoutChange('mindMap')}
+                  className={`text-2xl opacity-50 hover:opacity-100 transition-opacity mr-2 ${currentLayout === 'mindMap' ? 'opacity-100' : ''}`}
+                  title="Mind map layout"
+                >
+                  🌳
+                </button>
+                <button
+                  onClick={() => handleLayoutChange('radialTree')}
+                  className={`text-2xl opacity-50 hover:opacity-100 transition-opacity ${currentLayout === 'radialTree' ? 'opacity-100' : ''}`}
+                  title="Radial tree layout"
+                >
+                  🌞
                 </button>
               </div>
             </div>

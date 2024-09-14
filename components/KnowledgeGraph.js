@@ -1,5 +1,6 @@
 import dynamic from 'next/dynamic';
 import { useEffect, useState, useCallback } from 'react';
+import { createPyramidLayout, createMindMapLayout, createRadialTreeLayout } from '../utils/graphLayouts';
 
 const ReactFlow = dynamic(() => import('react-flow-renderer').then(mod => mod.default), {
   ssr: false,
@@ -15,7 +16,7 @@ const Background = dynamic(() => import('react-flow-renderer').then(mod => mod.B
   ssr: false
 });
 
-const KnowledgeGraph = ({ data, onNodeClick, onNodeDragStop }) => {
+const KnowledgeGraph = ({ data, onNodeClick, onNodeDragStop, layout }) => {
   console.log('KnowledgeGraph rendered with data:', data);
 
   const [mounted, setMounted] = useState(false);
@@ -28,6 +29,26 @@ const KnowledgeGraph = ({ data, onNodeClick, onNodeDragStop }) => {
     setNodes(data.nodes);
     setEdges(data.edges);
   }, [data]);
+
+  useEffect(() => {
+    if (data && data.nodes && data.edges) {
+      let layoutedNodes;
+      switch (layout) {
+        case 'pyramid':
+          layoutedNodes = createPyramidLayout(data.nodes);
+          break;
+        case 'mindMap':
+          layoutedNodes = createMindMapLayout(data.nodes);
+          break;
+        case 'radialTree':
+        default:
+          layoutedNodes = createRadialTreeLayout(data.nodes, data.edges);
+          break;
+      }
+      setNodes(layoutedNodes);
+      setEdges(data.edges);
+    }
+  }, [data, layout]);
 
   const onInit = useCallback((reactFlowInstance) => {
     reactFlowInstance.fitView({ padding: 0.2, includeHiddenNodes: false });
