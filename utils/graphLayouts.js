@@ -1,3 +1,7 @@
+const NODE_WIDTH = 180;
+const NODE_HEIGHT = 60;
+const NODE_COLORS = ['#E6F3FF', '#CCE7FF', '#B3DBFF', '#99CFFF', '#80C3FF'];
+
 export function createPyramidLayout(nodes) {
   const levels = Math.ceil(Math.sqrt(nodes.length));
   const width = 1200; // 增加宽度
@@ -6,8 +10,6 @@ export function createPyramidLayout(nodes) {
   const baseNodeHeight = 50;
   const horizontalSpacing = 50; // 减小基础水平间距
   const verticalSpacing = 100; // 减小基础垂直间距
-
-  const colors = ['#E6F3FF', '#CCE7FF', '#B3DBFF', '#99CFFF', '#80C3FF']; // 层级颜色
 
   const layoutedNodes = nodes.map((node, index) => {
     const level = Math.floor(Math.sqrt(index));
@@ -25,9 +27,9 @@ export function createPyramidLayout(nodes) {
       ...node,
       position: { x, y },
       style: { 
-        width: nodeWidth, 
-        height: nodeHeight,
-        backgroundColor: colors[level % colors.length],
+        width: NODE_WIDTH, 
+        height: NODE_HEIGHT,
+        backgroundColor: NODE_COLORS[level % NODE_COLORS.length],
         borderRadius: '8px',
         border: '1px solid #ddd',
         padding: '5px',
@@ -60,10 +62,10 @@ export function createMindMapLayout(nodes) {
         ...node,
         position: { x, y },
         style: { 
-          width: 120, 
-          height: 40,
-          backgroundColor: isLeft ? '#FFE5E5' : '#E5F2FF',
-          borderRadius: '20px',
+          width: NODE_WIDTH, 
+          height: NODE_HEIGHT,
+          backgroundColor: NODE_COLORS[index % NODE_COLORS.length],
+          borderRadius: '8px',
           border: '1px solid #ddd',
           padding: '5px',
           fontSize: '12px'
@@ -124,13 +126,13 @@ export function createRadialTreeLayout(nodes, edges) {
 
     node.position = { x, y };
     node.style = {
-      width: Math.max(100 - level * 10, 50),
-      height: Math.max(50 - level * 5, 30),
-      backgroundColor: `hsl(${(level * 30) % 360}, 70%, 80%)`,
-      borderRadius: '50%',
+      width: NODE_WIDTH,
+      height: NODE_HEIGHT,
+      backgroundColor: NODE_COLORS[level % NODE_COLORS.length],
+      borderRadius: '8px',
       border: '1px solid #ddd',
       padding: '5px',
-      fontSize: `${14 - level}px`
+      fontSize: '12px'
     };
 
     children.forEach((childId, index) => {

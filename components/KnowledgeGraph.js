@@ -85,7 +85,7 @@ const KnowledgeGraph = ({ data, onNodeClick, onNodeDragStop, layout }) => {
     setNodes((nds) =>
       nds.map((n) => {
         if (n.id === node.id || edges.some(e => (e.source === node.id && e.target === n.id) || (e.target === node.id && e.source === n.id))) {
-          return { ...n, style: { ...n.style, backgroundColor: '#ffa500', color: '#000' } };
+          return { ...n, style: { ...n.style, opacity: 1, border: '2px solid #ffa500' } };
         }
         return { ...n, style: { ...n.style, opacity: 0.3 } };
       })
@@ -103,7 +103,7 @@ const KnowledgeGraph = ({ data, onNodeClick, onNodeDragStop, layout }) => {
   const handleNodeMouseLeave = useCallback(() => {
     setHoveredNode(null);
     setNodes((nds) =>
-      nds.map((n) => ({ ...n, style: { ...n.style, backgroundColor: '#fff', color: '#000', opacity: 1 } }))
+      nds.map((n) => ({ ...n, style: { ...n.style, opacity: 1, border: '1px solid #ddd' } }))
     );
     setEdges((eds) =>
       eds.map((e) => ({ ...e, style: { ...e.style, stroke: '#888', strokeWidth: 2, opacity: 1 } }))
