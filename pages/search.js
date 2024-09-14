@@ -413,139 +413,68 @@ export default function Search() {
     console.log('knowledgeGraphData updated:', knowledgeGraphData);
   }, [knowledgeGraphData]);
 
-  return (
-    <div className="flex flex-row min-h-screen relative pb-20">
-      <div className="flex flex-col w-1/2 p-4">
-        <div className="flex flex-col items-center mb-4">
-          <input
-            type="text"
-            value={query}
-            onChange={handleChange}
-            onKeyPress={handleKeyPress}
-            placeholder="Enter your question..."
-            className="w-full px-4 py-2 border rounded-md focus:outline-none focus:border-blue-500"
-          />
-          <button
-            onClick={handleButtonClick}
-            className="mt-2 px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 focus:outline-none"
-          >
-            Ask
-          </button>
-        </div>
+import { faArrowRight, faArrowUp } from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import dynamic from 'next/dynamic';
+import Link from 'next/link';
+import { useRouter } from 'next/router';
+import { useState, useCallback, useEffect, useRef } from 'react';
+import 'tailwindcss/tailwind.css';
+import '../styles/globals.css';
 
-        {isCollecting && (
-          <div className="flex flex-col items-center">
-            <p className="text-lg font-semibold mb-2">Collecting pages...</p>
-            <div className="w-1/2 h-2 bg-blue-500 rounded-full overflow-hidden">
-              <div
-                className="h-full bg-blue-700"
-                style={{ width: `${(collectedPages / totalPages) * 100}%` }}
-              ></div>
-            </div>
-            <p className="mt-2">{collectedPages} / {totalPages} pages</p>
-          </div>
-        )}
+const KnowledgeGraph = dynamic(() => import('../components/KnowledgeGraph'), {
+  ssr: false,
+  loading: () => <p>Loading knowledge graph...</p>
+});
 
-        {isProcessing && (
-          <div className="flex flex-col items-center">
-            <p className="text-lg font-semibold mb-2">{processingMessages[processingStep]}</p>
-            <div className="w-1/2 h-2 bg-blue-500 rounded-full overflow-hidden">
-              <div
-                className="h-full bg-blue-700"
-                style={{ width: `${(processingStep / processingMessages.length) * 100}%` }}
-              ></div>
-            </div>
-          </div>
-        )}
+function sanitizeHtml(html) {
+  const temp = document.createElement('div');
+  temp.innerHTML = html;
+  const allowedTags = ['h3', 'strong', 'ul', 'li', 'p'];
+  const allowedAttributes = {};
+  
+  function sanitizeNode(node) {
+    if (node.nodeType === Node.ELEMENT_NODE) {
+      if (!allowedTags.includes(node.tagName.toLowerCase())) {
+        const text = document.createTextNode(node.textContent);
+        node.parentNode.replaceChild(text, node);
+      } else {
+        for (let i = node.attributes.length - 1; i >= 0; i--) {
+          const attr = node.attributes[i];
+          if (!(node.tagName.toLowerCase() in allowedAttributes) || 
+              !allowedAttributes[node.tagName.toLowerCase()].includes(attr.name)) {
+            node.removeAttribute(attr.name);
+          }
+        }
+        Array.from(node.childNodes).forEach(sanitizeNode);
+      }
+    }
+  }
+  
+  Array.from(temp.childNodes).forEach(sanitizeNode);
+  return temp.innerHTML;
+}
 
-        {loading && (
-          <div className="flex flex-col items-center">
-            <p className="text-lg font-semibold mb-2">{loadingMessage}</p>
-            <div className="w-1/2 h-2 bg-blue-500 rounded-full overflow-hidden">
-              <div
-                className="h-full bg-blue-700"
-                style={{ width: `${(processingStep / processingMessages.length) * 100}%` }}
-              ></div>
-            </div>
-          </div>
-        )}
-
-        {knowledgeGraphData && knowledgeGraphData.nodes && knowledgeGraphData.nodes.length > 0 ? (
-          <div style={{ height: '600px', width: '100%', border: '1px solid #ddd', borderRadius: '8px' }}>
-            <KnowledgeGraph 
-              data={knowledgeGraphData} 
-              onNodeClick={handleNodeClick}
-              onNodeDragStop={handleNodeDragStop}
-              onDeleteNode={handleDeleteNode}
-              layout={currentLayout}
-            />
-          </div>
-        ) : (
-          <p>No knowledge graph data available</p>
-        )}
-
-        <div className="flex justify-center mt-4">
-          <button 
-            onClick={handleUndo} 
-            disabled={graphHistory.length === 0}
-            className="text-2xl opacity-50 hover:opacity-100 transition-opacity disabled:opacity-30 mr-2"
-            title="Undo last action"
-          >
-            ↩️
-          </button>
-          <button 
-            onClick={handleRedo} 
-            disabled={graphFuture.length === 0}
-            className="text-2xl opacity-50 hover:opacity-100 transition-opacity disabled:opacity-30 mr-2"
-            title="Redo next action"
-          >
-            ↪️
-          </button>
-        </div>
-
-        {renderedAnswer && (
-          <div className="mt-4 p-4 border rounded-md shadow-md">
-            <div dangerouslySetInnerHTML={{ __html: renderedAnswer }} />
-          </div>
-        )}
-      </div>
-
-      <div className="flex flex-col w-1/2 p-4">
-        <div className="flex flex-col items-center mb-4">
-          <input
-            type="text"
-            value={largeSearchQuery}
-            onChange={handleLargeSearchChange}
-            onKeyPress={handleLargeSearchKeyPress}
-            placeholder="Enter your large search query..."
-            className="w-full px-4 py-2 border rounded-md focus:outline-none focus:border-blue-500"
-          />
-          <button
-            onClick={handleLargeSearch}
-            className="mt-2 px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 focus:outline-none"
-          >
-            Search
-          </button>
-        </div>
-
-        {searchResults.length > 0 && (
-          <div className="mt-4 p-4 border rounded-md shadow-md">
-            <h2 className="text-lg font-semibold mb-2">Search Results:</h2>
-            <ul>
-              {searchResults.map((result, index) => (
-                <li key={index} className="mb-2">
-                  <Link href={result.url} target="_blank" className="text-blue-500 hover:underline">
-                    {result.title}
-                  </Link>
-                  <p>{result.snippet}</p>
-                </li>
-              ))}
-            </ul>
-          </div>
-        )}
-      </div>
-    </div>
-  );
+function renderMarkdown(text) {
+  // Handle headings (only h3)
+  text = text.replace(/^###\s(.*)$/gm, '<h3>$1</h3>');
+  
+  // Handle bold
+  text = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+  
+  // Handle unordered lists
+  text = text.replace(/•\s(.*)$/gm, '<li>$1</li>');
+  text = text.replace(/(<li>.*<\/li>(\n|$))+/g, '<ul>$&</ul>');
+  
+  // Handle paragraphs (excluding list items and headings)
+  text = text.split('\n').map(line => {
+    if (!line.startsWith('<h3>') && !line.startsWith('<li>') && !line.startsWith('<ul>') && line.trim() !== '') {
+      return `<p>${line}</p>`;
+    }
+    return line;
+  }).join('\n');
+  
+  return text;
 }
 
 export default function Search() {
@@ -899,139 +828,68 @@ export default function Search() {
     console.log('knowledgeGraphData updated:', knowledgeGraphData);
   }, [knowledgeGraphData]);
 
-  return (
-    <div className="flex flex-row min-h-screen relative pb-20">
-      <div className="flex flex-col w-1/2 p-4">
-        <div className="flex flex-col items-center mb-4">
-          <input
-            type="text"
-            value={query}
-            onChange={handleChange}
-            onKeyPress={handleKeyPress}
-            placeholder="Enter your question..."
-            className="w-full px-4 py-2 border rounded-md focus:outline-none focus:border-blue-500"
-          />
-          <button
-            onClick={handleButtonClick}
-            className="mt-2 px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 focus:outline-none"
-          >
-            Ask
-          </button>
-        </div>
+import { faArrowRight, faArrowUp } from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import dynamic from 'next/dynamic';
+import Link from 'next/link';
+import { useRouter } from 'next/router';
+import { useState, useCallback, useEffect, useRef } from 'react';
+import 'tailwindcss/tailwind.css';
+import '../styles/globals.css';
 
-        {isCollecting && (
-          <div className="flex flex-col items-center">
-            <p className="text-lg font-semibold mb-2">Collecting pages...</p>
-            <div className="w-1/2 h-2 bg-blue-500 rounded-full overflow-hidden">
-              <div
-                className="h-full bg-blue-700"
-                style={{ width: `${(collectedPages / totalPages) * 100}%` }}
-              ></div>
-            </div>
-            <p className="mt-2">{collectedPages} / {totalPages} pages</p>
-          </div>
-        )}
+const KnowledgeGraph = dynamic(() => import('../components/KnowledgeGraph'), {
+  ssr: false,
+  loading: () => <p>Loading knowledge graph...</p>
+});
 
-        {isProcessing && (
-          <div className="flex flex-col items-center">
-            <p className="text-lg font-semibold mb-2">{processingMessages[processingStep]}</p>
-            <div className="w-1/2 h-2 bg-blue-500 rounded-full overflow-hidden">
-              <div
-                className="h-full bg-blue-700"
-                style={{ width: `${(processingStep / processingMessages.length) * 100}%` }}
-              ></div>
-            </div>
-          </div>
-        )}
+function sanitizeHtml(html) {
+  const temp = document.createElement('div');
+  temp.innerHTML = html;
+  const allowedTags = ['h3', 'strong', 'ul', 'li', 'p'];
+  const allowedAttributes = {};
+  
+  function sanitizeNode(node) {
+    if (node.nodeType === Node.ELEMENT_NODE) {
+      if (!allowedTags.includes(node.tagName.toLowerCase())) {
+        const text = document.createTextNode(node.textContent);
+        node.parentNode.replaceChild(text, node);
+      } else {
+        for (let i = node.attributes.length - 1; i >= 0; i--) {
+          const attr = node.attributes[i];
+          if (!(node.tagName.toLowerCase() in allowedAttributes) || 
+              !allowedAttributes[node.tagName.toLowerCase()].includes(attr.name)) {
+            node.removeAttribute(attr.name);
+          }
+        }
+        Array.from(node.childNodes).forEach(sanitizeNode);
+      }
+    }
+  }
+  
+  Array.from(temp.childNodes).forEach(sanitizeNode);
+  return temp.innerHTML;
+}
 
-        {loading && (
-          <div className="flex flex-col items-center">
-            <p className="text-lg font-semibold mb-2">{loadingMessage}</p>
-            <div className="w-1/2 h-2 bg-blue-500 rounded-full overflow-hidden">
-              <div
-                className="h-full bg-blue-700"
-                style={{ width: `${(processingStep / processingMessages.length) * 100}%` }}
-              ></div>
-            </div>
-          </div>
-        )}
-
-        {knowledgeGraphData && knowledgeGraphData.nodes && knowledgeGraphData.nodes.length > 0 ? (
-          <div style={{ height: '600px', width: '100%', border: '1px solid #ddd', borderRadius: '8px' }}>
-            <KnowledgeGraph 
-              data={knowledgeGraphData} 
-              onNodeClick={handleNodeClick}
-              onNodeDragStop={handleNodeDragStop}
-              onDeleteNode={handleDeleteNode}
-              layout={currentLayout}
-            />
-          </div>
-        ) : (
-          <p>No knowledge graph data available</p>
-        )}
-
-        <div className="flex justify-center mt-4">
-          <button 
-            onClick={handleUndo} 
-            disabled={graphHistory.length === 0}
-            className="text-2xl opacity-50 hover:opacity-100 transition-opacity disabled:opacity-30 mr-2"
-            title="Undo last action"
-          >
-            ↩️
-          </button>
-          <button 
-            onClick={handleRedo} 
-            disabled={graphFuture.length === 0}
-            className="text-2xl opacity-50 hover:opacity-100 transition-opacity disabled:opacity-30 mr-2"
-            title="Redo next action"
-          >
-            ↪️
-          </button>
-        </div>
-
-        {renderedAnswer && (
-          <div className="mt-4 p-4 border rounded-md shadow-md">
-            <div dangerouslySetInnerHTML={{ __html: renderedAnswer }} />
-          </div>
-        )}
-      </div>
-
-      <div className="flex flex-col w-1/2 p-4">
-        <div className="flex flex-col items-center mb-4">
-          <input
-            type="text"
-            value={largeSearchQuery}
-            onChange={handleLargeSearchChange}
-            onKeyPress={handleLargeSearchKeyPress}
-            placeholder="Enter your large search query..."
-            className="w-full px-4 py-2 border rounded-md focus:outline-none focus:border-blue-500"
-          />
-          <button
-            onClick={handleLargeSearch}
-            className="mt-2 px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 focus:outline-none"
-          >
-            Search
-          </button>
-        </div>
-
-        {searchResults.length > 0 && (
-          <div className="mt-4 p-4 border rounded-md shadow-md">
-            <h2 className="text-lg font-semibold mb-2">Search Results:</h2>
-            <ul>
-              {searchResults.map((result, index) => (
-                <li key={index} className="mb-2">
-                  <Link href={result.url} target="_blank" className="text-blue-500 hover:underline">
-                    {result.title}
-                  </Link>
-                  <p>{result.snippet}</p>
-                </li>
-              ))}
-            </ul>
-          </div>
-        )}
-      </div>
-    </div>
-  );
+function renderMarkdown(text) {
+  // Handle headings (only h3)
+  text = text.replace(/^###\s(.*)$/gm, '<h3>$1</h3>');
+  
+  // Handle bold
+  text = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+  
+  // Handle unordered lists
+  text = text.replace(/•\s(.*)$/gm, '<li>$1</li>');
+  text = text.replace(/(<li>.*<\/li>(\n|$))+/g, '<ul>$&</ul>');
+  
+  // Handle paragraphs (excluding list items and headings)
+  text = text.split('\n').map(line => {
+    if (!line.startsWith('<h3>') && !line.startsWith('<li>') && !line.startsWith('<ul>') && line.trim() !== '') {
+      return `<p>${line}</p>`;
+    }
+    return line;
+  }).join('\n');
+  
+  return text;
 }
 
 export default function Search() {
