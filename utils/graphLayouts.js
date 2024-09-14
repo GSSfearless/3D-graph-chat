@@ -14,8 +14,9 @@ export function createPyramidLayout(nodes) {
     const nodesInLevel = (level * 2) + 1;
     const nodeIndex = index - (level * level);
     
-    const { width: nodeWidth, height: nodeHeight } = calculateNodeSize(node.data.label);
-    
+    const nodeWidth = Math.max(baseNodeWidth, node.data.label.length * 10); // 根据文本长度调整宽度
+    const nodeHeight = baseNodeHeight;
+
     const levelWidth = nodesInLevel * nodeWidth + (nodesInLevel - 1) * horizontalSpacing;
     const x = (width - levelWidth) / 2 + (nodeWidth + horizontalSpacing) * nodeIndex;
     const y = verticalSpacing * (level + 1);
@@ -26,7 +27,7 @@ export function createPyramidLayout(nodes) {
       style: { 
         width: nodeWidth, 
         height: nodeHeight,
-        backgroundColor: getColorGradient(level, totalLevels),
+        backgroundColor: colors[level % colors.length],
         borderRadius: '8px',
         border: '1px solid #ddd',
         padding: '5px',
@@ -112,10 +113,8 @@ export function createRadialTreeLayout(nodes, edges) {
   function layoutNode(node, angle, distance, level) {
     if (!node) return;
 
-    const spiralFactor = 0.1; // 添加螺旋因子
-    const adjustedAngle = angle + level * spiralFactor;
-    const x = centerX + Math.cos(adjustedAngle) * distance;
-    const y = centerY + Math.sin(adjustedAngle) * distance;
+    const x = centerX + Math.cos(angle) * distance;
+    const y = centerY + Math.sin(angle) * distance;
     const children = childrenMap.get(node.id) || [];
     const childAngleStep = Math.max((Math.PI * 2) / Math.pow(2, level + 1), minAngle);
 
@@ -173,43 +172,8 @@ export function relayoutGraph(nodes, edges) {
 function calculateNodeSize(label) {
   const baseWidth = 100;
   const baseHeight = 40;
-  const charWidth = 10; // 增加字符宽度以提高可读性
-  const maxWidth = 250; // 设置最大宽度
+  const charWidth = 8; // 估计每个字符的宽度
   
-  const width = Math.min(Math.max(baseWidth, label.length * charWidth), maxWidth);
-  const height = baseHeight + Math.floor((width - baseWidth) / 50) * 10; // 根据宽度适当增加高度
-  
-  return { width, height };
-}
-
-function getColorGradient(level, totalLevels) {
-  const startColor = [230, 243, 255]; // 浅蓝色
-  const endColor = [0, 119, 255]; // 深蓝色
-  
-  const r = Math.round(startColor[0] + (endColor[0] - startColor[0]) * (level / totalLevels));
-  const g = Math.round(startColor[1] + (endColor[1] - startColor[1]) * (level / totalLevels));
-  const b = Math.round(startColor[2] + (endColor[2] - startColor[2]) * (level / totalLevels));
-  
-  return `rgb(${r}, ${g}, ${b})`;
-}
-
-export function createResponsiveLayout(nodes, edges, width, height) {
-  const scaleFactor = Math.min(width / 1200, height / 900);
-  
-  return {
-    nodes: nodes.map(node => ({
-      ...node,
-      position: {
-        x: node.position.x * scaleFactor,
-        y: node.position.y * scaleFactor,
-      },
-      style: {
-        ...node.style,
-        width: node.style.width * scaleFactor,
-        height: node.style.height * scaleFactor,
-        fontSize: `${parseInt(node.style.fontSize) * scaleFactor}px`,
-      },
-    })),
-    edges: edges,
-  };
+  const width = Math.max(baseWidth, label.length * charWidth);
+  return { width, height: baseHeight };
 }
