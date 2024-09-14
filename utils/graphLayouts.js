@@ -9,7 +9,7 @@ export function createPyramidLayout(nodes) {
 
   const colors = ['#E6F3FF', '#CCE7FF', '#B3DBFF', '#99CFFF', '#80C3FF']; // 层级颜色
 
-  return nodes.map((node, index) => {
+  const layoutedNodes = nodes.map((node, index) => {
     const level = Math.floor(Math.sqrt(index));
     const nodesInLevel = (level * 2) + 1;
     const nodeIndex = index - (level * level);
@@ -35,6 +35,8 @@ export function createPyramidLayout(nodes) {
       }
     };
   });
+
+  return centerLayout(layoutedNodes);
 }
 
 export function createMindMapLayout(nodes) {
@@ -73,7 +75,7 @@ export function createMindMapLayout(nodes) {
   const leftLayout = layoutBranch(leftNodes, -Math.PI / 3, Math.PI / 3, true);
   const rightLayout = layoutBranch(rightNodes, -Math.PI / 3, Math.PI / 3, false);
 
-  return [
+  const layoutedNodes = [
     {
       ...rootNode,
       position: { x: centerX - 75, y: centerY - 25 },
@@ -91,6 +93,8 @@ export function createMindMapLayout(nodes) {
     ...leftLayout,
     ...rightLayout
   ];
+
+  return centerLayout(layoutedNodes);
 }
 
 export function createRadialTreeLayout(nodes, edges) {
@@ -143,7 +147,8 @@ export function createRadialTreeLayout(nodes, edges) {
     layoutNode(rootNode, 0, 0, 0);
   }
 
-  return nodes;
+  const layoutedNodes = nodes;
+  return centerLayout(layoutedNodes);
 }
 
 function getNodeColor(level) {
@@ -151,8 +156,21 @@ function getNodeColor(level) {
   return colors[level % colors.length];
 }
 
-export function relayoutGraph(nodes, edges) {
-  const layoutedNodes = createRadialTreeLayout(nodes, edges);
+export function relayoutGraph(nodes, edges, layoutType) {
+  let layoutedNodes;
+  switch (layoutType) {
+    case 'pyramid':
+      layoutedNodes = createPyramidLayout(nodes);
+      break;
+    case 'mindmap':
+      layoutedNodes = createMindMapLayout(nodes);
+      break;
+    case 'radialtree':
+      layoutedNodes = createRadialTreeLayout(nodes, edges);
+      break;
+    default:
+      layoutedNodes = createRadialTreeLayout(nodes, edges);
+  }
   
   return {
     nodes: layoutedNodes,
@@ -176,4 +194,25 @@ function calculateNodeSize(label) {
   
   const width = Math.max(baseWidth, label.length * charWidth);
   return { width, height: baseHeight };
+}
+
+function centerLayout(nodes) {
+  const minX = Math.min(...nodes.map(node => node.position.x));
+  const maxX = Math.max(...nodes.map(node => node.position.x));
+  const minY = Math.min(...nodes.map(node => node.position.y));
+  const maxY = Math.max(...nodes.map(node => node.position.y));
+
+  const centerX = (minX + maxX) / 2;
+  const centerY = (minY + maxY) / 2;
+
+  const offsetX = 600 - centerX;
+  const offsetY = 450 - centerY;
+
+  return nodes.map(node => ({
+    ...node,
+    position: {
+      x: node.position.x + offsetX,
+      y: node.position.y + offsetY
+    }
+  }));
 }
