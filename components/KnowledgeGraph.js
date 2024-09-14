@@ -1,5 +1,5 @@
 import dynamic from 'next/dynamic';
-import { useEffect, useState, useCallback, useMemo } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { createPyramidLayout, createMindMapLayout, createRadialTreeLayout } from '../utils/graphLayouts';
 
 const ReactFlow = dynamic(() => import('react-flow-renderer').then(mod => mod.default), {
@@ -23,7 +23,6 @@ const KnowledgeGraph = ({ data, onNodeClick, onNodeDragStop, onNodeDelete }) => 
   const [nodes, setNodes] = useState(data.nodes);
   const [edges, setEdges] = useState(data.edges);
   const [hoveredNode, setHoveredNode] = useState(null);
-  const [nodePositions, setNodePositions] = useState({});
 
   const MAX_NODES = 50; // 设置一个合理的最大节点数
 
@@ -106,24 +105,6 @@ const KnowledgeGraph = ({ data, onNodeClick, onNodeDragStop, onNodeDelete }) => 
     );
   }, []);
 
-  const handleNodeDrag = useCallback((event, node) => {
-    setNodePositions(prev => ({
-      ...prev,
-      [node.id]: { x: node.position.x, y: node.position.y }
-    }));
-  }, []);
-
-  const nodeTypes = useMemo(() => ({
-    custom: (nodeProps) => (
-      <CustomNode
-        {...nodeProps}
-        onDelete={handleNodeDelete}
-        xPos={nodePositions[nodeProps.id]?.x ?? nodeProps.position.x}
-        yPos={nodePositions[nodeProps.id]?.y ?? nodeProps.position.y}
-      />
-    )
-  }), [handleNodeDelete, nodePositions]);
-
   if (!mounted) return null;
 
   if (!data || !data.nodes || !data.edges) {
@@ -133,15 +114,14 @@ const KnowledgeGraph = ({ data, onNodeClick, onNodeDragStop, onNodeDelete }) => 
   return (
     <div style={{ height: '100%', width: '100%', fontFamily: 'Roboto, sans-serif' }}>
       <ReactFlow 
-        nodes={nodes.map(node => ({ ...node, type: 'custom' }))}
+        nodes={nodes}
         edges={edges}
         onNodeClick={handleNodeClick}
-        onNodeDrag={handleNodeDrag}
         onNodeDragStop={handleNodeDragStop}
+        onNodeDelete={handleNodeDelete}
         onNodeMouseEnter={handleNodeMouseEnter}
         onNodeMouseLeave={handleNodeMouseLeave}
         onInit={onInit}
-        nodeTypes={nodeTypes}
         nodesDraggable={true}
         nodesConnectable={false}
         zoomOnScroll={false}
