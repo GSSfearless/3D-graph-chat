@@ -103,10 +103,10 @@ const KnowledgeGraph = ({ data, onNodeClick, onNodeDragStop, layout }) => {
   const handleNodeMouseLeave = useCallback(() => {
     setHoveredNode(null);
     setNodes((nds) =>
-      nds.map((n) => ({ ...n, style: { ...n.style, backgroundColor: '#fff', color: '#000', opacity: 1 } }))
+      nds.map((n) => ({ ...n, style: getNodeStyle(n.level) }))
     );
     setEdges((eds) =>
-      eds.map((e) => ({ ...e, style: { ...e.style, stroke: '#888', strokeWidth: 2, opacity: 1 } }))
+      eds.map((e) => ({ ...e, style: { stroke: '#888', strokeWidth: 2, opacity: 1 } }))
     );
   }, []);
 

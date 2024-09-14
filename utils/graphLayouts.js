@@ -24,15 +24,7 @@ export function createPyramidLayout(nodes) {
     return {
       ...node,
       position: { x, y },
-      style: { 
-        width: nodeWidth, 
-        height: nodeHeight,
-        backgroundColor: colors[level % colors.length],
-        borderRadius: '8px',
-        border: '1px solid #ddd',
-        padding: '5px',
-        fontSize: '12px'
-      }
+      style: getNodeStyle(level)
     };
   });
 }
@@ -57,15 +49,7 @@ export function createMindMapLayout(nodes) {
       return {
         ...node,
         position: { x, y },
-        style: { 
-          width: 120, 
-          height: 40,
-          backgroundColor: isLeft ? '#FFE5E5' : '#E5F2FF',
-          borderRadius: '20px',
-          border: '1px solid #ddd',
-          padding: '5px',
-          fontSize: '12px'
-        }
+        style: getNodeStyle(level)
       };
     });
   }
@@ -77,16 +61,7 @@ export function createMindMapLayout(nodes) {
     {
       ...rootNode,
       position: { x: centerX - 75, y: centerY - 25 },
-      style: { 
-        width: 150, 
-        height: 50,
-        backgroundColor: '#FFFAE5',
-        borderRadius: '25px',
-        border: '2px solid #FFD700',
-        padding: '5px',
-        fontSize: '14px',
-        fontWeight: 'bold'
-      }
+      style: getNodeStyle(level)
     },
     ...leftLayout,
     ...rightLayout
@@ -176,4 +151,17 @@ function calculateNodeSize(label) {
   
   const width = Math.max(baseWidth, label.length * charWidth);
   return { width, height: baseHeight };
+}
+
+function getNodeStyle(level) {
+  const colors = ['#E6F3FF', '#CCE7FF', '#B3DBFF', '#99CFFF', '#80C3FF'];
+  return {
+    backgroundColor: colors[level % colors.length],
+    borderRadius: '8px',
+    border: '1px solid #ddd',
+    padding: '5px',
+    fontSize: '12px',
+    width: 120,
+    height: 40,
+  };
 }
