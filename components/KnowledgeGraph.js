@@ -1,7 +1,7 @@
 import dynamic from 'next/dynamic';
 import { useEffect, useState, useCallback } from 'react';
 import { createPyramidLayout, createMindMapLayout, createRadialTreeLayout } from '../utils/graphLayouts';
-import ReactFlow, { useNodesState, useEdgesState, useReactFlow } from 'react-flow-renderer';
+import { useNodesState, useEdgesState, useReactFlow } from 'react-flow-renderer';
 
 const ReactFlow = dynamic(() => import('react-flow-renderer').then(mod => mod.default), {
   ssr: false,
