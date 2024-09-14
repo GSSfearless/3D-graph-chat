@@ -1,6 +1,12 @@
 const NODE_WIDTH = 180;
 const NODE_HEIGHT = 60;
-const NODE_COLORS = ['#E6F3FF', '#CCE7FF', '#B3DBFF', '#99CFFF', '#80C3FF'];
+const NODE_COLORS = [
+  'linear-gradient(135deg, #F5F7FA 0%, #C3CFE2 100%)',
+  'linear-gradient(135deg, #E0EAFC 0%, #CFDEF3 100%)',
+  'linear-gradient(135deg, #E0F2F1 0%, #B2DFDB 100%)',
+  'linear-gradient(135deg, #FFF8E1 0%, #FFECB3 100%)',
+  'linear-gradient(135deg, #F3E5F5 0%, #E1BEE7 100%)'
+];
 
 export function createPyramidLayout(nodes) {
   const levels = Math.ceil(Math.sqrt(nodes.length));
@@ -29,7 +35,7 @@ export function createPyramidLayout(nodes) {
       style: { 
         width: NODE_WIDTH, 
         height: NODE_HEIGHT,
-        backgroundColor: NODE_COLORS[level % NODE_COLORS.length],
+        background: NODE_COLORS[level % NODE_COLORS.length],
         borderRadius: '8px',
         border: '1px solid #ddd',
         padding: '5px',
