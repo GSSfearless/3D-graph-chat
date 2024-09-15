@@ -347,20 +347,12 @@ export default function Search() {
     setLoadingMessage('');
   }, [knowledgeGraphData, nodeExplanations, generateNodeExplanation, initialAnswerRef]);
 
-  const handleNodeDragStop = useCallback((node) => {
-    setGraphHistory(prev => {
-      const newHistory = [...prev, knowledgeGraphData];
-      setHasPreviousGraph(newHistory.length > 0);
-      return newHistory;
-    });
-    setGraphFuture([]); // Clear future states
-    setKnowledgeGraphData(prevData => {
-      const updatedNodes = prevData.nodes.map(n => 
-        n.id === node.id ? { ...n, position: node.position } : n
-      );
-      return { ...prevData, nodes: updatedNodes };
-    });
-  }, [knowledgeGraphData]);
+  const handleNodeDragStop = (node) => {
+    setKnowledgeGraphData(prevData => ({
+      ...prevData,
+      nodes: prevData.nodes.map(n => n.id === node.id ? { ...n, position: node.position } : n)
+    }));
+  };
 
   const handleNodeDelete = useCallback((node) => {
     setGraphHistory(prev => {

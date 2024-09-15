@@ -62,17 +62,17 @@ const KnowledgeGraph = ({ data, onNodeClick, onNodeDragStop, onNodeDelete }) => 
   }, [onNodeClick]);
 
   const handleNodeDragStart = useCallback((event, node) => {
-    // You can add any logic here for when dragging starts
+    // 可以在这里添加拖拽开始时的逻辑
+    console.log('Node drag started:', node);
   }, []);
 
   const handleNodeDrag = useCallback((event, node) => {
-    setNodes((nds) =>
-      nds.map((n) => (n.id === node.id ? { ...n, position: node.position } : n))
-    );
-  }, [setNodes]);
+    // 节点拖拽过程中的逻辑
+    console.log('Node being dragged:', node);
+  }, []);
 
   const handleNodeDragStop = useCallback((event, node) => {
-    console.log('Node dragged in KnowledgeGraph:', node);
+    console.log('Node drag stopped:', node);
     onNodeDragStop(node);
   }, [onNodeDragStop]);
 
