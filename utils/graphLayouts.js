@@ -31,8 +31,10 @@ function centerLayout(nodes) {
 
 export function createPyramidLayout(nodes) {
   const levels = Math.ceil(Math.sqrt(nodes.length));
-  const width = 1200;
-  const height = 900;
+  const width = 1200; // 增加宽度
+  const height = 900; // 增加高度
+  const nodeWidth = 180;
+  const nodeHeight = 60;
   const horizontalSpacing = 50;
   const verticalSpacing = 100;
 
@@ -41,16 +43,16 @@ export function createPyramidLayout(nodes) {
     const nodesInLevel = (level * 2) + 1;
     const nodeIndex = index - (level * level);
     
-    const levelWidth = nodesInLevel * NODE_WIDTH + (nodesInLevel - 1) * horizontalSpacing;
-    const x = (width - levelWidth) / 2 + (NODE_WIDTH + horizontalSpacing) * nodeIndex;
+    const levelWidth = nodesInLevel * nodeWidth + (nodesInLevel - 1) * horizontalSpacing;
+    const x = (width - levelWidth) / 2 + (nodeWidth + horizontalSpacing) * nodeIndex;
     const y = verticalSpacing * (level + 1);
 
     return {
       ...node,
       position: { x, y },
       style: { 
-        width: NODE_WIDTH, 
-        height: NODE_HEIGHT,
+        width: nodeWidth, 
+        height: nodeHeight,
         background: NODE_COLORS[level % NODE_COLORS.length],
         borderRadius: '8px',
         border: '1px solid #ddd',
