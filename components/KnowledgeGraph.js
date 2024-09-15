@@ -1,6 +1,6 @@
 import dynamic from 'next/dynamic';
 import { useEffect, useState, useCallback } from 'react';
-import { createPyramidLayout, createMindMapLayout, createRadialTreeLayout } from '../utils/graphLayouts';
+import { createPyramidLayout, createMindMapLayout, createRadialTreeLayout, createImprovedPyramidLayout } from '../utils/graphLayouts';
 
 const ReactFlow = dynamic(() => import('react-flow-renderer').then(mod => mod.default), {
   ssr: false,
@@ -35,20 +35,17 @@ const KnowledgeGraph = ({ data, onNodeClick, onNodeDragStop, onNodeDelete }) => 
   useEffect(() => {
     if (data && data.nodes && data.edges) {
       try {
-        // 限制节点数量
         const limitedNodes = data.nodes.slice(0, MAX_NODES);
         const limitedEdges = data.edges.filter(edge => 
           limitedNodes.some(node => node.id === edge.source) && 
           limitedNodes.some(node => node.id === edge.target)
         );
 
-        // 始终使用金字塔布局
-        const { nodes: layoutedNodes, edges: layoutedEdges } = relayoutGraph(limitedNodes, limitedEdges, 'pyramid');
+        const { nodes: layoutedNodes, edges: layoutedEdges } = createImprovedPyramidLayout(limitedNodes, limitedEdges);
         setNodes(layoutedNodes);
         setEdges(layoutedEdges);
       } catch (error) {
         console.error('Error in layout calculation:', error);
-        // 如果布局计算失败，至少显示原始节点
         setNodes(data.nodes.slice(0, MAX_NODES));
         setEdges(data.edges);
       }

@@ -17,8 +17,8 @@ function centerLayout(nodes) {
   const centerX = (minX + maxX) / 2;
   const centerY = (minY + maxY) / 2;
 
-  const offsetX = 600 - centerX;
-  const offsetY = 450 - centerY;
+  const offsetX = 650 - centerX;
+  const offsetY = 325 - centerY;
 
   return nodes.map(node => ({
     ...node,
@@ -174,9 +174,116 @@ export function createRadialTreeLayout(nodes, edges) {
   return centerLayout(nodes);
 }
 
+export function createImprovedPyramidLayout(nodes, edges) {
+  const levels = Math.ceil(Math.sqrt(nodes.length));
+  const width = 1200;
+  const height = 900;
+  const baseHorizontalSpacing = 50;
+  const baseVerticalSpacing = 100;
+
+  // 动态调整间距
+  const horizontalSpacing = Math.max(baseHorizontalSpacing, width / (nodes.length * 2));
+  const verticalSpacing = Math.max(baseVerticalSpacing, height / (levels * 2));
+
+  // 分层
+  const layeredNodes = Array.from({ length: levels }, () => []);
+  nodes.forEach((node, index) => {
+    const level = Math.floor(Math.sqrt(index));
+    layeredNodes[level].push(node);
+  });
+
+  const layoutedNodes = [];
+  let yOffset = 0;
+
+  layeredNodes.forEach((levelNodes, level) => {
+    const levelWidth = levelNodes.length * NODE_WIDTH + (levelNodes.length - 1) * horizontalSpacing;
+    let xOffset = (width - levelWidth) / 2;
+
+    levelNodes.forEach((node, index) => {
+      // 交错布局
+      const y = yOffset + (index % 2 === 0 ? 0 : verticalSpacing / 2);
+      const x = xOffset + index * (NODE_WIDTH + horizontalSpacing);
+
+      // 自适应节点大小
+      const nodeWidth = Math.max(NODE_WIDTH, node.data.label.length * 8);
+      const nodeHeight = NODE_HEIGHT;
+
+      layoutedNodes.push({
+        ...node,
+        position: { x, y },
+        style: {
+          width: nodeWidth,
+          height: nodeHeight,
+          background: NODE_COLORS[level % NODE_COLORS.length],
+          borderRadius: '8px',
+          border: '1px solid #ddd',
+          padding: '5px',
+          fontSize: '12px'
+        }
+      });
+    });
+
+    yOffset += verticalSpacing;
+  });
+
+  // 智能边路由
+  const layoutedEdges = edges.map(edge => {
+    const sourceNode = layoutedNodes.find(n => n.id === edge.source);
+    const targetNode = layoutedNodes.find(n => n.id === edge.target);
+    
+    if (!sourceNode || !targetNode) return edge;
+
+    const sourceX = sourceNode.position.x + sourceNode.style.width / 2;
+    const sourceY = sourceNode.position.y + sourceNode.style.height;
+    const targetX = targetNode.position.x + targetNode.style.width / 2;
+    const targetY = targetNode.position.y;
+
+    const midX = (sourceX + targetX) / 2;
+    const midY = (sourceY + targetY) / 2;
+
+    return {
+      ...edge,
+      type: 'smoothstep',
+      animated: true,
+      style: { stroke: '#888', strokeWidth: 2 },
+      markerEnd: {
+        type: 'arrowclosed',
+        color: '#888',
+      },
+      labelStyle: { fill: '#888', fontWeight: 700 },
+      labelBgStyle: { fill: '#fff', fillOpacity: 0.7 },
+      labelBgPadding: [8, 4],
+      labelBgBorderRadius: 4,
+      label: edge.label,
+      labelPosition: 0.5,
+      labelBgPosition: 'center',
+      labelShowBg: true,
+      labelStyle: { fontSize: 10 },
+      sourcePosition: 'bottom',
+      targetPosition: 'top',
+      // 使用贝塞尔曲线来避免边与节点重叠
+      sourceHandle: null,
+      targetHandle: null,
+      data: {
+        controlPoints: [
+          { x: sourceX, y: sourceY },
+          { x: midX, y: midY - 50 },
+          { x: midX, y: midY + 50 },
+          { x: targetX, y: targetY }
+        ]
+      }
+    };
+  });
+
+  return {
+    nodes: layoutedNodes,
+    edges: layoutedEdges
+  };
+}
+
 export function relayoutGraph(nodes, edges, layoutType) {
   // 暂时忽略 layoutType 参数，始终使用金字塔布局
-  const layoutedNodes = createPyramidLayout(nodes);
+  const layoutedNodes = createImprovedPyramidLayout(nodes, edges).nodes;
   
   return {
     nodes: layoutedNodes,
