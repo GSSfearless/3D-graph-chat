@@ -8,23 +8,10 @@ import 'tailwindcss/tailwind.css'; // 引入 Tailwind CSS
 export default function Home() {
     const router = useRouter();
     const [query, setQuery] = useState('');
-    const [language, setLanguage] = useState('en');
-
-    const languages = [
-        { code: 'en', name: 'English' },
-        { code: 'zh', name: '中文' },
-        { code: 'es', name: 'Español' },
-        { code: 'fr', name: 'Français' },
-        { code: 'de', name: 'Deutsch' },
-    ];
-
-    const handleLanguageChange = (e) => {
-        setLanguage(e.target.value);
-    };
 
     const handleSearch = () => {
         if (query.trim() !== '') {
-            router.push(`/search?q=${query}&language=${language}`);
+            router.push(`/search?q=${query}`);
         }
     };
 
@@ -59,17 +46,7 @@ export default function Home() {
                 </div>
             </div>
             <div className="mt-8 text-gray-500 text-center">
-                <select 
-                    value={language} 
-                    onChange={handleLanguageChange}
-                    className="bg-white border border-gray-300 rounded-md px-2 py-1"
-                >
-                    {languages.map((lang) => (
-                        <option key={lang.code} value={lang.code}>
-                            {lang.name}
-                        </option>
-                    ))}
-                </select>
+                <span>English (English)</span>
             </div>
         </div>
     );

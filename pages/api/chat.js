@@ -5,14 +5,14 @@ export const config = {
 };
 
 export default async function handler(req) {
-  const { context, query, language } = await req.json();
+  const { context, query } = await req.json();
 
-  if (!context || !query || !language) {
-    return new Response('Context, query, and language are required', { status: 400 });
+  if (!context || !query) {
+    return new Response('Context and query are required', { status: 400 });
   }
 
   const prompt = `
-You are a large language AI assistant. Please provide a concise and accurate answer to the user's question in ${language}. You will receive a set of context information related to the question. Your answer must be correct, accurate, and written in a professional and neutral tone. Please limit it to 1024 tokens. Do not provide information unrelated to the question, and do not repeat yourself.
+You are a large language AI assistant. Please provide a concise and accurate answer to the user's question. You will receive a set of context information related to the question. Your answer must be correct, accurate, and written in a professional and neutral tone. Please limit it to 1024 tokens. Do not provide information unrelated to the question, and do not repeat yourself.
 
 Please strictly use the following format to organize your answer:
 1. Use double asterisks (**) to surround important concepts or keywords to indicate bold. For example: **important concept**.

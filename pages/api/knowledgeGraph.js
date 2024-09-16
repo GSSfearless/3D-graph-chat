@@ -1,7 +1,8 @@
 const OpenAI = require('openai');
 
 const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
+  organization: 'org-gLWuvsHwqOs4i3QAdK8nQ5zk',
+  project: 'proj_TRi4aW8PdBr9LBaE9W34pDPi',
 });
 
 function createPyramidLayout(nodes) {
@@ -70,34 +71,63 @@ function parseJSONSafely(str) {
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
-    return res.status(405).json({ message: 'Method Not Allowed' });
+    return res.status(405).json({ message: 'Only POST requests are allowed' });
   }
 
-  const { query, language } = req.body;
+  const { query } = req.body;
 
-  if (!query || !language) {
-    return res.status(400).json({ message: 'Query and language are required' });
+  if (!query) {
+    return res.status(400).json({ message: 'Missing query parameter' });
   }
 
   try {
-    const prompt = `Generate a knowledge graph based on the following query in ${language}. The graph should include the main concept and related sub-concepts. Format the output as a JSON object with 'nodes' and 'edges' arrays. Each node should have an 'id' and 'label' property, and each edge should have 'source' and 'target' properties. Query: "${query}"`;
-
     const completion = await openai.chat.completions.create({
-      model: "gpt-3.5-turbo-16k",
-      messages: [{ role: "user", content: prompt }],
-      temperature: 0.7,
-      max_tokens: 1000,
+      model: "gpt-3.5-turbo",
+      messages: [
+        {role: "system", content: "You are an expert capable of breaking down complex concepts into structured knowledge graphs. Please provide a response in JSON format, including 'nodes' and 'edges' arrays, and a 'type' field indicating whether the graph should be a 'pyramid' or 'mindmap'. Each node should have 'id' and 'label' properties. Each edge should have 'source', 'target', and 'label' properties."},
+        {role: "user", content: `Please create a knowledge graph for the following question: ${query}`}
+      ],
     });
 
-    const graphData = JSON.parse(completion.choices[0].message.content);
+    const rawGraphData = parseJSONSafely(completion.choices[0].message.content);
     
-    // 应用布局
-    const layoutedNodes = createRadialTreeLayout(graphData.nodes);
-    graphData.nodes = layoutedNodes;
+    const layoutFunction = rawGraphData.type === 'pyramid' ? createPyramidLayout : createMindMapLayout;
+    
+    const graphData = {
+      nodes: layoutFunction(rawGraphData.nodes.map(node => ({
+        id: node.id,
+        data: { label: node.label || node.id },
+      }))),
+      edges: rawGraphData.edges.map(edge => ({
+        id: `${edge.source}-${edge.target}`,
+        source: edge.source,
+        target: edge.target,
+        label: edge.label || '',
+        type: 'smoothstep',
+        animated: true,
+        labelStyle: { fill: '#888', fontWeight: 700 },
+        labelBgStyle: { fill: '#fff', fillOpacity: 0.7 },
+        labelBgPadding: [8, 4],
+        labelBgBorderRadius: 4,
+        style: { stroke: '#888' },
+        markerEnd: {
+          type: 'arrowclosed',
+          color: '#888',
+        },
+      }))
+    };
 
+    // 添加智能边路由
+    graphData.edges = graphData.edges.map(edge => ({
+      ...edge,
+      type: 'smoothstep',
+      style: { ...edge.style, strokeWidth: 2 },
+    }));
+
+    console.log('Processed graph data:', graphData);
     res.status(200).json(graphData);
   } catch (error) {
-    console.error('Error generating knowledge graph:', error);
+    console.error('Error:', error);
     res.status(500).json({ message: 'Error generating knowledge graph', error: error.message });
   }
 }

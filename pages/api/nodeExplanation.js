@@ -9,9 +9,9 @@ export default async function handler(req, res) {
     return res.status(405).json({ message: 'Method Not Allowed' });
   }
 
-  const { nodeId, label, graphData, language } = req.body;
+  const { nodeId, label, graphData } = req.body;
 
-  if (!nodeId || !label || !graphData || !language) {
+  if (!nodeId || !label || !graphData) {
     return res.status(400).json({ message: 'Missing required parameters' });
   }
 
@@ -24,7 +24,7 @@ export default async function handler(req, res) {
       });
 
     const prompt = `
-    You are a large language AI assistant. Please provide a concise and accurate explanation for the concept "${label}" in ${language} in the context of a knowledge graph. Your explanation must be correct, accurate, and written in a professional and neutral tone. Please limit it to about 200 words. Do not provide information unrelated to the concept, and do not repeat yourself.
+    You are a large language AI assistant. Please provide a concise and accurate explanation for the concept "${label}" in the context of a knowledge graph. Your explanation must be correct, accurate, and written in a professional and neutral tone. Please limit it to about 200 words. Do not provide information unrelated to the concept, and do not repeat yourself.
 
     Please strictly use the following format to organize your answer:
     1. Use double asterisks (**) to surround important concepts or keywords to indicate bold. For example: **important concept**.
