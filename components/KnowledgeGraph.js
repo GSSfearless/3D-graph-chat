@@ -16,7 +16,7 @@ const Background = dynamic(() => import('react-flow-renderer').then(mod => mod.B
   ssr: false
 });
 
-const KnowledgeGraph = ({ data, onNodeClick, onNodeDragStop, onNodeDelete }) => {
+const KnowledgeGraph = ({ data, onNodeClick, onNodeDragStop, onNodeDelete, layout, language }) => {
   console.log('KnowledgeGraph rendered with data:', data);
 
   const [mounted, setMounted] = useState(false);
