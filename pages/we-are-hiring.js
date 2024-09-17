@@ -8,7 +8,7 @@ export default function WeAreHiring() {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    alert("Thank you for your interest! We'll be in touch soon. 🎉");
+    alert("Thank you for your interest! We&apos;ll be in touch soon. 🎉");
     setEmail('');
   };
 
@@ -26,12 +26,12 @@ export default function WeAreHiring() {
         <div className="bg-white shadow-md rounded-lg p-6 mb-8">
           <h2 className="text-2xl font-semibold mb-4">🎯 Our Mission</h2>
           <p className="text-lg mb-4">
-            We're on the hunt for the most ambitious adventurers to explore and develop killer applications with the wildest imagination. Join us in pushing the boundaries of technology and creating products that change the world!
+            We&apos;re on the hunt for the most ambitious adventurers to explore and develop killer applications with the wildest imagination. Join us in pushing the boundaries of technology and creating products that change the world!
           </p>
         </div>
 
         <div className="bg-white shadow-md rounded-lg p-6 mb-8">
-          <h2 className="text-2xl font-semibold mb-4">🦸‍♀️ We're Looking For 🦸‍♂️</h2>
+          <h2 className="text-2xl font-semibold mb-4">🦸‍♀️ We&apos;re Looking For 🦸‍♂️</h2>
           <ul className="list-disc list-inside text-lg">
             <li>Fearless Innovators</li>
             <li>Cross-disciplinary Thinkers</li>
