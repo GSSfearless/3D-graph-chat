@@ -9,14 +9,7 @@ export default function WeAreHiring() {
   const [email, setEmail] = useState('');
 
   return (
-    <div 
-      className="min-h-screen flex items-center justify-center bg-cover bg-center bg-no-repeat"
-      style={{ 
-        backgroundImage: "url('/space-background.png')",
-        backgroundSize: 'cover',
-        backgroundPosition: 'center'
-      }}
-    >
+    <div className="min-h-screen flex items-center justify-center bg-gray-900">
       <div className="max-w-4xl w-full mx-auto text-center text-white p-4 sm:p-8">
         <div className="mb-12">
           <Link href="/">
