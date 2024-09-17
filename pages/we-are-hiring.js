@@ -6,19 +6,18 @@ import { faArrowRight } from '@fortawesome/free-solid-svg-icons';
 
 export default function WeAreHiring() {
   const [showQuiz, setShowQuiz] = useState(false);
-  const [quizAnswer, setQuizAnswer] = useState('');
   const [email, setEmail] = useState('');
 
   return (
-    <div className="min-h-screen bg-gradient-to-r from-[#ECF5FD] to-[#B6DBF7] text-gray-800 p-8">
-      <div className="max-w-4xl mx-auto">
-        <div className="mb-12 text-center">
+    <div className="min-h-screen bg-gradient-to-r from-[#ECF5FD] to-[#B6DBF7] text-gray-800 p-8 flex items-center justify-center">
+      <div className="max-w-4xl mx-auto text-center">
+        <div className="mb-12">
           <Link href="/">
             <a className="text-5xl font-extrabold mb-4 inline-block transition-all duration-300 hover:text-[#6CB6EF]" style={{ fontFamily: 'Poppins, sans-serif', fontWeight: '800', letterSpacing: '-1px' }}>Think-Graph</a>
           </Link>
         </div>
         
-        <h1 className="text-6xl font-bold mb-12 text-center leading-tight">🚀 Seeking Cosmic Adventurers:<br />Shaping the Future Together 🌟</h1>
+        <h1 className="text-6xl font-bold mb-12 leading-tight">🚀 Seeking Cosmic Adventurers:<br />Shaping the Future Together 🌟</h1>
         
         <section className="mb-12 bg-white rounded-lg shadow-lg p-8 transition-all duration-300 hover:shadow-xl">
           <h2 className="text-4xl font-semibold mb-6">🎯 Our Mission</h2>
@@ -28,34 +27,34 @@ export default function WeAreHiring() {
         <section className="mb-12 bg-white rounded-lg shadow-lg p-8 transition-all duration-300 hover:shadow-xl">
           <h2 className="text-4xl font-semibold mb-6">🦸‍♀️ We&apos;re Looking For 🦸‍♂️</h2>
           <ul className="list-none text-xl space-y-4">
-            <li className="flex items-center"><span className="text-3xl mr-4">🔥</span> Fearless Innovators</li>
-            <li className="flex items-center"><span className="text-3xl mr-4">🧠</span> Cross-disciplinary Thinkers</li>
-            <li className="flex items-center"><span className="text-3xl mr-4">🖥️</span> Tech Enthusiasts</li>
-            <li className="flex items-center"><span className="text-3xl mr-4">✨</span> Dreamers and Doers</li>
+            <li className="flex items-center justify-center"><span className="text-3xl mr-4">🔥</span> Fearless Innovators</li>
+            <li className="flex items-center justify-center"><span className="text-3xl mr-4">🧠</span> Cross-disciplinary Thinkers</li>
+            <li className="flex items-center justify-center"><span className="text-3xl mr-4">🖥️</span> Tech Enthusiasts</li>
+            <li className="flex items-center justify-center"><span className="text-3xl mr-4">✨</span> Dreamers and Doers</li>
           </ul>
         </section>
 
         <section className="mb-12 bg-white rounded-lg shadow-lg p-8 transition-all duration-300 hover:shadow-xl">
           <h2 className="text-4xl font-semibold mb-6">🌈 Why Join Us</h2>
           <ul className="list-none text-xl space-y-4">
-            <li className="flex items-center"><span className="text-3xl mr-4">🎨</span> Unlimited Creative Freedom</li>
-            <li className="flex items-center"><span className="text-3xl mr-4">🔬</span> Opportunity to Work with Cutting-edge Technologies</li>
-            <li className="flex items-center"><span className="text-3xl mr-4">🌏</span> World-changing Projects</li>
-            <li className="flex items-center"><span className="text-3xl mr-4">🔥</span> A Team Fueled by Passion</li>
+            <li className="flex items-center justify-center"><span className="text-3xl mr-4">🎨</span> Unlimited Creative Freedom</li>
+            <li className="flex items-center justify-center"><span className="text-3xl mr-4">🔬</span> Opportunity to Work with Cutting-edge Technologies</li>
+            <li className="flex items-center justify-center"><span className="text-3xl mr-4">🌏</span> World-changing Projects</li>
+            <li className="flex items-center justify-center"><span className="text-3xl mr-4">🔥</span> A Team Fueled by Passion</li>
           </ul>
         </section>
 
         <section className="mb-12 bg-white rounded-lg shadow-lg p-8 transition-all duration-300 hover:shadow-xl">
           <h2 className="text-4xl font-semibold mb-6">🚀 Open Positions</h2>
           <ul className="list-none text-xl space-y-4">
-            <li className="flex items-center"><span className="text-3xl mr-4">👨‍💻</span> Full Stack Developer</li>
-            <li className="flex items-center"><span className="text-3xl mr-4">🤖</span> AI Researcher</li>
-            <li className="flex items-center"><span className="text-3xl mr-4">🎨</span> Product Designer</li>
-            <li className="flex items-center"><span className="text-3xl mr-4">🎬</span> Creative Director</li>
+            <li className="flex items-center justify-center"><span className="text-3xl mr-4">👨‍💻</span> Full Stack Developer</li>
+            <li className="flex items-center justify-center"><span className="text-3xl mr-4">🤖</span> AI Researcher</li>
+            <li className="flex items-center justify-center"><span className="text-3xl mr-4">🎨</span> Product Designer</li>
+            <li className="flex items-center justify-center"><span className="text-3xl mr-4">🎬</span> Creative Director</li>
           </ul>
         </section>
 
-        <div className="text-center">
+        <div>
           <button 
             className="bg-[#105C93] text-white px-12 py-6 rounded-full text-2xl font-bold hover:bg-[#3A86C8] transition duration-300 shadow-lg hover:shadow-xl"
             onClick={() => setShowQuiz(true)}
@@ -68,14 +67,6 @@ export default function WeAreHiring() {
           <div className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm flex items-center justify-center z-50">
             <div className="bg-white text-black p-10 rounded-lg max-w-2xl w-full shadow-2xl">
               <h3 className="text-3xl font-bold mb-6">🤔 Are you ready to join our adventure?</h3>
-              <p className="mb-6 text-xl">Answer the following question to test your creative potential:</p>
-              <p className="mb-4 text-2xl font-semibold">🌟 If you could develop any application, and it was guaranteed to succeed, what would you create?</p>
-              <textarea 
-                className="w-full h-40 border-2 border-gray-300 rounded-lg p-4 mb-6 text-xl focus:border-[#3A86C8] focus:ring focus:ring-[#3A86C8] focus:ring-opacity-50 transition duration-300"
-                placeholder="Enter your idea here..."
-                value={quizAnswer}
-                onChange={(e) => setQuizAnswer(e.target.value)}
-              ></textarea>
               <input
                 type="email"
                 className="w-full border-2 border-gray-300 rounded-lg p-4 mb-6 text-xl focus:border-[#3A86C8] focus:ring focus:ring-[#3A86C8] focus:ring-opacity-50 transition duration-300"
@@ -87,7 +78,7 @@ export default function WeAreHiring() {
                 <button 
                   className="bg-[#105C93] text-white px-8 py-4 rounded-full text-xl font-bold hover:bg-[#3A86C8] transition duration-300 flex items-center shadow-lg hover:shadow-xl"
                   onClick={() => {
-                    alert("Thank you for your response! We'll be in touch soon. 🎉");
+                    alert("Thank you for your interest! We'll be in touch soon. 🎉");
                     setShowQuiz(false);
                   }}
                 >
