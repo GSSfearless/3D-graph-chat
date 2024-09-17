@@ -8,7 +8,7 @@ export default function WeAreHiring() {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    alert("Thank you for your interest! We&apos;ll be in touch soon. 🎉");
+    alert("Thank you for your interest! We will be in touch soon. 🎉");
     setEmail('');
   };
 
