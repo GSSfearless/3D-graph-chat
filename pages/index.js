@@ -2,6 +2,7 @@
 import { faArrowRight } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { useRouter } from 'next/router';
+import Link from 'next/link';
 import { useState } from 'react';
 import 'tailwindcss/tailwind.css'; // 引入 Tailwind CSS
 
@@ -47,6 +48,11 @@ export default function Home() {
             </div>
             <div className="mt-8 text-gray-500 text-center">
                 <span>English (English)</span>
+            </div>
+            <div className="mt-4">
+                <Link href="/we-are-hiring">
+                    <a className="text-blue-500 hover:text-blue-700 transition duration-300">We are hiring</a>
+                </Link>
             </div>
         </div>
     );
