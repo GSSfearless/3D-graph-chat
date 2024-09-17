@@ -9,8 +9,8 @@ export default function WeAreHiring() {
   const [email, setEmail] = useState('');
 
   return (
-    <div className="min-h-screen bg-gradient-to-r from-[#ECF5FD] to-[#B6DBF7] text-gray-800 p-8 flex items-center justify-center">
-      <div className="max-w-4xl mx-auto text-center">
+    <div className="min-h-screen flex items-center justify-center bg-cover bg-center bg-no-repeat" style={{ backgroundImage: "url('/images/space-background.png')" }}>
+      <div className="max-w-4xl mx-auto text-center text-white p-8">
         <div className="mb-12">
           <Link href="/">
             <a className="text-5xl font-extrabold mb-4 inline-block transition-all duration-300 hover:text-[#6CB6EF]" style={{ fontFamily: 'Poppins, sans-serif', fontWeight: '800', letterSpacing: '-1px' }}>Think-Graph</a>
@@ -19,12 +19,12 @@ export default function WeAreHiring() {
         
         <h1 className="text-6xl font-bold mb-12 leading-tight">🚀 Seeking Cosmic Adventurers:<br />Shaping the Future Together 🌟</h1>
         
-        <section className="mb-12 bg-white rounded-lg shadow-lg p-8 transition-all duration-300 hover:shadow-xl">
+        <section className="mb-12 bg-black bg-opacity-50 rounded-lg shadow-lg p-8 transition-all duration-300 hover:shadow-xl">
           <h2 className="text-4xl font-semibold mb-6">🎯 Our Mission</h2>
           <p className="text-xl leading-relaxed">We&apos;re on the hunt for the most ambitious adventurers to explore and develop killer applications with the wildest imagination. Join us in pushing the boundaries of technology and creating products that change the world! 🌍💡</p>
         </section>
 
-        <section className="mb-12 bg-white rounded-lg shadow-lg p-8 transition-all duration-300 hover:shadow-xl">
+        <section className="mb-12 bg-black bg-opacity-50 rounded-lg shadow-lg p-8 transition-all duration-300 hover:shadow-xl">
           <h2 className="text-4xl font-semibold mb-6">🦸‍♀️ We&apos;re Looking For 🦸‍♂️</h2>
           <ul className="list-none text-xl space-y-4">
             <li className="flex items-center justify-center"><span className="text-3xl mr-4">🔥</span> Fearless Innovators</li>
@@ -34,7 +34,7 @@ export default function WeAreHiring() {
           </ul>
         </section>
 
-        <section className="mb-12 bg-white rounded-lg shadow-lg p-8 transition-all duration-300 hover:shadow-xl">
+        <section className="mb-12 bg-black bg-opacity-50 rounded-lg shadow-lg p-8 transition-all duration-300 hover:shadow-xl">
           <h2 className="text-4xl font-semibold mb-6">🌈 Why Join Us</h2>
           <ul className="list-none text-xl space-y-4">
             <li className="flex items-center justify-center"><span className="text-3xl mr-4">🎨</span> Unlimited Creative Freedom</li>
@@ -44,7 +44,7 @@ export default function WeAreHiring() {
           </ul>
         </section>
 
-        <section className="mb-12 bg-white rounded-lg shadow-lg p-8 transition-all duration-300 hover:shadow-xl">
+        <section className="mb-12 bg-black bg-opacity-50 rounded-lg shadow-lg p-8 transition-all duration-300 hover:shadow-xl">
           <h2 className="text-4xl font-semibold mb-6">🚀 Open Positions</h2>
           <ul className="list-none text-xl space-y-4">
             <li className="flex items-center justify-center"><span className="text-3xl mr-4">👨‍💻</span> Full Stack Developer</li>
