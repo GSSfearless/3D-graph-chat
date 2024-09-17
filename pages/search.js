@@ -441,16 +441,16 @@ export default function Search() {
         </div>
         <div className="flex justify-between items-center">
           <div className="flex items-center">
-            <div className="block bg-[#ECF5FD] text-center p-2 rounded text-2xl font-medium text-gray-600">
+            <a href="/we-are-hiring" className="block bg-[#ECF5FD] text-center p-2 rounded hover:bg-[#B6DBF7] transition duration-300 text-2xl font-medium text-gray-600">
               🪐
-            </div>
+            </a>
             <span className="text-xs ml-2 text-gray-600">We&apos;re hiring</span>
           </div>
           <div className="text-gray-400 mx-2">|</div>
           <div className="flex items-center">
-            <div className="block bg-[#ECF5FD] text-center p-2 rounded text-2xl font-medium text-gray-600">
+            <a href="https://discord.gg/G66pESH3gm" target="_blank" rel="noopener noreferrer" className="block bg-[#ECF5FD] text-center p-2 rounded hover:bg-[#B6DBF7] transition duration-300 text-2xl font-medium text-gray-600">
             🍻
-            </div>
+            </a>
             <span className="text-xs ml-2 text-gray-600">Join our discord</span>
           </div>
         </div>
