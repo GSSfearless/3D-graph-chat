@@ -12,7 +12,7 @@ export default function WeAreHiring() {
     <div 
       className="min-h-screen flex items-center justify-center bg-cover bg-center bg-no-repeat"
       style={{ 
-        backgroundImage: "url('/images/space-background.png')",
+        backgroundImage: "url('/space-background.png')",
         backgroundSize: 'cover',
         backgroundPosition: 'center'
       }}
