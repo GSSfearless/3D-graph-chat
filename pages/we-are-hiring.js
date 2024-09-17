@@ -22,11 +22,11 @@ export default function WeAreHiring() {
         
         <section className="mb-12 bg-white rounded-lg shadow-md p-6">
           <h2 className="text-3xl font-semibold mb-4">🎯 Our Mission</h2>
-          <p className="text-xl">We're on the hunt for the most ambitious adventurers to explore and develop killer applications with the wildest imagination. Join us in pushing the boundaries of technology and creating products that change the world! 🌍💡</p>
+          <p className="text-xl">We&apos;re on the hunt for the most ambitious adventurers to explore and develop killer applications with the wildest imagination. Join us in pushing the boundaries of technology and creating products that change the world! 🌍💡</p>
         </section>
 
         <section className="mb-12 bg-white rounded-lg shadow-md p-6">
-          <h2 className="text-3xl font-semibold mb-4">🦸‍♀️ We're Looking For 🦸‍♂️</h2>
+          <h2 className="text-3xl font-semibold mb-4">🦸‍♀️ We&apos;re Looking For 🦸‍♂️</h2>
           <ul className="list-disc list-inside text-xl">
             <li>🔥 Fearless Innovators</li>
             <li>🧠 Cross-disciplinary Thinkers</li>
