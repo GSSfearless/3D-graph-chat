@@ -3,7 +3,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
-import { useState, useCallback, useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import 'tailwindcss/tailwind.css';
 import '../styles/globals.css';
 
@@ -441,11 +441,11 @@ export default function Search() {
         </div>
         <div className="flex justify-between items-center">
           <div className="flex items-center">
-            <Link href="/about">
+            <Link href="/we-are-hiring">
               <a className="block bg-[#ECF5FD] text-center p-2 rounded hover:bg-[#B6DBF7] transition duration-300 text-2xl font-medium text-gray-600">🪐</a>
             </Link>
             <Link href="/we-are-hiring">
-              <a className="text-xs ml-2 hover:text-blue-500 transition duration-300">We are hiring</a>
+              <a className="text-xs ml-2 hover:text-blue-500 transition duration-300">We&apos;re hiring</a>
             </Link>
           </div>
           <div className="text-gray-400 mx-2">|</div>

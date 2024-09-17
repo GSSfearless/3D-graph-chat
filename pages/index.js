@@ -49,11 +49,6 @@ export default function Home() {
             <div className="mt-8 text-gray-500 text-center">
                 <span>English (English)</span>
             </div>
-            <div className="mt-4">
-                <Link href="/we-are-hiring">
-                    <a className="text-blue-500 hover:text-blue-700 transition duration-300">We are hiring</a>
-                </Link>
-            </div>
         </div>
     );
 }
