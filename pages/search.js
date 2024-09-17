@@ -441,7 +441,7 @@ export default function Search() {
         </div>
         <div className="flex justify-between items-center">
           <div className="flex items-center">
-            <Link href="/about">
+            <Link href="/we-are-hiring">
               <a className="block bg-[#ECF5FD] text-center p-2 rounded hover:bg-[#B6DBF7] transition duration-300 text-2xl font-medium text-gray-600">🪐</a>
             </Link>
             <span className="text-xs ml-2">We are hiring</span>
