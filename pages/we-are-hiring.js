@@ -13,12 +13,9 @@ export default function WeAreHiring() {
   };
 
   return (
-    <div className="min-h-screen flex">
-      {/* Left background image */}
-      <div className="w-1/4 bg-cover bg-center" style={{backgroundImage: "url('/left-image.jpg')"}}></div>
-
-      {/* Center content area */}
-      <div className="w-1/2 bg-gray-100 overflow-y-auto px-8 py-12">
+    <div className="min-h-screen flex flex-col items-center justify-center bg-gray-100">
+      <div className="w-full max-w-4xl px-4 py-12">
+        {/* 内容部分 */}
         <Link href="/">
           <a className="text-4xl font-bold text-center block mb-8">Think-Graph</a>
         </Link>
@@ -72,9 +69,6 @@ export default function WeAreHiring() {
           </button>
         </form>
       </div>
-
-      {/* Right background image */}
-      <div className="w-1/4 bg-cover bg-center" style={{backgroundImage: "url('/right-image.jpg')"}}></div>
     </div>
   );
 }
