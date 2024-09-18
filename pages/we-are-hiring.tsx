@@ -1,17 +1,26 @@
-import '../styles/we-are-hiring.css';
-
+import { useState } from 'react';
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
-import { Brain, Mail, MapPin } from "lucide-react"
+import { Brain, MapPin } from "lucide-react"
 import Link from "next/link"
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+
+import '../styles/we-are-hiring.css';
 
 export default function HiringPage() {
+  const [showSuccessDialog, setShowSuccessDialog] = useState(false);
+
   const scrollToSection = (id: string) => {
     const element = document.getElementById(id);
     if (element) {
       element.scrollIntoView({ behavior: 'smooth' });
     }
+  };
+
+  const handleSubscribe = (e: React.FormEvent) => {
+    e.preventDefault();
+    setShowSuccessDialog(true);
   };
 
   return (
@@ -66,36 +75,42 @@ export default function HiringPage() {
                 title="Hacker"
                 description="Seeking out-of-the-box thinkers to create revolutionary technologies."
                 location="Global Remote"
+                onApply={() => scrollToSection('talent-network')}
               />
               <JobCard
                 title="Future Rocket Engineer"
                 description="Design next-gen interstellar travel tech to make humans a multi-planetary species."
                 location="Mars Base"
+                onApply={() => scrollToSection('talent-network')}
               />
               <JobCard
                 title="LLM JailBreaker"
                 description="Break the limitations of large language models and explore the true potential of AI."
                 location="Virtual Lab"
+                onApply={() => scrollToSection('talent-network')}
               />
               <JobCard
                 title="AI Philosopher"
                 description="Contemplate the ethics and existential questions of AI to shape the future of human-machine coexistence."
                 location="Virtual Reality Space"
+                onApply={() => scrollToSection('talent-network')}
               />
               <JobCard
                 title="Black Hole Scientist"
                 description="Unravel the mysteries of black holes and push the boundaries of astrophysics."
                 location="Event Horizon Observatory"
+                onApply={() => scrollToSection('talent-network')}
               />
               <JobCard
                 title="Mad Scientist of Creativity"
                 description="Transform crazy ideas into reality, challenging the limits of science."
                 location="Secret Laboratory"
+                onApply={() => scrollToSection('talent-network')}
               />
             </div>
           </div>
         </section>
-        <section className="w-full py-12 md:py-24 lg:py-32 flex items-center justify-center">
+        <section id="talent-network" className="w-full py-12 md:py-24 lg:py-32 flex items-center justify-center">
           <div className="container px-4 md:px-6 max-w-4xl">
             <div className="flex flex-col items-center space-y-4 text-center">
               <div className="space-y-2">
@@ -107,8 +122,8 @@ export default function HiringPage() {
                 </p>
               </div>
               <div className="w-full max-w-sm space-y-2">
-                <form className="flex space-x-2">
-                  <Input placeholder="Enter your email" type="email" className="flex-grow" />
+                <form className="flex space-x-2" onSubmit={handleSubscribe}>
+                  <Input placeholder="Enter your email" type="email" className="flex-grow" required />
                   <Button type="submit" className="bg-green-600 hover:bg-green-700 text-white">Subscribe</Button>
                 </form>
               </div>
@@ -131,25 +146,33 @@ export default function HiringPage() {
           </nav>
         </div>
       </footer>
+      <Dialog open={showSuccessDialog} onOpenChange={setShowSuccessDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Subscription Successful</DialogTitle>
+          </DialogHeader>
+          <p>Thank you for subscribing to our talent network. We'll keep you updated on new opportunities!</p>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
 
-function JobCard({ title, description, location }: { title: string; description: string; location: string }) {
+function JobCard({ title, description, location, onApply }: { title: string; description: string; location: string; onApply: () => void }) {
   return (
     <Card className="flex flex-col h-full">
       <CardHeader>
-        <CardTitle>{title}</CardTitle>
-        <CardDescription>{description}</CardDescription>
+        <CardTitle className="text-xl mb-2">{title}</CardTitle>
+        <CardDescription className="flex-grow">{description}</CardDescription>
       </CardHeader>
-      <CardContent className="flex-grow flex flex-col justify-between">
-        <div className="flex items-center space-x-2 text-sm text-gray-500 dark:text-gray-400">
+      <CardContent className="mt-auto">
+        <div className="flex items-center space-x-2 text-sm text-gray-500 dark:text-gray-400 mb-4">
           <MapPin className="h-4 w-4" />
           <span>{location}</span>
         </div>
         <Button 
-          className="mt-4 w-full bg-indigo-600 hover:bg-indigo-700 text-white" 
-          onClick={() => document.getElementById('talent-network')?.scrollIntoView({ behavior: 'smooth' })}
+          className="w-full bg-indigo-600 hover:bg-indigo-700 text-white" 
+          onClick={onApply}
         >
           Apply Now
         </Button>
