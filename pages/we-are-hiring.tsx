@@ -63,7 +63,7 @@ export default function HiringPage() {
             </h2>
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
               <JobCard
-                title="Visionary Hacker"
+                title="Hacker"
                 description="Seeking out-of-the-box thinkers to create revolutionary technologies."
                 location="Global Remote"
               />
@@ -73,9 +73,9 @@ export default function HiringPage() {
                 location="Mars Base"
               />
               <JobCard
-                title="Quantum Computing Pioneer"
-                description="Explore the mysteries of the quantum realm and develop disruptive computing technologies."
-                location="Quantum Lab"
+                title="LLM JailBreaker"
+                description="Break the limitations of large language models and explore the true potential of AI."
+                location="Virtual Lab"
               />
               <JobCard
                 title="AI Philosopher"
@@ -136,25 +136,21 @@ export default function HiringPage() {
 }
 
 function JobCard({ title, description, location }: { title: string; description: string; location: string }) {
-  const scrollToSection = (id: string) => {
-    const element = document.getElementById(id);
-    if (element) {
-      element.scrollIntoView({ behavior: 'smooth' });
-    }
-  };
-
   return (
-    <Card>
+    <Card className="flex flex-col h-full">
       <CardHeader>
         <CardTitle>{title}</CardTitle>
         <CardDescription>{description}</CardDescription>
       </CardHeader>
-      <CardContent>
+      <CardContent className="flex-grow flex flex-col justify-between">
         <div className="flex items-center space-x-2 text-sm text-gray-500 dark:text-gray-400">
           <MapPin className="h-4 w-4" />
           <span>{location}</span>
         </div>
-        <Button className="mt-4 w-full bg-indigo-600 hover:bg-indigo-700 text-white" onClick={() => scrollToSection('talent-network')}>
+        <Button 
+          className="mt-4 w-full bg-indigo-600 hover:bg-indigo-700 text-white" 
+          onClick={() => document.getElementById('talent-network')?.scrollIntoView({ behavior: 'smooth' })}
+        >
           Apply Now
         </Button>
       </CardContent>
