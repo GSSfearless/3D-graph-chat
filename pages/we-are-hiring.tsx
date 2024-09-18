@@ -37,7 +37,7 @@ export default function HiringPage() {
                   Join the AI Revolution
                 </h1>
                 <p className="mx-auto max-w-[700px] text-gray-500 md:text-xl dark:text-gray-400">
-                  We're building the future of artificial intelligence. Are you ready to be part of something extraordinary?
+                  We&apos;re building the future of artificial intelligence. Are you ready to be part of something extraordinary?
                 </p>
               </div>
               <div className="space-x-4">
