@@ -44,7 +44,7 @@ export default function HiringPage() {
                   Join the AI Revolution
                 </h1>
                 <p className="mx-auto max-w-[700px] text-gray-500 md:text-xl dark:text-gray-400">
-                  We're on a mission to create world-changing AI applications. Are you ready to help us build the next killer app that will revolutionize industries?
+                  We&apos;re on a mission to create world-changing AI applications. Are you ready to help us build the next killer app that will revolutionize industries?
                 </p>
               </div>
               <div className="space-x-4">
