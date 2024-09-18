@@ -9,7 +9,7 @@ import Link from "next/link"
 export default function HiringPage() {
   return (
     <div className="flex flex-col min-h-screen">
-      <header className="px-4 lg:px-6 h-14 flex items-center">
+      <header className="px-4 lg:px-6 h-14 flex items-center justify-center">
         <Link className="flex items-center justify-center" href="#">
           <Brain className="h-6 w-6" />
           <span className="sr-only">AI Startup Logo</span>
@@ -26,9 +26,9 @@ export default function HiringPage() {
           </Link>
         </nav>
       </header>
-      <main className="flex-1">
-        <section className="w-full py-12 md:py-24 lg:py-32 xl:py-48">
-          <div className="container px-4 md:px-6">
+      <main className="flex-1 flex flex-col items-center">
+        <section className="w-full py-12 md:py-24 lg:py-32 xl:py-48 flex items-center justify-center">
+          <div className="container px-4 md:px-6 max-w-4xl">
             <div className="flex flex-col items-center space-y-4 text-center">
               <div className="space-y-2">
                 <h1 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl lg:text-6xl/none">
@@ -39,14 +39,14 @@ export default function HiringPage() {
                 </p>
               </div>
               <div className="space-x-4">
-                <Button>View Open Positions</Button>
-                <Button variant="outline">Learn More</Button>
+                <Button className="bg-blue-600 hover:bg-blue-700 text-white">View Open Positions</Button>
+                <Button variant="outline" className="border-blue-600 text-blue-600 hover:bg-blue-50">Learn More</Button>
               </div>
             </div>
           </div>
         </section>
         <section className="w-full py-12 md:py-24 lg:py-32 bg-gray-100 dark:bg-gray-800">
-          <div className="container px-4 md:px-6">
+          <div className="container px-4 md:px-6 max-w-6xl">
             <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl text-center mb-8">
               Open Positions
             </h2>
@@ -85,7 +85,7 @@ export default function HiringPage() {
           </div>
         </section>
         <section className="w-full py-12 md:py-24 lg:py-32">
-          <div className="container px-4 md:px-6">
+          <div className="container px-4 md:px-6 max-w-4xl">
             <div className="flex flex-col items-center space-y-4 text-center">
               <div className="space-y-2">
                 <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl">
@@ -97,15 +97,15 @@ export default function HiringPage() {
               </div>
               <div className="w-full max-w-sm space-y-2">
                 <form className="flex space-x-2">
-                  <Input placeholder="Enter your email" type="email" />
-                  <Button type="submit">Subscribe</Button>
+                  <Input placeholder="Enter your email" type="email" className="flex-grow" />
+                  <Button type="submit" className="bg-green-600 hover:bg-green-700 text-white">Subscribe</Button>
                 </form>
               </div>
             </div>
           </div>
         </section>
       </main>
-      <footer className="flex flex-col gap-2 sm:flex-row py-6 w-full shrink-0 items-center px-4 md:px-6 border-t">
+      <footer className="flex flex-col gap-2 sm:flex-row py-6 w-full shrink-0 items-center justify-center px-4 md:px-6 border-t">
         <p className="text-xs text-gray-500 dark:text-gray-400">
           © 2023 AI Startup Inc. All rights reserved.
         </p>
@@ -134,7 +134,7 @@ function JobCard({ title, description, location }: { title: string; description:
           <MapPin className="h-4 w-4" />
           <span>{location}</span>
         </div>
-        <Button className="mt-4 w-full">Apply Now</Button>
+        <Button className="mt-4 w-full bg-indigo-600 hover:bg-indigo-700 text-white">Apply Now</Button>
       </CardContent>
     </Card>
   )
