@@ -1,11 +1,10 @@
 const NODE_WIDTH = 180;
 const NODE_HEIGHT = 60;
 const NODE_COLORS = [
-  'linear-gradient(135deg, #F5F7FA 0%, #C3CFE2 100%)',
-  'linear-gradient(135deg, #E0EAFC 0%, #CFDEF3 100%)',
-  'linear-gradient(135deg, #E0F2F1 0%, #B2DFDB 100%)',
-  'linear-gradient(135deg, #FFF8E1 0%, #FFECB3 100%)',
-  'linear-gradient(135deg, #F3E5F5 0%, #E1BEE7 100%)'
+  '#E3F2FD', // 浅蓝
+  '#F3E5F5', // 浅紫
+  '#E8F5E9', // 浅绿
+  '#FFF3E0', // 浅橙
 ];
 
 function centerLayout(nodes) {
@@ -124,75 +123,93 @@ export function createMindMapLayout(nodes) {
 }
 
 export function createRadialTreeLayout(nodes, edges) {
-  const rootNode = nodes.find(node => !edges.some(edge => edge.target === node.id));
+  const centerX = 600;
+  const centerY = 450;
+  const rootNode = nodes[0];
   const childrenMap = new Map();
-
+  
+  // 构建父子关系图
   edges.forEach(edge => {
     if (!childrenMap.has(edge.source)) {
       childrenMap.set(edge.source, []);
     }
     childrenMap.get(edge.source).push(edge.target);
   });
-
-  const centerX = 600;
-  const centerY = 450;
-  const baseRadius = 200;
-  const radiusStep = 150;
-  const minAngle = 0.3;
-
-  function layoutNode(node, angle, distance, level) {
-    if (!node) return;
-
-    const x = centerX + Math.cos(angle) * distance;
-    const y = centerY + Math.sin(angle) * distance;
-    const children = childrenMap.get(node.id) || [];
-    const childAngleStep = Math.max((Math.PI * 2) / Math.pow(2, level + 1), minAngle);
-
-    node.position = { x, y };
-    node.style = {
-      width: NODE_WIDTH,
-      height: NODE_HEIGHT,
-      background: NODE_COLORS[level % NODE_COLORS.length],
-      borderRadius: '8px',
-      border: '1px solid #ddd',
-      padding: '5px',
-      fontSize: '12px'
-    };
-
-    children.forEach((childId, index) => {
-      const childNode = nodes.find(n => n.id === childId);
-      if (childNode && childNode !== node) {
-        const childAngle = angle - Math.PI / 2 + childAngleStep * (index + 0.5);
-        const childDistance = distance + radiusStep;
-        layoutNode(childNode, childAngle, childDistance, level + 1);
-      }
+  
+  // 计算每个层级的节点数量
+  const levelCounts = new Map();
+  const nodeLevels = new Map();
+  
+  function calculateLevels(nodeId, level = 0) {
+    nodeLevels.set(nodeId, level);
+    levelCounts.set(level, (levelCounts.get(level) || 0) + 1);
+    
+    const children = childrenMap.get(nodeId) || [];
+    children.forEach(childId => calculateLevels(childId, level + 1));
+  }
+  
+  calculateLevels(rootNode.id);
+  
+  // 计算每个节点的位置
+  const maxLevel = Math.max(...levelCounts.keys());
+  const radiusStep = 150; // 每层的半径增量
+  
+  function calculateNodePosition(nodeId, angle, level) {
+    const radius = level * radiusStep;
+    const x = centerX + radius * Math.cos(angle);
+    const y = centerY + radius * Math.sin(angle);
+    
+    return { x, y };
+  }
+  
+  // 为每个节点分配位置
+  const nodePositions = new Map();
+  levelCounts.forEach((count, level) => {
+    const nodesAtLevel = nodes.filter(node => nodeLevels.get(node.id) === level);
+    nodesAtLevel.forEach((node, index) => {
+      const angle = (2 * Math.PI * index) / count;
+      nodePositions.set(node.id, calculateNodePosition(node.id, angle, level));
     });
-  }
-
-  if (rootNode) {
-    layoutNode(rootNode, 0, 0, 0);
-  }
-
-  return centerLayout(nodes);
-}
-
-export function relayoutGraph(nodes, edges, layoutType) {
-  // 暂时忽略 layoutType 参数，始终使用金字塔布局
-  const layoutedNodes = createPyramidLayout(nodes);
+  });
   
   return {
-    nodes: layoutedNodes,
+    nodes: nodes.map(node => ({
+      ...node,
+      position: nodePositions.get(node.id),
+      style: {
+        width: NODE_WIDTH,
+        height: NODE_HEIGHT,
+        background: NODE_COLORS[nodeLevels.get(node.id) % NODE_COLORS.length],
+        border: node.id === rootNode.id ? '2px solid #1976d2' : '1px solid #ddd',
+        borderRadius: '8px',
+        padding: '10px',
+        fontSize: '12px',
+        boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+        textAlign: 'center'
+      }
+    })),
     edges: edges.map(edge => ({
       ...edge,
       type: 'smoothstep',
-      animated: true,
-      style: { stroke: '#888', strokeWidth: 2 },
-      markerEnd: {
-        type: 'arrowclosed',
-        color: '#888',
-      },
-    })),
+      animated: false,
+      style: {
+        stroke: '#888',
+        strokeWidth: 1.5,
+        opacity: 0.8
+      }
+    }))
   };
+}
+
+export function relayoutGraph(nodes, edges, layoutType) {
+  switch (layoutType) {
+    case 'hierarchical':
+      return createHierarchicalLayout(nodes, edges);
+    case 'radialTree':
+      return createRadialTreeLayout(nodes, edges);
+    default:
+      return createHierarchicalLayout(nodes, edges);
+  }
 }
 
 // 力导向布局
@@ -220,11 +237,12 @@ export const createForceDirectedLayout = (nodes, edges) => {
 
 // 层次布局
 export const createHierarchicalLayout = (nodes, edges) => {
-  const LEVEL_HEIGHT = 100;
-  const LEVEL_WIDTH = 200;
+  const LEVEL_HEIGHT = 120; // 增加垂直间距
+  const HORIZONTAL_SPACING = 200; // 水平间距
   
   // 计算节点层级
   const nodeLevels = new Map();
+  const levelNodes = new Map();
   const rootNode = nodes[0];
   nodeLevels.set(rootNode.id, 0);
   
@@ -234,6 +252,13 @@ export const createHierarchicalLayout = (nodes, edges) => {
     const currentNode = queue.shift();
     const currentLevel = nodeLevels.get(currentNode.id);
     
+    // 将节点添加到对应层级
+    if (!levelNodes.has(currentLevel)) {
+      levelNodes.set(currentLevel, []);
+    }
+    levelNodes.get(currentLevel).push(currentNode.id);
+    
+    // 处理子节点
     const childEdges = edges.filter(edge => edge.source === currentNode.id);
     childEdges.forEach(edge => {
       const childNode = nodes.find(n => n.id === edge.target);
@@ -244,23 +269,49 @@ export const createHierarchicalLayout = (nodes, edges) => {
     });
   }
   
-  // 根据层级布局
-  const levelNodes = new Map();
-  nodeLevels.forEach((level, nodeId) => {
-    if (!levelNodes.has(level)) {
-      levelNodes.set(level, []);
-    }
-    levelNodes.get(level).push(nodeId);
-  });
+  // 计算每层的中心位置
+  const maxNodesInLevel = Math.max(...Array.from(levelNodes.values()).map(level => level.length));
+  const totalWidth = (maxNodesInLevel - 1) * HORIZONTAL_SPACING;
   
   return {
-    nodes: nodes.map(node => ({
-      ...node,
-      position: {
-        x: (levelNodes.get(nodeLevels.get(node.id)).indexOf(node.id) + 1) * LEVEL_WIDTH,
-        y: nodeLevels.get(node.id) * LEVEL_HEIGHT
+    nodes: nodes.map(node => {
+      const level = nodeLevels.get(node.id);
+      const nodesInLevel = levelNodes.get(level);
+      const position = nodesInLevel.indexOf(node.id);
+      const totalNodesInLevel = nodesInLevel.length;
+      
+      // 计算水平位置，使每层节点居中
+      const levelWidth = (totalNodesInLevel - 1) * HORIZONTAL_SPACING;
+      const startX = (totalWidth - levelWidth) / 2;
+      
+      return {
+        ...node,
+        position: {
+          x: startX + position * HORIZONTAL_SPACING,
+          y: level * LEVEL_HEIGHT
+        },
+        style: {
+          width: NODE_WIDTH,
+          height: NODE_HEIGHT,
+          background: NODE_COLORS[level % NODE_COLORS.length],
+          border: node === rootNode ? '2px solid #1976d2' : '1px solid #ddd',
+          borderRadius: '8px',
+          padding: '10px',
+          fontSize: '12px',
+          boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+          textAlign: 'center'
+        }
+      };
+    }),
+    edges: edges.map(edge => ({
+      ...edge,
+      type: 'smoothstep',
+      animated: false,
+      style: { 
+        stroke: '#888',
+        strokeWidth: 1.5,
+        opacity: 0.8
       }
-    })),
-    edges
+    }))
   };
 };
