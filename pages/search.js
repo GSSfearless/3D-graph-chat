@@ -419,6 +419,102 @@ export default function Search() {
     console.log('knowledgeGraphData updated:', knowledgeGraphData);
   }, [knowledgeGraphData]);
 
+  // 在 search.js 中添加新的布局配置
+  const layouts = {
+    radialTree: {
+      name: '放射状布局',
+      options: {
+        physics: {
+          enabled: true,
+          stabilization: {
+            enabled: true,
+            iterations: 200,
+            updateInterval: 25
+          },
+          minVelocity: 0.75,
+          solver: 'forceAtlas2Based',
+          forceAtlas2Based: {
+            gravitationalConstant: -50,
+            centralGravity: 0.01,
+            springLength: 100,
+            springConstant: 0.08,
+            damping: 0.4,
+            avoidOverlap: 1.5
+          }
+        },
+        layout: {
+          improvedLayout: true,
+          hierarchical: {
+            enabled: true,
+            direction: 'UD',
+            sortMethod: 'directed',
+            nodeSpacing: 120,
+            treeSpacing: 200,
+            levelSeparation: 200,
+            blockShifting: true
+          }
+        }
+      }
+    }
+  };
+
+  // 添加节点和边的样式配置
+  const options = {
+    nodes: {
+      shape: 'box',
+      margin: 10,
+      widthConstraint: {
+        minimum: 100,
+        maximum: 200
+      },
+      font: {
+        size: 14,
+        face: 'Arial'
+      },
+      borderWidth: 2,
+      shadow: {
+        enabled: true,
+        color: 'rgba(0,0,0,0.2)',
+        size: 5,
+        x: 2,
+        y: 2
+      },
+      color: {
+        border: '#2B7CE9',
+        background: '#ffffff',
+        highlight: {
+          border: '#2B7CE9',
+          background: '#D2E5FF'
+        }
+      }
+    },
+    edges: {
+      color: {
+        color: '#848484',
+        highlight: '#848484',
+        hover: '#848484'
+      },
+      width: 1.5,
+      smooth: {
+        type: 'continuous',
+        forceDirection: 'none',
+        roundness: 0.5
+      },
+      arrows: {
+        to: {
+          enabled: true,
+          scaleFactor: 0.5
+        }
+      }
+    },
+    interaction: {
+      hover: true,
+      navigationButtons: true,
+      keyboard: true
+    },
+    ...layouts.radialTree.options
+  };
+
   return (
     <div className="flex flex-row min-h-screen relative pb-20">
       <div className="w-1/6 p-4 bg-[#ECF5FD] flex flex-col justify-between fixed h-full" style={{ fontFamily: 'Open Sans, sans-serif' }}>
