@@ -3,7 +3,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
-import { useState, useCallback, useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import 'tailwindcss/tailwind.css';
 import '../styles/globals.css';
 
@@ -92,7 +92,7 @@ export default function Search() {
   const [isLoadingNodeExplanation, setIsLoadingNodeExplanation] = useState(false);
   const initialAnswerRef = useRef('');
   const [viewingChildNode, setViewingChildNode] = useState(false);
-  const [currentLayout, setCurrentLayout] = useState('radialTree');
+  const [currentLayout, setCurrentLayout] = useState('hierarchical');
 
   const defaultQuery = "What is the answer to life, the universe, and everything?";
 
@@ -418,6 +418,71 @@ export default function Search() {
   useEffect(() => {
     console.log('knowledgeGraphData updated:', knowledgeGraphData);
   }, [knowledgeGraphData]);
+
+  const layouts = {
+    hierarchical: {
+      name: '层次布局',
+      options: {
+        hierarchical: {
+          direction: 'UD',
+          sortMethod: 'directed',
+          levelSeparation: 150,
+          nodeSpacing: 200,
+          treeSpacing: 200,
+          blockShifting: true,
+          edgeMinimization: true,
+          parentCentralization: true,
+        }
+      }
+    },
+    force: {
+      name: '力导向布局',
+      options: {
+        physics: {
+          enabled: true,
+          solver: 'forceAtlas2Based',
+          forceAtlas2Based: {
+            gravitationalConstant: -500,
+            centralGravity: 0.01,
+            springLength: 200,
+            springConstant: 0.08,
+            damping: 0.4,
+            avoidOverlap: 1
+          },
+          stabilization: {
+            enabled: true,
+            iterations: 1000,
+            updateInterval: 25
+          }
+        }
+      }
+    }
+  };
+
+  const options = {
+    nodes: {
+      shape: 'box',
+      margin: 10,
+      widthConstraint: {
+        minimum: 100,
+        maximum: 200
+      },
+      font: {
+        size: 14
+      }
+    },
+    edges: {
+      smooth: {
+        type: 'cubicBezier',
+        forceDirection: 'vertical',
+        roundness: 0.5
+      },
+      arrows: {
+        to: { enabled: true, scaleFactor: 1 }
+      }
+    },
+    ...layouts[currentLayout].options
+  };
 
   return (
     <div className="flex flex-row min-h-screen relative pb-20">
