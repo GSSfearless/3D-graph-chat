@@ -1,6 +1,5 @@
 import dynamic from 'next/dynamic';
-import { useEffect, useState, useCallback } from 'react';
-import { createPyramidLayout, createMindMapLayout, createRadialTreeLayout } from '../utils/graphLayouts';
+import { useCallback, useEffect, useState } from 'react';
 
 const ReactFlow = dynamic(() => import('react-flow-renderer').then(mod => mod.default), {
   ssr: false,
@@ -16,7 +15,48 @@ const Background = dynamic(() => import('react-flow-renderer').then(mod => mod.B
   ssr: false
 });
 
-const KnowledgeGraph = ({ data, onNodeClick, onNodeDragStop, onNodeDelete }) => {
+const getNodeStyle = (node, isHovered) => {
+  const baseStyle = {
+    background: '#fff',
+    border: '1px solid #ddd',
+    borderRadius: '8px',
+    padding: '10px',
+    fontSize: '12px',
+    transition: 'all 0.3s ease',
+    boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+  };
+
+  // 根据节点权重调整大小
+  const weight = node.data.weight || 1;
+  const size = Math.max(100, 100 * weight);
+
+  // 根据节点类型设置颜色
+  let color;
+  switch (node.type) {
+    case 'concept':
+      color = '#e3f2fd';
+      break;
+    case 'entity':
+      color = '#f3e5f5';
+      break;
+    case 'relation':
+      color = '#e8f5e9';
+      break;
+    default:
+      color = '#fff';
+  }
+
+  return {
+    ...baseStyle,
+    width: size,
+    height: size * 0.4,
+    background: color,
+    border: isHovered ? '2px solid #1976d2' : '1px solid #ddd',
+    transform: isHovered ? 'scale(1.05)' : 'scale(1)',
+  };
+};
+
+const KnowledgeGraph = ({ data, onNodeClick, onNodeDragStop, onNodeDelete, layout = 'radialTree' }) => {
   console.log('KnowledgeGraph rendered with data:', data);
 
   const [mounted, setMounted] = useState(false);
@@ -35,25 +75,37 @@ const KnowledgeGraph = ({ data, onNodeClick, onNodeDragStop, onNodeDelete }) => 
   useEffect(() => {
     if (data && data.nodes && data.edges) {
       try {
-        // 限制节点数量
         const limitedNodes = data.nodes.slice(0, MAX_NODES);
         const limitedEdges = data.edges.filter(edge => 
           limitedNodes.some(node => node.id === edge.source) && 
           limitedNodes.some(node => node.id === edge.target)
         );
 
-        // 始终使用金字塔布局
-        const { nodes: layoutedNodes, edges: layoutedEdges } = relayoutGraph(limitedNodes, limitedEdges, 'pyramid');
-        setNodes(layoutedNodes);
-        setEdges(layoutedEdges);
+        let layoutedGraph;
+        switch (layout) {
+          case 'radialTree':
+            layoutedGraph = createRadialTreeLayout(limitedNodes, limitedEdges);
+            break;
+          case 'mindMap':
+            layoutedGraph = createMindMapLayout(limitedNodes, limitedEdges);
+            break;
+          case 'forceDirected':
+            layoutedGraph = createForceDirectedLayout(limitedNodes, limitedEdges);
+            break;
+          case 'hierarchical':
+            layoutedGraph = createHierarchicalLayout(limitedNodes, limitedEdges);
+            break;
+          default:
+            layoutedGraph = { nodes: limitedNodes, edges: limitedEdges };
+        }
+
+        setNodes(layoutedGraph.nodes);
+        setEdges(layoutedGraph.edges);
       } catch (error) {
         console.error('Error in layout calculation:', error);
-        // 如果布局计算失败，至少显示原始节点
-        setNodes(data.nodes.slice(0, MAX_NODES));
-        setEdges(data.edges);
       }
     }
-  }, [data]);
+  }, [data, layout]);
 
   const onInit = useCallback((reactFlowInstance) => {
     reactFlowInstance.fitView({ padding: 0.2, includeHiddenNodes: false });

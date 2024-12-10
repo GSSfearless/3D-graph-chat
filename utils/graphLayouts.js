@@ -194,3 +194,73 @@ export function relayoutGraph(nodes, edges, layoutType) {
     })),
   };
 }
+
+// 力导向布局
+export const createForceDirectedLayout = (nodes, edges) => {
+  const centerX = 500;
+  const centerY = 300;
+  const radius = 250;
+
+  return {
+    nodes: nodes.map((node, index) => ({
+      ...node,
+      position: {
+        x: centerX + radius * Math.cos(2 * Math.PI * index / nodes.length),
+        y: centerY + radius * Math.sin(2 * Math.PI * index / nodes.length)
+      },
+      style: {
+        ...node.style,
+        width: node.data.weight ? 100 + node.data.weight * 20 : 100,
+        height: node.data.weight ? 40 + node.data.weight * 10 : 40,
+      }
+    })),
+    edges
+  };
+};
+
+// 层次布局
+export const createHierarchicalLayout = (nodes, edges) => {
+  const LEVEL_HEIGHT = 100;
+  const LEVEL_WIDTH = 200;
+  
+  // 计算节点层级
+  const nodeLevels = new Map();
+  const rootNode = nodes[0];
+  nodeLevels.set(rootNode.id, 0);
+  
+  // BFS 遍历计算层级
+  const queue = [rootNode];
+  while (queue.length > 0) {
+    const currentNode = queue.shift();
+    const currentLevel = nodeLevels.get(currentNode.id);
+    
+    const childEdges = edges.filter(edge => edge.source === currentNode.id);
+    childEdges.forEach(edge => {
+      const childNode = nodes.find(n => n.id === edge.target);
+      if (!nodeLevels.has(childNode.id)) {
+        nodeLevels.set(childNode.id, currentLevel + 1);
+        queue.push(childNode);
+      }
+    });
+  }
+  
+  // 根据层级布局
+  const levelNodes = new Map();
+  nodeLevels.forEach((level, nodeId) => {
+    if (!levelNodes.has(level)) {
+      levelNodes.set(level, []);
+    }
+    levelNodes.get(level).push(nodeId);
+  });
+  
+  return {
+    nodes: nodes.map(node => ({
+      ...node,
+      position: {
+        x: (levelNodes.get(nodeLevels.get(node.id)).indexOf(node.id) + 1) * LEVEL_WIDTH,
+        y: nodeLevels.get(node.id) * LEVEL_HEIGHT
+      }
+    })),
+    edges
+  };
+};
