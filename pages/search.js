@@ -442,12 +442,12 @@ export default function Search() {
       </div>
 
       <div className="w-5/6 p-4 ml-[16.666667%] overflow-y-auto mb-16">
-        <div className="flex">
-          <div className="w-1/2 pr-4">
-            <div className="mb-4">
-              <h3 className="result-title text-4xl mb-4 text-center">📝Answer</h3>
+        <div className="flex space-x-4">
+          <div className="w-1/2">
+            <div className="bg-white rounded-lg shadow-md p-6">
+              <h3 className="text-4xl mb-6 text-center font-semibold">📝 Answer</h3>
               {viewingChildNode && (
-                <div className="flex justify-center mb-2">
+                <div className="flex justify-center mb-4">
                   <button
                     onClick={handleReturnToInitialResult}
                     className="text-3xl hover:scale-110 transition-transform duration-200 focus:outline-none"
@@ -466,30 +466,29 @@ export default function Search() {
                   <p className="text-sm text-gray-500 text-center mt-2">{loadingMessage}</p>
                 </div>
               ) : (
-                <div className="min-h-40 p-4 bg-white rounded-lg shadow-md">
-                  <div 
-                    className="result-snippet prose prose-sm max-w-none"
-                    dangerouslySetInnerHTML={{ __html: renderedAnswer }}
-                  />
+                <div className="prose prose-sm max-w-none">
+                  <div dangerouslySetInnerHTML={{ __html: renderedAnswer }} />
                 </div>
               )}
             </div>
           </div>
 
-          <div className="w-1/2 pl-4">
-            <div className="mb-4">
-              <h3 className="result-title text-4xl mb-4 text-center">🧠Knowledge Graph</h3>
+          <div className="w-1/2">
+            <div className="bg-white rounded-lg shadow-md p-6">
+              <h3 className="text-4xl mb-6 text-center font-semibold">🧠 Knowledge Graph</h3>
               {loading || expandingNode ? (
-                <div className="h-64 bg-gray-100 rounded flex items-center justify-center">
+                <div className="h-[600px] bg-gray-50 rounded-lg flex items-center justify-center">
                   <div className="text-center">
                     <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-blue-500 mx-auto mb-4"></div>
                     <p className="text-lg font-semibold text-gray-600">{loadingMessage}</p>
                   </div>
                 </div>
               ) : graphError ? (
-                <p className="text-red-500">{graphError}</p>
+                <div className="h-[600px] bg-gray-50 rounded-lg flex items-center justify-center">
+                  <p className="text-red-500 text-center">{graphError}</p>
+                </div>
               ) : knowledgeGraphData && knowledgeGraphData.nodes && knowledgeGraphData.nodes.length > 0 ? (
-                <div style={{ height: '650px', width: '100%', border: '1px solid #ddd', borderRadius: '8px', background: 'white' }}>
+                <div className="h-[600px] rounded-lg border border-gray-200">
                   <KnowledgeGraph 
                     data={knowledgeGraphData} 
                     onNodeClick={handleNodeClick}
@@ -499,13 +498,15 @@ export default function Search() {
                   />
                 </div>
               ) : (
-                <p>No knowledge graph data available</p>
+                <div className="h-[600px] bg-gray-50 rounded-lg flex items-center justify-center">
+                  <p className="text-gray-500">No knowledge graph data available</p>
+                </div>
               )}
-              <div className="flex justify-center mt-4">
+              <div className="flex justify-center mt-4 space-x-2">
                 <button 
                   onClick={handleUndo} 
                   disabled={!hasPreviousGraph}
-                  className="text-2xl opacity-50 hover:opacity-100 transition-opacity disabled:opacity-30 mr-2"
+                  className="text-2xl opacity-50 hover:opacity-100 transition-opacity disabled:opacity-30"
                   title="Undo last action"
                 >
                   ↩️
@@ -513,7 +514,7 @@ export default function Search() {
                 <button 
                   onClick={handleRedo} 
                   disabled={graphFuture.length === 0}
-                  className="text-2xl opacity-50 hover:opacity-100 transition-opacity disabled:opacity-30 mr-2"
+                  className="text-2xl opacity-50 hover:opacity-100 transition-opacity disabled:opacity-30"
                   title="Redo next action"
                 >
                   ↪️
