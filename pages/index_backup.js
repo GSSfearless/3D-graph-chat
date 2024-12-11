@@ -37,7 +37,7 @@ export default function Home() {
                         onKeyPress={handleKeyPress}
                     />
                     <button 
-                        className="bg-[#105C93] text-white rounded-full h-12 w-12 flex items-center justify-center absolute right-4" 
+                        className="bg-[#105C93] text-white rounded-full h-12 w-12 flex items-center justify-center absolute right-4 hover:bg-[#3A86C8] transition duration-300" 
                         style={{ top: 'calc(50% - 2rem)' }}
                         onClick={handleSearch}
                     >
