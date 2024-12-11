@@ -57,9 +57,6 @@ function Home() {
             <FontAwesomeIcon icon={faArrowRight} />
           </button>
         </div>
-        <p className="text-center text-gray-600">
-          Discover the synergy of logical reasoning and creative inspiration
-        </p>
       </div>
     </div>
   );
