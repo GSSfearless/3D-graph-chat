@@ -1,7 +1,6 @@
 import { faArrowRight, faArrowUp } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import dynamic from 'next/dynamic';
-import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import 'tailwindcss/tailwind.css';
@@ -421,27 +420,7 @@ export default function Search() {
 
   return (
     <div className="flex flex-row min-h-screen relative pb-20">
-      <div className="w-1/6 p-4 bg-[#ECF5FD] flex flex-col justify-between fixed h-full" style={{ fontFamily: 'Open Sans, sans-serif' }}>
-        <div>
-          <Link href="/">
-            <a className="text-3xl font-extrabold mb-4 text-center block transition-all duration-300 hover:text-[#6CB6EF]" style={{ fontFamily: 'Poppins, sans-serif', fontWeight: '800', letterSpacing: '-1px', color: 'black' }}>Think-Graph</a>
-          </Link>
-          <div className="mb-4 relative">
-            <input 
-              type="text" 
-              placeholder="Just Ask..." 
-              className="w-full p-4 border-2 border-gray-300 rounded-full outline-none text-xl hover:border-gray-400 focus:border-gray-500 transition-all duration-300 cursor-pointer"
-              onClick={() => setShowLargeSearch(true)}
-              readOnly
-            />
-          </div>
-          <Link href="/">
-            <a className="block bg-[#ECF5FD] text-center p-2 rounded hover:bg-[#B6DBF7] transition duration-300 text-xl font-medium text-gray-600">🏠 Homepage</a>
-          </Link>
-        </div>
-      </div>
-
-      <div className="w-5/6 p-4 ml-[16.666667%] overflow-y-auto mb-16">
+      <div className="w-full p-4 overflow-y-auto mb-16">
         <div className="flex space-x-4">
           <div className="w-1/2">
             <div className="bg-white rounded-lg shadow-md p-6">
