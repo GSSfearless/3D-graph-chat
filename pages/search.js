@@ -1,6 +1,9 @@
+import { faArrowRight, faArrowUp } from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import dynamic from 'next/dynamic';
+import Link from 'next/link';
 import { useRouter } from 'next/router';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import 'tailwindcss/tailwind.css';
 import '../styles/globals.css';
 
@@ -417,71 +420,196 @@ export default function Search() {
   }, [knowledgeGraphData]);
 
   return (
-    <div className="min-h-screen bg-[#f8f9fa] flex flex-col">
-      {/* 顶部搜索栏 */}
-      <div className="w-full bg-white shadow-sm p-4 sticky top-0 z-10">
-        <div className="max-w-7xl mx-auto flex items-center gap-4">
-          <input
-            type="text"
-            placeholder="探索你的想法..."
-            className="flex-1 p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            onKeyPress={(e) => e.key === 'Enter' && handleSearch(query)}
-          />
-          <button
-            onClick={() => handleSearch(query)}
-            className="bg-blue-500 text-white px-6 py-2 rounded-lg hover:bg-blue-600 transition-colors"
-            disabled={loading}
-          >
-            {loading ? '搜索中...' : '搜索'}
-          </button>
+    <div className="flex flex-row min-h-screen relative pb-20">
+      <div className="w-1/6 p-4 bg-[#ECF5FD] flex flex-col justify-between fixed h-full" style={{ fontFamily: 'Open Sans, sans-serif' }}>
+        <div>
+          <Link href="/">
+            <a className="text-3xl font-extrabold mb-4 text-center block transition-all duration-300 hover:text-[#6CB6EF]" style={{ fontFamily: 'Poppins, sans-serif', fontWeight: '800', letterSpacing: '-1px', color: 'black' }}>Think-Graph</a>
+          </Link>
+          <div className="mb-4 relative">
+            <input 
+              type="text" 
+              placeholder="Just Ask..." 
+              className="w-full p-4 border-2 border-gray-300 rounded-full outline-none text-xl hover:border-gray-400 focus:border-gray-500 transition-all duration-300 cursor-pointer"
+              onClick={() => setShowLargeSearch(true)}
+              readOnly
+            />
+          </div>
+          <Link href="/">
+            <a className="block bg-[#ECF5FD] text-center p-2 rounded hover:bg-[#B6DBF7] transition duration-300 text-xl font-medium text-gray-600">🏠 Homepage</a>
+          </Link>
+        </div>
+        <div className="flex justify-between items-center">
+          <div className="flex items-center">
+            <Link href="/we-are-hiring">
+              <a className="block bg-[#ECF5FD] text-center p-2 rounded hover:bg-[#B6DBF7] transition duration-300 text-2xl font-medium text-gray-600">🪐</a>
+            </Link>
+            <span className="text-xs ml-2">We are hiring</span>
+          </div>
+          <div className="text-gray-400 mx-2">|</div>
+          <div className="flex items-center">
+            <a href="https://discord.gg/G66pESH3gm" target="_blank" rel="noopener noreferrer" className="block bg-[#ECF5FD] text-center p-2 rounded hover:bg-[#B6DBF7] transition duration-300 text-2xl font-medium text-gray-600">
+            🍻
+            </a>
+            <span className="text-xs ml-2">Join our discord</span>
+          </div>
+        </div>
+      </div>
+      <div className="w-5/6 p-4 ml-[16.666667%] overflow-y-auto mb-16">
+        <div className="flex">
+          <div className="w-3/4 pr-4">
+            <div className="mb-4">
+              <h3 className="result-title text-4xl mb-2 text-center">🧠Knowledge Graph</h3>
+              {loading || expandingNode ? (
+                <div className="h-64 bg-gray-100 rounded flex items-center justify-center">
+                  <div className="text-center">
+                    <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-blue-500 mx-auto mb-4"></div>
+                    <p className="text-lg font-semibold text-gray-600">{loadingMessage}</p>
+                  </div>
+                </div>
+              ) : graphError ? (
+                <p className="text-red-500">{graphError}</p>
+              ) : knowledgeGraphData && knowledgeGraphData.nodes && knowledgeGraphData.nodes.length > 0 ? (
+                <div style={{ height: '650px', width: '100%', border: '1px solid #ddd', borderRadius: '8px' }}>
+                  <KnowledgeGraph 
+                    data={knowledgeGraphData} 
+                    onNodeClick={handleNodeClick}
+                    onNodeDragStop={handleNodeDragStop}
+                    onNodeDelete={handleNodeDelete}
+                    layout={currentLayout}
+                  />
+                </div>
+              ) : (
+                <p>No knowledge graph data available</p>
+              )}
+              <div className="flex justify-center mt-4">
+                <button 
+                  onClick={handleUndo} 
+                  disabled={!hasPreviousGraph}
+                  className="text-2xl opacity-50 hover:opacity-100 transition-opacity disabled:opacity-30 mr-2"
+                  title="Undo last action"
+                >
+                  ↩️
+                </button>
+                <button 
+                  onClick={handleRedo} 
+                  disabled={graphFuture.length === 0}
+                  className="text-2xl opacity-50 hover:opacity-100 transition-opacity disabled:opacity-30 mr-2"
+                  title="Redo next action"
+                >
+                  ↪️
+                </button>
+                {/* 注释掉布局切换按钮 */}
+                {/*
+                <button
+                  onClick={() => handleLayoutChange('pyramid')}
+                  className={`text-2xl opacity-50 hover:opacity-100 transition-opacity mr-2 ${currentLayout === 'pyramid' ? 'opacity-100' : ''}`}
+                  title="Pyramid layout"
+                >
+                  🔺
+                </button>
+                <button
+                  onClick={() => handleLayoutChange('mindMap')}
+                  className={`text-2xl opacity-50 hover:opacity-100 transition-opacity mr-2 ${currentLayout === 'mindMap' ? 'opacity-100' : ''}`}
+                  title="Mind map layout"
+                >
+                  🌳
+                </button>
+                <button
+                  onClick={() => handleLayoutChange('radialTree')}
+                  className={`text-2xl opacity-50 hover:opacity-100 transition-opacity ${currentLayout === 'radialTree' ? 'opacity-100' : ''}`}
+                  title="Radial tree layout"
+                >
+                  🌞
+                </button>
+                */}
+              </div>
+            </div>
+          </div>
+          <div className="w-1/4 p-4 bg-white">
+            <div className="result-item mb-4">
+              <h3 className="result-title text-4xl mb-2">📝Answer</h3>
+              {viewingChildNode && (
+                <div className="flex justify-center mb-2">
+                  <button
+                    onClick={handleReturnToInitialResult}
+                    className="text-3xl hover:scale-110 transition-transform duration-200 focus:outline-none"
+                    title="Return to initial result"
+                  >
+                    🔙
+                  </button>
+                </div>
+              )}
+              {isLoadingNodeExplanation ? (
+                <div className="animate-pulse">
+                  <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
+                  <div className="h-4 bg-gray-200 rounded w-1/2 mb-2"></div>
+                  <div className="h-4 bg-gray-200 rounded w-5/6 mb-2"></div>
+                  <div className="h-4 bg-gray-200 rounded w-2/3 mb-2"></div>
+                  <p className="text-sm text-gray-500 text-center mt-2">{loadingMessage}</p>
+                </div>
+              ) : (
+                <div className="min-h-40 p-4">
+                  <div 
+                    className="result-snippet prose prose-sm max-w-none"
+                    dangerouslySetInnerHTML={{ __html: renderedAnswer }}
+                  />
+                </div>
+              )}
+            </div>
+          </div>
         </div>
       </div>
 
-      {/* 主要内容区域 */}
-      <div className="flex-1 flex">
-        {/* 左侧 Answer 区域 */}
-        <div className="w-1/2 p-6 overflow-y-auto">
-          {loading && (
-            <div className="text-center py-8">
-              {isCollecting ? (
-                <div>
-                  <p className="text-lg mb-2">{loadingMessage}</p>
-                  <p>收集页面: {collectedPages}/{totalPages || '?'}</p>
-                </div>
-              ) : isProcessing ? (
-                <p className="text-lg">{processingMessages[processingStep]}</p>
-              ) : (
-                <p className="text-lg">{loadingMessage}</p>
-              )}
-            </div>
-          )}
-          
-          {!loading && streamedAnswer && (
-            <div 
-              className="prose max-w-none"
-              dangerouslySetInnerHTML={{ __html: renderMarkdown(streamedAnswer) }}
-            />
-          )}
-        </div>
-
-        {/* 右侧 Knowledge Graph 区域 */}
-        <div className="w-1/2 border-l border-gray-200 p-6">
-          {graphError ? (
-            <div className="text-red-500 text-center py-8">
-              {graphError}
-            </div>
-          ) : (
-            <div className="h-full">
-              <KnowledgeGraph
-                data={knowledgeGraphData}
-                onNodeClick={handleNodeClick}
-                layout={currentLayout}
-                loading={loading}
+      {showLargeSearch && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm flex items-center justify-center z-50">
+          <div className="w-full max-w-2xl p-4">
+            <div className="bg-white p-4 rounded-lg shadow-md mb-4 flex items-center border border-gray-300 transition-all duration-300 relative" style={{ height: '8rem' }}>
+              <button 
+                className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors duration-200"
+                onClick={() => setShowLargeSearch(false)}
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+              <input 
+                type="text" 
+                placeholder="Just ask..." 
+                className="w-full p-4 border-none outline-none text-xl pl-16"
+                value={largeSearchQuery}
+                onChange={handleLargeSearchChange}
+                onKeyPress={handleLargeSearchKeyPress}
+                autoFocus
               />
+              <button 
+                className="bg-[#105C93] text-white rounded-full h-12 w-12 flex items-center justify-center absolute right-4 hover:bg-[#3A86C8] transition duration-300" 
+                style={{ top: 'calc(50% - 1.5rem)' }}
+                onClick={handleLargeSearch}
+              >
+                <FontAwesomeIcon icon={faArrowRight} />
+              </button>
             </div>
-          )}
+          </div>
+        </div>
+      )}
+
+      <div className="fixed bottom-4 left-1/2 transform -translate-x-1/2 w-full max-w-2xl z-50">
+        <div className="bg-white p-2 rounded-lg shadow-md flex items-center border-2 border-gray-300 transition-all duration-300" style={{ height: '4rem' }}>
+          <input 
+            type="text" 
+            placeholder={defaultQuery}
+            className="w-full p-2 border-none outline-none text-xl"
+            value={query}
+            onChange={handleChange}
+            onKeyPress={handleKeyPress}
+          />
+          <button 
+            className="bg-[#105C93] text-white rounded-full h-10 w-10 flex items-center justify-center absolute right-4 hover:bg-[#3A86C8] transition duration-300" 
+            onClick={handleButtonClick}
+          >
+            <FontAwesomeIcon icon={faArrowUp} />
+          </button>
         </div>
       </div>
     </div>
