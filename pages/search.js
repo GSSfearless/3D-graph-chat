@@ -3,7 +3,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
-import { useState, useCallback, useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import 'tailwindcss/tailwind.css';
 import '../styles/globals.css';
 
@@ -439,27 +439,46 @@ export default function Search() {
             <a className="block bg-[#ECF5FD] text-center p-2 rounded hover:bg-[#B6DBF7] transition duration-300 text-xl font-medium text-gray-600">🏠 Homepage</a>
           </Link>
         </div>
-        <div className="flex justify-between items-center">
-          <div className="flex items-center">
-            <Link href="/we-are-hiring">
-              <a className="block bg-[#ECF5FD] text-center p-2 rounded hover:bg-[#B6DBF7] transition duration-300 text-2xl font-medium text-gray-600">🪐</a>
-            </Link>
-            <span className="text-xs ml-2">We are hiring</span>
-          </div>
-          <div className="text-gray-400 mx-2">|</div>
-          <div className="flex items-center">
-            <a href="https://discord.gg/G66pESH3gm" target="_blank" rel="noopener noreferrer" className="block bg-[#ECF5FD] text-center p-2 rounded hover:bg-[#B6DBF7] transition duration-300 text-2xl font-medium text-gray-600">
-            🍻
-            </a>
-            <span className="text-xs ml-2">Join our discord</span>
-          </div>
-        </div>
       </div>
+
       <div className="w-5/6 p-4 ml-[16.666667%] overflow-y-auto mb-16">
         <div className="flex">
-          <div className="w-3/4 pr-4">
+          <div className="w-1/2 pr-4">
             <div className="mb-4">
-              <h3 className="result-title text-4xl mb-2 text-center">🧠Knowledge Graph</h3>
+              <h3 className="result-title text-4xl mb-4 text-center">📝Answer</h3>
+              {viewingChildNode && (
+                <div className="flex justify-center mb-2">
+                  <button
+                    onClick={handleReturnToInitialResult}
+                    className="text-3xl hover:scale-110 transition-transform duration-200 focus:outline-none"
+                    title="Return to initial result"
+                  >
+                    🔙
+                  </button>
+                </div>
+              )}
+              {isLoadingNodeExplanation ? (
+                <div className="animate-pulse">
+                  <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
+                  <div className="h-4 bg-gray-200 rounded w-1/2 mb-2"></div>
+                  <div className="h-4 bg-gray-200 rounded w-5/6 mb-2"></div>
+                  <div className="h-4 bg-gray-200 rounded w-2/3 mb-2"></div>
+                  <p className="text-sm text-gray-500 text-center mt-2">{loadingMessage}</p>
+                </div>
+              ) : (
+                <div className="min-h-40 p-4 bg-white rounded-lg shadow-md">
+                  <div 
+                    className="result-snippet prose prose-sm max-w-none"
+                    dangerouslySetInnerHTML={{ __html: renderedAnswer }}
+                  />
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div className="w-1/2 pl-4">
+            <div className="mb-4">
+              <h3 className="result-title text-4xl mb-4 text-center">🧠Knowledge Graph</h3>
               {loading || expandingNode ? (
                 <div className="h-64 bg-gray-100 rounded flex items-center justify-center">
                   <div className="text-center">
@@ -470,7 +489,7 @@ export default function Search() {
               ) : graphError ? (
                 <p className="text-red-500">{graphError}</p>
               ) : knowledgeGraphData && knowledgeGraphData.nodes && knowledgeGraphData.nodes.length > 0 ? (
-                <div style={{ height: '650px', width: '100%', border: '1px solid #ddd', borderRadius: '8px' }}>
+                <div style={{ height: '650px', width: '100%', border: '1px solid #ddd', borderRadius: '8px', background: 'white' }}>
                   <KnowledgeGraph 
                     data={knowledgeGraphData} 
                     onNodeClick={handleNodeClick}
@@ -499,63 +518,7 @@ export default function Search() {
                 >
                   ↪️
                 </button>
-                {/* 注释掉布局切换按钮 */}
-                {/*
-                <button
-                  onClick={() => handleLayoutChange('pyramid')}
-                  className={`text-2xl opacity-50 hover:opacity-100 transition-opacity mr-2 ${currentLayout === 'pyramid' ? 'opacity-100' : ''}`}
-                  title="Pyramid layout"
-                >
-                  🔺
-                </button>
-                <button
-                  onClick={() => handleLayoutChange('mindMap')}
-                  className={`text-2xl opacity-50 hover:opacity-100 transition-opacity mr-2 ${currentLayout === 'mindMap' ? 'opacity-100' : ''}`}
-                  title="Mind map layout"
-                >
-                  🌳
-                </button>
-                <button
-                  onClick={() => handleLayoutChange('radialTree')}
-                  className={`text-2xl opacity-50 hover:opacity-100 transition-opacity ${currentLayout === 'radialTree' ? 'opacity-100' : ''}`}
-                  title="Radial tree layout"
-                >
-                  🌞
-                </button>
-                */}
               </div>
-            </div>
-          </div>
-          <div className="w-1/4 p-4 bg-white">
-            <div className="result-item mb-4">
-              <h3 className="result-title text-4xl mb-2">📝Answer</h3>
-              {viewingChildNode && (
-                <div className="flex justify-center mb-2">
-                  <button
-                    onClick={handleReturnToInitialResult}
-                    className="text-3xl hover:scale-110 transition-transform duration-200 focus:outline-none"
-                    title="Return to initial result"
-                  >
-                    🔙
-                  </button>
-                </div>
-              )}
-              {isLoadingNodeExplanation ? (
-                <div className="animate-pulse">
-                  <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
-                  <div className="h-4 bg-gray-200 rounded w-1/2 mb-2"></div>
-                  <div className="h-4 bg-gray-200 rounded w-5/6 mb-2"></div>
-                  <div className="h-4 bg-gray-200 rounded w-2/3 mb-2"></div>
-                  <p className="text-sm text-gray-500 text-center mt-2">{loadingMessage}</p>
-                </div>
-              ) : (
-                <div className="min-h-40 p-4">
-                  <div 
-                    className="result-snippet prose prose-sm max-w-none"
-                    dangerouslySetInnerHTML={{ __html: renderedAnswer }}
-                  />
-                </div>
-              )}
             </div>
           </div>
         </div>

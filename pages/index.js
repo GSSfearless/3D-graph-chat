@@ -1,5 +1,6 @@
 import { faArrowRight, faBrain, faLightbulb } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { useState } from 'react';
 import 'tailwindcss/tailwind.css';
@@ -21,7 +22,7 @@ function Home() {
   };
 
   return (
-    <div className="flex flex-col md:flex-row min-h-screen bg-[#f8f9fa]">
+    <div className="flex flex-col md:flex-row min-h-screen bg-[#f8f9fa] relative">
       {/* Left side - Logical Reasoning */}
       <div className="flex-1 flex flex-col items-center justify-center p-8 bg-blue-50">
         <FontAwesomeIcon icon={faBrain} className="text-6xl text-blue-600 mb-4" />
@@ -56,6 +57,32 @@ function Home() {
           >
             <FontAwesomeIcon icon={faArrowRight} />
           </button>
+        </div>
+      </div>
+
+      {/* Bottom links */}
+      <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 flex justify-center space-x-8">
+        <div className="bg-white p-6 rounded-lg shadow-lg hover:shadow-xl transition-shadow duration-300 w-64">
+          <Link href="/we-are-hiring">
+            <a className="flex flex-col items-center space-y-2">
+              <span className="text-4xl">🪐</span>
+              <span className="text-lg font-medium text-gray-800">We are hiring</span>
+              <p className="text-sm text-gray-600 text-center">Join our team and shape the future of knowledge exploration</p>
+            </a>
+          </Link>
+        </div>
+
+        <div className="bg-white p-6 rounded-lg shadow-lg hover:shadow-xl transition-shadow duration-300 w-64">
+          <a 
+            href="https://discord.gg/G66pESH3gm" 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="flex flex-col items-center space-y-2"
+          >
+            <span className="text-4xl">🍻</span>
+            <span className="text-lg font-medium text-gray-800">Join our Discord</span>
+            <p className="text-sm text-gray-600 text-center">Connect with our community and share ideas</p>
+          </a>
         </div>
       </div>
     </div>
