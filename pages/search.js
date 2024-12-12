@@ -424,7 +424,7 @@ export default function Search() {
         <div className="flex space-x-4">
           <div className="w-1/2">
             <div className="bg-white rounded-lg shadow-md p-6">
-              <h3 className="text-4xl mb-6 text-center font-semibold">📝 Answer</h3>
+              <h3 className="text-4xl mb-6 text-center font-semibold">🧠 Deep Think</h3>
               {viewingChildNode && (
                 <div className="flex justify-center mb-4">
                   <button
@@ -454,7 +454,7 @@ export default function Search() {
 
           <div className="w-1/2">
             <div className="bg-white rounded-lg shadow-md p-6">
-              <h3 className="text-4xl mb-6 text-center font-semibold">🧠 Knowledge Graph</h3>
+              <h3 className="text-4xl mb-6 text-center font-semibold">🧠 Graph Insight</h3>
               {loading || expandingNode ? (
                 <div className="h-[600px] bg-gray-50 rounded-lg flex items-center justify-center">
                   <div className="text-center">
