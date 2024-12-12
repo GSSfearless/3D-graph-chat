@@ -26,12 +26,17 @@ Example format:
 • **Second important concept**
 • **Third important concept**
 
-### Thought Process
-1. **Step 1**: Explanation of the first concept
-2. **Step 2**: Explanation of the second concept
-3. **Step 3**: Explanation of the third concept
+### Detailed Explanation
+• Explanation of the first concept
+  • Additional details
+  • More information
+• Explanation of the second concept
+• Explanation of the third concept
+
+Do not use more than three hash symbols (###) for headings. Do not reference any context numbers or sources. Focus on providing an informative and well-structured answer.
 
 Here is the set of context information:
+
 ${context.map((item, index) => `Title: ${item.title}\nSummary: ${item.snippet}`).join('\n\n')}
 
 Remember, don't blindly repeat the context. Here is the user's question:

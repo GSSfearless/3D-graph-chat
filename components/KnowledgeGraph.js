@@ -1,5 +1,6 @@
 import dynamic from 'next/dynamic';
-import { useCallback, useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
+import { createPyramidLayout, createMindMapLayout, createRadialTreeLayout } from '../utils/graphLayouts';
 
 const ReactFlow = dynamic(() => import('react-flow-renderer').then(mod => mod.default), {
   ssr: false,
@@ -22,7 +23,6 @@ const KnowledgeGraph = ({ data, onNodeClick, onNodeDragStop, onNodeDelete }) => 
   const [nodes, setNodes] = useState(data.nodes);
   const [edges, setEdges] = useState(data.edges);
   const [hoveredNode, setHoveredNode] = useState(null);
-  const [thoughtChain, setThoughtChain] = useState([]);
 
   const MAX_NODES = 50; // 设置一个合理的最大节点数
 
@@ -52,16 +52,6 @@ const KnowledgeGraph = ({ data, onNodeClick, onNodeDragStop, onNodeDelete }) => 
         setNodes(data.nodes.slice(0, MAX_NODES));
         setEdges(data.edges);
       }
-    }
-  }, [data]);
-
-  useEffect(() => {
-    if (data) {
-      const steps = data.nodes.map(node => ({
-        id: node.id,
-        label: node.data.label,
-      }));
-      setThoughtChain(steps);
     }
   }, [data]);
 
@@ -133,13 +123,6 @@ const KnowledgeGraph = ({ data, onNodeClick, onNodeDragStop, onNodeDelete }) => 
 
   return (
     <div style={{ height: '100%', width: '100%', fontFamily: 'Roboto, sans-serif' }}>
-      <div className="thought-chain">
-        {thoughtChain.map((step, index) => (
-          <div key={index} className="thought-step">
-            <h3>{step.label}</h3>
-          </div>
-        ))}
-      </div>
       <ReactFlow 
         nodes={nodes}
         edges={edges}
