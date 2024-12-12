@@ -1,4 +1,4 @@
-import { faArrowRight, faArrowUp } from '@fortawesome/free-solid-svg-icons';
+import { faArrowRight, faBrain, faLightbulb } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import dynamic from 'next/dynamic';
 import { useRouter } from 'next/router';
@@ -424,7 +424,10 @@ export default function Search() {
         <div className="flex space-x-4">
           <div className="w-1/2">
             <div className="bg-white rounded-lg shadow-md p-6">
-              <h3 className="text-4xl mb-6 text-center font-semibold">🧠 Deep Think</h3>
+              <h3 className="text-4xl mb-6 text-center font-semibold">
+                <FontAwesomeIcon icon={faBrain} className="text-blue-600 mr-2" />
+                Deep Think
+              </h3>
               {viewingChildNode && (
                 <div className="flex justify-center mb-4">
                   <button
@@ -454,7 +457,10 @@ export default function Search() {
 
           <div className="w-1/2">
             <div className="bg-white rounded-lg shadow-md p-6">
-              <h3 className="text-4xl mb-6 text-center font-semibold">🧠 Graph Insight</h3>
+              <h3 className="text-4xl mb-6 text-center font-semibold">
+                <FontAwesomeIcon icon={faLightbulb} className="text-yellow-500 mr-2" />
+                Graph Insight
+              </h3>
               {loading || expandingNode ? (
                 <div className="h-[600px] bg-gray-50 rounded-lg flex items-center justify-center">
                   <div className="text-center">
@@ -551,7 +557,7 @@ export default function Search() {
             className="bg-[#105C93] text-white rounded-full h-10 w-10 flex items-center justify-center absolute right-4 hover:bg-[#3A86C8] transition duration-300" 
             onClick={handleButtonClick}
           >
-            <FontAwesomeIcon icon={faArrowUp} />
+            <FontAwesomeIcon icon={faArrowRight} />
           </button>
         </div>
       </div>
