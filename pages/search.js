@@ -89,9 +89,6 @@ export default function Search() {
   const [nodeExplanations, setNodeExplanations] = useState({});
   const [selectedNodeId, setSelectedNodeId] = useState(null);
   const [isLoadingNodeExplanation, setIsLoadingNodeExplanation] = useState(false);
-  const [thoughtChain, setThoughtChain] = useState([]);
-  const [currentThoughtIndex, setCurrentThoughtIndex] = useState(-1);
-  const [isThinking, setIsThinking] = useState(false);
   const initialAnswerRef = useRef('');
   const [viewingChildNode, setViewingChildNode] = useState(false);
   const [currentLayout, setCurrentLayout] = useState('radialTree');
@@ -126,9 +123,6 @@ export default function Search() {
     setTotalPages(0);
     setGraphError(null);
     setSearchResults([]);
-    setThoughtChain([]);
-    setCurrentThoughtIndex(-1);
-    setIsThinking(true);
 
     try {
       const eventSource = new EventSource(`/api/rag-search?query=${encodeURIComponent(searchQuery)}`);
@@ -168,22 +162,12 @@ export default function Search() {
       const reader = chatResponse.body.getReader();
       const decoder = new TextDecoder();
       let done = false;
-      let accumulatedText = '';
 
       while (!done) {
         const { value, done: doneReading } = await reader.read();
         done = doneReading;
         const chunkValue = decoder.decode(value);
-        accumulatedText += chunkValue;
-        
-        // 解析思维链条
-        const thoughts = accumulatedText.split('\n').filter(t => t.trim().startsWith('•'));
-        if (thoughts.length > thoughtChain.length) {
-          setThoughtChain(thoughts);
-          setCurrentThoughtIndex(thoughts.length - 1);
-        }
-        
-        setStreamedAnswer(accumulatedText);
+        setStreamedAnswer((prev) => prev + chunkValue);
       }
 
       // Store the initial answer
@@ -225,7 +209,6 @@ export default function Search() {
       console.error('Error during search:', error);
       setIsProcessing(false);
       setIsCollecting(false);
-      setIsThinking(false);
     }
     setLoading(false);
   }, []);
@@ -463,38 +446,7 @@ export default function Search() {
                 </div>
               ) : (
                 <div className="prose prose-sm max-w-none">
-                  {isThinking ? (
-                    <div className="space-y-4">
-                      {thoughtChain.map((thought, index) => (
-                        <div
-                          key={index}
-                          className={`p-4 rounded-lg border-2 transition-all duration-500 ${
-                            index === currentThoughtIndex
-                              ? 'border-blue-500 bg-blue-50 scale-105'
-                              : index < currentThoughtIndex
-                              ? 'border-green-500 bg-green-50'
-                              : 'border-gray-200'
-                          }`}
-                        >
-                          <div className="flex items-center space-x-3">
-                            <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                              index <= currentThoughtIndex ? 'bg-green-500' : 'bg-gray-200'
-                            }`}>
-                              <span className="text-white font-bold">{index + 1}</span>
-                            </div>
-                            <p className="flex-1 text-lg">{thought}</p>
-                          </div>
-                          {index === currentThoughtIndex && (
-                            <div className="mt-2 h-1 bg-blue-200 rounded">
-                              <div className="h-full w-full bg-blue-500 rounded animate-thinking"></div>
-                            </div>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <div dangerouslySetInnerHTML={{ __html: renderedAnswer }} />
-                  )}
+                  <div dangerouslySetInnerHTML={{ __html: renderedAnswer }} />
                 </div>
               )}
             </div>
