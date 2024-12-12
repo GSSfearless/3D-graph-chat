@@ -89,8 +89,6 @@ export default function Search() {
   const [nodeExplanations, setNodeExplanations] = useState({});
   const [selectedNodeId, setSelectedNodeId] = useState(null);
   const [isLoadingNodeExplanation, setIsLoadingNodeExplanation] = useState(false);
-  const [thoughtChain, setThoughtChain] = useState([]);
-  const [currentThoughtIndex, setCurrentThoughtIndex] = useState(0);
   const initialAnswerRef = useRef('');
   const [viewingChildNode, setViewingChildNode] = useState(false);
   const [currentLayout, setCurrentLayout] = useState('radialTree');
@@ -125,8 +123,6 @@ export default function Search() {
     setTotalPages(0);
     setGraphError(null);
     setSearchResults([]);
-    setThoughtChain([]);
-    setCurrentThoughtIndex(0);
 
     try {
       const eventSource = new EventSource(`/api/rag-search?query=${encodeURIComponent(searchQuery)}`);
@@ -166,31 +162,13 @@ export default function Search() {
       const reader = chatResponse.body.getReader();
       const decoder = new TextDecoder();
       let done = false;
-      let fullResponse = '';
 
       while (!done) {
         const { value, done: doneReading } = await reader.read();
         done = doneReading;
         const chunkValue = decoder.decode(value);
-        fullResponse += chunkValue;
-        
-        // 解析思维链条
-        const thoughts = fullResponse.split('\n').filter(line => line.trim().startsWith('•'));
-        setThoughtChain(thoughts);
-        
-        setStreamedAnswer(fullResponse);
+        setStreamedAnswer((prev) => prev + chunkValue);
       }
-
-      // 开始动画展示思维链条
-      let index = 0;
-      const thoughtInterval = setInterval(() => {
-        if (index < thoughtChain.length) {
-          setCurrentThoughtIndex(index);
-          index++;
-        } else {
-          clearInterval(thoughtInterval);
-        }
-      }, 1000);
 
       // Store the initial answer
       initialAnswerRef.current = streamedAnswer;
@@ -468,34 +446,7 @@ export default function Search() {
                 </div>
               ) : (
                 <div className="prose prose-sm max-w-none">
-                  {thoughtChain.length > 0 ? (
-                    <div className="space-y-4">
-                      {thoughtChain.map((thought, index) => (
-                        <div
-                          key={index}
-                          className={`thought-chain-item transition-all duration-500 ${
-                            index <= currentThoughtIndex
-                              ? 'opacity-100 transform translate-y-0'
-                              : 'opacity-0 transform translate-y-4'
-                          }`}
-                        >
-                          <div className="flex items-start space-x-3">
-                            <div className="flex-shrink-0 w-6 h-6 rounded-full bg-blue-500 text-white flex items-center justify-center text-sm">
-                              {index + 1}
-                            </div>
-                            <div className="flex-grow">
-                              <p className="text-gray-800">{thought.replace('•', '').trim()}</p>
-                            </div>
-                          </div>
-                          {index < thoughtChain.length - 1 && (
-                            <div className="ml-3 pl-3 border-l-2 border-blue-200 h-4"></div>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <div dangerouslySetInnerHTML={{ __html: renderedAnswer }} />
-                  )}
+                  <div dangerouslySetInnerHTML={{ __html: renderedAnswer }} />
                 </div>
               )}
             </div>
@@ -503,7 +454,7 @@ export default function Search() {
 
           <div className="w-1/2">
             <div className="bg-white rounded-lg shadow-md p-6">
-              <h3 className="text-4xl mb-6 text-center font-semibold">🧠 Answer</h3>
+              <h3 className="text-4xl mb-6 text-center font-semibold">🧠 Graph Insight</h3>
               {loading || expandingNode ? (
                 <div className="h-[600px] bg-gray-50 rounded-lg flex items-center justify-center">
                   <div className="text-center">
@@ -511,15 +462,43 @@ export default function Search() {
                     <p className="text-lg font-semibold text-gray-600">{loadingMessage}</p>
                   </div>
                 </div>
+              ) : graphError ? (
+                <div className="h-[600px] bg-gray-50 rounded-lg flex items-center justify-center">
+                  <p className="text-red-500 text-center">{graphError}</p>
+                </div>
+              ) : knowledgeGraphData && knowledgeGraphData.nodes && knowledgeGraphData.nodes.length > 0 ? (
+                <div className="h-[600px] rounded-lg border border-gray-200">
+                  <KnowledgeGraph 
+                    data={knowledgeGraphData} 
+                    onNodeClick={handleNodeClick}
+                    onNodeDragStop={handleNodeDragStop}
+                    onNodeDelete={handleNodeDelete}
+                    layout={currentLayout}
+                  />
+                </div>
               ) : (
-                <div className="h-[600px] overflow-y-auto">
-                  <div className={`transition-opacity duration-500 ${
-                    currentThoughtIndex === thoughtChain.length - 1 ? 'opacity-100' : 'opacity-0'
-                  }`}>
-                    <div dangerouslySetInnerHTML={{ __html: renderedAnswer }} />
-                  </div>
+                <div className="h-[600px] bg-gray-50 rounded-lg flex items-center justify-center">
+                  <p className="text-gray-500">No knowledge graph data available</p>
                 </div>
               )}
+              <div className="flex justify-center mt-4 space-x-2">
+                <button 
+                  onClick={handleUndo} 
+                  disabled={!hasPreviousGraph}
+                  className="text-2xl opacity-50 hover:opacity-100 transition-opacity disabled:opacity-30"
+                  title="Undo last action"
+                >
+                  ↩️
+                </button>
+                <button 
+                  onClick={handleRedo} 
+                  disabled={graphFuture.length === 0}
+                  className="text-2xl opacity-50 hover:opacity-100 transition-opacity disabled:opacity-30"
+                  title="Redo next action"
+                >
+                  ↪️
+                </button>
+              </div>
             </div>
           </div>
         </div>
