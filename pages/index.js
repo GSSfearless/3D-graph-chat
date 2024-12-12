@@ -65,7 +65,6 @@ function Home() {
             <a className="flex flex-col items-center space-y-2">
               <span className="text-4xl">🪐</span>
               <span className="text-lg font-medium text-gray-800">We are hiring</span>
-              <p className="text-sm text-gray-600 text-center">Join our team and shape the future of knowledge exploration</p>
             </a>
           </Link>
         </div>
@@ -79,7 +78,6 @@ function Home() {
           >
             <span className="text-4xl">🍻</span>
             <span className="text-lg font-medium text-gray-800">Join our Discord</span>
-            <p className="text-sm text-gray-600 text-center">Connect with our community and share ideas</p>
           </a>
         </div>
       </div>
