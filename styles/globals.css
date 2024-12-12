@@ -127,3 +127,67 @@ body {
   font-size: 20px; /* 设置箭头图标大小 */
   color: #ffffff;
 }
+
+/* 思维链条动画 */
+@keyframes thinking {
+  0% {
+    width: 0%;
+  }
+  100% {
+    width: 100%;
+  }
+}
+
+.animate-thinking {
+  animation: thinking 2s ease-in-out infinite;
+}
+
+/* 思维链条卡片动画 */
+.thought-card-enter {
+  opacity: 0;
+  transform: translateY(20px);
+}
+
+.thought-card-enter-active {
+  opacity: 1;
+  transform: translateY(0);
+  transition: opacity 500ms, transform 500ms;
+}
+
+/* 完成状态动画 */
+@keyframes complete {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.1);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.animate-complete {
+  animation: complete 0.5s ease-out;
+}
+
+/* 思维进度条动画 */
+.progress-bar {
+  height: 4px;
+  background: linear-gradient(90deg, #3B82F6 0%, #60A5FA 100%);
+  border-radius: 2px;
+  transition: width 0.3s ease-in-out;
+}
+
+/* 思维节点连接线动画 */
+.thought-connection {
+  position: absolute;
+  left: 4px;
+  width: 2px;
+  background: #E5E7EB;
+  transition: height 0.3s ease-in-out;
+}
+
+.thought-connection.active {
+  background: #3B82F6;
+}
