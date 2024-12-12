@@ -23,18 +23,18 @@ function Home() {
 
   return (
     <div className="flex flex-col md:flex-row min-h-screen bg-[#f8f9fa] relative">
-      {/* Left side - Logical Reasoning */}
+      {/* Left side - Deep Think */}
       <div className="flex-1 flex flex-col items-center justify-center p-8 bg-blue-50">
         <FontAwesomeIcon icon={faBrain} className="text-6xl text-blue-600 mb-4" />
-        <h2 className="text-2xl font-semibold mb-4 text-blue-800">Logical Reasoning</h2>
-        <p className="text-center text-blue-600 mb-8">Structured thinking and analysis</p>
+        <h2 className="text-2xl font-semibold mb-4 text-blue-800">Deep Think</h2>
+        <p className="text-center text-blue-600 mb-8">Dive deep into knowledge exploration</p>
       </div>
 
-      {/* Right side - Inspiration */}
+      {/* Right side - Graph Insight */}
       <div className="flex-1 flex flex-col items-center justify-center p-8 bg-yellow-50">
         <FontAwesomeIcon icon={faLightbulb} className="text-6xl text-yellow-500 mb-4" />
-        <h2 className="text-2xl font-semibold mb-4 text-yellow-800">Inspiration</h2>
-        <p className="text-center text-yellow-600 mb-8">Creative ideas and connections</p>
+        <h2 className="text-2xl font-semibold mb-4 text-yellow-800">Graph Insight</h2>
+        <p className="text-center text-yellow-600 mb-8">Visualize knowledge connections</p>
       </div>
 
       {/* Centered search bar */}
