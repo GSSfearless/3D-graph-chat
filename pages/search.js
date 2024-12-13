@@ -316,14 +316,13 @@ export default function Search() {
 
     if (knowledgeGraphData && knowledgeGraphData.nodes && knowledgeGraphData.nodes.length > 0) {
       if (node.id === knowledgeGraphData.nodes[0].id) {
-        // If it's the root node, always show the initial answer
+        // 如果是根节点，显示初始答案
         setStreamedAnswer(initialAnswerRef.current);
         setViewingChildNode(false);
       } else {
-        // If it's a child node
+        // 如果是子节点，只显示节点说明
         setViewingChildNode(true);
         if (!nodeExplanations[node.id]) {
-          // If explanation doesn't exist, fetch it
           try {
             const explanation = await generateNodeExplanation(node.id, node.data.label);
             setNodeExplanations(prev => ({...prev, [node.id]: explanation}));
@@ -333,7 +332,6 @@ export default function Search() {
             setStreamedAnswer('Failed to load explanation. Please try again.');
           }
         } else {
-          // If explanation exists, just set it
           setStreamedAnswer(nodeExplanations[node.id]);
         }
       }
@@ -341,7 +339,7 @@ export default function Search() {
       console.error('Knowledge graph data is incomplete or missing');
       setStreamedAnswer('Unable to load node information. Please try again.');
     }
-  
+
     setIsLoadingNodeExplanation(false);
     setLoadingMessage('');
   }, [knowledgeGraphData, nodeExplanations, generateNodeExplanation, initialAnswerRef]);
