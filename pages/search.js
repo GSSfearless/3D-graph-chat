@@ -423,7 +423,7 @@ export default function Search() {
       <div className="w-full p-4 overflow-y-auto mb-16">
         <div className="flex space-x-4">
           <div className="w-1/2">
-            <div className="bg-white rounded-lg shadow-md p-6">
+            <div className="bg-white p-6">
               <h3 className="text-4xl mb-6 text-center font-semibold">
                 <FontAwesomeIcon icon={faBrain} className="text-blue-600 mr-2" />
                 Deep Think
@@ -456,7 +456,7 @@ export default function Search() {
           </div>
 
           <div className="w-1/2">
-            <div className="bg-white rounded-lg shadow-md p-6">
+            <div className="bg-white p-6">
               <h3 className="text-4xl mb-6 text-center font-semibold">
                 <FontAwesomeIcon icon={faLightbulb} className="text-yellow-500 mr-2" />
                 Graph Insight
