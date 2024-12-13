@@ -1,6 +1,5 @@
 import dynamic from 'next/dynamic';
-import { useEffect, useState, useCallback } from 'react';
-import { createPyramidLayout, createMindMapLayout, createRadialTreeLayout } from '../utils/graphLayouts';
+import { useCallback, useEffect, useState } from 'react';
 
 const ReactFlow = dynamic(() => import('react-flow-renderer').then(mod => mod.default), {
   ssr: false,
@@ -60,9 +59,9 @@ const KnowledgeGraph = ({ data, onNodeClick, onNodeDragStop, onNodeDelete }) => 
   }, []);
 
   const handleNodeClick = useCallback((event, node) => {
-    console.log('Node clicked in KnowledgeGraph:', node);
-    onNodeClick(node);
-  }, [onNodeClick]);
+    // 禁用节点点击事件
+    return;
+  }, []);
 
   const handleNodeDragStart = useCallback((event, node) => {
     // You can add any logic here for when dragging starts
