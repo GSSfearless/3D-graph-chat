@@ -125,7 +125,16 @@ export default function Search() {
     setSearchResults([]);
 
     try {
-      const eventSource = new EventSource(`/api/rag-search?query=${encodeURIComponent(searchQuery)}`);
+      // 检测查询语言
+      const detectLanguageResponse = await fetch('/api/detectLanguage', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text: searchQuery }),
+      });
+
+      const { language } = await detectLanguageResponse.json();
+      
+      const eventSource = new EventSource(`/api/rag-search?query=${encodeURIComponent(searchQuery)}&language=${language}`);
       
       eventSource.onmessage = (event) => {
         const data = JSON.parse(event.data);
@@ -147,12 +156,16 @@ export default function Search() {
         setIsProcessing(false);
       };
 
-      // Get AI answer
+      // Get AI answer with detected language
       setStreamedAnswer('');
       const chatResponse = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ context: searchResults, query: searchQuery }),
+        body: JSON.stringify({ 
+          context: searchResults, 
+          query: searchQuery,
+          language: language 
+        }),
       });
 
       if (!chatResponse.ok) {
@@ -173,12 +186,15 @@ export default function Search() {
       // Store the initial answer
       initialAnswerRef.current = streamedAnswer;
 
-      // Get knowledge graph data
+      // Get knowledge graph data with detected language
       try {
         const graphResponse = await fetch('/api/knowledgeGraph', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ query: searchQuery }),
+          body: JSON.stringify({ 
+            query: searchQuery,
+            language: language 
+          }),
         });
 
         if (!graphResponse.ok) {
@@ -293,7 +309,8 @@ export default function Search() {
         body: JSON.stringify({ 
           nodeId, 
           label, 
-          graphData: knowledgeGraphData 
+          graphData: knowledgeGraphData,
+          language: knowledgeGraphData.language // 使用存储在图数据中的语言
         }),
       });
 
