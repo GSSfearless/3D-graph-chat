@@ -136,6 +136,7 @@ export default function Search() {
   const { q } = router.query;
 
   const [query, setQuery] = useState('');
+  const [currentQuestion, setCurrentQuestion] = useState('');
   const [largeSearchQuery, setLargeSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState([]);
   const [aiAnswer, setAiAnswer] = useState('');
@@ -186,7 +187,15 @@ export default function Search() {
     "AI processing retrieved information..."
   ];
 
+  // 监听路由参数变化，更新当前问题
+  useEffect(() => {
+    if (q) {
+      setCurrentQuestion(q);
+    }
+  }, [q]);
+
   const handleSearch = useCallback(async (searchQuery) => {
+    setCurrentQuestion(searchQuery);
     setLoading(true);
     setIsCollecting(true);
     setIsProcessing(false);
@@ -557,8 +566,8 @@ export default function Search() {
 
           <div className="w-1/2">
             <div className="bg-white p-6">
-              <h3 className="text-3xl mb-6 text-center font-semibold">
-                {q || getText('deepThink')}
+              <h3 className="text-3xl mb-6 text-left font-semibold">
+                {currentQuestion}
               </h3>
               {viewingChildNode && (
                 <div className="flex justify-center mb-4">
