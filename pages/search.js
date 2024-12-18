@@ -61,6 +61,76 @@ function renderMarkdown(text) {
   return text;
 }
 
+// 添加语言检测函数
+function detectLanguage(text) {
+  const hasChineseChars = /[\u4e00-\u9fa5]/.test(text);
+  const hasJapaneseChars = /[\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff]/.test(text);
+  const hasKoreanChars = /[\uac00-\ud7af\u1100-\u11ff]/.test(text);
+
+  if (hasChineseChars) return 'zh';
+  if (hasJapaneseChars) return 'ja';
+  if (hasKoreanChars) return 'ko';
+  return 'en';
+}
+
+// 添加多语言文本
+const i18n = {
+  zh: {
+    deepThink: '深度思考',
+    graphInsight: '图谱洞察',
+    loading: '加载中...',
+    loadingGraph: '正在加载知识图谱...',
+    noGraphData: '暂无知识图谱数据',
+    searchPlaceholder: '输入你的问题...',
+    defaultQuery: '生命、宇宙以及一切的答案是什么？',
+    loadingMessages: [
+      '🎨 准备画布...',
+      '🧚 唤醒知识精灵...',
+      '🏰 构建思维宫殿...',
+      '🌌 连接知识星座...',
+      '🧠 激活大脑神经元...',
+      '🗺️ 绘制智慧蓝图...',
+      '🔓 解锁知识宝库...',
+      '🧙‍♀️ 召唤智慧女神...',
+      '💡 点亮思维灯塔...',
+      '🚀 启动知识引擎...'
+    ],
+    processingMessages: [
+      "正在执行检索增强生成(RAG)...",
+      "正在使用大语言模型(LLM)分析信息...",
+      "正在整合搜索结果并生成答案...",
+      "AI正在处理检索到的信息..."
+    ]
+  },
+  en: {
+    deepThink: 'Deep Think',
+    graphInsight: 'Graph Insight',
+    loading: 'Loading...',
+    loadingGraph: 'Loading knowledge graph...',
+    noGraphData: 'No knowledge graph data available',
+    searchPlaceholder: 'Just ask...',
+    defaultQuery: 'What is the answer to life, the universe, and everything?',
+    loadingMessages: [
+      '🎨 Preparing the canvas...',
+      '🧚 Awakening knowledge fairies...',
+      '🏰 Constructing mind palace...',
+      '🌌 Connecting knowledge constellation...',
+      '🧠 Activating brain neurons...',
+      '🗺️ Drawing wisdom blueprint...',
+      '🔓 Unlocking knowledge vault...',
+      '🧙‍♀️ Summoning wisdom goddess...',
+      '💡 Illuminating thought lighthouse...',
+      '🚀 Launching knowledge engine...'
+    ],
+    processingMessages: [
+      "Performing Retrieval-Augmented Generation (RAG)...",
+      "Analyzing information with Large Language Model (LLM)...",
+      "Integrating search results and generating answer...",
+      "AI processing retrieved information..."
+    ]
+  }
+};
+
 export default function Search() {
   const router = useRouter();
   const { q } = router.query;
@@ -92,6 +162,7 @@ export default function Search() {
   const initialAnswerRef = useRef('');
   const [viewingChildNode, setViewingChildNode] = useState(false);
   const [currentLayout, setCurrentLayout] = useState('radialTree');
+  const [currentLang, setCurrentLang] = useState('en');
 
   const defaultQuery = "What is the answer to life, the universe, and everything?";
 
@@ -418,6 +489,19 @@ export default function Search() {
     console.log('knowledgeGraphData updated:', knowledgeGraphData);
   }, [knowledgeGraphData]);
 
+  // 更新语言检测逻辑
+  useEffect(() => {
+    if (q) {
+      const detectedLang = detectLanguage(q);
+      setCurrentLang(detectedLang);
+    }
+  }, [q]);
+
+  // 获取当前语言的文本
+  const getText = useCallback((key) => {
+    return i18n[currentLang]?.[key] || i18n.en[key];
+  }, [currentLang]);
+
   return (
     <div className="flex flex-row min-h-screen relative pb-20">
       <div className="w-full p-4 overflow-y-auto mb-16">
@@ -426,7 +510,7 @@ export default function Search() {
             <div className="bg-white p-6">
               <h3 className="text-4xl mb-6 text-center font-semibold">
                 <FontAwesomeIcon icon={faBrain} className="text-blue-600 mr-2" />
-                Deep Think
+                {getText('deepThink')}
               </h3>
               {viewingChildNode && (
                 <div className="flex justify-center mb-4">
@@ -459,7 +543,7 @@ export default function Search() {
             <div className="bg-white p-6">
               <h3 className="text-4xl mb-6 text-center font-semibold">
                 <FontAwesomeIcon icon={faLightbulb} className="text-yellow-500 mr-2" />
-                Graph Insight
+                {getText('graphInsight')}
               </h3>
               {loading || expandingNode ? (
                 <div className="h-[600px] bg-gray-50 rounded-lg flex items-center justify-center">
@@ -484,7 +568,7 @@ export default function Search() {
                 </div>
               ) : (
                 <div className="h-[600px] bg-gray-50 rounded-lg flex items-center justify-center">
-                  <p className="text-gray-500">No knowledge graph data available</p>
+                  <p className="text-gray-500">{getText('noGraphData')}</p>
                 </div>
               )}
               <div className="flex justify-center mt-4 space-x-2">
@@ -547,7 +631,7 @@ export default function Search() {
         <div className="bg-white p-2 rounded-lg shadow-md flex items-center border-2 border-gray-300 transition-all duration-300" style={{ height: '4rem' }}>
           <input 
             type="text" 
-            placeholder={defaultQuery}
+            placeholder={getText('searchPlaceholder')}
             className="w-full p-2 border-none outline-none text-xl"
             value={query}
             onChange={handleChange}
