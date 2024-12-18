@@ -1,55 +1,60 @@
-import { Configuration, OpenAIApi } from 'openai';
+import { OpenAIStream } from '../../utils/OpenAIStream';
 
-const configuration = new Configuration({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+export const config = {
+  runtime: 'edge',
+};
 
-const openai = new OpenAIApi(configuration);
+export default async function handler(req) {
+  const { context, query } = await req.json();
 
-export default async function handler(req, res) {
-  if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method not allowed' });
+  if (!context || !query) {
+    return new Response('Context and query are required', { status: 400 });
   }
 
-  try {
-    const { context, query, language = 'en' } = req.body;
+  const prompt = `
+You are a large language AI assistant. Please provide a concise and accurate answer to the user's question. You will receive a set of context information related to the question. Your answer must be correct, accurate, and written in a professional and neutral tone. Please limit it to 1024 tokens. Do not provide information unrelated to the question, and do not repeat yourself.
 
-    // 根据语言选择系统提示
-    const systemPrompts = {
-      'zh': '你是一个知识渊博的AI助手。请用中文回答问题，保持专业性和易懂性。',
-      'en': 'You are a knowledgeable AI assistant. Please answer in English, maintaining professionalism and clarity.',
-      'ja': 'あなたは知識豊富なAIアシスタントです。日本語で分かりやすく、専門的な回答をしてください。',
-      'ko': '당신은 지식이 풍부한 AI 어시스턴트입니다. 한국어로 전문적이고 이해하기 쉽게 답변해 주세요.'
-    };
+Please strictly use the following format to organize your answer:
+1. Use double asterisks (**) to surround important concepts or keywords to indicate bold. For example: **important concept**.
+2. Use a bullet point (•) followed by a space to create bulleted lists. Each new point should start on a new line.
+3. Use three hash symbols (###) to create subheadings, ensuring the subheading is on its own line. Do not use more than three hash symbols.
+4. Use a single line break to separate paragraphs.
 
-    const systemPrompt = systemPrompts[language] || systemPrompts['en'];
+Example format:
+### Key Points
+• **First important concept**
+• **Second important concept**
+• **Third important concept**
 
-    const completion = await openai.createChatCompletion({
-      model: "gpt-4",
-      messages: [
-        { role: "system", content: systemPrompt },
-        { role: "user", content: `Context: ${context}\n\nQuestion: ${query}` }
-      ],
-      stream: true,
-    });
+### Detailed Explanation
+• Explanation of the first concept
+  • Additional details
+  • More information
+• Explanation of the second concept
+• Explanation of the third concept
 
-    // 设置响应头以支持流式传输
-    res.writeHead(200, {
-      'Content-Type': 'text/plain',
-      'Transfer-Encoding': 'chunked',
-    });
+Do not use more than three hash symbols (###) for headings. Do not reference any context numbers or sources. Focus on providing an informative and well-structured answer.
 
-    // 流式传输回答
-    for await (const chunk of completion.data) {
-      const content = chunk.choices[0]?.delta?.content || '';
-      if (content) {
-        res.write(content);
-      }
-    }
+Here is the set of context information:
 
-    res.end();
-  } catch (error) {
-    console.error('Chat API error:', error);
-    res.status(500).json({ error: 'Failed to generate response' });
-  }
+${context.map((item, index) => `Title: ${item.title}\nSummary: ${item.snippet}`).join('\n\n')}
+
+Remember, don't blindly repeat the context. Here is the user's question:
+"${query}"
+`;
+
+  const payload = {
+    model: 'gpt-3.5-turbo',
+    messages: [{ role: 'user', content: prompt }],
+    temperature: 0.7,
+    top_p: 1,
+    frequency_penalty: 0,
+    presence_penalty: 0,
+    max_tokens: 1024,
+    stream: true,
+    n: 1,
+  };
+
+  const stream = await OpenAIStream(payload);
+  return new Response(stream);
 }

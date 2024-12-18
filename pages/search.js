@@ -160,15 +160,11 @@ export default function Search() {
       setStreamedAnswer('');
       const chatResponse = await fetch('/api/chat', {
         method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json',
-          'Accept-Language': language
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
           context: searchResults, 
           query: searchQuery,
-          language: language,
-          responseLanguage: language
+          language: language 
         }),
       });
 
@@ -194,14 +190,10 @@ export default function Search() {
       try {
         const graphResponse = await fetch('/api/knowledgeGraph', {
           method: 'POST',
-          headers: { 
-            'Content-Type': 'application/json',
-            'Accept-Language': language
-          },
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ 
             query: searchQuery,
-            language: language,
-            responseLanguage: language
+            language: language 
           }),
         });
 
@@ -313,16 +305,12 @@ export default function Search() {
     try {
       const response = await fetch('/api/nodeExplanation', {
         method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json',
-          'Accept-Language': knowledgeGraphData.language || 'en'
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
           nodeId, 
           label, 
           graphData: knowledgeGraphData,
-          language: knowledgeGraphData.language,
-          responseLanguage: knowledgeGraphData.language
+          language: knowledgeGraphData.language // 使用存储在图数据中的语言
         }),
       });
 
