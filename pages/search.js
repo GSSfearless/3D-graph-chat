@@ -510,7 +510,7 @@ export default function Search() {
             <div className="bg-white p-6">
               <h3 className="text-4xl mb-6 text-center font-semibold">
                 <FontAwesomeIcon icon={faBrain} className="text-blue-600 mr-2" />
-                {getText('deepThink')}
+                {q || getText('deepThink')}
               </h3>
               {viewingChildNode && (
                 <div className="flex justify-center mb-4">
@@ -532,8 +532,18 @@ export default function Search() {
                   <p className="text-sm text-gray-500 text-center mt-2">{loadingMessage}</p>
                 </div>
               ) : (
-                <div className="prose prose-sm max-w-none">
-                  <div dangerouslySetInnerHTML={{ __html: renderedAnswer }} />
+                <div className="prose prose-lg max-w-none px-8">
+                  <div 
+                    dangerouslySetInnerHTML={{ __html: renderedAnswer }} 
+                    className="text-lg leading-relaxed"
+                    style={{
+                      '& h3': { fontSize: '1.75rem', marginBottom: '1rem', marginTop: '2rem' },
+                      '& p': { fontSize: '1.125rem', marginBottom: '1rem' },
+                      '& ul': { marginLeft: '1.5rem', marginBottom: '1rem' },
+                      '& li': { fontSize: '1.125rem', marginBottom: '0.5rem' },
+                      '& strong': { color: '#2563EB' }
+                    }}
+                  />
                 </div>
               )}
             </div>
