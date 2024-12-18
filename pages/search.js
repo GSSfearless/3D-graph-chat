@@ -1,4 +1,4 @@
-import { faArrowRight, faBrain, faLightbulb } from '@fortawesome/free-solid-svg-icons';
+import { faArrowRight, faBrain } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import dynamic from 'next/dynamic';
 import { useRouter } from 'next/router';
@@ -508,7 +508,7 @@ export default function Search() {
         <div className="flex space-x-4">
           <div className="w-1/2">
             <div className="bg-white p-6">
-              <h3 className="text-4xl mb-6 text-center font-semibold">
+              <h3 className="text-3xl mb-6 text-center font-semibold">
                 <FontAwesomeIcon icon={faBrain} className="text-blue-600 mr-2" />
                 {q || getText('deepThink')}
               </h3>
@@ -532,15 +532,15 @@ export default function Search() {
                   <p className="text-sm text-gray-500 text-center mt-2">{loadingMessage}</p>
                 </div>
               ) : (
-                <div className="prose prose-lg max-w-none px-8">
+                <div className="prose max-w-none px-8">
                   <div 
                     dangerouslySetInnerHTML={{ __html: renderedAnswer }} 
-                    className="text-lg leading-relaxed"
+                    className="text-base leading-normal"
                     style={{
-                      '& h3': { fontSize: '1.75rem', marginBottom: '1rem', marginTop: '2rem' },
-                      '& p': { fontSize: '1.125rem', marginBottom: '1rem' },
-                      '& ul': { marginLeft: '1.5rem', marginBottom: '1rem' },
-                      '& li': { fontSize: '1.125rem', marginBottom: '0.5rem' },
+                      '& h3': { fontSize: '1.5rem', marginBottom: '0.75rem', marginTop: '1.5rem' },
+                      '& p': { fontSize: '1rem', marginBottom: '0.75rem' },
+                      '& ul': { marginLeft: '1.25rem', marginBottom: '0.75rem' },
+                      '& li': { fontSize: '1rem', marginBottom: '0.25rem' },
                       '& strong': { color: '#2563EB' }
                     }}
                   />
@@ -551,10 +551,6 @@ export default function Search() {
 
           <div className="w-1/2">
             <div className="bg-white p-6">
-              <h3 className="text-4xl mb-6 text-center font-semibold">
-                <FontAwesomeIcon icon={faLightbulb} className="text-yellow-500 mr-2" />
-                {getText('graphInsight')}
-              </h3>
               {loading || expandingNode ? (
                 <div className="h-[600px] bg-gray-50 rounded-lg flex items-center justify-center">
                   <div className="text-center">
