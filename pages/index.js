@@ -2,27 +2,15 @@ import { faArrowRight, faBrain, faLightbulb } from '@fortawesome/free-solid-svg-
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import 'tailwindcss/tailwind.css';
-
-// 添加语言检测函数
-function detectLanguage(text) {
-  const hasChineseChars = /[\u4e00-\u9fa5]/.test(text);
-  const hasJapaneseChars = /[\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff]/.test(text);
-  const hasKoreanChars = /[\uac00-\ud7af\u1100-\u11ff]/.test(text);
-
-  if (hasChineseChars) return 'zh';
-  if (hasJapaneseChars) return 'ja';
-  if (hasKoreanChars) return 'ko';
-  return 'en';
-}
 
 // 添加多语言文本
 const i18n = {
   zh: {
-    deepThink: '深度思考',
+    deepThink: '深思',
     deepThinkDesc: '深入探索知识的海洋',
-    graphInsight: '图谱洞察',
+    graphInsight: '图谱',
     graphInsightDesc: '可视化知识连接',
     mainTitle: '释放你的思维潜能',
     searchPlaceholder: '探索你的想法...',
@@ -45,18 +33,39 @@ const i18n = {
   }
 };
 
-function Home() {
+// 获取服务器端属性
+export async function getServerSideProps(context) {
+  // 获取客户端IP地址
+  const forwarded = context.req.headers["x-forwarded-for"];
+  const ip = forwarded ? forwarded.split(/, /)[0] : context.req.connection.remoteAddress;
+  
+  // 调用IP地理位置API
+  try {
+    const response = await fetch(`http://ip-api.com/json/${ip}`);
+    const data = await response.json();
+    
+    // 根据国家/地区代码确定语言
+    const lang = data.countryCode === 'CN' ? 'zh' : 'en';
+    
+    return {
+      props: {
+        defaultLang: lang,
+      },
+    };
+  } catch (error) {
+    console.error('Error fetching location:', error);
+    return {
+      props: {
+        defaultLang: 'en', // 默认使用英语
+      },
+    };
+  }
+}
+
+function Home({ defaultLang }) {
   const router = useRouter();
   const [query, setQuery] = useState('');
-  const [currentLang, setCurrentLang] = useState('en');
-
-  // 监听查询变化以更新语言
-  useEffect(() => {
-    if (query) {
-      const detectedLang = detectLanguage(query);
-      setCurrentLang(detectedLang);
-    }
-  }, [query]);
+  const [currentLang] = useState(defaultLang);
 
   // 获取当前语言的文本
   const getText = (key) => {
