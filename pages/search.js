@@ -1,4 +1,4 @@
-import { faArrowRight, faBrain } from '@fortawesome/free-solid-svg-icons';
+import { faArrowRight } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import dynamic from 'next/dynamic';
 import { useRouter } from 'next/router';
@@ -508,49 +508,6 @@ export default function Search() {
         <div className="flex space-x-4">
           <div className="w-1/2">
             <div className="bg-white p-6">
-              <h3 className="text-3xl mb-6 text-center font-semibold">
-                <FontAwesomeIcon icon={faBrain} className="text-blue-600 mr-2" />
-                {q || getText('deepThink')}
-              </h3>
-              {viewingChildNode && (
-                <div className="flex justify-center mb-4">
-                  <button
-                    onClick={handleReturnToInitialResult}
-                    className="text-3xl hover:scale-110 transition-transform duration-200 focus:outline-none"
-                    title="Return to initial result"
-                  >
-                    🔙
-                  </button>
-                </div>
-              )}
-              {isLoadingNodeExplanation ? (
-                <div className="animate-pulse">
-                  <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
-                  <div className="h-4 bg-gray-200 rounded w-1/2 mb-2"></div>
-                  <div className="h-4 bg-gray-200 rounded w-5/6 mb-2"></div>
-                  <div className="h-4 bg-gray-200 rounded w-2/3 mb-2"></div>
-                  <p className="text-sm text-gray-500 text-center mt-2">{loadingMessage}</p>
-                </div>
-              ) : (
-                <div className="prose max-w-none px-8">
-                  <div 
-                    dangerouslySetInnerHTML={{ __html: renderedAnswer }} 
-                    className="text-base leading-normal"
-                    style={{
-                      '& h3': { fontSize: '1.5rem', marginBottom: '0.75rem', marginTop: '1.5rem' },
-                      '& p': { fontSize: '1rem', marginBottom: '0.75rem' },
-                      '& ul': { marginLeft: '1.25rem', marginBottom: '0.75rem' },
-                      '& li': { fontSize: '1rem', marginBottom: '0.25rem' },
-                      '& strong': { color: '#2563EB' }
-                    }}
-                  />
-                </div>
-              )}
-            </div>
-          </div>
-
-          <div className="w-1/2">
-            <div className="bg-white p-6">
               {loading || expandingNode ? (
                 <div className="h-[600px] bg-gray-50 rounded-lg flex items-center justify-center">
                   <div className="text-center">
@@ -595,6 +552,48 @@ export default function Search() {
                   ↪️
                 </button>
               </div>
+            </div>
+          </div>
+
+          <div className="w-1/2">
+            <div className="bg-white p-6">
+              <h3 className="text-3xl mb-6 text-center font-semibold">
+                {q || getText('deepThink')}
+              </h3>
+              {viewingChildNode && (
+                <div className="flex justify-center mb-4">
+                  <button
+                    onClick={handleReturnToInitialResult}
+                    className="text-3xl hover:scale-110 transition-transform duration-200 focus:outline-none"
+                    title="Return to initial result"
+                  >
+                    🔙
+                  </button>
+                </div>
+              )}
+              {isLoadingNodeExplanation ? (
+                <div className="animate-pulse">
+                  <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
+                  <div className="h-4 bg-gray-200 rounded w-1/2 mb-2"></div>
+                  <div className="h-4 bg-gray-200 rounded w-5/6 mb-2"></div>
+                  <div className="h-4 bg-gray-200 rounded w-2/3 mb-2"></div>
+                  <p className="text-sm text-gray-500 text-center mt-2">{loadingMessage}</p>
+                </div>
+              ) : (
+                <div className="prose max-w-none px-8">
+                  <div 
+                    dangerouslySetInnerHTML={{ __html: renderedAnswer }} 
+                    className="text-base leading-normal"
+                    style={{
+                      '& h3': { fontSize: '1.5rem', marginBottom: '0.75rem', marginTop: '1.5rem' },
+                      '& p': { fontSize: '1rem', marginBottom: '0.75rem' },
+                      '& ul': { marginLeft: '1.25rem', marginBottom: '0.75rem' },
+                      '& li': { fontSize: '1rem', marginBottom: '0.25rem' },
+                      '& strong': { color: '#2563EB' }
+                    }}
+                  />
+                </div>
+              )}
             </div>
           </div>
         </div>
