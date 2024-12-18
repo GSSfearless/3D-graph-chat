@@ -1,5 +1,44 @@
 const OpenAI = require('openai');
 
+// 添加语言检测函数
+function detectLanguage(text) {
+  const hasChineseChars = /[\u4e00-\u9fa5]/.test(text);
+  const hasJapaneseChars = /[\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff]/.test(text);
+  const hasKoreanChars = /[\uac00-\ud7af\u1100-\u11ff]/.test(text);
+
+  if (hasChineseChars) return 'zh';
+  if (hasJapaneseChars) return 'ja';
+  if (hasKoreanChars) return 'ko';
+  return 'en';
+}
+
+// 获取多语言提示模板
+function getPromptTemplate(lang) {
+  const templates = {
+    zh: `你是一个专门用于创建知识图谱的AI助手。请为以下问题创建一个知识图谱。
+请以JSON格式提供响应，包含'nodes'和'edges'数组，以及一个'type'字段，指示图谱应该是'pyramid'还是'mindmap'类型。
+每个节点应该有'id'和'label'属性，每个边应该有'source'、'target'和'label'属性。
+所有文本必须使用中文。
+
+请确保：
+1. 节点标签简洁明了
+2. 边的标签描述节点间的关系
+3. 图谱结构清晰易懂
+4. 所有文本使用中文`,
+    en: `You are an AI assistant specialized in creating knowledge graphs. Please create a knowledge graph for the following question.
+Please provide your response in JSON format, including 'nodes' and 'edges' arrays, and a 'type' field indicating whether the graph should be a 'pyramid' or 'mindmap'.
+Each node should have 'id' and 'label' properties. Each edge should have 'source', 'target', and 'label' properties.
+
+Please ensure:
+1. Node labels are concise and clear
+2. Edge labels describe relationships between nodes
+3. Graph structure is clear and understandable
+4. All text is in English`
+  };
+
+  return templates[lang] || templates.en;
+}
+
 const openai = new OpenAI({
   organization: 'org-gLWuvsHwqOs4i3QAdK8nQ5zk',
   project: 'proj_TRi4aW8PdBr9LBaE9W34pDPi',
@@ -81,11 +120,21 @@ export default async function handler(req, res) {
   }
 
   try {
+    // 检测用户输入的语言
+    const detectedLang = detectLanguage(query);
+    const promptTemplate = getPromptTemplate(detectedLang);
+
     const completion = await openai.chat.completions.create({
       model: "gpt-3.5-turbo",
       messages: [
-        {role: "system", content: "You are an expert capable of breaking down complex concepts into structured knowledge graphs. Please provide a response in JSON format, including 'nodes' and 'edges' arrays, and a 'type' field indicating whether the graph should be a 'pyramid' or 'mindmap'. Each node should have 'id' and 'label' properties. Each edge should have 'source', 'target', and 'label' properties."},
-        {role: "user", content: `Please create a knowledge graph for the following question: ${query}`}
+        {
+          role: "system", 
+          content: promptTemplate
+        },
+        {
+          role: "user", 
+          content: `请为以下问题创建知识图谱：${query}`
+        }
       ],
     });
 
