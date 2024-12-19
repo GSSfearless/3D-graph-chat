@@ -650,15 +650,24 @@ export default function Search() {
                 </svg>
               </button>
               <div className="flex-grow pl-16 pr-14">
-                <input 
-                  type="text" 
+                <textarea 
                   placeholder="Just ask..." 
-                  className="w-full p-4 border-none outline-none text-xl whitespace-pre-wrap break-words"
+                  className="w-full p-4 border-none outline-none text-xl whitespace-pre-wrap break-words overflow-hidden"
                   value={largeSearchQuery}
-                  onChange={handleLargeSearchChange}
+                  onChange={(e) => {
+                    e.target.style.height = 'auto';
+                    e.target.style.height = e.target.scrollHeight + 'px';
+                    handleLargeSearchChange(e);
+                  }}
                   onKeyPress={handleLargeSearchKeyPress}
                   autoFocus
-                  style={{ wordWrap: 'break-word', height: 'auto', resize: 'none' }}
+                  style={{ 
+                    wordWrap: 'break-word',
+                    resize: 'none',
+                    minHeight: '3rem',
+                    height: 'auto'
+                  }}
+                  rows="1"
                 />
               </div>
               <button 
@@ -676,14 +685,23 @@ export default function Search() {
       <div className="fixed bottom-4 left-1/2 transform -translate-x-1/2 w-full max-w-2xl z-50">
         <div className="bg-white p-2 rounded-lg shadow-md flex items-center border-2 border-gray-300 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:border-blue-400 group" style={{ minHeight: '4rem' }}>
           <div className="flex-grow pr-14">
-            <input 
-              type="text" 
+            <textarea 
               placeholder={getText('searchPlaceholder')}
-              className="w-full p-2 border-none outline-none text-xl group-hover:placeholder-blue-400 transition-colors duration-300 min-h-[2.5rem] whitespace-pre-wrap break-words"
+              className="w-full p-2 border-none outline-none text-xl group-hover:placeholder-blue-400 transition-colors duration-300 min-h-[2.5rem] whitespace-pre-wrap break-words overflow-hidden"
               value={query}
-              onChange={handleChange}
+              onChange={(e) => {
+                e.target.style.height = 'auto';
+                e.target.style.height = e.target.scrollHeight + 'px';
+                handleChange(e);
+              }}
               onKeyPress={handleKeyPress}
-              style={{ wordWrap: 'break-word', height: 'auto', resize: 'none' }}
+              style={{ 
+                wordWrap: 'break-word',
+                resize: 'none',
+                minHeight: '2.5rem',
+                height: 'auto'
+              }}
+              rows="1"
             />
           </div>
           <button 

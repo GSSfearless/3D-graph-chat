@@ -107,14 +107,23 @@ function Home({ defaultLang }) {
         </h1>
         <div className="bg-white p-4 rounded-lg shadow-lg mb-4 flex items-center border border-gray-300 transition-all duration-300" style={{ minHeight: '5rem' }}>
           <div className="flex-grow pr-14">
-            <input 
-              type="text" 
+            <textarea 
               placeholder={getText('searchPlaceholder')}
-              className="w-full p-4 border-none outline-none text-xl whitespace-pre-wrap break-words"
+              className="w-full p-4 border-none outline-none text-xl whitespace-pre-wrap break-words overflow-hidden"
               value={query}
-              onChange={(e) => setQuery(e.target.value)}
+              onChange={(e) => {
+                e.target.style.height = 'auto';
+                e.target.style.height = e.target.scrollHeight + 'px';
+                setQuery(e.target.value);
+              }}
               onKeyPress={handleKeyPress}
-              style={{ wordWrap: 'break-word', height: 'auto', resize: 'none' }}
+              style={{ 
+                wordWrap: 'break-word',
+                resize: 'none',
+                minHeight: '3rem',
+                height: 'auto'
+              }}
+              rows="1"
             />
           </div>
           <button 
