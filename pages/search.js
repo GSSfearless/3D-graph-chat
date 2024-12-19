@@ -640,27 +640,30 @@ export default function Search() {
       {showLargeSearch && (
         <div className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm flex items-center justify-center z-50">
           <div className="w-full max-w-2xl p-4">
-            <div className="bg-white p-4 rounded-lg shadow-md mb-4 flex items-center border border-gray-300 transition-all duration-300 relative" style={{ height: '8rem' }}>
+            <div className="bg-white p-4 rounded-lg shadow-md mb-4 flex items-center border border-gray-300 transition-all duration-300 relative" style={{ minHeight: '8rem' }}>
               <button 
-                className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors duration-200"
+                className="absolute left-4 top-4 text-gray-400 hover:text-gray-600 transition-colors duration-200"
                 onClick={() => setShowLargeSearch(false)}
               >
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                 </svg>
               </button>
-              <input 
-                type="text" 
-                placeholder="Just ask..." 
-                className="w-full p-4 border-none outline-none text-xl pl-16"
-                value={largeSearchQuery}
-                onChange={handleLargeSearchChange}
-                onKeyPress={handleLargeSearchKeyPress}
-                autoFocus
-              />
+              <div className="flex-grow pl-16 pr-14">
+                <input 
+                  type="text" 
+                  placeholder="Just ask..." 
+                  className="w-full p-4 border-none outline-none text-xl whitespace-pre-wrap break-words"
+                  value={largeSearchQuery}
+                  onChange={handleLargeSearchChange}
+                  onKeyPress={handleLargeSearchKeyPress}
+                  autoFocus
+                  style={{ wordWrap: 'break-word', height: 'auto', resize: 'none' }}
+                />
+              </div>
               <button 
                 className="bg-gradient-to-r from-blue-500 to-yellow-500 text-white rounded-full h-12 w-12 flex items-center justify-center absolute right-4 hover:from-blue-600 hover:to-yellow-600 transition duration-300" 
-                style={{ top: 'calc(50% - 1.5rem)' }}
+                style={{ top: '1rem' }}
                 onClick={handleLargeSearch}
               >
                 <FontAwesomeIcon icon={faArrowRight} />
@@ -671,15 +674,18 @@ export default function Search() {
       )}
 
       <div className="fixed bottom-4 left-1/2 transform -translate-x-1/2 w-full max-w-2xl z-50">
-        <div className="bg-white p-2 rounded-lg shadow-md flex items-center border-2 border-gray-300 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:border-blue-400 group" style={{ height: '4rem' }}>
-          <input 
-            type="text" 
-            placeholder={getText('searchPlaceholder')}
-            className="w-full p-2 border-none outline-none text-xl group-hover:placeholder-blue-400 transition-colors duration-300"
-            value={query}
-            onChange={handleChange}
-            onKeyPress={handleKeyPress}
-          />
+        <div className="bg-white p-2 rounded-lg shadow-md flex items-center border-2 border-gray-300 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:border-blue-400 group" style={{ minHeight: '4rem' }}>
+          <div className="flex-grow pr-14">
+            <input 
+              type="text" 
+              placeholder={getText('searchPlaceholder')}
+              className="w-full p-2 border-none outline-none text-xl group-hover:placeholder-blue-400 transition-colors duration-300 min-h-[2.5rem] whitespace-pre-wrap break-words"
+              value={query}
+              onChange={handleChange}
+              onKeyPress={handleKeyPress}
+              style={{ wordWrap: 'break-word', height: 'auto', resize: 'none' }}
+            />
+          </div>
           <button 
             className="bg-gradient-to-r from-blue-500 to-yellow-500 text-white rounded-full h-10 w-10 flex items-center justify-center absolute right-4 hover:from-blue-600 hover:to-yellow-600 transition duration-300 group-hover:scale-110" 
             onClick={handleButtonClick}
