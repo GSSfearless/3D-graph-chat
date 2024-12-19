@@ -105,15 +105,18 @@ function Home({ defaultLang }) {
         <h1 className="text-4xl font-semibold mb-8 text-center text-gray-800">
           {getText('mainTitle')}
         </h1>
-        <div className="bg-white p-4 rounded-lg shadow-lg mb-4 flex items-center border border-gray-300 transition-all duration-300">
-          <input 
-            type="text" 
-            placeholder={getText('searchPlaceholder')}
-            className="w-full p-4 border-none outline-none text-xl"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            onKeyPress={handleKeyPress}
-          />
+        <div className="bg-white p-4 rounded-lg shadow-lg mb-4 flex items-center border border-gray-300 transition-all duration-300" style={{ minHeight: '5rem' }}>
+          <div className="flex-grow pr-14">
+            <input 
+              type="text" 
+              placeholder={getText('searchPlaceholder')}
+              className="w-full p-4 border-none outline-none text-xl whitespace-pre-wrap break-words"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              onKeyPress={handleKeyPress}
+              style={{ wordWrap: 'break-word', height: 'auto', resize: 'none' }}
+            />
+          </div>
           <button 
             className="bg-gradient-to-r from-blue-500 to-yellow-500 text-white rounded-full h-12 w-12 flex items-center justify-center absolute right-8 hover:from-blue-600 hover:to-yellow-600 transition duration-300" 
             onClick={handleSearch}
