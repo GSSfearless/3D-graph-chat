@@ -666,7 +666,7 @@ export default function Search() {
               <input 
                 type="text" 
                 placeholder="Just ask..." 
-                className="w-full p-4 border-none outline-none text-xl pl-16 pr-14"
+                className="w-full p-4 border-none outline-none text-xl pl-16"
                 value={largeSearchQuery}
                 onChange={handleLargeSearchChange}
                 onKeyPress={handleLargeSearchKeyPress}
@@ -689,7 +689,7 @@ export default function Search() {
           <input 
             type="text" 
             placeholder={getText('searchPlaceholder')}
-            className="w-full p-2 border-none outline-none text-xl group-hover:placeholder-blue-400 transition-colors duration-300 pr-14"
+            className="w-full p-2 border-none outline-none text-xl group-hover:placeholder-blue-400 transition-colors duration-300"
             value={query}
             onChange={handleChange}
             onKeyPress={handleKeyPress}
