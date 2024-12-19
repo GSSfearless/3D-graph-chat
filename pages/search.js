@@ -133,7 +133,7 @@ const i18n = {
 
 export default function Search() {
   const router = useRouter();
-  const { q } = router.query;
+  const { q, side = 'both' } = router.query;
 
   const [query, setQuery] = useState('');
   const [currentQuestion, setCurrentQuestion] = useState('');
@@ -510,6 +510,18 @@ export default function Search() {
   const getText = useCallback((key) => {
     return i18n[currentLang]?.[key] || i18n.en[key];
   }, [currentLang]);
+
+  // 在组件加载时检测语言
+  useEffect(() => {
+    if (q) {
+      const detectedLang = detectLanguage(q);
+      setCurrentLang(detectedLang);
+    } else {
+      // 如果没有查询参数，尝试从浏览器语言设置中检测
+      const browserLang = navigator.language.toLowerCase();
+      setCurrentLang(browserLang.startsWith('zh') ? 'zh' : 'en');
+    }
+  }, [q]);
 
   return (
     <div className="flex flex-row min-h-screen relative pb-20">
