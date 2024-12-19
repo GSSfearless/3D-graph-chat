@@ -335,24 +335,10 @@ export default function Search() {
 
   const handleChange = (e) => {
     setQuery(e.target.value);
-    if (streamedAnswer) {
-      setStreamedAnswer('');
-      setRenderedAnswer('');
-      setKnowledgeGraphData(null);
-      setSelectedNodeId(null);
-      setViewingChildNode(false);
-    }
   }
 
   const handleLargeSearchChange = (e) => {
     setLargeSearchQuery(e.target.value);
-    if (streamedAnswer) {
-      setStreamedAnswer('');
-      setRenderedAnswer('');
-      setKnowledgeGraphData(null);
-      setSelectedNodeId(null);
-      setViewingChildNode(false);
-    }
   }
 
   const handleKeyPress = (e) => {
