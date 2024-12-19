@@ -654,17 +654,17 @@ export default function Search() {
       )}
 
       <div className="fixed bottom-4 left-1/2 transform -translate-x-1/2 w-full max-w-2xl z-50">
-        <div className="bg-white p-2 rounded-lg shadow-md flex items-center border-2 border-gray-300 transition-all duration-300" style={{ height: '4rem' }}>
+        <div className="bg-white p-2 rounded-lg shadow-md flex items-center border-2 border-gray-300 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:border-blue-400 group" style={{ height: '4rem' }}>
           <input 
             type="text" 
             placeholder={getText('searchPlaceholder')}
-            className="w-full p-2 border-none outline-none text-xl"
+            className="w-full p-2 border-none outline-none text-xl group-hover:placeholder-blue-400 transition-colors duration-300"
             value={query}
             onChange={handleChange}
             onKeyPress={handleKeyPress}
           />
           <button 
-            className="bg-[#105C93] text-white rounded-full h-10 w-10 flex items-center justify-center absolute right-4 hover:bg-[#3A86C8] transition duration-300" 
+            className="bg-[#105C93] text-white rounded-full h-10 w-10 flex items-center justify-center absolute right-4 hover:bg-[#3A86C8] transition duration-300 group-hover:scale-110" 
             onClick={handleButtonClick}
           >
             <FontAwesomeIcon icon={faArrowRight} />
