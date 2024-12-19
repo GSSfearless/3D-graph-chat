@@ -642,7 +642,7 @@ export default function Search() {
                 autoFocus
               />
               <button 
-                className="bg-[#105C93] text-white rounded-full h-12 w-12 flex items-center justify-center absolute right-4 hover:bg-[#3A86C8] transition duration-300" 
+                className="bg-gradient-to-r from-blue-500 to-yellow-500 text-white rounded-full h-12 w-12 flex items-center justify-center absolute right-4 hover:from-blue-600 hover:to-yellow-600 transition duration-300" 
                 style={{ top: 'calc(50% - 1.5rem)' }}
                 onClick={handleLargeSearch}
               >
@@ -664,7 +664,7 @@ export default function Search() {
             onKeyPress={handleKeyPress}
           />
           <button 
-            className="bg-[#105C93] text-white rounded-full h-10 w-10 flex items-center justify-center absolute right-4 hover:bg-[#3A86C8] transition duration-300 group-hover:scale-110" 
+            className="bg-gradient-to-r from-blue-500 to-yellow-500 text-white rounded-full h-10 w-10 flex items-center justify-center absolute right-4 hover:from-blue-600 hover:to-yellow-600 transition duration-300 group-hover:scale-110" 
             onClick={handleButtonClick}
           >
             <FontAwesomeIcon icon={faArrowRight} />
