@@ -164,7 +164,6 @@ export default function Search() {
   const [viewingChildNode, setViewingChildNode] = useState(false);
   const [currentLayout, setCurrentLayout] = useState('radialTree');
   const [currentLang, setCurrentLang] = useState('en');
-  const [isPreloading, setIsPreloading] = useState(false);
 
   const defaultQuery = "What is the answer to life, the universe, and everything?";
 
@@ -200,7 +199,6 @@ export default function Search() {
     setLoading(true);
     setIsCollecting(true);
     setIsProcessing(false);
-    setIsPreloading(true);
     setCollectedPages(0);
     setTotalPages(0);
     setGraphError(null);
@@ -227,7 +225,6 @@ export default function Search() {
         eventSource.close();
         setIsCollecting(false);
         setIsProcessing(false);
-        setIsPreloading(false);
       };
 
       // Get AI answer
@@ -292,7 +289,6 @@ export default function Search() {
       console.error('Error during search:', error);
       setIsProcessing(false);
       setIsCollecting(false);
-      setIsPreloading(false);
     }
     setLoading(false);
   }, []);
@@ -345,7 +341,6 @@ export default function Search() {
       setKnowledgeGraphData(null);
       setSelectedNodeId(null);
       setViewingChildNode(false);
-      setIsPreloading(false);
     }
   }
 
@@ -619,7 +614,22 @@ export default function Search() {
                   <div className="h-4 bg-gray-200 rounded w-2/3 mb-2"></div>
                   <p className="text-sm text-gray-500 text-center mt-2">{loadingMessage}</p>
                 </div>
-              ) : isPreloading ? (
+              ) : (
+                <div className="prose max-w-none px-8">
+                  <div 
+                    dangerouslySetInnerHTML={{ __html: renderedAnswer }} 
+                    className="text-base leading-normal"
+                    style={{
+                      '& h3': { fontSize: '1.5rem', marginBottom: '0.75rem', marginTop: '1.5rem' },
+                      '& p': { fontSize: '1rem', marginBottom: '0.75rem' },
+                      '& ul': { marginLeft: '1.25rem', marginBottom: '0.75rem' },
+                      '& li': { fontSize: '1rem', marginBottom: '0.25rem' },
+                      '& strong': { color: '#2563EB' }
+                    }}
+                  />
+                </div>
+              )}
+              {!streamedAnswer && query && (
                 <div className="animate-pulse space-y-4">
                   <div className="h-4 bg-gray-200 rounded w-3/4"></div>
                   <div className="h-4 bg-gray-200 rounded w-5/6"></div>
@@ -635,7 +645,8 @@ export default function Search() {
                     <div className="h-3 bg-gray-200 rounded w-1/2"></div>
                   </div>
                 </div>
-              ) : streamedAnswer ? (
+              )}
+              {streamedAnswer && (
                 <div className="prose max-w-none px-8">
                   <div 
                     dangerouslySetInnerHTML={{ __html: renderedAnswer }} 
@@ -649,7 +660,7 @@ export default function Search() {
                     }}
                   />
                 </div>
-              ) : null}
+              )}
             </div>
           </div>
         </div>
