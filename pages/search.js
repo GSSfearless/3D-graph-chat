@@ -335,10 +335,24 @@ export default function Search() {
 
   const handleChange = (e) => {
     setQuery(e.target.value);
+    if (streamedAnswer) {
+      setStreamedAnswer('');
+      setRenderedAnswer('');
+      setKnowledgeGraphData(null);
+      setSelectedNodeId(null);
+      setViewingChildNode(false);
+    }
   }
 
   const handleLargeSearchChange = (e) => {
     setLargeSearchQuery(e.target.value);
+    if (streamedAnswer) {
+      setStreamedAnswer('');
+      setRenderedAnswer('');
+      setKnowledgeGraphData(null);
+      setSelectedNodeId(null);
+      setViewingChildNode(false);
+    }
   }
 
   const handleKeyPress = (e) => {
@@ -601,6 +615,38 @@ export default function Search() {
                   <p className="text-sm text-gray-500 text-center mt-2">{loadingMessage}</p>
                 </div>
               ) : (
+                <div className="prose max-w-none px-8">
+                  <div 
+                    dangerouslySetInnerHTML={{ __html: renderedAnswer }} 
+                    className="text-base leading-normal"
+                    style={{
+                      '& h3': { fontSize: '1.5rem', marginBottom: '0.75rem', marginTop: '1.5rem' },
+                      '& p': { fontSize: '1rem', marginBottom: '0.75rem' },
+                      '& ul': { marginLeft: '1.25rem', marginBottom: '0.75rem' },
+                      '& li': { fontSize: '1rem', marginBottom: '0.25rem' },
+                      '& strong': { color: '#2563EB' }
+                    }}
+                  />
+                </div>
+              )}
+              {!streamedAnswer && query && (
+                <div className="animate-pulse space-y-4">
+                  <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+                  <div className="h-4 bg-gray-200 rounded w-5/6"></div>
+                  <div className="h-4 bg-gray-200 rounded w-2/3"></div>
+                  <div className="space-y-3">
+                    <div className="h-3 bg-gray-200 rounded w-1/2"></div>
+                    <div className="h-3 bg-gray-200 rounded w-4/5"></div>
+                    <div className="h-3 bg-gray-200 rounded w-3/5"></div>
+                  </div>
+                  <div className="space-y-3 mt-6">
+                    <div className="h-3 bg-gray-200 rounded w-3/4"></div>
+                    <div className="h-3 bg-gray-200 rounded w-2/3"></div>
+                    <div className="h-3 bg-gray-200 rounded w-1/2"></div>
+                  </div>
+                </div>
+              )}
+              {streamedAnswer && (
                 <div className="prose max-w-none px-8">
                   <div 
                     dangerouslySetInnerHTML={{ __html: renderedAnswer }} 
