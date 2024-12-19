@@ -503,6 +503,10 @@ export default function Search() {
     if (q) {
       const detectedLang = detectLanguage(q);
       setCurrentLang(detectedLang);
+    } else {
+      // 如果没有查询参数，使用浏览器的语言设置
+      const browserLang = navigator.language.toLowerCase().split('-')[0];
+      setCurrentLang(browserLang in i18n ? browserLang : 'en');
     }
   }, [q]);
 
@@ -652,10 +656,10 @@ export default function Search() {
             onKeyPress={handleKeyPress}
           />
           <button 
-            className="bg-[#105C93] text-white rounded-full h-10 w-10 flex items-center justify-center absolute right-4 hover:bg-[#3A86C8] transition duration-300" 
+            className="bg-gradient-to-r from-blue-500 to-blue-700 hover:from-blue-600 hover:to-blue-800 text-white rounded-full h-10 w-10 flex items-center justify-center absolute right-4 transition-all duration-300 transform hover:scale-105 shadow-lg" 
             onClick={handleButtonClick}
           >
-            <FontAwesomeIcon icon={faArrowRight} />
+            <FontAwesomeIcon icon={faArrowRight} className="text-lg" />
           </button>
         </div>
       </div>
