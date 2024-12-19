@@ -646,21 +646,6 @@ export default function Search() {
                   </div>
                 </div>
               )}
-              {streamedAnswer && (
-                <div className="prose max-w-none px-8">
-                  <div 
-                    dangerouslySetInnerHTML={{ __html: renderedAnswer }} 
-                    className="text-base leading-normal"
-                    style={{
-                      '& h3': { fontSize: '1.5rem', marginBottom: '0.75rem', marginTop: '1.5rem' },
-                      '& p': { fontSize: '1rem', marginBottom: '0.75rem' },
-                      '& ul': { marginLeft: '1.25rem', marginBottom: '0.75rem' },
-                      '& li': { fontSize: '1rem', marginBottom: '0.25rem' },
-                      '& strong': { color: '#2563EB' }
-                    }}
-                  />
-                </div>
-              )}
             </div>
           </div>
         </div>
