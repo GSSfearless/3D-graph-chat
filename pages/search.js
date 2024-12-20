@@ -605,7 +605,11 @@ export default function Search() {
 
           <div className="w-1/2">
             <div className="bg-white p-6">
-              <h3 className="text-3xl mb-6 text-left font-semibold">
+              <h3 className="text-3xl mb-6 text-left font-semibold break-words whitespace-pre-wrap" style={{
+                fontSize: currentQuestion.length > 100 ? '1.5rem' : currentQuestion.length > 50 ? '1.875rem' : '2.25rem',
+                lineHeight: '1.4',
+                maxWidth: '100%'
+              }}>
                 {currentQuestion}
               </h3>
               {viewingChildNode && (
