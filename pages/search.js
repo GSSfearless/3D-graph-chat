@@ -195,6 +195,10 @@ export default function Search() {
   }, [q]);
 
   const handleSearch = useCallback(async (searchQuery) => {
+    setQuery('');
+    setStreamedAnswer('');
+    setRenderedAnswer('');
+    setKnowledgeGraphData(null);
     setCurrentQuestion(searchQuery);
     setLoading(true);
     setIsCollecting(true);
@@ -342,13 +346,15 @@ export default function Search() {
   }
 
   const handleKeyPress = (e) => {
-    if (e.key === 'Enter') {
+    if (e.key === 'Enter' && query.trim() !== '') {
       handleSearch(query);
     }
   }
 
   const handleButtonClick = () => {
-    handleSearch(query);
+    if (query.trim() !== '') {
+      handleSearch(query);
+    }
   }
 
   const handleLargeSearch = () => {
