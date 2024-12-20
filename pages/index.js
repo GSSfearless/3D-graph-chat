@@ -112,9 +112,14 @@ function Home({ defaultLang }) {
               className="w-full p-4 border-none outline-none text-xl whitespace-pre-wrap break-words overflow-hidden"
               value={query}
               onChange={(e) => {
-                e.target.style.height = 'auto';
-                e.target.style.height = e.target.scrollHeight + 'px';
-                setQuery(e.target.value);
+                const value = e.target.value;
+                if (value.trim() !== '') {
+                  e.target.style.height = 'auto';
+                  e.target.style.height = e.target.scrollHeight + 'px';
+                } else {
+                  e.target.style.height = '3rem'; // 重置为默认高度
+                }
+                setQuery(value);
               }}
               onKeyPress={handleKeyPress}
               style={{ 

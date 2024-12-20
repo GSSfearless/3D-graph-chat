@@ -338,11 +338,25 @@ export default function Search() {
   }, [streamedAnswer]);
 
   const handleChange = (e) => {
-    setQuery(e.target.value);
+    const value = e.target.value;
+    if (value.trim() !== '') {
+      e.target.style.height = 'auto';
+      e.target.style.height = e.target.scrollHeight + 'px';
+    } else {
+      e.target.style.height = '2.5rem'; // 重置为默认高度
+    }
+    setQuery(value);
   }
 
   const handleLargeSearchChange = (e) => {
-    setLargeSearchQuery(e.target.value);
+    const value = e.target.value;
+    if (value.trim() !== '') {
+      e.target.style.height = 'auto';
+      e.target.style.height = e.target.scrollHeight + 'px';
+    } else {
+      e.target.style.height = '3rem'; // 重置为默认高度
+    }
+    setLargeSearchQuery(value);
   }
 
   const handleKeyPress = (e) => {
