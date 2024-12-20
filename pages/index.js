@@ -74,8 +74,8 @@ function Home({ defaultLang }) {
 
   const handleKeyPress = (e) => {
     if (e.key === 'Enter') {
+      e.preventDefault(); // 阻止回车键的默认换行行为
       if (query.trim() === '') {
-        e.preventDefault(); // 阻止空输入时的回车键默认行为
         return;
       }
       handleSearch();
