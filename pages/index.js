@@ -108,41 +108,38 @@ function Home({ defaultLang }) {
         <h1 className="text-4xl font-semibold mb-8 text-center text-white drop-shadow-lg">
           {getText('mainTitle')}
         </h1>
-        <div className="relative">
-          <div className="absolute inset-0 bg-gradient-to-r from-blue-500 to-yellow-500 rounded-lg opacity-10 blur-xl transition-all duration-300 group-hover:opacity-20"></div>
-          <div className="bg-white/90 backdrop-blur-sm p-4 rounded-lg shadow-lg mb-4 flex items-center border border-white/20 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl group" style={{ minHeight: '5rem' }}>
-            <div className="flex-grow pr-14">
-              <textarea 
-                placeholder={getText('searchPlaceholder')}
-                className="w-full p-4 border-none outline-none text-xl whitespace-pre-wrap break-words overflow-hidden bg-transparent group-hover:placeholder-blue-400/60 transition-colors duration-300"
-                value={query}
-                onChange={(e) => {
-                  const value = e.target.value;
-                  if (value.trim() !== '') {
-                    e.target.style.height = 'auto';
-                    e.target.style.height = e.target.scrollHeight + 'px';
-                  } else {
-                    e.target.style.height = '3rem'; // 重置为默认高度
-                  }
-                  setQuery(value);
-                }}
-                onKeyPress={handleKeyPress}
-                style={{ 
-                  wordWrap: 'break-word',
-                  resize: 'none',
-                  minHeight: '3rem',
-                  height: 'auto'
-                }}
-                rows="1"
-              />
-            </div>
-            <button 
-              className="bg-gradient-to-r from-blue-500 to-yellow-500 text-white rounded-full h-12 w-12 flex items-center justify-center absolute right-8 hover:from-blue-600 hover:to-yellow-600 transition duration-300 shadow-lg hover:shadow-xl hover:scale-110" 
-              onClick={handleSearch}
-            >
-              <FontAwesomeIcon icon={faArrowRight} />
-            </button>
+        <div className="bg-white/90 backdrop-blur-sm p-4 rounded-lg shadow-lg mb-4 flex items-center border border-white/20 transition-all duration-300 hover:bg-white hover:border-white" style={{ minHeight: '5rem' }}>
+          <div className="flex-grow pr-14">
+            <textarea 
+              placeholder={getText('searchPlaceholder')}
+              className="w-full p-4 border-none outline-none text-xl whitespace-pre-wrap break-words overflow-hidden bg-transparent"
+              value={query}
+              onChange={(e) => {
+                const value = e.target.value;
+                if (value.trim() !== '') {
+                  e.target.style.height = 'auto';
+                  e.target.style.height = e.target.scrollHeight + 'px';
+                } else {
+                  e.target.style.height = '3rem'; // 重置为默认高度
+                }
+                setQuery(value);
+              }}
+              onKeyPress={handleKeyPress}
+              style={{ 
+                wordWrap: 'break-word',
+                resize: 'none',
+                minHeight: '3rem',
+                height: 'auto'
+              }}
+              rows="1"
+            />
           </div>
+          <button 
+            className="bg-gradient-to-r from-blue-500 to-yellow-500 text-white rounded-full h-12 w-12 flex items-center justify-center absolute right-8 hover:from-blue-600 hover:to-yellow-600 transition duration-300 shadow-lg hover:shadow-xl" 
+            onClick={handleSearch}
+          >
+            <FontAwesomeIcon icon={faArrowRight} />
+          </button>
         </div>
       </div>
     </div>
