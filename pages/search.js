@@ -360,7 +360,11 @@ export default function Search() {
   }
 
   const handleKeyPress = (e) => {
-    if (e.key === 'Enter' && query.trim() !== '') {
+    if (e.key === 'Enter') {
+      if (query.trim() === '') {
+        e.preventDefault(); // 阻止空输入时的回车键默认行为
+        return;
+      }
       handleSearch(query);
     }
   }
@@ -381,6 +385,10 @@ export default function Search() {
 
   const handleLargeSearchKeyPress = (e) => {
     if (e.key === 'Enter') {
+      if (largeSearchQuery.trim() === '') {
+        e.preventDefault(); // 阻止空输入时的回车键默认行为
+        return;
+      }
       handleLargeSearch();
     }
   };

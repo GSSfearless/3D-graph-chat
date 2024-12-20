@@ -74,6 +74,10 @@ function Home({ defaultLang }) {
 
   const handleKeyPress = (e) => {
     if (e.key === 'Enter') {
+      if (query.trim() === '') {
+        e.preventDefault(); // 阻止空输入时的回车键默认行为
+        return;
+      }
       handleSearch();
     }
   };
