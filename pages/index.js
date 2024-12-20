@@ -109,11 +109,11 @@ function Home({ defaultLang }) {
         <h1 className="text-4xl font-semibold mb-8 text-center text-gray-800">
           {getText('mainTitle')}
         </h1>
-        <div className="bg-white p-4 rounded-lg shadow-lg mb-4 flex items-center border border-gray-300 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:border-blue-400 group" style={{ minHeight: '5rem' }}>
+        <div className="bg-white p-4 rounded-lg shadow-lg mb-4 flex items-center border border-gray-300 transition-all duration-300" style={{ minHeight: '5rem' }}>
           <div className="flex-grow pr-14">
             <textarea 
               placeholder={getText('searchPlaceholder')}
-              className="w-full p-4 border-none outline-none text-xl whitespace-pre-wrap break-words overflow-hidden group-hover:placeholder-blue-400 transition-colors duration-300"
+              className="w-full p-4 border-none outline-none text-xl whitespace-pre-wrap break-words overflow-hidden"
               value={query}
               onChange={(e) => {
                 const value = e.target.value;
