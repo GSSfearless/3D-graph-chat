@@ -90,29 +90,29 @@ function Home({ defaultLang }) {
   return (
     <div className="flex flex-col md:flex-row min-h-screen bg-[#f8f9fa] relative">
       {/* Left side - Deep Think */}
-      <div className="flex-1 flex flex-col items-center justify-center p-8 bg-gradient-to-br from-blue-500 to-blue-600">
-        <FontAwesomeIcon icon={faBrain} className="text-6xl text-white mb-4" />
-        <h2 className="text-2xl font-semibold mb-4 text-white">{getText('deepThink')}</h2>
-        <p className="text-center text-white/90 mb-8">{getText('deepThinkDesc')}</p>
+      <div className="flex-1 flex flex-col items-center justify-center p-8 bg-blue-50">
+        <FontAwesomeIcon icon={faBrain} className="text-6xl text-blue-600 mb-4" />
+        <h2 className="text-2xl font-semibold mb-4 text-blue-800">{getText('deepThink')}</h2>
+        <p className="text-center text-blue-600 mb-8">{getText('deepThinkDesc')}</p>
       </div>
 
       {/* Right side - Graph Insight */}
-      <div className="flex-1 flex flex-col items-center justify-center p-8 bg-gradient-to-bl from-yellow-500 to-yellow-600">
-        <FontAwesomeIcon icon={faLightbulb} className="text-6xl text-white mb-4" />
-        <h2 className="text-2xl font-semibold mb-4 text-white">{getText('graphInsight')}</h2>
-        <p className="text-center text-white/90 mb-8">{getText('graphInsightDesc')}</p>
+      <div className="flex-1 flex flex-col items-center justify-center p-8 bg-yellow-50">
+        <FontAwesomeIcon icon={faLightbulb} className="text-6xl text-yellow-500 mb-4" />
+        <h2 className="text-2xl font-semibold mb-4 text-yellow-800">{getText('graphInsight')}</h2>
+        <p className="text-center text-yellow-600 mb-8">{getText('graphInsightDesc')}</p>
       </div>
 
       {/* Centered search bar */}
       <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-full max-w-2xl px-4">
-        <h1 className="text-4xl font-semibold mb-8 text-center text-white drop-shadow-lg">
+        <h1 className="text-4xl font-semibold mb-8 text-center text-gray-800">
           {getText('mainTitle')}
         </h1>
-        <div className="bg-white/90 backdrop-blur-sm p-4 rounded-lg shadow-lg mb-4 flex items-center border border-white/20 transition-all duration-300 hover:bg-white hover:border-white" style={{ minHeight: '5rem' }}>
+        <div className="bg-white p-4 rounded-lg shadow-lg mb-4 flex items-center border border-gray-300 transition-all duration-300" style={{ minHeight: '5rem' }}>
           <div className="flex-grow pr-14">
             <textarea 
               placeholder={getText('searchPlaceholder')}
-              className="w-full p-4 border-none outline-none text-xl whitespace-pre-wrap break-words overflow-hidden bg-transparent"
+              className="w-full p-4 border-none outline-none text-xl whitespace-pre-wrap break-words overflow-hidden"
               value={query}
               onChange={(e) => {
                 const value = e.target.value;
@@ -135,7 +135,7 @@ function Home({ defaultLang }) {
             />
           </div>
           <button 
-            className="bg-gradient-to-r from-blue-500 to-yellow-500 text-white rounded-full h-12 w-12 flex items-center justify-center absolute right-8 hover:from-blue-600 hover:to-yellow-600 transition duration-300 shadow-lg hover:shadow-xl" 
+            className="bg-gradient-to-r from-blue-500 to-yellow-500 text-white rounded-full h-12 w-12 flex items-center justify-center absolute right-8 hover:from-blue-600 hover:to-yellow-600 transition duration-300" 
             onClick={handleSearch}
           >
             <FontAwesomeIcon icon={faArrowRight} />
