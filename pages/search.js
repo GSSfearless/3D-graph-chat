@@ -282,6 +282,7 @@ export default function Search() {
       // After all processing is complete
       setIsProcessing(false);
       setIsCollecting(false);
+      setQuery('');
       setCollectedPages(0);
       setTotalPages(0);
     } catch (error) {
