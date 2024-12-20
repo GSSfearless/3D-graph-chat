@@ -364,12 +364,21 @@ export default function Search() {
         e.preventDefault(); // 阻止空输入时的回车键默认行为
         return;
       }
+      e.preventDefault();
+      // 重置搜索框高度
+      const textarea = e.target;
+      textarea.style.height = '2.5rem';
       handleSearch(query);
     }
   }
 
   const handleButtonClick = () => {
     if (query.trim() !== '') {
+      // 重置搜索框高度
+      const textarea = document.querySelector('textarea');
+      if (textarea) {
+        textarea.style.height = '2.5rem';
+      }
       handleSearch(query);
     }
   }
@@ -388,6 +397,10 @@ export default function Search() {
         e.preventDefault(); // 阻止空输入时的回车键默认行为
         return;
       }
+      e.preventDefault();
+      // 重置搜索框高度
+      const textarea = e.target;
+      textarea.style.height = '3rem';
       handleLargeSearch();
     }
   };
