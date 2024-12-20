@@ -1,6 +1,5 @@
 import { faArrowRight, faBrain, faLightbulb } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { useState } from 'react';
 import 'tailwindcss/tailwind.css';
@@ -141,32 +140,6 @@ function Home({ defaultLang }) {
           >
             <FontAwesomeIcon icon={faArrowRight} />
           </button>
-        </div>
-      </div>
-
-      {/* Bottom links */}
-      <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 flex justify-center space-x-8">
-        <div className="bg-white p-6 rounded-lg shadow-lg hover:shadow-xl transition-shadow duration-300 w-64">
-          <Link href="/we-are-hiring">
-            <a className="flex flex-col items-center space-y-2">
-              <span className="text-4xl">🪐</span>
-              <span className="text-lg font-medium text-gray-800">{getText('hiring')}</span>
-              <p className="text-sm text-gray-600 text-center">{getText('hiringDesc')}</p>
-            </a>
-          </Link>
-        </div>
-
-        <div className="bg-white p-6 rounded-lg shadow-lg hover:shadow-xl transition-shadow duration-300 w-64">
-          <a 
-            href="https://discord.gg/G66pESH3gm" 
-            target="_blank" 
-            rel="noopener noreferrer"
-            className="flex flex-col items-center space-y-2"
-          >
-            <span className="text-4xl">🍻</span>
-            <span className="text-lg font-medium text-gray-800">{getText('discord')}</span>
-            <p className="text-sm text-gray-600 text-center">{getText('discordDesc')}</p>
-          </a>
         </div>
       </div>
     </div>

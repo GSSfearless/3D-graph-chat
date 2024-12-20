@@ -1,6 +1,7 @@
 import { faArrowRight } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import dynamic from 'next/dynamic';
+import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import 'tailwindcss/tailwind.css';
@@ -100,7 +101,11 @@ const i18n = {
       "正在使用大语言模型(LLM)分析信息...",
       "正在整合搜索结果并生成答案...",
       "AI正在处理检索到的信息..."
-    ]
+    ],
+    hiring: '招聘',
+    hiringDesc: '加入我们，共同创造未来',
+    discord: 'Discord',
+    discordDesc: '加入我们的社区，与我们互动'
   },
   en: {
     deepThink: 'Deep Think',
@@ -127,7 +132,11 @@ const i18n = {
       "Analyzing information with Large Language Model (LLM)...",
       "Integrating search results and generating answer...",
       "AI processing retrieved information..."
-    ]
+    ],
+    hiring: 'Hiring',
+    hiringDesc: 'Join us to create the future',
+    discord: 'Discord',
+    discordDesc: 'Join our community and interact with us'
   }
 };
 
@@ -733,11 +742,7 @@ export default function Search() {
               placeholder={getText('searchPlaceholder')}
               className="w-full p-2 border-none outline-none text-xl group-hover:placeholder-blue-400 transition-colors duration-300 min-h-[2.5rem] whitespace-pre-wrap break-words overflow-hidden"
               value={query}
-              onChange={(e) => {
-                e.target.style.height = 'auto';
-                e.target.style.height = e.target.scrollHeight + 'px';
-                handleChange(e);
-              }}
+              onChange={handleChange}
               onKeyPress={handleKeyPress}
               style={{ 
                 wordWrap: 'break-word',
@@ -754,6 +759,38 @@ export default function Search() {
           >
             <FontAwesomeIcon icon={faArrowRight} />
           </button>
+        </div>
+      </div>
+
+      {/* Quick Links */}
+      <div className="fixed bottom-4 right-4 flex flex-col space-y-2 z-50">
+        {/* Hiring Link */}
+        <div className="group relative">
+          <Link href="/we-are-hiring">
+            <a className="block bg-white p-3 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
+              <span className="text-2xl">🪐</span>
+            </a>
+          </Link>
+          <div className="absolute right-full mr-2 bottom-0 bg-white p-4 rounded-lg shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 whitespace-nowrap">
+            <h4 className="text-lg font-medium text-gray-800">{getText('hiring')}</h4>
+            <p className="text-sm text-gray-600">{getText('hiringDesc')}</p>
+          </div>
+        </div>
+
+        {/* Discord Link */}
+        <div className="group relative">
+          <a 
+            href="https://discord.gg/G66pESH3gm" 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="block bg-white p-3 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
+          >
+            <span className="text-2xl">🍻</span>
+          </a>
+          <div className="absolute right-full mr-2 bottom-0 bg-white p-4 rounded-lg shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 whitespace-nowrap">
+            <h4 className="text-lg font-medium text-gray-800">{getText('discord')}</h4>
+            <p className="text-sm text-gray-600">{getText('discordDesc')}</p>
+          </div>
         </div>
       </div>
     </div>
