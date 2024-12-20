@@ -108,13 +108,13 @@ function Home({ defaultLang }) {
         <h1 className="text-4xl font-semibold mb-8 text-center text-white drop-shadow-lg">
           {getText('mainTitle')}
         </h1>
-        <div className="relative group">
-          <div className="absolute inset-0 bg-gradient-to-r from-blue-500 to-yellow-500 rounded-lg opacity-0 blur-xl transition-all duration-300 group-hover:opacity-20"></div>
-          <div className="relative bg-white/90 backdrop-blur-sm p-4 rounded-lg shadow-lg mb-4 flex items-center border border-white/20 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl" style={{ minHeight: '5rem' }}>
+        <div className="relative">
+          <div className="absolute inset-0 bg-gradient-to-r from-blue-500 to-yellow-500 rounded-lg opacity-10 blur-xl transition-all duration-300 group-hover:opacity-20"></div>
+          <div className="bg-white/90 backdrop-blur-sm p-4 rounded-lg shadow-lg mb-4 flex items-center border border-white/20 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl group" style={{ minHeight: '5rem' }}>
             <div className="flex-grow pr-14">
               <textarea 
                 placeholder={getText('searchPlaceholder')}
-                className="w-full p-4 border-none outline-none text-xl whitespace-pre-wrap break-words overflow-hidden bg-transparent placeholder-gray-400 group-hover:placeholder-blue-400/60 transition-colors duration-300"
+                className="w-full p-4 border-none outline-none text-xl whitespace-pre-wrap break-words overflow-hidden bg-transparent group-hover:placeholder-blue-400/60 transition-colors duration-300"
                 value={query}
                 onChange={(e) => {
                   const value = e.target.value;
