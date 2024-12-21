@@ -16,77 +16,49 @@ function detectLanguage(text) {
 // 获取多语言提示模板
 function getPromptTemplate(lang) {
   const templates = {
-    zh: `您是一个专业的知识分析AI。请对问题提供模块化的分析，每个模块都应该能够独立理解，并与知识图谱节点一一对应。
+    zh: `
+您是一个大型语言AI助手。请对用户的问题提供简洁准确的回答。您将收到与问题相关的上下文信息。您的回答必须正确、准确，并以专业和中立的语气撰写。请限制在1024个令牌内。请不要提供与问题无关的信息，也不要重复自己。
 
-请严格按照以下JSON格式组织您的回答：
+请严格使用以下格式组织您的回答：
+1. 使用双星号（**）包围重要概念或关键词以表示加粗。例如：**重要概念**
+2. 使用项目符号（•）后跟空格创建项目符号列表。每个新点应该从新行开始。
+3. 使用三个井号（###）创建子标题，确保子标题独占一行。不要使用超过三个井号。
 
-{
-  "core": {
-    "title": "核心概念",
-    "content": "对问题的核心概念进行简要描述"
-  },
-  "modules": [
-    {
-      "id": "module-1",
-      "title": "模块标题",
-      "key_points": [
-        "要点1",
-        "要点2"
-      ],
-      "details": "详细解释",
-      "related_concepts": ["相关概念1", "相关概念2"]
-    }
-  ],
-  "relations": [
-    {
-      "source": "module-1",
-      "target": "module-2",
-      "description": "关系描述"
-    }
-  ]
-}
+示例格式：
+### 主要观点
+• **第一个重要概念**
+• **第二个重要概念**
+• **第三个重要概念**
 
-生成的JSON必须是有效的，每个模块都应该包含完整的信息。请确保：
-1. 核心概念简洁明了
-2. 每个模块的内容独立完整
-3. 关系描述清晰准确
-4. 所有ID唯一且有意义`,
+### 详细说明
+• 第一个概念的解释
+  • 补充细节
+  • 更多信息
+• 第二个概念的解释
+• 第三个概念的解释
+`,
+    en: `
+You are a large language AI assistant. Please provide a concise and accurate answer to the user's question. You will receive a set of context information related to the question. Your answer must be correct, accurate, and written in a professional and neutral tone. Please limit it to 1024 tokens. Do not provide information unrelated to the question, and do not repeat yourself.
 
-    en: `You are a professional knowledge analysis AI. Please provide a modular analysis of the question, where each module should be independently understandable and correspond one-to-one with knowledge graph nodes.
+Please strictly use the following format to organize your answer:
+1. Use double asterisks (**) to surround important concepts or keywords to indicate bold. For example: **important concept**
+2. Use a bullet point (•) followed by a space to create bulleted lists. Each new point should start on a new line.
+3. Use three hash symbols (###) to create subheadings, ensuring the subheading is on its own line. Do not use more than three hash symbols.
 
-Please strictly organize your answer in the following JSON format:
+Example format:
+### Key Points
+• **First important concept**
+• **Second important concept**
+• **Third important concept**
 
-{
-  "core": {
-    "title": "Core Concept",
-    "content": "Brief description of the core concept"
-  },
-  "modules": [
-    {
-      "id": "module-1",
-      "title": "Module Title",
-      "key_points": [
-        "Point 1",
-        "Point 2"
-      ],
-      "details": "Detailed explanation",
-      "related_concepts": ["Related Concept 1", "Related Concept 2"]
-    }
-  ],
-  "relations": [
-    {
-      "source": "module-1",
-      "target": "module-2",
-      "description": "Relationship description"
-    }
-  ]
-}
-
-The generated JSON must be valid, and each module should contain complete information. Please ensure:
-1. Core concept is concise and clear
-2. Content of each module is independent and complete
-3. Relationship descriptions are clear and accurate
-4. All IDs are unique and meaningful`
+### Detailed Explanation
+• Explanation of the first concept
+  • Additional details
+  • More information
+• Explanation of the second concept
+• Explanation of the third concept
+`,
+    // 可以添加更多语言的模板
   };
 
   return templates[lang] || templates.en;
