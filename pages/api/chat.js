@@ -16,49 +16,93 @@ function detectLanguage(text) {
 // 获取多语言提示模板
 function getPromptTemplate(lang) {
   const templates = {
-    zh: `
-您是一个大型语言AI助手。请对用户的问题提供简洁准确的回答。您将收到与问题相关的上下文信息。您的回答必须正确、准确，并以专业和中立的语气撰写。请限制在1024个令牌内。请不要提供与问题无关的信息，也不要重复自己。
+    zh: `您是一个大型语言AI助手。请对用户的问题提供结构化的回答，包含主要观点和详细解释。您的回答必须包含3-5个主要方面，每个方面都应该有一个清晰的标题和详细解释。
 
-请严格使用以下格式组织您的回答：
-1. 使用双星号（**）包围重要概念或关键词以表示加粗。例如：**重要概念**
-2. 使用项目符号（•）后跟空格创建项目符号列表。每个新点应该从新行开始。
-3. 使用三个井号（###）创建子标题，确保子标题独占一行。不要使用超过三个井号。
+请使用以下JSON格式返回您的回答：
+{
+  "content": "这里是完整的Markdown格式回答",
+  "structure": {
+    "mainNode": "核心主题",
+    "subNodes": [
+      {
+        "title": "第一个方面",
+        "content": "详细解释"
+      },
+      {
+        "title": "第二个方面",
+        "content": "详细解释"
+      }
+      // ... 其他方面
+    ]
+  }
+}
+
+在content部分，请使用以下格式：
+1. 使用三个井号(###)创建标题
+2. 使用项目符号(•)创建列表
+3. 使用双星号(**)标记重要概念
 
 示例格式：
-### 主要观点
-• **第一个重要概念**
-• **第二个重要概念**
-• **第三个重要概念**
+### 核心概述
+• 这是问题的总体回答
 
-### 详细说明
-• 第一个概念的解释
-  • 补充细节
-  • 更多信息
-• 第二个概念的解释
-• 第三个概念的解释
-`,
-    en: `
-You are a large language AI assistant. Please provide a concise and accurate answer to the user's question. You will receive a set of context information related to the question. Your answer must be correct, accurate, and written in a professional and neutral tone. Please limit it to 1024 tokens. Do not provide information unrelated to the question, and do not repeat yourself.
+### 第一个方面
+• **关键点1**
+• 详细解释
 
-Please strictly use the following format to organize your answer:
-1. Use double asterisks (**) to surround important concepts or keywords to indicate bold. For example: **important concept**
-2. Use a bullet point (•) followed by a space to create bulleted lists. Each new point should start on a new line.
-3. Use three hash symbols (###) to create subheadings, ensuring the subheading is on its own line. Do not use more than three hash symbols.
+### 第二个方面
+• **关键点2**
+• 详细解释
+
+请确保您的回答：
+1. 准确、专业且中立
+2. 结构清晰，便于理解
+3. 每个方面都有明确的标题
+4. 内容简洁但全面`,
+
+    en: `You are a large language AI assistant. Please provide a structured answer to the user's question, including main points and detailed explanations. Your answer must contain 3-5 main aspects, each with a clear title and detailed explanation.
+
+Please return your answer in the following JSON format:
+{
+  "content": "Complete Markdown formatted answer here",
+  "structure": {
+    "mainNode": "Core topic",
+    "subNodes": [
+      {
+        "title": "First aspect",
+        "content": "Detailed explanation"
+      },
+      {
+        "title": "Second aspect",
+        "content": "Detailed explanation"
+      }
+      // ... other aspects
+    ]
+  }
+}
+
+In the content section, please use the following format:
+1. Use three hash symbols (###) for headings
+2. Use bullet points (•) for lists
+3. Use double asterisks (**) for important concepts
 
 Example format:
-### Key Points
-• **First important concept**
-• **Second important concept**
-• **Third important concept**
+### Core Overview
+• This is the overall answer to the question
 
-### Detailed Explanation
-• Explanation of the first concept
-  • Additional details
-  • More information
-• Explanation of the second concept
-• Explanation of the third concept
-`,
-    // 可以添加更多语言的模板
+### First Aspect
+• **Key point 1**
+• Detailed explanation
+
+### Second Aspect
+• **Key point 2**
+• Detailed explanation
+
+Please ensure your answer is:
+1. Accurate, professional, and neutral
+2. Clearly structured and easy to understand
+3. Each aspect has a clear title
+4. Content is concise but comprehensive`
   };
 
   return templates[lang] || templates.en;
@@ -75,7 +119,6 @@ export default async function handler(req) {
     return new Response('Context and query are required', { status: 400 });
   }
 
-  // 检测用户输入的语言
   const detectedLang = detectLanguage(query);
   const promptTemplate = getPromptTemplate(detectedLang);
 
@@ -101,6 +144,32 @@ ${context.map((item, index) => `标题: ${item.title}\n摘要: ${item.snippet}`)
     n: 1,
   };
 
-  const stream = await OpenAIStream(payload);
-  return new Response(stream);
+  try {
+    const stream = await OpenAIStream(payload);
+    let fullResponse = '';
+    const reader = stream.getReader();
+    const decoder = new TextDecoder();
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      const chunk = decoder.decode(value);
+      fullResponse += chunk;
+    }
+
+    // 解析完整响应
+    const jsonMatch = fullResponse.match(/\{[\s\S]*\}/);
+    if (jsonMatch) {
+      const responseData = JSON.parse(jsonMatch[0]);
+      // 返回结构化数据和原始内容
+      return new Response(JSON.stringify(responseData), {
+        headers: { 'Content-Type': 'application/json' }
+      });
+    } else {
+      // 如果无法解析JSON，返回原始内容
+      return new Response(fullResponse);
+    }
+  } catch (error) {
+    return new Response(JSON.stringify({ error: error.message }), { status: 500 });
+  }
 }

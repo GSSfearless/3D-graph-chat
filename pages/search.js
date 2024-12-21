@@ -252,26 +252,15 @@ export default function Search() {
         throw new Error(`HTTP error! status: ${chatResponse.status}`);
       }
 
-      const reader = chatResponse.body.getReader();
-      const decoder = new TextDecoder();
-      let done = false;
-
-      while (!done) {
-        const { value, done: doneReading } = await reader.read();
-        done = doneReading;
-        const chunkValue = decoder.decode(value);
-        setStreamedAnswer((prev) => prev + chunkValue);
-      }
-
-      // Store the initial answer
-      initialAnswerRef.current = streamedAnswer;
-
-      // Get knowledge graph data
+      const chatData = await chatResponse.json();
+      setStreamedAnswer(chatData.content);
+      
+      // 使用相同的结构生成知识图谱
       try {
         const graphResponse = await fetch('/api/knowledgeGraph', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ query: searchQuery }),
+          body: JSON.stringify({ structure: chatData.structure }),
         });
 
         if (!graphResponse.ok) {
@@ -280,9 +269,16 @@ export default function Search() {
 
         const graphData = await graphResponse.json();
         
-        // 确保 graphData 有正确的结构
         if (graphData && graphData.nodes && graphData.edges) {
           setKnowledgeGraphData(graphData);
+          // 保存节点解释
+          const explanations = {};
+          graphData.nodes.forEach(node => {
+            if (node.data.content) {
+              explanations[node.id] = node.data.content;
+            }
+          });
+          setNodeExplanations(explanations);
         } else {
           console.error('Invalid graph data structure:', graphData);
           setGraphError('Invalid graph data structure');
@@ -443,37 +439,24 @@ export default function Search() {
     setIsLoadingNodeExplanation(true);
     setLoadingMessage('Loading explanation...');
 
-    if (knowledgeGraphData && knowledgeGraphData.nodes && knowledgeGraphData.nodes.length > 0) {
-      if (node.id === knowledgeGraphData.nodes[0].id) {
-        // If it's the root node, always show the initial answer
-        setStreamedAnswer(initialAnswerRef.current);
-        setViewingChildNode(false);
-      } else {
-        // If it's a child node
-        setViewingChildNode(true);
-        if (!nodeExplanations[node.id]) {
-          // If explanation doesn't exist, fetch it
-          try {
-            const explanation = await generateNodeExplanation(node.id, node.data.label);
-            setNodeExplanations(prev => ({...prev, [node.id]: explanation}));
-            setStreamedAnswer(explanation);
-          } catch (error) {
-            console.error('Error fetching node explanation:', error);
-            setStreamedAnswer('Failed to load explanation. Please try again.');
-          }
-        } else {
-          // If explanation exists, just set it
-          setStreamedAnswer(nodeExplanations[node.id]);
-        }
-      }
+    if (node.id === 'root') {
+      // 如果是根节点，显示完整答案
+      setStreamedAnswer(initialAnswerRef.current);
+      setViewingChildNode(false);
     } else {
-      console.error('Knowledge graph data is incomplete or missing');
-      setStreamedAnswer('Unable to load node information. Please try again.');
+      // 如果是子节点，显示该节点的内容
+      setViewingChildNode(true);
+      const explanation = nodeExplanations[node.id];
+      if (explanation) {
+        setStreamedAnswer(explanation);
+      } else {
+        setStreamedAnswer('No detailed explanation available for this node.');
+      }
     }
-  
+
     setIsLoadingNodeExplanation(false);
     setLoadingMessage('');
-  }, [knowledgeGraphData, nodeExplanations, generateNodeExplanation, initialAnswerRef]);
+  }, [nodeExplanations, initialAnswerRef]);
 
   const handleNodeDragStop = useCallback((node) => {
     setGraphHistory(prev => {
