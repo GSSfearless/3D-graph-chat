@@ -88,7 +88,7 @@ function Home({ defaultLang }) {
   };
 
   return (
-    <div className="flex flex-col md:flex-row min-h-screen bg-[#f8f9fa] relative">
+    <div className="flex flex-col md:flex-row min-h-screen bg-white relative">
       {/* Left side - Deep Think */}
       <div className="flex-1 flex flex-col items-center justify-center p-8 bg-blue-50">
         <FontAwesomeIcon icon={faBrain} className="text-6xl text-blue-600 mb-4" />
