@@ -1,4 +1,3 @@
-import { OpenAIStream } from '../../utils/OpenAIStream';
 
 // 添加语言检测函数
 function detectLanguage(text) {
@@ -132,44 +131,78 @@ ${context.map((item, index) => `标题: ${item.title}\n摘要: ${item.snippet}`)
 "${query}"
 `;
 
-  const payload = {
-    model: 'gpt-3.5-turbo',
-    messages: [{ role: 'user', content: prompt }],
-    temperature: 0.7,
-    top_p: 1,
-    frequency_penalty: 0,
-    presence_penalty: 0,
-    max_tokens: 1024,
-    stream: true,
-    n: 1,
-  };
-
   try {
-    const stream = await OpenAIStream(payload);
-    let fullResponse = '';
-    const reader = stream.getReader();
-    const decoder = new TextDecoder();
+    // 使用非流式响应
+    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${process.env.OPENAI_API_KEY ?? ''}`,
+      },
+      method: 'POST',
+      body: JSON.stringify({
+        model: 'gpt-3.5-turbo',
+        messages: [{ role: 'user', content: prompt }],
+        temperature: 0.7,
+        max_tokens: 1024,
+        stream: false,
+      }),
+    });
 
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
-      const chunk = decoder.decode(value);
-      fullResponse += chunk;
+    if (!response.ok) {
+      throw new Error(`OpenAI API error: ${response.status}`);
     }
 
-    // 解析完整响应
-    const jsonMatch = fullResponse.match(/\{[\s\S]*\}/);
-    if (jsonMatch) {
-      const responseData = JSON.parse(jsonMatch[0]);
-      // 返回结构化数据和原始内容
-      return new Response(JSON.stringify(responseData), {
-        headers: { 'Content-Type': 'application/json' }
-      });
-    } else {
-      // 如果无法解析JSON，返回原始内容
-      return new Response(fullResponse);
+    const data = await response.json();
+    const fullResponse = data.choices[0].message.content;
+
+    try {
+      // 尝试解析JSON响应
+      const jsonMatch = fullResponse.match(/\{[\s\S]*\}/);
+      if (jsonMatch) {
+        const responseData = JSON.parse(jsonMatch[0]);
+        return new Response(JSON.stringify(responseData), {
+          headers: { 'Content-Type': 'application/json' }
+        });
+      }
+    } catch (parseError) {
+      console.error('Error parsing JSON response:', parseError);
     }
+
+    // 如果无法解析JSON，返回一个格式化的默认结构
+    const defaultResponse = {
+      content: fullResponse,
+      structure: {
+        mainNode: query,
+        subNodes: [
+          {
+            title: "主要内容",
+            content: fullResponse
+          }
+        ]
+      }
+    };
+
+    return new Response(JSON.stringify(defaultResponse), {
+      headers: { 'Content-Type': 'application/json' }
+    });
   } catch (error) {
-    return new Response(JSON.stringify({ error: error.message }), { status: 500 });
+    console.error('Chat API error:', error);
+    return new Response(
+      JSON.stringify({ 
+        error: error.message,
+        content: "抱歉，处理您的请求时出现错误。",
+        structure: {
+          mainNode: "错误",
+          subNodes: [{
+            title: "错误信息",
+            content: error.message
+          }]
+        }
+      }), 
+      { 
+        status: 500,
+        headers: { 'Content-Type': 'application/json' }
+      }
+    );
   }
 }
