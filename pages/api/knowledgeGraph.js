@@ -113,70 +113,139 @@ export default async function handler(req, res) {
     return res.status(405).json({ message: 'Only POST requests are allowed' });
   }
 
-  const { query } = req.body;
+  const { query, moduleData } = req.body;
 
   if (!query) {
     return res.status(400).json({ message: 'Missing query parameter' });
   }
 
   try {
-    // 检测用户输入的语言
-    const detectedLang = detectLanguage(query);
-    const promptTemplate = getPromptTemplate(detectedLang);
-
-    const completion = await openai.chat.completions.create({
-      model: "gpt-3.5-turbo",
-      messages: [
-        {
-          role: "system", 
-          content: promptTemplate
-        },
-        {
-          role: "user", 
-          content: `请为以下问题创建知识图谱：${query}`
-        }
-      ],
-    });
-
-    const rawGraphData = parseJSONSafely(completion.choices[0].message.content);
+    let graphData;
     
-    const layoutFunction = rawGraphData.type === 'pyramid' ? createPyramidLayout : createMindMapLayout;
-    
-    const graphData = {
-      nodes: layoutFunction(rawGraphData.nodes.map(node => ({
-        id: node.id,
-        data: { label: node.label || node.id },
-      }))),
-      edges: rawGraphData.edges.map(edge => ({
-        id: `${edge.source}-${edge.target}`,
-        source: edge.source,
-        target: edge.target,
-        label: edge.label || '',
-        type: 'smoothstep',
-        animated: true,
-        labelStyle: { fill: '#888', fontWeight: 700 },
-        labelBgStyle: { fill: '#fff', fillOpacity: 0.7 },
-        labelBgPadding: [8, 4],
-        labelBgBorderRadius: 4,
-        style: { stroke: '#888' },
-        markerEnd: {
-          type: 'arrowclosed',
-          color: '#888',
-        },
-      }))
-    };
+    if (moduleData) {
+      // 如果提供了模块数据，直接使用它生成图谱
+      graphData = convertModuleDataToGraph(moduleData);
+    } else {
+      // 否则使用原有的方式生成图谱
+      const detectedLang = detectLanguage(query);
+      const promptTemplate = getPromptTemplate(detectedLang);
 
-    // 添加智能边路由
-    graphData.edges = graphData.edges.map(edge => ({
-      ...edge,
-      type: 'smoothstep',
-      style: { ...edge.style, strokeWidth: 2 },
-    }));
+      const completion = await openai.chat.completions.create({
+        model: "gpt-3.5-turbo",
+        messages: [
+          {
+            role: "system", 
+            content: promptTemplate
+          },
+          {
+            role: "user", 
+            content: `请为以下问题创建知识图谱：${query}`
+          }
+        ],
+      });
 
-    console.log('Processed graph data:', graphData);
+      const rawGraphData = parseJSONSafely(completion.choices[0].message.content);
+      graphData = processRawGraphData(rawGraphData);
+    }
+
     res.status(200).json(graphData);
   } catch (error) {
     console.error('Error:', error);
     res.status(500).json({ message: 'Error generating knowledge graph', error: error.message });
   }
+}
+
+function convertModuleDataToGraph(moduleData) {
+  // 创建节点
+  const nodes = [
+    // 核心概念节点
+    {
+      id: 'core',
+      data: { 
+        label: moduleData.core.title,
+        type: 'core',
+        content: moduleData.core.content
+      }
+    },
+    // 模块节点
+    ...moduleData.modules.map(module => ({
+      id: module.id,
+      data: { 
+        label: module.title,
+        type: 'module',
+        key_points: module.key_points,
+        details: module.details,
+        related_concepts: module.related_concepts
+      }
+    }))
+  ];
+
+  // 创建边
+  const edges = [
+    // 从核心节点到各模块的边
+    ...moduleData.modules.map(module => ({
+      id: `core-${module.id}`,
+      source: 'core',
+      target: module.id,
+      type: 'smoothstep',
+      animated: true,
+      label: '包含',
+      labelStyle: { fill: '#888', fontWeight: 700 },
+      labelBgStyle: { fill: '#fff', fillOpacity: 0.7 },
+      labelBgPadding: [8, 4],
+      labelBgBorderRadius: 4,
+      style: { stroke: '#888', strokeWidth: 2 },
+      markerEnd: {
+        type: 'arrowclosed',
+        color: '#888',
+      },
+    })),
+    // 模块之间的关系边
+    ...moduleData.relations.map(relation => ({
+      id: `${relation.source}-${relation.target}`,
+      source: relation.source,
+      target: relation.target,
+      type: 'smoothstep',
+      animated: true,
+      label: relation.description,
+      labelStyle: { fill: '#888', fontWeight: 700 },
+      labelBgStyle: { fill: '#fff', fillOpacity: 0.7 },
+      labelBgPadding: [8, 4],
+      labelBgBorderRadius: 4,
+      style: { stroke: '#888', strokeWidth: 2 },
+      markerEnd: {
+        type: 'arrowclosed',
+        color: '#888',
+      },
+    }))
+  ];
+
+  return { nodes, edges };
+}
+
+function processRawGraphData(rawData) {
+  const nodes = rawData.nodes.map(node => ({
+    id: node.id,
+    data: { label: node.label || node.id },
+  }));
+
+  const edges = rawData.edges.map(edge => ({
+    id: `${edge.source}-${edge.target}`,
+    source: edge.source,
+    target: edge.target,
+    label: edge.label || '',
+    type: 'smoothstep',
+    animated: true,
+    labelStyle: { fill: '#888', fontWeight: 700 },
+    labelBgStyle: { fill: '#fff', fillOpacity: 0.7 },
+    labelBgPadding: [8, 4],
+    labelBgBorderRadius: 4,
+    style: { stroke: '#888', strokeWidth: 2 },
+    markerEnd: {
+      type: 'arrowclosed',
+      color: '#888',
+    },
+  }));
+
+  return { nodes, edges };
 }

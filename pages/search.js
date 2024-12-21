@@ -140,6 +140,53 @@ const i18n = {
   }
 };
 
+function renderModuleContent(module) {
+  return `
+    <div class="module-content mb-6">
+      <h3 class="text-xl font-semibold mb-2">${module.title}</h3>
+      <div class="key-points mb-4">
+        ${module.key_points.map(point => `
+          <div class="flex items-start mb-2">
+            <span class="text-blue-500 mr-2">•</span>
+            <p>${point}</p>
+          </div>
+        `).join('')}
+      </div>
+      <div class="details text-gray-600">
+        ${module.details}
+      </div>
+      ${module.related_concepts.length > 0 ? `
+        <div class="related-concepts mt-4">
+          <p class="text-sm text-gray-500">相关概念：${module.related_concepts.join(', ')}</p>
+        </div>
+      ` : ''}
+    </div>
+  `;
+}
+
+function renderModularAnswer(answer) {
+  if (!answer) return '';
+  
+  try {
+    const data = typeof answer === 'string' ? JSON.parse(answer) : answer;
+    
+    return `
+      <div class="modular-answer">
+        <div class="core-concept mb-8">
+          <h2 class="text-2xl font-bold mb-4">${data.core.title}</h2>
+          <p class="text-lg text-gray-700">${data.core.content}</p>
+        </div>
+        <div class="modules">
+          ${data.modules.map(module => renderModuleContent(module)).join('')}
+        </div>
+      </div>
+    `;
+  } catch (error) {
+    console.error('Error rendering modular answer:', error);
+    return '<p class="text-red-500">Error rendering answer</p>';
+  }
+}
+
 export default function Search() {
   const router = useRouter();
   const { q, side = 'both' } = router.query;
@@ -173,6 +220,7 @@ export default function Search() {
   const [viewingChildNode, setViewingChildNode] = useState(false);
   const [currentLayout, setCurrentLayout] = useState('radialTree');
   const [currentLang, setCurrentLang] = useState('en');
+  const [moduleData, setModuleData] = useState(null);
 
   const defaultQuery = "What is the answer to life, the universe, and everything?";
 
@@ -208,6 +256,7 @@ export default function Search() {
     setStreamedAnswer('');
     setRenderedAnswer('');
     setKnowledgeGraphData(null);
+    setModuleData(null);
     setCurrentQuestion(searchQuery);
     setLoading(true);
     setIsCollecting(true);
@@ -255,23 +304,29 @@ export default function Search() {
       const reader = chatResponse.body.getReader();
       const decoder = new TextDecoder();
       let done = false;
+      let accumulatedResponse = '';
 
       while (!done) {
         const { value, done: doneReading } = await reader.read();
         done = doneReading;
         const chunkValue = decoder.decode(value);
-        setStreamedAnswer((prev) => prev + chunkValue);
+        accumulatedResponse += chunkValue;
+        setStreamedAnswer(accumulatedResponse);
       }
 
-      // Store the initial answer
-      initialAnswerRef.current = streamedAnswer;
-
-      // Get knowledge graph data
+      // Parse the complete response as JSON
       try {
+        const parsedModuleData = JSON.parse(accumulatedResponse);
+        setModuleData(parsedModuleData);
+        
+        // Generate knowledge graph from module data
         const graphResponse = await fetch('/api/knowledgeGraph', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ query: searchQuery }),
+          body: JSON.stringify({ 
+            query: searchQuery,
+            moduleData: parsedModuleData 
+          }),
         });
 
         if (!graphResponse.ok) {
@@ -279,24 +334,15 @@ export default function Search() {
         }
 
         const graphData = await graphResponse.json();
-        
-        // 确保 graphData 有正确的结构
-        if (graphData && graphData.nodes && graphData.edges) {
-          setKnowledgeGraphData(graphData);
-        } else {
-          console.error('Invalid graph data structure:', graphData);
-          setGraphError('Invalid graph data structure');
-        }
+        setKnowledgeGraphData(graphData);
       } catch (error) {
-        console.error('Error fetching knowledge graph:', error);
-        setGraphError('Failed to load knowledge graph');
+        console.error('Error parsing module data:', error);
+        setStreamedAnswer(accumulatedResponse); // Fallback to raw text if JSON parsing fails
       }
 
-      // After all processing is complete
-      setIsProcessing(false);
-      setIsCollecting(false);
-      setCollectedPages(0);
-      setTotalPages(0);
+      // Store the initial answer
+      initialAnswerRef.current = accumulatedResponse;
+
     } catch (error) {
       console.error('Error during search:', error);
       setIsProcessing(false);
@@ -339,9 +385,17 @@ export default function Search() {
 
   useEffect(() => {
     if (streamedAnswer) {
-      const markdown = renderMarkdown(streamedAnswer);
-      const sanitized = sanitizeHtml(markdown);
-      setRenderedAnswer(sanitized);
+      try {
+        // Try to parse as JSON first
+        const parsedData = JSON.parse(streamedAnswer);
+        const rendered = renderModularAnswer(parsedData);
+        setRenderedAnswer(rendered);
+      } catch (error) {
+        // Fallback to markdown rendering if JSON parsing fails
+        const markdown = renderMarkdown(streamedAnswer);
+        const sanitized = sanitizeHtml(markdown);
+        setRenderedAnswer(sanitized);
+      }
     }
   }, [streamedAnswer]);
 
