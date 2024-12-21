@@ -11,7 +11,7 @@ const i18n = {
     deepThinkDesc: '深入探索知识的海洋',
     graphInsight: '图谱',
     graphInsightDesc: '可视化知识连接',
-    mainTitle: '释放你的思维潜能',
+    mainTitle: 'Think Graph',
     searchPlaceholder: '探索你的想法...',
     hiring: '我们在招聘',
     hiringDesc: '加入我们，共同塑造知识探索的未来',
@@ -23,7 +23,7 @@ const i18n = {
     deepThinkDesc: 'Dive deep into knowledge exploration',
     graphInsight: 'Graph Insight',
     graphInsightDesc: 'Visualize knowledge connections',
-    mainTitle: "Unleash Your Mind's Potential",
+    mainTitle: 'Think Graph',
     searchPlaceholder: 'Explore your thoughts...',
     hiring: 'We are hiring',
     hiringDesc: 'Join our team and shape the future of knowledge exploration',
@@ -90,14 +90,14 @@ function Home({ defaultLang }) {
   return (
     <div className="flex flex-col md:flex-row min-h-screen bg-white relative">
       {/* Left side - Deep Think */}
-      <div className="flex-1 flex flex-col items-center justify-center p-8 bg-blue-50">
+      <div className="flex-1 flex flex-col items-center justify-center p-8 bg-white">
         <FontAwesomeIcon icon={faBrain} className="text-6xl text-blue-600 mb-4" />
         <h2 className="text-2xl font-semibold mb-4 text-blue-800">{getText('deepThink')}</h2>
         <p className="text-center text-blue-600 mb-8">{getText('deepThinkDesc')}</p>
       </div>
 
       {/* Right side - Graph Insight */}
-      <div className="flex-1 flex flex-col items-center justify-center p-8 bg-yellow-50">
+      <div className="flex-1 flex flex-col items-center justify-center p-8 bg-white">
         <FontAwesomeIcon icon={faLightbulb} className="text-6xl text-yellow-500 mb-4" />
         <h2 className="text-2xl font-semibold mb-4 text-yellow-800">{getText('graphInsight')}</h2>
         <p className="text-center text-yellow-600 mb-8">{getText('graphInsightDesc')}</p>
