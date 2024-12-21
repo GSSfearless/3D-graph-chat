@@ -1,7 +1,7 @@
-import { faArrowRight, faBrain, faLightbulb } from '@fortawesome/free-solid-svg-icons';
+import { faArrowRight, faBrain, faLightbulb, faMoon, faSun } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { useRouter } from 'next/router';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import 'tailwindcss/tailwind.css';
 
 // 添加多语言文本
@@ -65,6 +65,28 @@ function Home({ defaultLang }) {
   const router = useRouter();
   const [query, setQuery] = useState('');
   const [currentLang] = useState(defaultLang);
+  const [darkMode, setDarkMode] = useState(false);
+
+  // 初始化暗色模式
+  useEffect(() => {
+    // 检查 localStorage 中保存的主题偏好
+    const savedTheme = localStorage.getItem('theme');
+    // 检查系统主题偏好
+    const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    
+    setDarkMode(savedTheme === 'dark' || (!savedTheme && systemPrefersDark));
+  }, []);
+
+  // 监听暗色模式变化
+  useEffect(() => {
+    if (darkMode) {
+      document.documentElement.classList.add('dark');
+      localStorage.setItem('theme', 'dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+      localStorage.setItem('theme', 'light');
+    }
+  }, [darkMode]);
 
   // 获取当前语言的文本
   const getText = (key) => {
@@ -88,31 +110,51 @@ function Home({ defaultLang }) {
   };
 
   return (
-    <div className="flex flex-col md:flex-row min-h-screen bg-white relative">
+    <div className={`flex flex-col md:flex-row min-h-screen relative transition-colors duration-300 ${darkMode ? 'bg-gray-900' : 'bg-white'}`}>
+      {/* Theme toggle button */}
+      <button
+        onClick={() => setDarkMode(!darkMode)}
+        className="fixed top-4 right-4 z-50 p-2 rounded-full transition-colors duration-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+        aria-label="Toggle theme"
+      >
+        <FontAwesomeIcon
+          icon={darkMode ? faSun : faMoon}
+          className={`text-2xl ${darkMode ? 'text-yellow-400' : 'text-gray-600'}`}
+        />
+      </button>
+
       {/* Left side - Deep Think */}
-      <div className="flex-1 flex flex-col items-center justify-center p-8 bg-white">
-        <FontAwesomeIcon icon={faBrain} className="text-6xl text-blue-600 mb-4" />
-        <h2 className="text-2xl font-semibold mb-4 text-blue-800">{getText('deepThink')}</h2>
-        <p className="text-center text-blue-600 mb-8">{getText('deepThinkDesc')}</p>
+      <div className={`flex-1 flex flex-col items-center justify-center p-8 transition-colors duration-300 ${darkMode ? 'bg-gray-900' : 'bg-white'}`}>
+        <FontAwesomeIcon icon={faBrain} className={`text-6xl mb-4 ${darkMode ? 'text-blue-400' : 'text-blue-600'}`} />
+        <h2 className={`text-2xl font-semibold mb-4 ${darkMode ? 'text-blue-400' : 'text-blue-800'}`}>{getText('deepThink')}</h2>
+        <p className={`text-center mb-8 ${darkMode ? 'text-blue-400' : 'text-blue-600'}`}>{getText('deepThinkDesc')}</p>
       </div>
 
       {/* Right side - Graph Insight */}
-      <div className="flex-1 flex flex-col items-center justify-center p-8 bg-white">
-        <FontAwesomeIcon icon={faLightbulb} className="text-6xl text-yellow-500 mb-4" />
-        <h2 className="text-2xl font-semibold mb-4 text-yellow-800">{getText('graphInsight')}</h2>
-        <p className="text-center text-yellow-600 mb-8">{getText('graphInsightDesc')}</p>
+      <div className={`flex-1 flex flex-col items-center justify-center p-8 transition-colors duration-300 ${darkMode ? 'bg-gray-900' : 'bg-white'}`}>
+        <FontAwesomeIcon icon={faLightbulb} className={`text-6xl mb-4 ${darkMode ? 'text-yellow-400' : 'text-yellow-500'}`} />
+        <h2 className={`text-2xl font-semibold mb-4 ${darkMode ? 'text-yellow-400' : 'text-yellow-800'}`}>{getText('graphInsight')}</h2>
+        <p className={`text-center mb-8 ${darkMode ? 'text-yellow-400' : 'text-yellow-600'}`}>{getText('graphInsightDesc')}</p>
       </div>
 
       {/* Centered search bar */}
       <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-full max-w-2xl px-4">
-        <h1 className="text-4xl font-semibold mb-8 text-center text-gray-800">
+        <h1 className={`text-4xl font-semibold mb-8 text-center transition-colors duration-300 ${darkMode ? 'text-white' : 'text-gray-800'}`}>
           {getText('mainTitle')}
         </h1>
-        <div className="bg-white p-4 rounded-lg shadow-lg mb-4 flex items-center border border-gray-300 transition-all duration-300" style={{ minHeight: '5rem' }}>
+        <div className={`p-4 rounded-lg shadow-lg mb-4 flex items-center border transition-all duration-300 ${
+          darkMode 
+            ? 'bg-gray-800 border-gray-700 shadow-gray-900/50' 
+            : 'bg-white border-gray-300 shadow-gray-200/50'
+        }`} style={{ minHeight: '5rem' }}>
           <div className="flex-grow pr-14">
             <textarea 
               placeholder={getText('searchPlaceholder')}
-              className="w-full p-4 border-none outline-none text-xl whitespace-pre-wrap break-words overflow-hidden"
+              className={`w-full p-4 border-none outline-none text-xl whitespace-pre-wrap break-words overflow-hidden transition-colors duration-300 ${
+                darkMode 
+                  ? 'bg-gray-800 text-white placeholder-gray-400' 
+                  : 'bg-white text-gray-900 placeholder-gray-500'
+              }`}
               value={query}
               onChange={(e) => {
                 const value = e.target.value;
@@ -120,7 +162,7 @@ function Home({ defaultLang }) {
                   e.target.style.height = 'auto';
                   e.target.style.height = e.target.scrollHeight + 'px';
                 } else {
-                  e.target.style.height = '3rem'; // 重置为默认高度
+                  e.target.style.height = '3rem';
                 }
                 setQuery(value);
               }}
@@ -135,10 +177,14 @@ function Home({ defaultLang }) {
             />
           </div>
           <button 
-            className="bg-gradient-to-r from-blue-500 to-yellow-500 text-white rounded-full h-12 w-12 flex items-center justify-center absolute right-8 hover:from-blue-600 hover:to-yellow-600 transition duration-300" 
+            className={`rounded-full h-12 w-12 flex items-center justify-center absolute right-8 transition-all duration-300 ${
+              darkMode
+                ? 'bg-gradient-to-r from-blue-400 to-yellow-400 hover:from-blue-500 hover:to-yellow-500'
+                : 'bg-gradient-to-r from-blue-500 to-yellow-500 hover:from-blue-600 hover:to-yellow-600'
+            }`}
             onClick={handleSearch}
           >
-            <FontAwesomeIcon icon={faArrowRight} />
+            <FontAwesomeIcon icon={faArrowRight} className="text-white" />
           </button>
         </div>
       </div>
