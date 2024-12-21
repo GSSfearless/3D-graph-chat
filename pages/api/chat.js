@@ -129,7 +129,21 @@ ${context.map((item, index) => `标题: ${item.title}\n摘要: ${item.snippet}`)
 记住，不要盲目重复上下文。这是用户的问题：
 "${query}"
 
-请首先生成JSON结构，然后生成详细内容。确保JSON和内容部分用"---"分隔。
+请严格按照以下格式回复：
+1. 首先输出完整的JSON结构
+2. 然后输出 "---SPLIT---" 作为分隔符
+3. 最后输出详细的Markdown内容
+
+示例：
+{
+  "structure": {
+    "mainNode": "主题",
+    "subNodes": []
+  }
+}
+---SPLIT---
+### 标题
+内容
 `;
 
   try {
@@ -158,6 +172,7 @@ ${context.map((item, index) => `标题: ${item.title}\n摘要: ${item.snippet}`)
     let buffer = '';
     let structure = null;
     let isStructurePart = true;
+    let structureBuffer = '';
 
     const stream = new ReadableStream({
       async start(controller) {
@@ -168,25 +183,17 @@ ${context.map((item, index) => `标题: ${item.title}\n摘要: ${item.snippet}`)
             if (done) break;
 
             buffer += decoder.decode(value, { stream: true });
-            const lines = buffer.split('\n');
-            buffer = lines.pop() || '';
-
-            for (const line of lines) {
-              if (line.trim() === '') continue;
-              if (!line.startsWith('data: ')) continue;
-              if (line === 'data: [DONE]') continue;
-
-              const json = JSON.parse(line.slice(5));
-              const content = json.choices[0].delta.content || '';
-
-              if (isStructurePart && content.includes('---')) {
-                isStructurePart = false;
-                const structureText = buffer.split('---')[0];
+            
+            if (isStructurePart) {
+              // 检查是否有分隔符
+              const splitIndex = buffer.indexOf('---SPLIT---');
+              if (splitIndex !== -1) {
+                // 找到分隔符，处理结构数据
+                structureBuffer = buffer.substring(0, splitIndex).trim();
                 try {
-                  const match = structureText.match(/\{[\s\S]*\}/);
+                  const match = structureBuffer.match(/\{[\s\S]*\}/);
                   if (match) {
                     structure = JSON.parse(match[0]);
-                    // 发送结构数据
                     controller.enqueue(encoder.encode(JSON.stringify({
                       type: 'structure',
                       data: structure
@@ -195,17 +202,36 @@ ${context.map((item, index) => `标题: ${item.title}\n摘要: ${item.snippet}`)
                 } catch (e) {
                   console.error('Error parsing structure:', e);
                 }
+                // 移除结构部分和分隔符，保留剩余内容
+                buffer = buffer.substring(splitIndex + 11);
+                isStructurePart = false;
+              } else {
+                // 继续累积结构数据
                 continue;
               }
+            }
 
-              if (!isStructurePart) {
-                // 发送内容数据
+            // 处理内容部分
+            if (!isStructurePart) {
+              const lines = buffer.split('\n');
+              buffer = lines.pop() || '';
+
+              for (const line of lines) {
+                if (line.trim() === '') continue;
                 controller.enqueue(encoder.encode(JSON.stringify({
                   type: 'content',
-                  data: content
+                  data: line + '\n'
                 }) + '\n'));
               }
             }
+          }
+
+          // 处理最后的缓冲区内容
+          if (buffer.trim()) {
+            controller.enqueue(encoder.encode(JSON.stringify({
+              type: 'content',
+              data: buffer
+            }) + '\n'));
           }
         } catch (error) {
           controller.error(error);
