@@ -146,32 +146,25 @@ function Home({ defaultLang }) {
           darkMode 
             ? 'bg-gray-800 border-gray-700 shadow-gray-900/50' 
             : 'bg-white border-gray-300 shadow-gray-200/50'
-        }`} style={{ minHeight: '5rem' }}>
-          <div className="flex-grow pr-14">
+        }`} style={{ height: '5rem' }}>
+          <div className="flex-grow pr-14 h-full flex items-center">
             <textarea 
               placeholder={getText('searchPlaceholder')}
-              className={`w-full p-4 border-none outline-none text-xl whitespace-pre-wrap break-words overflow-hidden transition-colors duration-300 ${
+              className={`w-full h-full p-2 border-none outline-none text-xl whitespace-pre-wrap break-words overflow-hidden transition-colors duration-300 ${
                 darkMode 
                   ? 'bg-gray-800 text-white placeholder-gray-400' 
                   : 'bg-white text-gray-900 placeholder-gray-500'
               }`}
               value={query}
               onChange={(e) => {
-                const value = e.target.value;
-                if (value.trim() !== '') {
-                  e.target.style.height = 'auto';
-                  e.target.style.height = e.target.scrollHeight + 'px';
-                } else {
-                  e.target.style.height = '3rem';
-                }
-                setQuery(value);
+                setQuery(e.target.value);
               }}
               onKeyPress={handleKeyPress}
               style={{ 
                 wordWrap: 'break-word',
                 resize: 'none',
-                minHeight: '3rem',
-                height: 'auto'
+                height: '100%',
+                lineHeight: '1.5'
               }}
               rows="1"
             />
