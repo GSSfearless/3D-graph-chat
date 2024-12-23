@@ -142,10 +142,10 @@ function Home({ defaultLang }) {
         <h1 className={`text-4xl font-semibold mb-8 text-center transition-colors duration-300 ${darkMode ? 'text-white' : 'text-gray-800'}`}>
           {getText('mainTitle')}
         </h1>
-        <div className={`p-4 rounded-lg shadow-lg mb-4 flex items-center border transition-all duration-300 ${
+        <div className={`p-4 rounded-lg mb-4 flex items-center transition-all duration-300 hover:scale-[1.01] ${
           darkMode 
-            ? 'bg-gray-800 border-gray-700 shadow-gray-900/50' 
-            : 'bg-white border-gray-300 shadow-gray-200/50'
+            ? 'bg-gray-800 shadow-[0_0_15px_rgba(59,130,246,0.3)] border-2 border-blue-500/30 hover:border-blue-400/50 hover:shadow-[0_0_20px_rgba(59,130,246,0.4)]' 
+            : 'bg-white shadow-[0_0_20px_rgba(59,130,246,0.15)] border-2 border-gradient-to-r from-blue-400 to-purple-400 hover:shadow-[0_0_25px_rgba(59,130,246,0.25)] hover:border-blue-500'
         }`} style={{ height: '5rem' }}>
           <div className="flex-grow pr-14 h-full flex items-center">
             <textarea 
