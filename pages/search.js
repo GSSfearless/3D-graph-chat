@@ -576,18 +576,18 @@ export default function Search() {
           <div className="w-1/2">
             <div className="bg-white p-6">
               {loading || expandingNode ? (
-                <div className="h-[600px] bg-gray-50 rounded-lg flex items-center justify-center">
+                <div className="h-[800px] bg-gray-50 rounded-lg flex items-center justify-center">
                   <div className="text-center">
                     <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-blue-500 mx-auto mb-4"></div>
                     <p className="text-lg font-semibold text-gray-600">{loadingMessage}</p>
                   </div>
                 </div>
               ) : graphError ? (
-                <div className="h-[600px] bg-gray-50 rounded-lg flex items-center justify-center">
+                <div className="h-[800px] bg-gray-50 rounded-lg flex items-center justify-center">
                   <p className="text-red-500 text-center">{graphError}</p>
                 </div>
               ) : knowledgeGraphData && knowledgeGraphData.nodes && knowledgeGraphData.nodes.length > 0 ? (
-                <div className="h-[600px] rounded-lg border border-gray-200">
+                <div className="h-[800px] rounded-lg border border-gray-200 transition-all duration-300 hover:shadow-lg">
                   <KnowledgeGraph 
                     data={knowledgeGraphData} 
                     onNodeClick={handleNodeClick}
@@ -597,7 +597,7 @@ export default function Search() {
                   />
                 </div>
               ) : (
-                <div className="h-[600px] bg-gray-50 rounded-lg flex items-center justify-center">
+                <div className="h-[800px] bg-gray-50 rounded-lg flex items-center justify-center">
                   <p className="text-gray-500">{getText('noGraphData')}</p>
                 </div>
               )}
