@@ -142,35 +142,37 @@ function Home({ defaultLang }) {
         <h1 className={`text-4xl font-semibold mb-8 text-center transition-colors duration-300 ${darkMode ? 'text-white' : 'text-gray-800'}`}>
           {getText('mainTitle')}
         </h1>
-        <div className={`p-4 rounded-lg mb-4 flex items-center transition-all duration-300 hover:scale-[1.01] ${
-          darkMode 
-            ? 'bg-gray-800 shadow-[0_0_15px_rgba(59,130,246,0.3)] border-2 border-blue-500/30 hover:border-blue-400/50 hover:shadow-[0_0_20px_rgba(59,130,246,0.4)]' 
-            : 'bg-white shadow-[0_0_20px_rgba(59,130,246,0.15)] border-2 border-gradient-to-r from-blue-400 to-purple-400 hover:shadow-[0_0_25px_rgba(59,130,246,0.25)] hover:border-blue-500'
-        }`} style={{ height: '5rem' }}>
-          <div className="flex-grow pr-14 h-full flex items-center">
-            <textarea 
-              placeholder={getText('searchPlaceholder')}
-              className={`w-full h-full p-2 border-none outline-none text-xl whitespace-pre-wrap break-words overflow-hidden transition-colors duration-300 ${
-                darkMode 
-                  ? 'bg-gray-800 text-white placeholder-gray-400' 
-                  : 'bg-white text-gray-900 placeholder-gray-500'
-              }`}
-              value={query}
-              onChange={(e) => {
-                setQuery(e.target.value);
-              }}
-              onKeyPress={handleKeyPress}
-              style={{ 
-                wordWrap: 'break-word',
-                resize: 'none',
-                height: '100%',
-                lineHeight: '1.5'
-              }}
-              rows="1"
-            />
+        <div className="relative">
+          <div className={`p-4 rounded-lg mb-4 flex items-center transition-all duration-300 hover:scale-[1.01] ${
+            darkMode 
+              ? 'bg-gray-800 shadow-[0_0_15px_rgba(59,130,246,0.3)] border-2 border-blue-500/30 hover:border-blue-400/50 hover:shadow-[0_0_20px_rgba(59,130,246,0.4)]' 
+              : 'bg-white shadow-[0_0_20px_rgba(59,130,246,0.15)] border-2 border-gradient-to-r from-blue-400 to-purple-400 hover:shadow-[0_0_25px_rgba(59,130,246,0.25)] hover:border-blue-500'
+          }`} style={{ height: '5rem' }}>
+            <div className="flex-grow pr-14 h-full flex items-center">
+              <textarea 
+                placeholder={getText('searchPlaceholder')}
+                className={`w-full h-full p-2 border-none outline-none text-xl whitespace-pre-wrap break-words overflow-hidden transition-colors duration-300 ${
+                  darkMode 
+                    ? 'bg-gray-800 text-white placeholder-gray-400' 
+                    : 'bg-white text-gray-900 placeholder-gray-500'
+                }`}
+                value={query}
+                onChange={(e) => {
+                  setQuery(e.target.value);
+                }}
+                onKeyPress={handleKeyPress}
+                style={{ 
+                  wordWrap: 'break-word',
+                  resize: 'none',
+                  height: '100%',
+                  lineHeight: '1.5'
+                }}
+                rows="1"
+              />
+            </div>
           </div>
           <button 
-            className={`rounded-full h-12 w-12 flex items-center justify-center absolute right-8 transition-all duration-300 ${
+            className={`rounded-full h-12 w-12 flex items-center justify-center absolute right-8 top-1/2 -translate-y-1/2 transition-all duration-300 ${
               darkMode
                 ? 'bg-gradient-to-r from-blue-400 to-yellow-400 hover:from-blue-500 hover:to-yellow-500'
                 : 'bg-gradient-to-r from-blue-500 to-yellow-500 hover:from-blue-600 hover:to-yellow-600'
