@@ -573,7 +573,7 @@ export default function Search() {
                   <p className="text-red-500 text-center">{graphError}</p>
                 </div>
               ) : knowledgeGraphData && knowledgeGraphData.nodes && knowledgeGraphData.nodes.length > 0 ? (
-                <div className="h-[600px] rounded-lg border border-gray-200">
+                <div className="h-[800px] rounded-lg border border-gray-200">
                   <KnowledgeGraph 
                     data={knowledgeGraphData} 
                     onNodeClick={handleNodeClick}
@@ -583,7 +583,7 @@ export default function Search() {
                   />
                 </div>
               ) : (
-                <div className="h-[600px] bg-gray-50 rounded-lg flex items-center justify-center">
+                <div className="h-[800px] bg-gray-50 rounded-lg flex items-center justify-center">
                   <p className="text-gray-500">{getText('noGraphData')}</p>
                 </div>
               )}
