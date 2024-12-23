@@ -253,6 +253,20 @@ export default function Search() {
       }
 
       const chatData = await chatResponse.json();
+      
+      // 添加数据格式验证
+      if (!chatData || typeof chatData !== 'object') {
+        throw new Error('Invalid response format: response is not an object');
+      }
+      
+      if (!chatData.content || typeof chatData.content !== 'string') {
+        throw new Error('Invalid response format: missing or invalid content');
+      }
+      
+      if (!chatData.structure || typeof chatData.structure !== 'object') {
+        throw new Error('Invalid response format: missing or invalid structure');
+      }
+      
       setStreamedAnswer(chatData.content);
       
       // 使用相同的结构生成知识图谱

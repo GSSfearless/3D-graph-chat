@@ -1,4 +1,3 @@
-
 // 添加语言检测函数
 function detectLanguage(text) {
   // 简单的语言检测逻辑
@@ -159,10 +158,35 @@ ${context.map((item, index) => `标题: ${item.title}\n摘要: ${item.snippet}`)
       // 尝试解析JSON响应
       const jsonMatch = fullResponse.match(/\{[\s\S]*\}/);
       if (jsonMatch) {
-        const responseData = JSON.parse(jsonMatch[0]);
-        return new Response(JSON.stringify(responseData), {
-          headers: { 'Content-Type': 'application/json' }
-        });
+        try {
+          const responseData = JSON.parse(jsonMatch[0]);
+          // 验证响应数据的格式
+          if (!responseData.content || typeof responseData.content !== 'string') {
+            throw new Error('Invalid response format: missing or invalid content');
+          }
+          if (!responseData.structure || typeof responseData.structure !== 'object') {
+            throw new Error('Invalid response format: missing or invalid structure');
+          }
+          return new Response(JSON.stringify(responseData), {
+            headers: { 'Content-Type': 'application/json' }
+          });
+        } catch (parseError) {
+          console.error('Error parsing or validating JSON response:', parseError);
+          // 创建格式化的错误响应
+          const errorResponse = {
+            content: "抱歉，处理响应时出现格式错误。",
+            structure: {
+              mainNode: "错误",
+              subNodes: [{
+                title: "错误信息",
+                content: parseError.message
+              }]
+            }
+          };
+          return new Response(JSON.stringify(errorResponse), {
+            headers: { 'Content-Type': 'application/json' }
+          });
+        }
       }
     } catch (parseError) {
       console.error('Error parsing JSON response:', parseError);
