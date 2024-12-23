@@ -723,13 +723,19 @@ export default function Search() {
           <div className="flex-grow pr-14">
             <textarea 
               placeholder={getText('searchPlaceholder')}
-              className="w-full p-2 border-none outline-none text-xl group-hover:placeholder-blue-400 transition-colors duration-300 min-h-[2.5rem] whitespace-pre-wrap break-words overflow-hidden"
+              className="w-full p-2 border-none outline-none text-xl group-hover:placeholder-blue-400 transition-colors duration-300 min-h-[2.5rem] whitespace-pre-wrap break-words overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-600 scrollbar-track-transparent hover:scrollbar-thumb-gray-400 dark:hover:scrollbar-thumb-gray-500"
               value={query}
-              onChange={handleChange}
+              onChange={(e) => {
+                const textarea = e.target;
+                textarea.style.height = 'auto';
+                textarea.style.height = Math.min(textarea.scrollHeight, 120) + 'px'; // 限制最大高度为120px
+                handleChange(e);
+              }}
               onKeyPress={handleKeyPress}
               style={{ 
                 wordWrap: 'break-word',
                 resize: 'none',
+                maxHeight: '120px',
                 minHeight: '2.5rem',
                 height: 'auto'
               }}

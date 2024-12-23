@@ -147,24 +147,28 @@ function Home({ defaultLang }) {
             darkMode 
               ? 'bg-gray-800 shadow-[0_0_15px_rgba(59,130,246,0.3)] border-2 border-blue-500/30 hover:border-blue-400/50 hover:shadow-[0_0_20px_rgba(59,130,246,0.4)]' 
               : 'bg-white shadow-[0_0_20px_rgba(59,130,246,0.15)] border-2 border-gradient-to-r from-blue-400 to-purple-400 hover:shadow-[0_0_25px_rgba(59,130,246,0.25)] hover:border-blue-500'
-          }`} style={{ height: '5rem' }}>
+          }`} style={{ minHeight: '5rem', maxHeight: '12rem' }}>
             <div className="flex-grow pr-14 h-full flex items-center">
               <textarea 
                 placeholder={getText('searchPlaceholder')}
-                className={`w-full h-full p-2 border-none outline-none text-xl whitespace-pre-wrap break-words overflow-hidden transition-colors duration-300 ${
+                className={`w-full p-2 border-none outline-none text-xl whitespace-pre-wrap break-words overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-600 scrollbar-track-transparent hover:scrollbar-thumb-gray-400 dark:hover:scrollbar-thumb-gray-500 transition-colors duration-300 ${
                   darkMode 
                     ? 'bg-gray-800 text-white placeholder-gray-400' 
                     : 'bg-white text-gray-900 placeholder-gray-500'
                 }`}
                 value={query}
                 onChange={(e) => {
+                  const textarea = e.target;
+                  textarea.style.height = 'auto';
+                  textarea.style.height = Math.min(textarea.scrollHeight, 160) + 'px'; // 限制最大高度为160px
                   setQuery(e.target.value);
                 }}
                 onKeyPress={handleKeyPress}
                 style={{ 
                   wordWrap: 'break-word',
                   resize: 'none',
-                  height: '100%',
+                  maxHeight: '160px',
+                  minHeight: '2.5rem',
                   lineHeight: '1.5'
                 }}
                 rows="1"
