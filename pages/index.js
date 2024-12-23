@@ -110,53 +110,57 @@ function Home({ defaultLang }) {
   };
 
   return (
-    <div className={`flex flex-col md:flex-row min-h-screen relative transition-all duration-300 ${
-      darkMode 
-        ? 'bg-gradient-to-r from-blue-900 via-indigo-900 to-yellow-900'
-        : 'bg-gradient-to-r from-blue-500 via-indigo-400 to-yellow-500'
-    }`}>
+    <div className={`flex flex-col md:flex-row min-h-screen relative transition-colors duration-300 ${darkMode ? 'bg-gray-900' : 'bg-white'}`}>
       {/* Theme toggle button */}
       <button
         onClick={() => setDarkMode(!darkMode)}
-        className="fixed top-4 right-4 z-50 p-2 rounded-full bg-white/10 backdrop-blur-sm transition-all duration-300 hover:bg-white/20"
+        className="fixed top-4 right-4 z-50 p-2 rounded-full transition-colors duration-300 hover:bg-gray-100 dark:hover:bg-gray-700"
         aria-label="Toggle theme"
       >
         <FontAwesomeIcon
           icon={darkMode ? faSun : faMoon}
-          className="text-2xl text-white"
+          className={`text-2xl ${darkMode ? 'text-yellow-400' : 'text-gray-600'}`}
         />
       </button>
 
       {/* Left side - Deep Think */}
-      <div className="flex-1 flex flex-col items-center justify-center p-8 bg-transparent">
-        <FontAwesomeIcon icon={faBrain} className="text-6xl mb-4 text-white" />
-        <h2 className="text-2xl font-semibold mb-4 text-white">{getText('deepThink')}</h2>
-        <p className="text-center mb-8 text-white/90">{getText('deepThinkDesc')}</p>
+      <div className={`flex-1 flex flex-col items-center justify-center p-8 transition-colors duration-300 ${darkMode ? 'bg-gray-900' : 'bg-white'}`}>
+        <FontAwesomeIcon icon={faBrain} className={`text-6xl mb-4 ${darkMode ? 'text-blue-400' : 'text-blue-600'}`} />
+        <h2 className={`text-2xl font-semibold mb-4 ${darkMode ? 'text-blue-400' : 'text-blue-800'}`}>{getText('deepThink')}</h2>
+        <p className={`text-center mb-8 ${darkMode ? 'text-blue-400' : 'text-blue-600'}`}>{getText('deepThinkDesc')}</p>
       </div>
 
       {/* Right side - Graph Insight */}
-      <div className="flex-1 flex flex-col items-center justify-center p-8 bg-transparent">
-        <FontAwesomeIcon icon={faLightbulb} className="text-6xl mb-4 text-white" />
-        <h2 className="text-2xl font-semibold mb-4 text-white">{getText('graphInsight')}</h2>
-        <p className="text-center mb-8 text-white/90">{getText('graphInsightDesc')}</p>
+      <div className={`flex-1 flex flex-col items-center justify-center p-8 transition-colors duration-300 ${darkMode ? 'bg-gray-900' : 'bg-white'}`}>
+        <FontAwesomeIcon icon={faLightbulb} className={`text-6xl mb-4 ${darkMode ? 'text-yellow-400' : 'text-yellow-500'}`} />
+        <h2 className={`text-2xl font-semibold mb-4 ${darkMode ? 'text-yellow-400' : 'text-yellow-800'}`}>{getText('graphInsight')}</h2>
+        <p className={`text-center mb-8 ${darkMode ? 'text-yellow-400' : 'text-yellow-600'}`}>{getText('graphInsightDesc')}</p>
       </div>
 
       {/* Centered search bar */}
       <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-full max-w-2xl px-4">
-        <h1 className="text-4xl font-semibold mb-8 text-center text-white">
+        <h1 className={`text-4xl font-semibold mb-8 text-center transition-colors duration-300 ${darkMode ? 'text-white' : 'text-gray-800'}`}>
           {getText('mainTitle')}
         </h1>
         <div className="relative">
-          <div className="p-4 rounded-lg mb-4 flex items-center transition-all duration-300 hover:scale-[1.01] bg-white/10 backdrop-blur-md border-2 border-white/30 hover:border-white/50 hover:shadow-[0_0_20px_rgba(255,255,255,0.2)]" style={{ minHeight: '5rem', maxHeight: '12rem' }}>
+          <div className={`p-4 rounded-lg mb-4 flex items-center transition-all duration-300 hover:scale-[1.01] ${
+            darkMode 
+              ? 'bg-gray-800 shadow-[0_0_15px_rgba(59,130,246,0.3)] border-2 border-blue-500/30 hover:border-blue-400/50 hover:shadow-[0_0_20px_rgba(59,130,246,0.4)]' 
+              : 'bg-white shadow-[0_0_20px_rgba(59,130,246,0.15)] border-2 border-gradient-to-r from-blue-400 to-purple-400 hover:shadow-[0_0_25px_rgba(59,130,246,0.25)] hover:border-blue-500'
+          }`} style={{ minHeight: '5rem', maxHeight: '12rem' }}>
             <div className="flex-grow pr-14 h-full flex items-center">
               <textarea 
                 placeholder={getText('searchPlaceholder')}
-                className="w-full p-2 border-none outline-none text-xl whitespace-pre-wrap break-words overflow-y-auto scrollbar-thin scrollbar-thumb-white/30 scrollbar-track-transparent hover:scrollbar-thumb-white/50 bg-transparent text-white placeholder-white/70"
+                className={`w-full p-2 border-none outline-none text-xl whitespace-pre-wrap break-words overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-600 scrollbar-track-transparent hover:scrollbar-thumb-gray-400 dark:hover:scrollbar-thumb-gray-500 transition-colors duration-300 ${
+                  darkMode 
+                    ? 'bg-gray-800 text-white placeholder-gray-400' 
+                    : 'bg-white text-gray-900 placeholder-gray-500'
+                }`}
                 value={query}
                 onChange={(e) => {
                   const textarea = e.target;
                   textarea.style.height = 'auto';
-                  textarea.style.height = Math.min(textarea.scrollHeight, 160) + 'px';
+                  textarea.style.height = Math.min(textarea.scrollHeight, 160) + 'px'; // 限制最大高度为160px
                   setQuery(e.target.value);
                 }}
                 onKeyPress={handleKeyPress}
@@ -172,10 +176,14 @@ function Home({ defaultLang }) {
             </div>
           </div>
           <button 
-            className="rounded-full h-12 w-12 flex items-center justify-center absolute right-8 top-1/2 -translate-y-1/2 transition-all duration-300 bg-white/20 backdrop-blur-sm hover:bg-white/30 text-white"
+            className={`rounded-full h-12 w-12 flex items-center justify-center absolute right-8 top-1/2 -translate-y-1/2 transition-all duration-300 ${
+              darkMode
+                ? 'bg-gradient-to-r from-blue-400 to-yellow-400 hover:from-blue-500 hover:to-yellow-500'
+                : 'bg-gradient-to-r from-blue-500 to-yellow-500 hover:from-blue-600 hover:to-yellow-600'
+            }`}
             onClick={handleSearch}
           >
-            <FontAwesomeIcon icon={faArrowRight} />
+            <FontAwesomeIcon icon={faArrowRight} className="text-white" />
           </button>
         </div>
       </div>
