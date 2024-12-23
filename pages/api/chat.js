@@ -1,3 +1,4 @@
+
 // 添加语言检测函数
 function detectLanguage(text) {
   // 简单的语言检测逻辑
@@ -128,11 +129,10 @@ ${context.map((item, index) => `标题: ${item.title}\n摘要: ${item.snippet}`)
 
 记住，不要盲目重复上下文。这是用户的问题：
 "${query}"
-
-请首先生成JSON结构，然后生成详细内容。确保JSON和内容部分用"---"分隔。
 `;
 
   try {
+    // 使用非流式响应
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       headers: {
         'Content-Type': 'application/json',
@@ -144,7 +144,7 @@ ${context.map((item, index) => `标题: ${item.title}\n摘要: ${item.snippet}`)
         messages: [{ role: 'user', content: prompt }],
         temperature: 0.7,
         max_tokens: 1024,
-        stream: true,
+        stream: false,
       }),
     });
 
@@ -152,81 +152,43 @@ ${context.map((item, index) => `标题: ${item.title}\n摘要: ${item.snippet}`)
       throw new Error(`OpenAI API error: ${response.status}`);
     }
 
-    const encoder = new TextEncoder();
-    const decoder = new TextDecoder();
+    const data = await response.json();
+    const fullResponse = data.choices[0].message.content;
 
-    let buffer = '';
-    let structure = null;
-    let isStructurePart = true;
+    try {
+      // 尝试解析JSON响应
+      const jsonMatch = fullResponse.match(/\{[\s\S]*\}/);
+      if (jsonMatch) {
+        const responseData = JSON.parse(jsonMatch[0]);
+        return new Response(JSON.stringify(responseData), {
+          headers: { 'Content-Type': 'application/json' }
+        });
+      }
+    } catch (parseError) {
+      console.error('Error parsing JSON response:', parseError);
+    }
 
-    const stream = new ReadableStream({
-      async start(controller) {
-        const reader = response.body.getReader();
-        try {
-          while (true) {
-            const { done, value } = await reader.read();
-            if (done) break;
-
-            buffer += decoder.decode(value, { stream: true });
-            const lines = buffer.split('\n');
-            buffer = lines.pop() || '';
-
-            for (const line of lines) {
-              if (line.trim() === '') continue;
-              if (!line.startsWith('data: ')) continue;
-              if (line === 'data: [DONE]') continue;
-
-              const json = JSON.parse(line.slice(5));
-              const content = json.choices[0].delta.content || '';
-
-              if (isStructurePart && content.includes('---')) {
-                isStructurePart = false;
-                const structureText = buffer.split('---')[0];
-                try {
-                  const match = structureText.match(/\{[\s\S]*\}/);
-                  if (match) {
-                    structure = JSON.parse(match[0]);
-                    // 发送结构数据
-                    controller.enqueue(encoder.encode(JSON.stringify({
-                      type: 'structure',
-                      data: structure
-                    }) + '\n'));
-                  }
-                } catch (e) {
-                  console.error('Error parsing structure:', e);
-                }
-                continue;
-              }
-
-              if (!isStructurePart) {
-                // 发送内容数据
-                controller.enqueue(encoder.encode(JSON.stringify({
-                  type: 'content',
-                  data: content
-                }) + '\n'));
-              }
-            }
+    // 如果无法解析JSON，返回一个格式化的默认结构
+    const defaultResponse = {
+      content: fullResponse,
+      structure: {
+        mainNode: query,
+        subNodes: [
+          {
+            title: "主要内容",
+            content: fullResponse
           }
-        } catch (error) {
-          controller.error(error);
-        } finally {
-          controller.close();
-        }
-      },
-    });
+        ]
+      }
+    };
 
-    return new Response(stream, {
-      headers: {
-        'Content-Type': 'text/event-stream',
-        'Cache-Control': 'no-cache',
-        'Connection': 'keep-alive',
-      },
+    return new Response(JSON.stringify(defaultResponse), {
+      headers: { 'Content-Type': 'application/json' }
     });
   } catch (error) {
     console.error('Chat API error:', error);
     return new Response(
-      JSON.stringify({
-        type: 'error',
+      JSON.stringify({ 
         error: error.message,
         content: "抱歉，处理您的请求时出现错误。",
         structure: {
@@ -236,8 +198,8 @@ ${context.map((item, index) => `标题: ${item.title}\n摘要: ${item.snippet}`)
             content: error.message
           }]
         }
-      }),
-      {
+      }), 
+      { 
         status: 500,
         headers: { 'Content-Type': 'application/json' }
       }

@@ -240,7 +240,7 @@ export default function Search() {
         setIsProcessing(false);
       };
 
-      // Get AI answer with streaming
+      // Get AI answer
       setStreamedAnswer('');
       const chatResponse = await fetch('/api/chat', {
         method: 'POST',
@@ -252,62 +252,40 @@ export default function Search() {
         throw new Error(`HTTP error! status: ${chatResponse.status}`);
       }
 
-      const reader = chatResponse.body.getReader();
-      const decoder = new TextDecoder();
-      let buffer = '';
+      const chatData = await chatResponse.json();
+      setStreamedAnswer(chatData.content);
+      
+      // 使用相同的结构生成知识图谱
+      try {
+        const graphResponse = await fetch('/api/knowledgeGraph', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ structure: chatData.structure }),
+        });
 
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-
-        buffer += decoder.decode(value, { stream: true });
-        const lines = buffer.split('\n');
-        buffer = lines.pop() || '';
-
-        for (const line of lines) {
-          if (!line.trim()) continue;
-          
-          try {
-            const data = JSON.parse(line);
-            if (data.type === 'structure') {
-              // 使用结构数据生成知识图谱
-              try {
-                const graphResponse = await fetch('/api/knowledgeGraph', {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({ structure: data.data }),
-                });
-
-                if (!graphResponse.ok) {
-                  throw new Error(`HTTP error! status: ${graphResponse.status}`);
-                }
-
-                const graphData = await graphResponse.json();
-                if (graphData && graphData.nodes && graphData.edges) {
-                  setKnowledgeGraphData(graphData);
-                  const explanations = {};
-                  graphData.nodes.forEach(node => {
-                    if (node.data.content) {
-                      explanations[node.id] = node.data.content;
-                    }
-                  });
-                  setNodeExplanations(explanations);
-                }
-              } catch (error) {
-                console.error('Error fetching knowledge graph:', error);
-                setGraphError('Failed to load knowledge graph');
-              }
-            } else if (data.type === 'content') {
-              // 累积内容数据
-              setStreamedAnswer(prev => prev + data.data);
-            } else if (data.type === 'error') {
-              console.error('Error from chat API:', data.error);
-              setStreamedAnswer(data.content);
-            }
-          } catch (e) {
-            console.error('Error parsing stream data:', e);
-          }
+        if (!graphResponse.ok) {
+          throw new Error(`HTTP error! status: ${graphResponse.status}`);
         }
+
+        const graphData = await graphResponse.json();
+        
+        if (graphData && graphData.nodes && graphData.edges) {
+          setKnowledgeGraphData(graphData);
+          // 保存节点解释
+          const explanations = {};
+          graphData.nodes.forEach(node => {
+            if (node.data.content) {
+              explanations[node.id] = node.data.content;
+            }
+          });
+          setNodeExplanations(explanations);
+        } else {
+          console.error('Invalid graph data structure:', graphData);
+          setGraphError('Invalid graph data structure');
+        }
+      } catch (error) {
+        console.error('Error fetching knowledge graph:', error);
+        setGraphError('Failed to load knowledge graph');
       }
 
       // After all processing is complete
