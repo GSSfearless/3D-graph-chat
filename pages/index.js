@@ -110,57 +110,57 @@ function Home({ defaultLang }) {
   };
 
   return (
-    <div className={`flex flex-col md:flex-row min-h-screen relative transition-colors duration-300 ${darkMode ? 'bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900' : 'bg-gradient-to-br from-blue-500 via-blue-400 to-yellow-500'}`}>
+    <div className={`flex flex-col md:flex-row min-h-screen relative transition-colors duration-300 ${darkMode ? 'bg-gray-900' : 'bg-white'}`}>
       {/* Theme toggle button */}
       <button
         onClick={() => setDarkMode(!darkMode)}
-        className="fixed top-4 right-4 z-50 p-2 rounded-full transition-colors duration-300 hover:bg-white/10 backdrop-blur-sm"
+        className="fixed top-4 right-4 z-50 p-2 rounded-full transition-colors duration-300 hover:bg-gray-100 dark:hover:bg-gray-700"
         aria-label="Toggle theme"
       >
         <FontAwesomeIcon
           icon={darkMode ? faSun : faMoon}
-          className={`text-2xl ${darkMode ? 'text-yellow-400' : 'text-white'}`}
+          className={`text-2xl ${darkMode ? 'text-yellow-400' : 'text-gray-600'}`}
         />
       </button>
 
       {/* Left side - Deep Think */}
-      <div className={`flex-1 flex flex-col items-center justify-center p-8 transition-all duration-300 backdrop-blur-sm bg-white/5`}>
-        <FontAwesomeIcon icon={faBrain} className={`text-6xl mb-4 ${darkMode ? 'text-blue-400' : 'text-white'}`} />
-        <h2 className={`text-2xl font-semibold mb-4 ${darkMode ? 'text-blue-400' : 'text-white'}`}>{getText('deepThink')}</h2>
-        <p className={`text-center mb-8 ${darkMode ? 'text-blue-400' : 'text-white/90'}`}>{getText('deepThinkDesc')}</p>
+      <div className={`flex-1 flex flex-col items-center justify-center p-8 transition-colors duration-300 ${darkMode ? 'bg-gray-900' : 'bg-white'}`}>
+        <FontAwesomeIcon icon={faBrain} className={`text-6xl mb-4 ${darkMode ? 'text-blue-400' : 'text-blue-600'}`} />
+        <h2 className={`text-2xl font-semibold mb-4 ${darkMode ? 'text-blue-400' : 'text-blue-800'}`}>{getText('deepThink')}</h2>
+        <p className={`text-center mb-8 ${darkMode ? 'text-blue-400' : 'text-blue-600'}`}>{getText('deepThinkDesc')}</p>
       </div>
 
       {/* Right side - Graph Insight */}
-      <div className={`flex-1 flex flex-col items-center justify-center p-8 transition-all duration-300 backdrop-blur-sm bg-white/5`}>
-        <FontAwesomeIcon icon={faLightbulb} className={`text-6xl mb-4 ${darkMode ? 'text-yellow-400' : 'text-white'}`} />
-        <h2 className={`text-2xl font-semibold mb-4 ${darkMode ? 'text-yellow-400' : 'text-white'}`}>{getText('graphInsight')}</h2>
-        <p className={`text-center mb-8 ${darkMode ? 'text-yellow-400' : 'text-white/90'}`}>{getText('graphInsightDesc')}</p>
+      <div className={`flex-1 flex flex-col items-center justify-center p-8 transition-colors duration-300 ${darkMode ? 'bg-gray-900' : 'bg-white'}`}>
+        <FontAwesomeIcon icon={faLightbulb} className={`text-6xl mb-4 ${darkMode ? 'text-yellow-400' : 'text-yellow-500'}`} />
+        <h2 className={`text-2xl font-semibold mb-4 ${darkMode ? 'text-yellow-400' : 'text-yellow-800'}`}>{getText('graphInsight')}</h2>
+        <p className={`text-center mb-8 ${darkMode ? 'text-yellow-400' : 'text-yellow-600'}`}>{getText('graphInsightDesc')}</p>
       </div>
 
       {/* Centered search bar */}
       <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-full max-w-2xl px-4">
-        <h1 className={`text-4xl font-semibold mb-8 text-center transition-colors duration-300 ${darkMode ? 'text-white' : 'text-white'}`}>
+        <h1 className={`text-4xl font-semibold mb-8 text-center transition-colors duration-300 ${darkMode ? 'text-white' : 'text-gray-800'}`}>
           {getText('mainTitle')}
         </h1>
         <div className="relative">
-          <div className={`p-4 rounded-lg mb-4 flex items-center transition-all duration-300 hover:scale-[1.01] backdrop-blur-md ${
+          <div className={`p-4 rounded-lg mb-4 flex items-center transition-all duration-300 hover:scale-[1.01] ${
             darkMode 
-              ? 'bg-gray-800/80 shadow-[0_0_15px_rgba(59,130,246,0.3)] border-2 border-blue-500/30 hover:border-blue-400/50 hover:shadow-[0_0_20px_rgba(59,130,246,0.4)]' 
-              : 'bg-white/80 shadow-[0_0_20px_rgba(255,255,255,0.3)] border-2 border-white/50 hover:shadow-[0_0_25px_rgba(255,255,255,0.4)] hover:border-white'
+              ? 'bg-gray-800 shadow-[0_0_15px_rgba(59,130,246,0.3)] border-2 border-blue-500/30 hover:border-blue-400/50 hover:shadow-[0_0_20px_rgba(59,130,246,0.4)]' 
+              : 'bg-white shadow-[0_0_20px_rgba(59,130,246,0.15)] border-2 border-gradient-to-r from-blue-400 to-purple-400 hover:shadow-[0_0_25px_rgba(59,130,246,0.25)] hover:border-blue-500'
           }`} style={{ minHeight: '5rem', maxHeight: '12rem' }}>
             <div className="flex-grow pr-14 h-full flex items-center">
               <textarea 
                 placeholder={getText('searchPlaceholder')}
                 className={`w-full p-2 border-none outline-none text-xl whitespace-pre-wrap break-words overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-600 scrollbar-track-transparent hover:scrollbar-thumb-gray-400 dark:hover:scrollbar-thumb-gray-500 transition-colors duration-300 ${
                   darkMode 
-                    ? 'bg-transparent text-white placeholder-gray-400' 
-                    : 'bg-transparent text-gray-900 placeholder-gray-600'
+                    ? 'bg-gray-800 text-white placeholder-gray-400' 
+                    : 'bg-white text-gray-900 placeholder-gray-500'
                 }`}
                 value={query}
                 onChange={(e) => {
                   const textarea = e.target;
                   textarea.style.height = 'auto';
-                  textarea.style.height = Math.min(textarea.scrollHeight, 160) + 'px';
+                  textarea.style.height = Math.min(textarea.scrollHeight, 160) + 'px'; // 限制最大高度为160px
                   setQuery(e.target.value);
                 }}
                 onKeyPress={handleKeyPress}
@@ -180,7 +180,7 @@ function Home({ defaultLang }) {
               darkMode
                 ? 'bg-gradient-to-r from-blue-400 to-yellow-400 hover:from-blue-500 hover:to-yellow-500'
                 : 'bg-gradient-to-r from-blue-500 to-yellow-500 hover:from-blue-600 hover:to-yellow-600'
-            } hover:scale-110`}
+            }`}
             onClick={handleSearch}
           >
             <FontAwesomeIcon icon={faArrowRight} className="text-white" />
