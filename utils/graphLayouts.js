@@ -176,62 +176,9 @@ export function createRadialTreeLayout(nodes, edges) {
   return centerLayout(nodes);
 }
 
-export function createFlowLayout(nodes) {
-  const rightX = 900; // 右侧源节点的 X 坐标
-  const leftX = 300;  // 左侧节点的 X 坐标
-  const startY = 100; // 起始 Y 坐标
-  const verticalSpacing = 120; // 垂直间距
-
-  // 找到源节点（通常是第一个节点）
-  const sourceNode = nodes[0];
-  const otherNodes = nodes.slice(1);
-
-  const layoutedNodes = [
-    // 源节点放在右侧中间位置
-    {
-      ...sourceNode,
-      position: { 
-        x: rightX, 
-        y: 450 - NODE_HEIGHT / 2 // 垂直居中
-      },
-      style: {
-        width: NODE_WIDTH,
-        height: NODE_HEIGHT,
-        background: NODE_COLORS[0],
-        borderRadius: '8px',
-        border: '2px solid #FFD700',
-        padding: '5px',
-        fontSize: '14px',
-        fontWeight: 'bold'
-      }
-    },
-    // 其他节点从上到下排列在左侧
-    ...otherNodes.map((node, index) => ({
-      ...node,
-      position: {
-        x: leftX,
-        y: startY + index * verticalSpacing
-      },
-      style: {
-        width: NODE_WIDTH,
-        height: NODE_HEIGHT,
-        background: NODE_COLORS[(index + 1) % NODE_COLORS.length],
-        borderRadius: '8px',
-        border: '1px solid #ddd',
-        padding: '5px',
-        fontSize: '12px'
-      }
-    }))
-  ];
-
-  return layoutedNodes;
-}
-
 export function relayoutGraph(nodes, edges, layoutType) {
-  let layoutedNodes;
-  
-  // 使用新的 Flow 布局
-  layoutedNodes = createFlowLayout(nodes);
+  // 暂时忽略 layoutType 参数，始终使用金字塔布局
+  const layoutedNodes = createPyramidLayout(nodes);
   
   return {
     nodes: layoutedNodes,

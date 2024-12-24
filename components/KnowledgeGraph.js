@@ -41,12 +41,13 @@ const KnowledgeGraph = ({ data, onNodeClick, onNodeDragStop, onNodeDelete }) => 
           limitedNodes.some(node => node.id === edge.target)
         );
 
-        // 使用 Flow 布局
-        const { nodes: layoutedNodes, edges: layoutedEdges } = relayoutGraph(limitedNodes, limitedEdges);
+        // 始终使用金字塔布局
+        const { nodes: layoutedNodes, edges: layoutedEdges } = relayoutGraph(limitedNodes, limitedEdges, 'pyramid');
         setNodes(layoutedNodes);
         setEdges(layoutedEdges);
       } catch (error) {
         console.error('Error in layout calculation:', error);
+        // 如果布局计算失败，至少显示原始节点
         setNodes(data.nodes.slice(0, MAX_NODES));
         setEdges(data.edges);
       }
@@ -54,11 +55,7 @@ const KnowledgeGraph = ({ data, onNodeClick, onNodeDragStop, onNodeDelete }) => 
   }, [data]);
 
   const onInit = useCallback((reactFlowInstance) => {
-    reactFlowInstance.fitView({ padding: 0.3, includeHiddenNodes: false });
-    // 设置初始缩放级别
-    reactFlowInstance.zoomTo(0.8);
-    // 设置视图中心
-    reactFlowInstance.setCenter(600, 450);
+    reactFlowInstance.fitView({ padding: 0.2, includeHiddenNodes: false });
   }, []);
 
   const handleNodeClick = useCallback((event, node) => {
