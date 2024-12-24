@@ -194,8 +194,20 @@ export function createRadialTreeLayout(nodes, edges) {
 }
 
 export function relayoutGraph(nodes, edges, layoutType) {
-  // 暂时忽略 layoutType 参数，始终使用金字塔布局
-  const layoutedNodes = createPyramidLayout(nodes);
+  let layoutedNodes;
+  
+  switch (layoutType) {
+    case 'mindmap':
+      layoutedNodes = createMindMapLayout(nodes);
+      break;
+    case 'radialTree':
+      layoutedNodes = createRadialTreeLayout(nodes, edges);
+      break;
+    case 'pyramid':
+    default:
+      layoutedNodes = createPyramidLayout(nodes);
+      break;
+  }
   
   return {
     nodes: layoutedNodes,

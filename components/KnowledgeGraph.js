@@ -41,8 +41,9 @@ const KnowledgeGraph = ({ data, onNodeClick, onNodeDragStop, onNodeDelete }) => 
           limitedNodes.some(node => node.id === edge.target)
         );
 
-        // 始终使用金字塔布局
+        // 使用左右布局（pyramid）
         const { nodes: layoutedNodes, edges: layoutedEdges } = relayoutGraph(limitedNodes, limitedEdges, 'pyramid');
+        console.log('Layout applied:', layoutedNodes); // 添加日志
         setNodes(layoutedNodes);
         setEdges(layoutedEdges);
       } catch (error) {
