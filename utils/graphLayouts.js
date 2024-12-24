@@ -179,12 +179,16 @@ export function createRadialTreeLayout(nodes, edges) {
 export function createFlowLayout(nodes) {
   const rightX = 900; // 右侧源节点的 X 坐标
   const leftX = 300;  // 左侧节点的 X 坐标
-  const startY = 100; // 起始 Y 坐标
-  const verticalSpacing = 120; // 垂直间距
+  const startY = 150; // 起始 Y 坐标
+  const verticalSpacing = 100; // 垂直间距
 
   // 找到源节点（通常是第一个节点）
   const sourceNode = nodes[0];
   const otherNodes = nodes.slice(1);
+
+  // 计算总高度以确保垂直居中
+  const totalHeight = (otherNodes.length - 1) * verticalSpacing;
+  const startingY = Math.max(100, (900 - totalHeight) / 2);
 
   const layoutedNodes = [
     // 源节点放在右侧中间位置
@@ -192,7 +196,7 @@ export function createFlowLayout(nodes) {
       ...sourceNode,
       position: { 
         x: rightX, 
-        y: 450 - NODE_HEIGHT / 2 // 垂直居中
+        y: 450 // 垂直居中
       },
       style: {
         width: NODE_WIDTH,
@@ -210,7 +214,7 @@ export function createFlowLayout(nodes) {
       ...node,
       position: {
         x: leftX,
-        y: startY + index * verticalSpacing
+        y: startingY + index * verticalSpacing
       },
       style: {
         width: NODE_WIDTH,
@@ -227,11 +231,9 @@ export function createFlowLayout(nodes) {
   return layoutedNodes;
 }
 
-export function relayoutGraph(nodes, edges, layoutType) {
-  let layoutedNodes;
-  
-  // 使用新的 Flow 布局
-  layoutedNodes = createFlowLayout(nodes);
+export function relayoutGraph(nodes, edges) {
+  // 直接使用 Flow 布局
+  const layoutedNodes = createFlowLayout(nodes);
   
   return {
     nodes: layoutedNodes,

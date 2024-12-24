@@ -19,52 +19,45 @@ const KnowledgeGraph = ({ data, onNodeClick, onNodeDragStop, onNodeDelete }) => 
   console.log('KnowledgeGraph rendered with data:', data);
 
   const [mounted, setMounted] = useState(false);
-  const [nodes, setNodes] = useState(data.nodes);
-  const [edges, setEdges] = useState(data.edges);
+  const [nodes, setNodes] = useState([]);
+  const [edges, setEdges] = useState([]);
   const [hoveredNode, setHoveredNode] = useState(null);
 
-  const MAX_NODES = 50; // 设置一个合理的最大节点数
+  const MAX_NODES = 50;
 
   useEffect(() => {
     setMounted(true);
-    setNodes(data.nodes);
-    setEdges(data.edges);
-  }, [data]);
+  }, []);
 
   useEffect(() => {
     if (data && data.nodes && data.edges) {
       try {
-        // 限制节点数量
         const limitedNodes = data.nodes.slice(0, MAX_NODES);
         const limitedEdges = data.edges.filter(edge => 
           limitedNodes.some(node => node.id === edge.source) && 
           limitedNodes.some(node => node.id === edge.target)
         );
 
-        // 使用 Flow 布局
         const { nodes: layoutedNodes, edges: layoutedEdges } = relayoutGraph(limitedNodes, limitedEdges);
         setNodes(layoutedNodes);
         setEdges(layoutedEdges);
       } catch (error) {
         console.error('Error in layout calculation:', error);
-        setNodes(data.nodes.slice(0, MAX_NODES));
-        setEdges(data.edges);
+        setNodes([]);
+        setEdges([]);
       }
     }
   }, [data]);
 
   const onInit = useCallback((reactFlowInstance) => {
-    reactFlowInstance.fitView({ padding: 0.3, includeHiddenNodes: false });
-    // 设置初始缩放级别
-    reactFlowInstance.zoomTo(0.8);
-    // 设置视图中心
-    reactFlowInstance.setCenter(600, 450);
+    reactFlowInstance.fitView({ padding: 0.3 });
   }, []);
 
   const handleNodeClick = useCallback((event, node) => {
-    // 禁用节点点击事件
-    return;
-  }, []);
+    if (onNodeClick) {
+      onNodeClick(node);
+    }
+  }, [onNodeClick]);
 
   const handleNodeDragStart = useCallback((event, node) => {
     // You can add any logic here for when dragging starts
@@ -137,15 +130,12 @@ const KnowledgeGraph = ({ data, onNodeClick, onNodeDragStop, onNodeDelete }) => 
         onInit={onInit}
         nodesDraggable={true}
         nodesConnectable={false}
-        zoomOnScroll={false}
-        zoomOnPinch={true}
+        zoomOnScroll={true}
         panOnScroll={true}
         panOnScrollMode="free"
         minZoom={0.1}
         maxZoom={4}
-        defaultZoom={1}
-        onlyRenderVisibleElements={true}
-        edgeUpdaterRadius={10}
+        defaultZoom={0.8}
       >
         <Controls />
         <Background color="#aaa" gap={16} />
