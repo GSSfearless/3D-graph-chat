@@ -177,14 +177,18 @@ export function createRadialTreeLayout(nodes, edges) {
 }
 
 export function createFlowLayout(nodes) {
-  const rightX = 900; // 右侧源节点的 X 坐标
-  const leftX = 300;  // 左侧节点的 X 坐标
-  const startY = 100; // 起始 Y 坐标
-  const verticalSpacing = 120; // 垂直间距
+  const rightX = 800; // 调整右侧源节点的 X 坐标
+  const leftX = 200;  // 调整左侧节点的 X 坐标
+  const startY = 150; // 调整起始 Y 坐标
+  const verticalSpacing = 100; // 调整垂直间距
 
   // 找到源节点（通常是第一个节点）
   const sourceNode = nodes[0];
   const otherNodes = nodes.slice(1);
+
+  // 计算总高度以确保源节点垂直居中
+  const totalHeight = (otherNodes.length - 1) * verticalSpacing;
+  const centerY = startY + totalHeight / 2;
 
   const layoutedNodes = [
     // 源节点放在右侧中间位置
@@ -192,7 +196,7 @@ export function createFlowLayout(nodes) {
       ...sourceNode,
       position: { 
         x: rightX, 
-        y: 450 - NODE_HEIGHT / 2 // 垂直居中
+        y: centerY // 确保源节点垂直居中
       },
       style: {
         width: NODE_WIDTH,
@@ -227,23 +231,28 @@ export function createFlowLayout(nodes) {
   return layoutedNodes;
 }
 
-export function relayoutGraph(nodes, edges, layoutType) {
-  let layoutedNodes;
+export function relayoutGraph(nodes, edges) {
+  // 直接使用 Flow 布局
+  const layoutedNodes = createFlowLayout(nodes);
   
-  // 使用新的 Flow 布局
-  layoutedNodes = createFlowLayout(nodes);
-  
+  // 优化边的样式
+  const layoutedEdges = edges.map(edge => ({
+    ...edge,
+    type: 'smoothstep',
+    animated: true,
+    style: { 
+      stroke: '#888', 
+      strokeWidth: 2,
+      opacity: 0.8
+    },
+    markerEnd: {
+      type: 'arrowclosed',
+      color: '#888',
+    },
+  }));
+
   return {
     nodes: layoutedNodes,
-    edges: edges.map(edge => ({
-      ...edge,
-      type: 'smoothstep',
-      animated: true,
-      style: { stroke: '#888', strokeWidth: 2 },
-      markerEnd: {
-        type: 'arrowclosed',
-        color: '#888',
-      },
-    })),
+    edges: layoutedEdges,
   };
 }
