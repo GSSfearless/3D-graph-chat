@@ -1,6 +1,6 @@
-const NODE_WIDTH = 180;
-const NODE_HEIGHT = 60;
-const NODE_COLORS = [
+export const NODE_WIDTH = 180;
+export const NODE_HEIGHT = 60;
+export const NODE_COLORS = [
   'linear-gradient(135deg, #F5F7FA 0%, #C3CFE2 100%)',
   'linear-gradient(135deg, #E0EAFC 0%, #CFDEF3 100%)',
   'linear-gradient(135deg, #E0F2F1 0%, #B2DFDB 100%)',
@@ -177,26 +177,30 @@ export function createRadialTreeLayout(nodes, edges) {
 }
 
 export function createFlowLayout(nodes) {
-  const rightX = 900; // 右侧源节点的 X 坐标
-  const leftX = 300;  // 左侧节点的 X 坐标
-  const startY = 150; // 起始 Y 坐标
-  const verticalSpacing = 100; // 垂直间距
+  if (!nodes || nodes.length === 0) {
+    console.warn('No nodes provided to createFlowLayout');
+    return [];
+  }
 
-  // 找到源节点（通常是第一个节点）
+  const rightX = 900;
+  const leftX = 300;
+  const startY = 150;
+  const verticalSpacing = 100;
+
   const sourceNode = nodes[0];
   const otherNodes = nodes.slice(1);
 
-  // 计算总高度以确保垂直居中
   const totalHeight = (otherNodes.length - 1) * verticalSpacing;
   const startingY = Math.max(100, (900 - totalHeight) / 2);
 
+  console.log('Creating flow layout with:', { sourceNode, otherNodes, startingY });
+
   const layoutedNodes = [
-    // 源节点放在右侧中间位置
     {
       ...sourceNode,
       position: { 
         x: rightX, 
-        y: 450 // 垂直居中
+        y: 450
       },
       style: {
         width: NODE_WIDTH,
@@ -209,7 +213,6 @@ export function createFlowLayout(nodes) {
         fontWeight: 'bold'
       }
     },
-    // 其他节点从上到下排列在左侧
     ...otherNodes.map((node, index) => ({
       ...node,
       position: {
@@ -228,13 +231,19 @@ export function createFlowLayout(nodes) {
     }))
   ];
 
+  console.log('Created layouted nodes:', layoutedNodes);
   return layoutedNodes;
 }
 
 export function relayoutGraph(nodes, edges) {
-  // 直接使用 Flow 布局
+  if (!nodes || !edges) {
+    console.warn('Invalid input to relayoutGraph:', { nodes, edges });
+    return { nodes: [], edges: [] };
+  }
+
+  console.log('Relayouting graph with:', { nodes, edges });
   const layoutedNodes = createFlowLayout(nodes);
-  
+
   return {
     nodes: layoutedNodes,
     edges: edges.map(edge => ({
