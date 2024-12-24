@@ -194,3 +194,61 @@ export function relayoutGraph(nodes, edges, layoutType) {
     })),
   };
 }
+
+function isOverlapping(node1, node2) {
+  const margin = 20; // 节点间的最小间距
+  return Math.abs(node1.position.x - node2.position.x) < (node1.style?.width || NODE_WIDTH) + margin &&
+         Math.abs(node1.position.y - node2.position.y) < (node1.style?.height || NODE_HEIGHT) + margin;
+}
+
+export function createExpandLayout(nodes, parentNode, existingNodes) {
+  const radius = 200;
+  const angleStep = (2 * Math.PI) / nodes.length;
+
+  return nodes.map((node, index) => {
+    let angle = index * angleStep;
+    let x, y;
+    let attempts = 0;
+    const maxAttempts = 20;
+
+    do {
+      x = parentNode.position.x + radius * Math.cos(angle);
+      y = parentNode.position.y + radius * Math.sin(angle);
+      attempts++;
+      angle += 0.1;
+
+      const newNode = {
+        ...node,
+        position: { x, y },
+        style: { 
+          width: NODE_WIDTH, 
+          height: NODE_HEIGHT,
+          background: NODE_COLORS[index % NODE_COLORS.length],
+          borderRadius: '8px',
+          border: '1px solid #ddd',
+          padding: '5px',
+          fontSize: '12px'
+        }
+      };
+
+      if (!existingNodes.some(existingNode => isOverlapping(newNode, existingNode))) {
+        return newNode;
+      }
+    } while (attempts < maxAttempts);
+
+    // 如果无法找到不重叠的位置，返回最后一次尝试的位置
+    return {
+      ...node,
+      position: { x, y },
+      style: { 
+        width: NODE_WIDTH, 
+        height: NODE_HEIGHT,
+        background: NODE_COLORS[index % NODE_COLORS.length],
+        borderRadius: '8px',
+        border: '1px solid #ddd',
+        padding: '5px',
+        fontSize: '12px'
+      }
+    };
+  });
+}

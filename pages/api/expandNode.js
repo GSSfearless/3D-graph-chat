@@ -1,73 +1,35 @@
 import OpenAI from 'openai';
+import { createExpandLayout } from '../../utils/graphLayouts';
 
 const openai = new OpenAI({
   organization: 'org-gLWuvsHwqOs4i3QAdK8nQ5zk',
   project: 'proj_TRi4aW8PdBr9LBaE9W34pDPi',
 });
 
-function isOverlapping(node1, node2) {
-  const margin = 20; // 节点间的最小间距
-  return Math.abs(node1.position.x - node2.position.x) < node1.style.width + margin &&
-         Math.abs(node1.position.y - node2.position.y) < node1.style.height + margin;
-}
-
-function createLayout(nodes, parentNode, existingNodes) {
-  const radius = 200;
-  const angleStep = (2 * Math.PI) / nodes.length;
-
-  return nodes.map((node, index) => {
-    let angle = index * angleStep;
-    let x, y;
-    let attempts = 0;
-    const maxAttempts = 20;
-
-    do {
-      x = parentNode.position.x + radius * Math.cos(angle);
-      y = parentNode.position.y + radius * Math.sin(angle);
-      attempts++;
-      angle += 0.1;
-
-      const newNode = {
-        ...node,
-        position: { x, y },
-        style: { width: 150, height: 50 }
-      };
-
-      if (!existingNodes.some(existingNode => isOverlapping(newNode, existingNode))) {
-        return newNode;
-      }
-    } while (attempts < maxAttempts);
-
-    // 如果无法找到不重叠的位置，返回最后一次尝试的位置
-    return {
-      ...node,
-      position: { x, y },
-      style: { width: 150, height: 50 }
-    };
-  });
-}
-
-function sanitizeJSON(str) {
-  // 移除可能导致 JSON 解析错误的字符
-  return str.replace(/[\n\r\t]/g, '')
-            .replace(/,\s*]/g, ']')
-            .replace(/,\s*}/g, '}');
+function cleanOpenAIResponse(response) {
+  try {
+    // 如果响应已经是JSON对象，直接返回
+    if (typeof response === 'object') return JSON.stringify(response);
+    
+    // 移除可能的Markdown代码块标记
+    let cleaned = response.replace(/```json\n?|\n?```/g, '');
+    
+    // 尝试解析和重新字符串化以确保有效的JSON
+    const parsed = JSON.parse(cleaned);
+    return JSON.stringify(parsed);
+  } catch (error) {
+    console.error('Error cleaning OpenAI response:', error);
+    return response;
+  }
 }
 
 function parseJSONSafely(str) {
   try {
-    return JSON.parse(sanitizeJSON(str));
+    return JSON.parse(str);
   } catch (error) {
-    console.error('JSON parsing error:', error);
+    console.error('Error parsing JSON:', error);
     return null;
   }
-}
-
-function cleanOpenAIResponse(response) {
-  // 移除可能的 Markdown 标记
-  let cleaned = response.replace(/```json\n?/, '').replace(/```\n?/, '');
-  // 使用 sanitizeJSON 函数
-  return sanitizeJSON(cleaned);
 }
 
 export default async function handler(req, res) {
@@ -118,7 +80,7 @@ export default async function handler(req, res) {
 
     const parentNode = { id: nodeId, position: parentPosition || { x: 0, y: 0 } };
     const existingNodes = req.body.existingNodes || [];
-    const layoutedNodes = createLayout(processedNodes, parentNode, existingNodes);
+    const layoutedNodes = createExpandLayout(processedNodes, parentNode, existingNodes);
 
     const newEdges = layoutedNodes.map(node => ({
       id: `${nodeId}-${node.id}`,
@@ -146,7 +108,6 @@ export default async function handler(req, res) {
     res.status(200).json(responseData);
   } catch (error) {
     console.error('展开节点时出错:', error);
-    // 添加更详细的错误信息
     res.status(500).json({ 
       message: '展开节点时出错', 
       error: error.message,

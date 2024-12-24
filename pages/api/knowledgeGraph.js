@@ -1,4 +1,5 @@
 const OpenAI = require('openai');
+const { relayoutGraph } = require('../../utils/graphLayouts');
 
 // 添加语言检测函数
 function detectLanguage(text) {
@@ -10,32 +11,6 @@ function detectLanguage(text) {
   if (hasJapaneseChars) return 'ja';
   if (hasKoreanChars) return 'ko';
   return 'en';
-}
-
-function createMindMapLayout(nodes) {
-  const centerX = 500;
-  const centerY = 400;
-  const radius = 300;
-
-  return nodes.map((node, index) => {
-    if (node.id === 'root') {
-      return {
-        ...node,
-        position: { x: centerX, y: centerY },
-        style: { width: 150, height: 50 }
-      };
-    }
-
-    const angle = ((index - 1) / (nodes.length - 1)) * 2 * Math.PI;
-    const x = centerX + radius * Math.cos(angle);
-    const y = centerY + radius * Math.sin(angle);
-
-    return {
-      ...node,
-      position: { x, y },
-      style: { width: 150, height: 50 }
-    };
-  });
 }
 
 function createGraphFromStructure(structure) {
@@ -95,19 +70,12 @@ export default async function handler(req, res) {
     // 直接使用传入的结构生成图谱
     const graphData = createGraphFromStructure(structure);
     
-    // 添加智能边路由
-    graphData.edges = graphData.edges.map(edge => ({
-      ...edge,
-      type: 'smoothstep',
-      style: { ...edge.style, strokeWidth: 2 },
-    }));
-
     // 应用布局
-    const layoutedNodes = createMindMapLayout(graphData.nodes);
+    const { nodes: layoutedNodes, edges: layoutedEdges } = relayoutGraph(graphData.nodes, graphData.edges, 'pyramid');
     
     const finalGraphData = {
       nodes: layoutedNodes,
-      edges: graphData.edges
+      edges: layoutedEdges
     };
 
     console.log('Processed graph data:', finalGraphData);
