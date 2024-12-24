@@ -30,36 +30,50 @@ function centerLayout(nodes) {
 }
 
 export function createPyramidLayout(nodes) {
-  const levels = Math.ceil(Math.sqrt(nodes.length));
-  const width = 1200; // 增加宽度
-  const height = 900; // 增加高度
+  const width = 1200;
+  const height = 900;
   const nodeWidth = 180;
   const nodeHeight = 60;
-  const horizontalSpacing = 50;
+  const horizontalSpacing = 300;
   const verticalSpacing = 100;
 
   const layoutedNodes = nodes.map((node, index) => {
-    const level = Math.floor(Math.sqrt(index));
-    const nodesInLevel = (level * 2) + 1;
-    const nodeIndex = index - (level * level);
-    
-    const levelWidth = nodesInLevel * nodeWidth + (nodesInLevel - 1) * horizontalSpacing;
-    const x = (width - levelWidth) / 2 + (nodeWidth + horizontalSpacing) * nodeIndex;
-    const y = verticalSpacing * (level + 1);
-
-    return {
-      ...node,
-      position: { x, y },
-      style: { 
-        width: nodeWidth, 
-        height: nodeHeight,
-        background: NODE_COLORS[level % NODE_COLORS.length],
-        borderRadius: '8px',
-        border: '1px solid #ddd',
-        padding: '5px',
-        fontSize: '12px'
-      }
-    };
+    if (index === 0) {
+      return {
+        ...node,
+        position: { 
+          x: 200,
+          y: height / 2 - nodeHeight / 2
+        },
+        style: { 
+          width: nodeWidth, 
+          height: nodeHeight,
+          background: NODE_COLORS[0],
+          borderRadius: '8px',
+          border: '2px solid #FFD700',
+          padding: '5px',
+          fontSize: '14px',
+          fontWeight: 'bold'
+        }
+      };
+    } else {
+      return {
+        ...node,
+        position: { 
+          x: 200 + horizontalSpacing,
+          y: verticalSpacing * index
+        },
+        style: { 
+          width: nodeWidth, 
+          height: nodeHeight,
+          background: NODE_COLORS[index % NODE_COLORS.length],
+          borderRadius: '8px',
+          border: '1px solid #ddd',
+          padding: '5px',
+          fontSize: '12px'
+        }
+      };
+    }
   });
 
   return centerLayout(layoutedNodes);
