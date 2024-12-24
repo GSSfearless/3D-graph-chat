@@ -1,22 +1,19 @@
 import dynamic from 'next/dynamic';
 import { useCallback, useEffect, useState } from 'react';
-import { relayoutGraph } from '../utils/graphLayouts';
 
-const ReactFlow = dynamic(() => import('reactflow').then(mod => mod.default), {
+const ReactFlow = dynamic(() => import('react-flow-renderer').then(mod => mod.default), {
   ssr: false,
   loading: () => <p>Loading knowledge graph...</p>
 });
 
-const Controls = dynamic(() => import('reactflow').then(mod => mod.Controls), {
+// 导入 Controls 和 Background 组件
+const Controls = dynamic(() => import('react-flow-renderer').then(mod => mod.Controls), {
   ssr: false
 });
 
-const Background = dynamic(() => import('reactflow').then(mod => mod.Background), {
+const Background = dynamic(() => import('react-flow-renderer').then(mod => mod.Background), {
   ssr: false
 });
-
-// 导入样式
-import 'reactflow/dist/style.css';
 
 const KnowledgeGraph = ({ data, onNodeClick, onNodeDragStop, onNodeDelete }) => {
   console.log('KnowledgeGraph rendered with data:', data);
@@ -35,19 +32,13 @@ const KnowledgeGraph = ({ data, onNodeClick, onNodeDragStop, onNodeDelete }) => 
   useEffect(() => {
     if (data && data.nodes && data.edges) {
       try {
-        console.log('Original data:', data);
         const limitedNodes = data.nodes.slice(0, MAX_NODES);
         const limitedEdges = data.edges.filter(edge => 
           limitedNodes.some(node => node.id === edge.source) && 
           limitedNodes.some(node => node.id === edge.target)
         );
-        console.log('Limited nodes:', limitedNodes);
-        console.log('Limited edges:', limitedEdges);
 
         const { nodes: layoutedNodes, edges: layoutedEdges } = relayoutGraph(limitedNodes, limitedEdges);
-        console.log('Layouted nodes:', layoutedNodes);
-        console.log('Layouted edges:', layoutedEdges);
-        
         setNodes(layoutedNodes);
         setEdges(layoutedEdges);
       } catch (error) {
