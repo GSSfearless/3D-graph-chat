@@ -43,8 +43,6 @@ const KnowledgeGraph = ({ data, onNodeClick, onNodeDragStop, onNodeDelete }) => 
 
         // 使用 Flow 布局
         const { nodes: layoutedNodes, edges: layoutedEdges } = relayoutGraph(limitedNodes, limitedEdges);
-        
-        // 应用布局
         setNodes(layoutedNodes);
         setEdges(layoutedEdges);
       } catch (error) {
@@ -56,11 +54,11 @@ const KnowledgeGraph = ({ data, onNodeClick, onNodeDragStop, onNodeDelete }) => 
   }, [data]);
 
   const onInit = useCallback((reactFlowInstance) => {
-    reactFlowInstance.fitView({ padding: 0.2, includeHiddenNodes: false });
-    // 设置初始缩放级别，使整个图表可见
-    reactFlowInstance.zoomTo(0.9);
-    // 设置视图中心点
-    reactFlowInstance.setCenter(500, 300);
+    reactFlowInstance.fitView({ padding: 0.3, includeHiddenNodes: false });
+    // 设置初始缩放级别
+    reactFlowInstance.zoomTo(0.8);
+    // 设置视图中心
+    reactFlowInstance.setCenter(600, 450);
   }, []);
 
   const handleNodeClick = useCallback((event, node) => {
@@ -143,16 +141,14 @@ const KnowledgeGraph = ({ data, onNodeClick, onNodeDragStop, onNodeDelete }) => 
         zoomOnPinch={true}
         panOnScroll={true}
         panOnScrollMode="free"
-        minZoom={0.2}
-        maxZoom={2}
-        defaultZoom={0.9}
-        snapToGrid={true}
-        snapGrid={[10, 10]}
+        minZoom={0.1}
+        maxZoom={4}
+        defaultZoom={1}
         onlyRenderVisibleElements={true}
         edgeUpdaterRadius={10}
       >
         <Controls />
-        <Background color="#aaa" gap={16} size={1} />
+        <Background color="#aaa" gap={16} />
       </ReactFlow>
     </div>
   );
