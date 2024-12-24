@@ -36,16 +36,14 @@ export function createPyramidLayout(nodes) {
   const nodeHeight = 60;
   const horizontalSpacing = 300;
   const verticalSpacing = 100;
-  const startY = 100; // 设置起始Y坐标，避免节点太靠上
 
   const layoutedNodes = nodes.map((node, index) => {
     if (index === 0) {
-      // 源节点（根节点）放在左侧中间位置
       return {
         ...node,
         position: { 
-          x: 400, // 调整左侧位置
-          y: height / 2 - nodeHeight / 2 // 垂直居中
+          x: 200,
+          y: height / 2 - nodeHeight / 2
         },
         style: { 
           width: nodeWidth, 
@@ -59,12 +57,11 @@ export function createPyramidLayout(nodes) {
         }
       };
     } else {
-      // 其他节点从上到下排列在右侧
       return {
         ...node,
         position: { 
-          x: 800, // 调整右侧位置
-          y: startY + verticalSpacing * (index - 1) // 从 startY 开始排列
+          x: 200 + horizontalSpacing,
+          y: verticalSpacing * index
         },
         style: { 
           width: nodeWidth, 
@@ -79,7 +76,7 @@ export function createPyramidLayout(nodes) {
     }
   });
 
-  return layoutedNodes; // 直接返回布局后的节点，不再使用 centerLayout
+  return centerLayout(layoutedNodes);
 }
 
 export function createMindMapLayout(nodes) {
