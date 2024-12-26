@@ -218,34 +218,33 @@ export default function Search() {
     setSearchResults([]);
 
     try {
-      const eventSource = new EventSource(`/api/rag-search?query=${encodeURIComponent(searchQuery)}`);
-      
-      eventSource.onmessage = (event) => {
-        const data = JSON.parse(event.data);
-        if (data.done) {
-          eventSource.close();
-          setIsCollecting(false);
-          setIsProcessing(true);
-        } else {
-          setCollectedPages(data.progress);
-          setTotalPages(data.total);
-          setSearchResults(prev => [...prev, data.result]);
-        }
-      };
+      // 使用fetch发送POST请求
+      const response = await fetch('/api/rag-search', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ query: searchQuery }),
+      });
 
-      eventSource.onerror = (error) => {
-        console.error('EventSource failed:', error);
-        eventSource.close();
-        setIsCollecting(false);
-        setIsProcessing(false);
-      };
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const searchData = await response.json();
+      if (searchData.results) {
+        setSearchResults(searchData.results);
+      }
+
+      setIsCollecting(false);
+      setIsProcessing(true);
 
       // Get AI answer
       setStreamedAnswer('');
       const chatResponse = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ context: searchResults, query: searchQuery }),
+        body: JSON.stringify({ context: searchData.results, query: searchQuery }),
       });
 
       if (!chatResponse.ok) {
