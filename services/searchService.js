@@ -78,6 +78,7 @@ export class MultiSourceSearchService {
       });
 
       console.log(`Bing API success: ${response.status} - Time taken: ${Date.now() - startTime}ms`); // 成功提示
+      console.log('Bing API response:', response.data); // 输出详细响应
 
       return response.data.webPages.value.map(result => new SearchResult(
         result.name,
@@ -87,6 +88,7 @@ export class MultiSourceSearchService {
       ));
     } catch (error) {
       console.error(`Bing API error: ${error.message} - Time taken: ${Date.now() - startTime}ms`); // 错误提示
+      console.error('Bing API error details:', error.response ? error.response.data : error); // 输出详细错误信息
       return [];
     }
   }
@@ -103,6 +105,7 @@ export class MultiSourceSearchService {
       });
 
       console.log(`Google API success: ${response.status} - Time taken: ${Date.now() - startTime}ms`); // 成功提示
+      console.log('Google API response:', response.data); // 输出详细响应
 
       return response.data.items.map(result => new SearchResult(
         result.title,
@@ -112,6 +115,7 @@ export class MultiSourceSearchService {
       ));
     } catch (error) {
       console.error(`Google API error: ${error.message} - Time taken: ${Date.now() - startTime}ms`); // 错误提示
+      console.error('Google API error details:', error.response ? error.response.data : error); // 输出详细错误信息
       return [];
     }
   }
