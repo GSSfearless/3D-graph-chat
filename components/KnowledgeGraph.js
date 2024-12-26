@@ -1,5 +1,19 @@
+import dynamic from 'next/dynamic';
 import { useCallback, useEffect, useState } from 'react';
-import ReactFlow from 'reactflow';
+
+const ReactFlow = dynamic(() => import('react-flow-renderer').then(mod => mod.default), {
+  ssr: false,
+  loading: () => <p>Loading knowledge graph...</p>
+});
+
+// 导入 Controls 和 Background 组件
+const Controls = dynamic(() => import('react-flow-renderer').then(mod => mod.Controls), {
+  ssr: false
+});
+
+const Background = dynamic(() => import('react-flow-renderer').then(mod => mod.Background), {
+  ssr: false
+});
 
 const KnowledgeGraph = ({ data, onNodeClick, onNodeDragStop, onNodeDelete }) => {
   console.log('KnowledgeGraph rendered with data:', data);
