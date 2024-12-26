@@ -41,7 +41,6 @@ export class MultiSourceSearchService {
   }
 
   async searchSerper(query) {
-    const startTime = Date.now(); // 记录开始时间
     try {
       const response = await axios.get(`https://serpapi.com/search.json`, {
         params: {
@@ -50,8 +49,6 @@ export class MultiSourceSearchService {
         }
       });
 
-      console.log(`Serper API success: ${response.status} - Time taken: ${Date.now() - startTime}ms`); // 成功提示
-
       return response.data.organic_results.map(result => new SearchResult(
         result.title,
         result.snippet,
@@ -59,13 +56,12 @@ export class MultiSourceSearchService {
         'serper'
       ));
     } catch (error) {
-      console.error(`Serper API error: ${error.message} - Time taken: ${Date.now() - startTime}ms`); // 错误提示
+      console.error('Serper API error:', error);
       return [];
     }
   }
 
   async searchBing(query) {
-    const startTime = Date.now(); // 记录开始时间
     try {
       const response = await axios.get('https://api.bing.microsoft.com/v7.0/search', {
         headers: {
@@ -77,9 +73,6 @@ export class MultiSourceSearchService {
         }
       });
 
-      console.log(`Bing API success: ${response.status} - Time taken: ${Date.now() - startTime}ms`); // 成功提示
-      console.log('Bing API response:', response.data); // 输出详细响应
-
       return response.data.webPages.value.map(result => new SearchResult(
         result.name,
         result.snippet,
@@ -87,14 +80,12 @@ export class MultiSourceSearchService {
         'bing'
       ));
     } catch (error) {
-      console.error(`Bing API error: ${error.message} - Time taken: ${Date.now() - startTime}ms`); // 错误提示
-      console.error('Bing API error details:', error.response ? error.response.data : error); // 输出详细错误信息
+      console.error('Bing API error:', error);
       return [];
     }
   }
 
   async searchGoogle(query) {
-    const startTime = Date.now(); // 记录开始时间
     try {
       const response = await axios.get('https://www.googleapis.com/customsearch/v1', {
         params: {
@@ -104,9 +95,6 @@ export class MultiSourceSearchService {
         }
       });
 
-      console.log(`Google API success: ${response.status} - Time taken: ${Date.now() - startTime}ms`); // 成功提示
-      console.log('Google API response:', response.data); // 输出详细响应
-
       return response.data.items.map(result => new SearchResult(
         result.title,
         result.snippet,
@@ -114,8 +102,7 @@ export class MultiSourceSearchService {
         'google'
       ));
     } catch (error) {
-      console.error(`Google API error: ${error.message} - Time taken: ${Date.now() - startTime}ms`); // 错误提示
-      console.error('Google API error details:', error.response ? error.response.data : error); // 输出详细错误信息
+      console.error('Google API error:', error);
       return [];
     }
   }
