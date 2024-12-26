@@ -19,7 +19,6 @@
     "@tailwindcss/typography": "^0.5.15",
     "autoprefixer": "^10.4.20",
     "axios": "^1.7.4",
-    "canvas": "^2.11.2",
     "class-variance-authority": "^0.7.0",
     "daisyui": "^4.12.10",
     "jimp": "^0.22.12",
@@ -30,7 +29,6 @@
     "pango": "^0.0.3",
     "react": "^18",
     "react-dom": "^18",
-    "react-flow-renderer": "^10.3.17",
     "reactflow": "^11.11.4",
     "sharp": "^0.33.5",
     "tailwind-merge": "^2.5.2"
