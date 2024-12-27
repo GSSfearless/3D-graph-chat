@@ -19,8 +19,8 @@ const KnowledgeGraph = ({ data, onNodeClick, onNodeDragStop, onNodeDelete }) => 
   console.log('KnowledgeGraph rendered with data:', data);
 
   const [mounted, setMounted] = useState(false);
-  const [nodes, setNodes] = useState(data.nodes);
-  const [edges, setEdges] = useState(data.edges);
+  const [nodes, setNodes] = useState([]);
+  const [edges, setEdges] = useState([]);
   const [hoveredNode, setHoveredNode] = useState(null);
   const [showNodeDialog, setShowNodeDialog] = useState(false);
   const [selectedNode, setSelectedNode] = useState(null);
@@ -28,36 +28,77 @@ const KnowledgeGraph = ({ data, onNodeClick, onNodeDragStop, onNodeDelete }) => 
   const [userInput, setUserInput] = useState('');
   const [isLoadingQuestions, setIsLoadingQuestions] = useState(false);
 
-  const MAX_NODES = 50; // 设置一个合理的最大节点数
+  const MAX_NODES = 50;
 
-  useEffect(() => {
-    setMounted(true);
-    setNodes(data.nodes);
-    setEdges(data.edges);
-  }, [data]);
+  // 定义基础样式
+  const baseNodeStyle = {
+    background: '#ffffff',
+    border: '1px solid #ddd',
+    borderRadius: '8px',
+    padding: '10px',
+    fontSize: '12px',
+    opacity: 1,
+    transition: 'all 0.3s ease',
+    boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+  };
 
+  const baseEdgeStyle = {
+    stroke: '#888',
+    strokeWidth: 2,
+    opacity: 1,
+    transition: 'all 0.3s ease'
+  };
+
+  // 统一处理数据初始化和布局
   useEffect(() => {
-    if (data && data.nodes && data.edges) {
+    if (!mounted) {
+      setMounted(true);
+      return;
+    }
+
+    if (data?.nodes && data?.edges) {
       try {
-        // 限制节点数量
-        const limitedNodes = data.nodes.slice(0, MAX_NODES);
-        const limitedEdges = data.edges.filter(edge => 
-          limitedNodes.some(node => node.id === edge.source) && 
-          limitedNodes.some(node => node.id === edge.target)
+        // 限制节点数量并应用基础样式
+        const limitedNodes = data.nodes.slice(0, MAX_NODES).map(node => ({
+          ...node,
+          style: { ...baseNodeStyle }
+        }));
+
+        // 过滤边并应用基础样式
+        const limitedEdges = data.edges
+          .filter(edge => 
+            limitedNodes.some(node => node.id === edge.source) && 
+            limitedNodes.some(node => node.id === edge.target)
+          )
+          .map(edge => ({
+            ...edge,
+            style: { ...baseEdgeStyle }
+          }));
+
+        // 应用布局
+        const { nodes: layoutedNodes, edges: layoutedEdges } = relayoutGraph(
+          limitedNodes,
+          limitedEdges,
+          'pyramid'
         );
 
-        // 始终使用金字塔布局
-        const { nodes: layoutedNodes, edges: layoutedEdges } = relayoutGraph(limitedNodes, limitedEdges, 'pyramid');
+        // 更新状态
         setNodes(layoutedNodes);
         setEdges(layoutedEdges);
       } catch (error) {
         console.error('Error in layout calculation:', error);
-        // 如果布局计算失败，至少显示原始节点
-        setNodes(data.nodes.slice(0, MAX_NODES));
-        setEdges(data.edges);
+        // 如果布局失败，至少应用基础样式
+        setNodes(data.nodes.slice(0, MAX_NODES).map(node => ({
+          ...node,
+          style: { ...baseNodeStyle }
+        })));
+        setEdges(data.edges.map(edge => ({
+          ...edge,
+          style: { ...baseEdgeStyle }
+        })));
       }
     }
-  }, [data]);
+  }, [data, mounted]);
 
   const onInit = useCallback((reactFlowInstance) => {
     reactFlowInstance.fitView({ padding: 0.2, includeHiddenNodes: false });
@@ -154,33 +195,58 @@ const KnowledgeGraph = ({ data, onNodeClick, onNodeDragStop, onNodeDelete }) => 
 
   const handleNodeMouseEnter = useCallback((event, node) => {
     setHoveredNode(node);
+    
+    // 使用基础样式进行高亮
     setNodes((nds) =>
       nds.map((n) => {
-        if (n.id === node.id || edges.some(e => (e.source === node.id && e.target === n.id) || (e.target === node.id && e.source === n.id))) {
-          return { ...n, style: { ...n.style, opacity: 1, border: '2px solid #ffa500' } };
-        }
-        return { ...n, style: { ...n.style, opacity: 0.3 } };
+        const isConnected = edges.some(e => 
+          (e.source === node.id && e.target === n.id) || 
+          (e.target === node.id && e.source === n.id)
+        );
+        
+        return {
+          ...n,
+          style: {
+            ...baseNodeStyle,
+            opacity: n.id === node.id || isConnected ? 1 : 0.3,
+            border: n.id === node.id || isConnected ? '2px solid #ffa500' : '1px solid #ddd',
+            boxShadow: n.id === node.id ? '0 4px 8px rgba(255,165,0,0.3)' : '0 2px 4px rgba(0,0,0,0.1)'
+          }
+        };
       })
     );
+
     setEdges((eds) =>
-      eds.map((e) => {
-        if (e.source === node.id || e.target === node.id) {
-          return { ...e, style: { ...e.style, stroke: '#ffa500', strokeWidth: 3 } };
+      eds.map((e) => ({
+        ...e,
+        style: {
+          ...baseEdgeStyle,
+          stroke: e.source === node.id || e.target === node.id ? '#ffa500' : '#888',
+          strokeWidth: e.source === node.id || e.target === node.id ? 3 : 2,
+          opacity: e.source === node.id || e.target === node.id ? 1 : 0.3
         }
-        return { ...e, style: { ...e.style, opacity: 0.3 } };
-      })
+      }))
     );
-  }, [edges]);
+  }, [edges, baseNodeStyle, baseEdgeStyle]);
 
   const handleNodeMouseLeave = useCallback(() => {
     setHoveredNode(null);
+    
+    // 恢复基础样式
     setNodes((nds) =>
-      nds.map((n) => ({ ...n, style: { ...n.style, opacity: 1, border: '1px solid #ddd' } }))
+      nds.map((n) => ({
+        ...n,
+        style: { ...baseNodeStyle }
+      }))
     );
+    
     setEdges((eds) =>
-      eds.map((e) => ({ ...e, style: { ...e.style, stroke: '#888', strokeWidth: 2, opacity: 1 } }))
+      eds.map((e) => ({
+        ...e,
+        style: { ...baseEdgeStyle }
+      }))
     );
-  }, []);
+  }, [baseNodeStyle, baseEdgeStyle]);
 
   if (!mounted) return null;
 
