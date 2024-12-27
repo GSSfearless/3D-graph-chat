@@ -22,6 +22,11 @@ const KnowledgeGraph = ({ data, onNodeClick, onNodeDragStop, onNodeDelete }) => 
   const [nodes, setNodes] = useState(data.nodes);
   const [edges, setEdges] = useState(data.edges);
   const [hoveredNode, setHoveredNode] = useState(null);
+  const [showNodeDialog, setShowNodeDialog] = useState(false);
+  const [selectedNode, setSelectedNode] = useState(null);
+  const [suggestedQuestions, setSuggestedQuestions] = useState([]);
+  const [userInput, setUserInput] = useState('');
+  const [isLoadingQuestions, setIsLoadingQuestions] = useState(false);
 
   const MAX_NODES = 50; // 设置一个合理的最大节点数
 
@@ -58,10 +63,73 @@ const KnowledgeGraph = ({ data, onNodeClick, onNodeDragStop, onNodeDelete }) => 
     reactFlowInstance.fitView({ padding: 0.2, includeHiddenNodes: false });
   }, []);
 
-  const handleNodeClick = useCallback((event, node) => {
-    // 禁用节点点击事件
-    return;
+  const handleNodeClick = useCallback(async (event, node) => {
+    event.preventDefault();
+    setSelectedNode(node);
+    setShowNodeDialog(true);
+    setIsLoadingQuestions(true);
+
+    try {
+      // 获取AI生成的问题
+      const response = await fetch('/api/generateQuestions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          nodeContent: node.data.label,
+          nodeId: node.id
+        })
+      });
+
+      if (!response.ok) throw new Error('Failed to generate questions');
+      
+      const data = await response.json();
+      setSuggestedQuestions(data.questions);
+    } catch (error) {
+      console.error('Error generating questions:', error);
+      setSuggestedQuestions([
+        `如何深入理解"${node.data.label}"？`,
+        `"${node.data.label}"的实际应用有哪些？`,
+        `"${node.data.label}"存在什么挑战？`
+      ]);
+    } finally {
+      setIsLoadingQuestions(false);
+    }
   }, []);
+
+  const handleQuestionSelect = async (question) => {
+    setUserInput(question);
+  };
+
+  const handleSubmit = async () => {
+    if (!userInput.trim()) return;
+
+    try {
+      const response = await fetch('/api/expandNode', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          nodeId: selectedNode.id,
+          label: selectedNode.data.label,
+          userInput: userInput,
+          parentPosition: selectedNode.position,
+          existingNodes: nodes
+        })
+      });
+
+      if (!response.ok) throw new Error('Failed to expand node');
+      
+      const newData = await response.json();
+      
+      setNodes(prev => [...prev, ...newData.nodes]);
+      setEdges(prev => [...prev, ...newData.edges]);
+      
+      setShowNodeDialog(false);
+      setUserInput('');
+      setSelectedNode(null);
+    } catch (error) {
+      console.error('Error expanding node:', error);
+    }
+  };
 
   const handleNodeDragStart = useCallback((event, node) => {
     // You can add any logic here for when dragging starts
@@ -121,7 +189,7 @@ const KnowledgeGraph = ({ data, onNodeClick, onNodeDragStop, onNodeDelete }) => 
   }
 
   return (
-    <div style={{ height: '100%', width: '100%', fontFamily: 'Roboto, sans-serif' }}>
+    <div style={{ height: '100%', width: '100%', position: 'relative' }}>
       <ReactFlow 
         nodes={nodes}
         edges={edges}
@@ -147,6 +215,76 @@ const KnowledgeGraph = ({ data, onNodeClick, onNodeDragStop, onNodeDelete }) => 
         <Controls />
         <Background color="#aaa" gap={16} />
       </ReactFlow>
+
+      {/* 节点交互弹窗 */}
+      {showNodeDialog && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-2xl w-full mx-4 transform transition-all">
+            {/* 关闭按钮 */}
+            <button 
+              onClick={() => setShowNodeDialog(false)}
+              className="absolute top-4 right-4 text-gray-500 hover:text-gray-700 transition-colors"
+            >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+
+            {/* 标题 */}
+            <h3 className="text-xl font-semibold mb-4 pr-8">
+              探索"{selectedNode?.data.label}"
+            </h3>
+
+            {/* AI生成的问题 */}
+            <div className="mb-6">
+              <p className="text-sm text-gray-600 mb-3">选择一个问题或输入你的想法：</p>
+              {isLoadingQuestions ? (
+                <div className="space-y-2">
+                  {[1, 2, 3].map((i) => (
+                    <div key={i} className="animate-pulse">
+                      <div className="h-10 bg-gray-200 rounded w-full"></div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {suggestedQuestions.map((question, index) => (
+                    <button
+                      key={index}
+                      onClick={() => handleQuestionSelect(question)}
+                      className="w-full text-left p-2 rounded hover:bg-blue-50 transition-colors duration-200 text-gray-700 hover:text-blue-600 border border-transparent hover:border-blue-200"
+                    >
+                      {question}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* 用户输入区域 */}
+            <div className="mb-4">
+              <textarea
+                value={userInput}
+                onChange={(e) => setUserInput(e.target.value)}
+                placeholder="输入你的想法..."
+                className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
+                rows="4"
+              />
+            </div>
+
+            {/* 提交按钮 */}
+            <div className="flex justify-end">
+              <button
+                onClick={handleSubmit}
+                disabled={!userInput.trim()}
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200 disabled:bg-gray-400 disabled:cursor-not-allowed"
+              >
+                添加想法
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
