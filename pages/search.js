@@ -6,6 +6,7 @@ import { useRouter } from 'next/router';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import 'tailwindcss/tailwind.css';
 import '../styles/globals.css';
+import { relayoutGraph } from '../utils/graphLayouts';
 
 const KnowledgeGraph = dynamic(() => import('../components/KnowledgeGraph'), {
   ssr: false,
