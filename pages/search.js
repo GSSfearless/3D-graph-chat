@@ -348,12 +348,11 @@ export default function Search() {
   }, [knowledgeGraphData, nodeExplanations, generateNodeExplanation, initialAnswerRef]);
 
   const handleNodeDragStop = useCallback((node) => {
-    setGraphHistory(prev => {
-      const newHistory = [...prev, knowledgeGraphData];
-      setHasPreviousGraph(newHistory.length > 0);
-      return newHistory;
-    });
+    const currentState = JSON.parse(JSON.stringify(knowledgeGraphData));
+    setGraphHistory(prev => [...prev, currentState]);
+    setHasPreviousGraph(true);
     setGraphFuture([]); // Clear future states
+    
     setKnowledgeGraphData(prevData => {
       const updatedNodes = prevData.nodes.map(n => 
         n.id === node.id ? { ...n, position: node.position } : n
@@ -363,12 +362,11 @@ export default function Search() {
   }, [knowledgeGraphData]);
 
   const handleNodeDelete = useCallback((node) => {
-    setGraphHistory(prev => {
-      const newHistory = [...prev, knowledgeGraphData];
-      setHasPreviousGraph(newHistory.length > 0);
-      return newHistory;
-    });
+    const currentState = JSON.parse(JSON.stringify(knowledgeGraphData));
+    setGraphHistory(prev => [...prev, currentState]);
+    setHasPreviousGraph(true);
     setGraphFuture([]); // Clear future states
+    
     setKnowledgeGraphData(prevData => {
       const updatedNodes = prevData.nodes.filter(n => n.id !== node.id);
       const updatedEdges = prevData.edges.filter(e => e.source !== node.id && e.target !== node.id);
@@ -379,7 +377,9 @@ export default function Search() {
   const handleUndo = useCallback(() => {
     if (graphHistory.length > 0) {
       const previousState = graphHistory[graphHistory.length - 1];
-      setGraphFuture(prev => [knowledgeGraphData, ...prev]);
+      const currentState = knowledgeGraphData;
+      
+      setGraphFuture(prev => [currentState, ...prev]);
       setKnowledgeGraphData(previousState);
       setGraphHistory(prev => {
         const newHistory = prev.slice(0, -1);
@@ -392,13 +392,12 @@ export default function Search() {
   const handleRedo = useCallback(() => {
     if (graphFuture.length > 0) {
       const nextState = graphFuture[0];
-      setGraphHistory(prev => {
-        const newHistory = [...prev, knowledgeGraphData];
-        setHasPreviousGraph(true);
-        return newHistory;
-      });
+      const currentState = knowledgeGraphData;
+      
+      setGraphHistory(prev => [...prev, currentState]);
       setKnowledgeGraphData(nextState);
       setGraphFuture(prev => prev.slice(1));
+      setHasPreviousGraph(true);
     }
   }, [graphFuture, knowledgeGraphData]);
 
