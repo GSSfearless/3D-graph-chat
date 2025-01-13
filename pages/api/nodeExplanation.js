@@ -9,9 +9,9 @@ export default async function handler(req, res) {
     return res.status(405).json({ message: 'Method Not Allowed' });
   }
 
-  const { nodeId, label, graphData, originalQuery } = req.body;
+  const { nodeId, label, graphData } = req.body;
 
-  if (!nodeId || !label || !graphData || !originalQuery) {
+  if (!nodeId || !label || !graphData) {
     return res.status(400).json({ message: 'Missing required parameters' });
   }
 
@@ -23,13 +23,37 @@ export default async function handler(req, res) {
         return graphData.nodes.find(node => node.id === relatedNodeId);
       });
 
-    const prompt = `你是一个专家，需要基于用户的原始问题"${originalQuery}"来深入解析概念"${label}"。
-请提供两个与用户原始问题高度相关的延伸概念。这些概念应该：
-1. 直接关联用户的核心关注点
-2. 帮助用户更深入理解他们关心的问题
-3. 保持在用户查询的语义范围内
+    const prompt = `
+    You are a large language AI assistant. Please provide a concise and accurate explanation for the concept "${label}" in the context of a knowledge graph. Your explanation must be correct, accurate, and written in a professional and neutral tone. Please limit it to about 200 words. Do not provide information unrelated to the concept, and do not repeat yourself.
 
-请以 JSON 格式返回响应，包含 'nodes' 数组。每个节点需要有 'id' 和 'label' 属性。`;
+    Please strictly use the following format to organize your answer:
+    1. Use double asterisks (**) to surround important concepts or keywords to indicate bold. For example: **important concept**.
+    2. Use a bullet point (•) followed by a space to create bulleted lists. Each new point should start on a new line.
+    3. Use three hash symbols (###) to create subheadings, ensuring the subheading is on its own line. Do not use more than three hash symbols.
+    4. Use a single line break to separate paragraphs.
+
+    Example format:
+    ### Key Points
+    • **First important concept**
+    • **Second important concept**
+    • **Third important concept**
+
+    ### Detailed Explanation
+    • Explanation of the first concept
+      • Additional details
+      • More information
+    • Explanation of the second concept
+    • Explanation of the third concept
+
+    Do not use more than three hash symbols (###) for headings. Focus on providing an informative and well-structured explanation.
+
+    Related concepts: ${relatedNodes.map(node => node.data.label).join(', ')}.
+
+    Please structure your response as follows:
+    1. A brief definition or explanation of "${label}".
+    2. How "${label}" relates to or interacts with the related concepts.
+    3. Any important sub-concepts or aspects of "${label}" that are relevant to understanding it fully.
+    `;
 
     const completion = await openai.chat.completions.create({
       model: "gpt-3.5-turbo",
