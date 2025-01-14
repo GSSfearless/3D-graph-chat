@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faXmark, faMinus, faExpand, faCompress } from '@fortawesome/free-solid-svg-icons';
 import MarkdownIt from 'markdown-it';
@@ -11,26 +11,67 @@ const md = new MarkdownIt({
   typographer: true
 });
 
+const thinkingSteps = [
+  "正在分析节点内容...",
+  "正在建立关联...",
+  "正在整理想法...",
+  "正在组织语言...",
+  "马上就好..."
+];
+
 const NodeContentDialog = ({ node, onClose, isVisible, currentQuestion }) => {
   const [isDragging, setIsDragging] = useState(false);
   const [position, setPosition] = useState({ x: window.innerWidth - 420, y: 100 });
   const [isMinimized, setIsMinimized] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [explanation, setExplanation] = useState('');
+  const [displayedExplanation, setDisplayedExplanation] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [thinkingStep, setThinkingStep] = useState(0);
   const constraintsRef = useRef(null);
+  const thinkingInterval = useRef(null);
 
   useEffect(() => {
     if (isVisible && node) {
       loadRelationExplanation();
     }
+    return () => {
+      if (thinkingInterval.current) {
+        clearInterval(thinkingInterval.current);
+      }
+    };
   }, [isVisible, node]);
+
+  // 打字机效果
+  useEffect(() => {
+    if (explanation) {
+      let currentIndex = 0;
+      const interval = setInterval(() => {
+        if (currentIndex <= explanation.length) {
+          setDisplayedExplanation(explanation.slice(0, currentIndex));
+          currentIndex += 3; // 每次显示3个字符
+        } else {
+          clearInterval(interval);
+        }
+      }, 10); // 每10ms更新一次
+
+      return () => clearInterval(interval);
+    }
+  }, [explanation]);
 
   const loadRelationExplanation = async () => {
     if (!node || !currentQuestion) return;
 
     setIsLoading(true);
     setExplanation('');
+    setDisplayedExplanation('');
+
+    // 启动思考步骤动画
+    let step = 0;
+    thinkingInterval.current = setInterval(() => {
+      setThinkingStep(step);
+      step = (step + 1) % thinkingSteps.length;
+    }, 1500);
 
     try {
       const response = await fetch('/api/nodeRelation', {
@@ -62,6 +103,9 @@ const NodeContentDialog = ({ node, onClose, isVisible, currentQuestion }) => {
       setExplanation('加载解释时出错，请稍后重试。');
     } finally {
       setIsLoading(false);
+      if (thinkingInterval.current) {
+        clearInterval(thinkingInterval.current);
+      }
     }
   };
 
@@ -155,9 +199,25 @@ const NodeContentDialog = ({ node, onClose, isVisible, currentQuestion }) => {
           {!isMinimized && (
             <div className="flex-1 overflow-y-auto p-6">
               {isLoading ? (
-                <div className="flex items-center justify-center space-x-2">
-                  <div className="animate-spin rounded-full h-4 w-4 border-2 border-blue-500 border-t-transparent"></div>
-                  <span className="text-gray-600">正在分析关联性...</span>
+                <div className="flex flex-col items-center justify-center space-y-4">
+                  <div className="relative">
+                    <div className="w-16 h-16 border-4 border-blue-200 border-t-blue-500 rounded-full animate-spin"></div>
+                    <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
+                      <div className="w-8 h-8 border-4 border-yellow-200 border-t-yellow-500 rounded-full animate-spin"></div>
+                    </div>
+                  </div>
+                  <AnimatePresence mode="wait">
+                    <motion.div
+                      key={thinkingStep}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -20 }}
+                      transition={{ duration: 0.5 }}
+                      className="text-gray-600 text-center"
+                    >
+                      {thinkingSteps[thinkingStep]}
+                    </motion.div>
+                  </AnimatePresence>
                 </div>
               ) : (
                 <div className="markdown-content prose prose-slate max-w-none">
@@ -209,7 +269,7 @@ const NodeContentDialog = ({ node, onClose, isVisible, currentQuestion }) => {
                   `}</style>
                   <div 
                     dangerouslySetInnerHTML={{ 
-                      __html: renderMarkdown(explanation) || '正在加载解释...'
+                      __html: renderMarkdown(displayedExplanation) || '正在加载解释...'
                     }} 
                   />
                 </div>
