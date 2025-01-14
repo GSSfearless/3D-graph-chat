@@ -560,57 +560,121 @@ export default function Search() {
   }, [q]);
 
   return (
-    <div className="flex flex-row min-h-screen relative pb-20">
-      <div className="w-full p-4 overflow-y-auto mb-16">
-        <div className="w-full">
-          <div className="bg-white p-6">
-            {loading || expandingNode ? (
-              <div className="h-[800px] bg-gray-50 rounded-lg flex items-center justify-center">
-                <div className="text-center">
-                  <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-blue-500 mx-auto mb-4"></div>
-                  <p className="text-lg font-semibold text-gray-600">{loadingMessage}</p>
-                </div>
+    <div className="fixed inset-0 overflow-hidden">
+      <div className="w-full h-full relative">
+        <div className="absolute inset-0">
+          {loading || expandingNode ? (
+            <div className="w-full h-full bg-gray-50 flex items-center justify-center">
+              <div className="text-center">
+                <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-blue-500 mx-auto mb-4"></div>
+                <p className="text-lg font-semibold text-gray-600">{loadingMessage}</p>
               </div>
-            ) : graphError ? (
-              <div className="h-[800px] bg-gray-50 rounded-lg flex items-center justify-center">
-                <p className="text-red-500 text-center">{graphError}</p>
+            </div>
+          ) : graphError ? (
+            <div className="w-full h-full bg-gray-50 flex items-center justify-center">
+              <p className="text-red-500 text-center">{graphError}</p>
+            </div>
+          ) : knowledgeGraphData && knowledgeGraphData.nodes && knowledgeGraphData.nodes.length > 0 ? (
+            <div className="w-full h-full relative">
+              {/* 左侧工具栏 */}
+              <div className="absolute left-4 top-1/2 -translate-y-1/2 bg-white rounded-lg shadow-lg p-2 space-y-2 border border-gray-200 z-10">
+                <button 
+                  onClick={handleUndo} 
+                  disabled={!hasPreviousGraph}
+                  className="w-10 h-10 flex items-center justify-center rounded-lg hover:bg-gray-100 transition-colors duration-200 disabled:opacity-30 disabled:hover:bg-white"
+                  title="撤销"
+                >
+                  <FontAwesomeIcon icon={faUndo} className="text-gray-600 text-lg" />
+                </button>
+                <button 
+                  onClick={handleRedo} 
+                  disabled={graphFuture.length === 0}
+                  className="w-10 h-10 flex items-center justify-center rounded-lg hover:bg-gray-100 transition-colors duration-200 disabled:opacity-30 disabled:hover:bg-white"
+                  title="重做"
+                >
+                  <FontAwesomeIcon icon={faRedo} className="text-gray-600 text-lg" />
+                </button>
               </div>
-            ) : knowledgeGraphData && knowledgeGraphData.nodes && knowledgeGraphData.nodes.length > 0 ? (
-              <div className="h-[800px] rounded-lg border border-gray-200 transition-all duration-300 hover:shadow-lg relative">
-                {/* 左侧工具栏 */}
-                <div className="absolute left-4 top-1/2 -translate-y-1/2 bg-white rounded-lg shadow-lg p-2 space-y-2 border border-gray-200 z-10">
-                  <button 
-                    onClick={handleUndo} 
-                    disabled={!hasPreviousGraph}
-                    className="w-10 h-10 flex items-center justify-center rounded-lg hover:bg-gray-100 transition-colors duration-200 disabled:opacity-30 disabled:hover:bg-white"
-                    title="撤销"
-                  >
-                    <FontAwesomeIcon icon={faUndo} className="text-gray-600 text-lg" />
-                  </button>
-                  <button 
-                    onClick={handleRedo} 
-                    disabled={graphFuture.length === 0}
-                    className="w-10 h-10 flex items-center justify-center rounded-lg hover:bg-gray-100 transition-colors duration-200 disabled:opacity-30 disabled:hover:bg-white"
-                    title="重做"
-                  >
-                    <FontAwesomeIcon icon={faRedo} className="text-gray-600 text-lg" />
-                  </button>
-                </div>
-                <div className="relative w-full h-full">
-                  <KnowledgeGraph 
-                    data={knowledgeGraphData} 
-                    onNodeClick={handleNodeClick}
-                    onNodeDragStop={handleNodeDragStop}
-                    onNodeDelete={handleNodeDelete}
-                    layout={currentLayout}
-                  />
-                </div>
+              <div className="w-full h-full">
+                <KnowledgeGraph 
+                  data={knowledgeGraphData} 
+                  onNodeClick={handleNodeClick}
+                  onNodeDragStop={handleNodeDragStop}
+                  onNodeDelete={handleNodeDelete}
+                  layout={currentLayout}
+                />
               </div>
-            ) : (
-              <div className="h-[800px] bg-gray-50 rounded-lg flex items-center justify-center">
-                <p className="text-gray-500">{getText('noGraphData')}</p>
-              </div>
-            )}
+            </div>
+          ) : (
+            <div className="w-full h-full bg-gray-50 flex items-center justify-center">
+              <p className="text-gray-500">{getText('noGraphData')}</p>
+            </div>
+          )}
+        </div>
+
+        {/* 底部搜索框 */}
+        <div className="fixed bottom-4 left-1/2 transform -translate-x-1/2 w-full max-w-2xl z-50">
+          <div className="bg-white p-2 rounded-lg shadow-md flex items-center border-2 border-gray-300 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:border-blue-400 group mx-4">
+            <div className="flex-grow pr-14">
+              <textarea 
+                placeholder={getText('searchPlaceholder')}
+                className="w-full p-2 border-none outline-none text-xl group-hover:placeholder-blue-400 transition-colors duration-300 min-h-[2.5rem] whitespace-pre-wrap break-words overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-600 scrollbar-track-transparent hover:scrollbar-thumb-gray-400 dark:hover:scrollbar-thumb-gray-500"
+                value={query}
+                onChange={(e) => {
+                  const textarea = e.target;
+                  textarea.style.height = 'auto';
+                  textarea.style.height = Math.min(textarea.scrollHeight, 120) + 'px';
+                  handleChange(e);
+                }}
+                onKeyPress={handleKeyPress}
+                style={{ 
+                  wordWrap: 'break-word',
+                  resize: 'none',
+                  maxHeight: '120px',
+                  minHeight: '2.5rem',
+                  height: 'auto'
+                }}
+                rows="1"
+              />
+            </div>
+            <button 
+              className="bg-gradient-to-r from-blue-500 to-yellow-500 text-white rounded-full h-10 w-10 flex items-center justify-center absolute right-4 hover:from-blue-600 hover:to-yellow-600 transition duration-300 group-hover:scale-110" 
+              onClick={handleButtonClick}
+            >
+              <FontAwesomeIcon icon={faArrowRight} />
+            </button>
+          </div>
+        </div>
+
+        {/* Quick Links */}
+        <div className="fixed bottom-4 right-4 flex flex-col space-y-2 z-50">
+          {/* Hiring Link */}
+          <div className="group relative">
+            <Link href="/we-are-hiring">
+              <a className="block bg-white p-3 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
+                <span className="text-2xl">🪐</span>
+              </a>
+            </Link>
+            <div className="absolute right-full mr-2 bottom-0 bg-white p-4 rounded-lg shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 whitespace-nowrap">
+              <h4 className="text-lg font-medium text-gray-800">{getText('hiring')}</h4>
+              <p className="text-sm text-gray-600">{getText('hiringDesc')}</p>
+            </div>
+          </div>
+
+          {/* Discord Link */}
+          <div className="group relative">
+            <a 
+              href="https://discord.gg/G66pESH3gm" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="block bg-white p-3 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
+            >
+              <span className="text-2xl">🍻</span>
+            </a>
+            <div className="absolute right-full mr-2 bottom-0 bg-white p-4 rounded-lg shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 whitespace-nowrap">
+              <h4 className="text-lg font-medium text-gray-800">{getText('discord')}</h4>
+              <p className="text-sm text-gray-600">{getText('discordDesc')}</p>
+            </div>
           </div>
         </div>
       </div>
@@ -659,71 +723,6 @@ export default function Search() {
           </div>
         </div>
       )}
-
-      <div className="fixed bottom-4 left-1/2 transform -translate-x-1/2 w-full max-w-2xl z-50">
-        <div className="bg-white p-2 rounded-lg shadow-md flex items-center border-2 border-gray-300 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:border-blue-400 group" style={{ minHeight: '4rem' }}>
-          <div className="flex-grow pr-14">
-            <textarea 
-              placeholder={getText('searchPlaceholder')}
-              className="w-full p-2 border-none outline-none text-xl group-hover:placeholder-blue-400 transition-colors duration-300 min-h-[2.5rem] whitespace-pre-wrap break-words overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-600 scrollbar-track-transparent hover:scrollbar-thumb-gray-400 dark:hover:scrollbar-thumb-gray-500"
-              value={query}
-              onChange={(e) => {
-                const textarea = e.target;
-                textarea.style.height = 'auto';
-                textarea.style.height = Math.min(textarea.scrollHeight, 120) + 'px'; // 限制最大高度为120px
-                handleChange(e);
-              }}
-              onKeyPress={handleKeyPress}
-              style={{ 
-                wordWrap: 'break-word',
-                resize: 'none',
-                maxHeight: '120px',
-                minHeight: '2.5rem',
-                height: 'auto'
-              }}
-              rows="1"
-            />
-          </div>
-          <button 
-            className="bg-gradient-to-r from-blue-500 to-yellow-500 text-white rounded-full h-10 w-10 flex items-center justify-center absolute right-4 hover:from-blue-600 hover:to-yellow-600 transition duration-300 group-hover:scale-110" 
-            onClick={handleButtonClick}
-          >
-            <FontAwesomeIcon icon={faArrowRight} />
-          </button>
-        </div>
-      </div>
-
-      {/* Quick Links */}
-      <div className="fixed bottom-4 right-4 flex flex-col space-y-2 z-50">
-        {/* Hiring Link */}
-        <div className="group relative">
-          <Link href="/we-are-hiring">
-            <a className="block bg-white p-3 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
-              <span className="text-2xl">🪐</span>
-            </a>
-          </Link>
-          <div className="absolute right-full mr-2 bottom-0 bg-white p-4 rounded-lg shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 whitespace-nowrap">
-            <h4 className="text-lg font-medium text-gray-800">{getText('hiring')}</h4>
-            <p className="text-sm text-gray-600">{getText('hiringDesc')}</p>
-          </div>
-        </div>
-
-        {/* Discord Link */}
-        <div className="group relative">
-          <a 
-            href="https://discord.gg/G66pESH3gm" 
-            target="_blank" 
-            rel="noopener noreferrer"
-            className="block bg-white p-3 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
-          >
-            <span className="text-2xl">🍻</span>
-          </a>
-          <div className="absolute right-full mr-2 bottom-0 bg-white p-4 rounded-lg shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 whitespace-nowrap">
-            <h4 className="text-lg font-medium text-gray-800">{getText('discord')}</h4>
-            <p className="text-sm text-gray-600">{getText('discordDesc')}</p>
-          </div>
-        </div>
-      </div>
 
       <NodeContentDialog
         node={selectedNode}
