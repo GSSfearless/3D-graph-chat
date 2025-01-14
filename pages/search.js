@@ -571,116 +571,51 @@ export default function Search() {
   return (
     <div className="flex flex-row min-h-screen relative pb-20">
       <div className="w-full p-4 overflow-y-auto mb-16">
-        <div className="flex space-x-4">
-          <div className="w-1/2">
-            <div className="bg-white p-6">
-              {loading || expandingNode ? (
-                <div className="h-[800px] bg-gray-50 rounded-lg flex items-center justify-center">
-                  <div className="text-center">
-                    <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-blue-500 mx-auto mb-4"></div>
-                    <p className="text-lg font-semibold text-gray-600">{loadingMessage}</p>
-                  </div>
+        <div className="w-full">
+          <div className="bg-white p-6">
+            {loading || expandingNode ? (
+              <div className="h-[800px] bg-gray-50 rounded-lg flex items-center justify-center">
+                <div className="text-center">
+                  <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-blue-500 mx-auto mb-4"></div>
+                  <p className="text-lg font-semibold text-gray-600">{loadingMessage}</p>
                 </div>
-              ) : graphError ? (
-                <div className="h-[800px] bg-gray-50 rounded-lg flex items-center justify-center">
-                  <p className="text-red-500 text-center">{graphError}</p>
-                </div>
-              ) : knowledgeGraphData && knowledgeGraphData.nodes && knowledgeGraphData.nodes.length > 0 ? (
-                <div className="h-[800px] rounded-lg border border-gray-200 transition-all duration-300 hover:shadow-lg">
-                  <KnowledgeGraph 
-                    data={knowledgeGraphData} 
-                    onNodeClick={handleNodeClick}
-                    onNodeDragStop={handleNodeDragStop}
-                    onNodeDelete={handleNodeDelete}
-                    layout={currentLayout}
-                  />
-                </div>
-              ) : (
-                <div className="h-[800px] bg-gray-50 rounded-lg flex items-center justify-center">
-                  <p className="text-gray-500">{getText('noGraphData')}</p>
-                </div>
-              )}
-              <div className="flex justify-center mt-4 space-x-2">
-                <button 
-                  onClick={handleUndo} 
-                  disabled={!hasPreviousGraph}
-                  className="text-2xl opacity-50 hover:opacity-100 transition-opacity disabled:opacity-30"
-                  title="Undo last action"
-                >
-                  ↩️
-                </button>
-                <button 
-                  onClick={handleRedo} 
-                  disabled={graphFuture.length === 0}
-                  className="text-2xl opacity-50 hover:opacity-100 transition-opacity disabled:opacity-30"
-                  title="Redo next action"
-                >
-                  ↪️
-                </button>
               </div>
-            </div>
-          </div>
-
-          <div className="w-1/2">
-            <div className="bg-white p-6">
-              <h3 className="text-3xl mb-6 text-left font-semibold break-words whitespace-pre-wrap" style={{
-                fontSize: currentQuestion.length > 100 ? '1.5rem' : currentQuestion.length > 50 ? '1.875rem' : '2.25rem',
-                lineHeight: '1.4',
-                maxWidth: '100%'
-              }}>
-                {currentQuestion}
-              </h3>
-              {viewingChildNode && (
-                <div className="flex justify-center mb-4">
-                  <button
-                    onClick={handleReturnToInitialResult}
-                    className="text-3xl hover:scale-110 transition-transform duration-200 focus:outline-none"
-                    title="Return to initial result"
-                  >
-                    🔙
-                  </button>
-                </div>
-              )}
-              {isLoadingNodeExplanation ? (
-                <div className="animate-pulse">
-                  <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
-                  <div className="h-4 bg-gray-200 rounded w-1/2 mb-2"></div>
-                  <div className="h-4 bg-gray-200 rounded w-5/6 mb-2"></div>
-                  <div className="h-4 bg-gray-200 rounded w-2/3 mb-2"></div>
-                  <p className="text-sm text-gray-500 text-center mt-2">{loadingMessage}</p>
-                </div>
-              ) : (
-                <div className="prose max-w-none px-8">
-                  <div 
-                    dangerouslySetInnerHTML={{ __html: renderedAnswer }} 
-                    className="text-base leading-normal"
-                    style={{
-                      '& h3': { fontSize: '1.5rem', marginBottom: '0.75rem', marginTop: '1.5rem' },
-                      '& p': { fontSize: '1rem', marginBottom: '0.75rem' },
-                      '& ul': { marginLeft: '1.25rem', marginBottom: '0.75rem' },
-                      '& li': { fontSize: '1rem', marginBottom: '0.25rem' },
-                      '& strong': { color: '#2563EB' }
-                    }}
-                  />
-                </div>
-              )}
-              {!streamedAnswer && query && (
-                <div className="animate-pulse space-y-4">
-                  <div className="h-4 bg-gray-200 rounded w-3/4"></div>
-                  <div className="h-4 bg-gray-200 rounded w-5/6"></div>
-                  <div className="h-4 bg-gray-200 rounded w-2/3"></div>
-                  <div className="space-y-3">
-                    <div className="h-3 bg-gray-200 rounded w-1/2"></div>
-                    <div className="h-3 bg-gray-200 rounded w-4/5"></div>
-                    <div className="h-3 bg-gray-200 rounded w-3/5"></div>
-                  </div>
-                  <div className="space-y-3 mt-6">
-                    <div className="h-3 bg-gray-200 rounded w-3/4"></div>
-                    <div className="h-3 bg-gray-200 rounded w-2/3"></div>
-                    <div className="h-3 bg-gray-200 rounded w-1/2"></div>
-                  </div>
-                </div>
-              )}
+            ) : graphError ? (
+              <div className="h-[800px] bg-gray-50 rounded-lg flex items-center justify-center">
+                <p className="text-red-500 text-center">{graphError}</p>
+              </div>
+            ) : knowledgeGraphData && knowledgeGraphData.nodes && knowledgeGraphData.nodes.length > 0 ? (
+              <div className="h-[800px] rounded-lg border border-gray-200 transition-all duration-300 hover:shadow-lg">
+                <KnowledgeGraph 
+                  data={knowledgeGraphData} 
+                  onNodeClick={handleNodeClick}
+                  onNodeDragStop={handleNodeDragStop}
+                  onNodeDelete={handleNodeDelete}
+                  layout={currentLayout}
+                />
+              </div>
+            ) : (
+              <div className="h-[800px] bg-gray-50 rounded-lg flex items-center justify-center">
+                <p className="text-gray-500">{getText('noGraphData')}</p>
+              </div>
+            )}
+            <div className="flex justify-center mt-4 space-x-2">
+              <button 
+                onClick={handleUndo} 
+                disabled={!hasPreviousGraph}
+                className="text-2xl opacity-50 hover:opacity-100 transition-opacity disabled:opacity-30"
+                title="Undo last action"
+              >
+                ↩️
+              </button>
+              <button 
+                onClick={handleRedo} 
+                disabled={graphFuture.length === 0}
+                className="text-2xl opacity-50 hover:opacity-100 transition-opacity disabled:opacity-30"
+                title="Redo next action"
+              >
+                ↪️
+              </button>
             </div>
           </div>
         </div>
