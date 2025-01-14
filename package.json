@@ -21,6 +21,7 @@
     "axios": "^1.7.4",
     "class-variance-authority": "^0.7.0",
     "daisyui": "^4.12.10",
+    "framer-motion": "^11.17.0",
     "jimp": "^0.22.12",
     "lodash.debounce": "^4.0.8",
     "lucide-react": "^0.441.0",
