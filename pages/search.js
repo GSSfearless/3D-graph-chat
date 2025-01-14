@@ -12,6 +12,10 @@ const KnowledgeGraph = dynamic(() => import('../components/KnowledgeGraph'), {
   loading: () => <p>Loading knowledge graph...</p>
 });
 
+const NodeContentDialog = dynamic(() => import('../components/NodeContentDialog'), {
+  ssr: false
+});
+
 function sanitizeHtml(html) {
   const temp = document.createElement('div');
   temp.innerHTML = html;
@@ -173,6 +177,8 @@ export default function Search() {
   const [viewingChildNode, setViewingChildNode] = useState(false);
   const [currentLayout, setCurrentLayout] = useState('radialTree');
   const [currentLang, setCurrentLang] = useState('en');
+  const [selectedNode, setSelectedNode] = useState(null);
+  const [isNodeContentVisible, setIsNodeContentVisible] = useState(false);
 
   const defaultQuery = "What is the answer to life, the universe, and everything?";
 
@@ -447,29 +453,14 @@ export default function Search() {
     }
   }, [knowledgeGraphData]);
 
-  const handleNodeClick = useCallback(async (node) => {
-    setSelectedNodeId(node.id);
-    setIsLoadingNodeExplanation(true);
-    setLoadingMessage('Loading explanation...');
+  const handleNodeClick = useCallback((node) => {
+    setSelectedNode(node);
+    setIsNodeContentVisible(true);
+  }, []);
 
-    if (node.id === 'root') {
-      // 如果是根节点，显示完整答案
-      setStreamedAnswer(initialAnswerRef.current);
-      setViewingChildNode(false);
-    } else {
-      // 如果是子节点，显示该节点的内容
-      setViewingChildNode(true);
-      const explanation = nodeExplanations[node.id];
-      if (explanation) {
-        setStreamedAnswer(explanation);
-      } else {
-        setStreamedAnswer('No detailed explanation available for this node.');
-      }
-    }
-
-    setIsLoadingNodeExplanation(false);
-    setLoadingMessage('');
-  }, [nodeExplanations, initialAnswerRef]);
+  const handleCloseNodeContent = useCallback(() => {
+    setIsNodeContentVisible(false);
+  }, []);
 
   const handleNodeDragStop = useCallback((node) => {
     setGraphHistory(prev => {
@@ -733,6 +724,12 @@ export default function Search() {
           </div>
         </div>
       </div>
+
+      <NodeContentDialog
+        node={selectedNode}
+        isVisible={isNodeContentVisible}
+        onClose={handleCloseNodeContent}
+      />
     </div>
   );
 }
