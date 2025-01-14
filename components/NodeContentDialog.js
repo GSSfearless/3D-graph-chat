@@ -136,7 +136,7 @@ const NodeContentDialog = ({ node, onClose, isVisible, currentQuestion }) => {
   if (!isVisible) return null;
 
   return (
-    <div ref={constraintsRef} className="fixed inset-0 pointer-events-none">
+    <div ref={constraintsRef} className="fixed inset-0 pointer-events-none z-[100]">
       <motion.div
         drag
         dragMomentum={false}
@@ -155,6 +155,7 @@ const NodeContentDialog = ({ node, onClose, isVisible, currentQuestion }) => {
         className="fixed pointer-events-auto"
         style={{ 
           touchAction: 'none',
+          zIndex: 100
         }}
       >
         <div className={`
