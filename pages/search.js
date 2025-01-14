@@ -1,4 +1,4 @@
-import { faArrowRight, faUndo, faRedo } from '@fortawesome/free-solid-svg-icons';
+import { faArrowRight, faUndo, faRedo, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
@@ -173,6 +173,9 @@ export default function Search() {
   const [viewingChildNode, setViewingChildNode] = useState(false);
   const [currentLayout, setCurrentLayout] = useState('radialTree');
   const [currentLang, setCurrentLang] = useState('en');
+  const [selectedNode, setSelectedNode] = useState(null);
+  const [nodeExplanation, setNodeExplanation] = useState('');
+  const [showNodeDialog, setShowNodeDialog] = useState(false);
 
   const defaultQuery = "What is the answer to life, the universe, and everything?";
 
@@ -448,28 +451,38 @@ export default function Search() {
   }, [knowledgeGraphData]);
 
   const handleNodeClick = useCallback(async (node) => {
-    setSelectedNodeId(node.id);
-    setIsLoadingNodeExplanation(true);
-    setLoadingMessage('Loading explanation...');
+    setSelectedNode(node);
+    setShowNodeDialog(true);
+    
+    try {
+      const response = await fetch('/api/nodeExplanation', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          nodeId: node.id,
+          nodeLabel: node.data.label,
+          userQuery: q,
+          graphContext: knowledgeGraphData
+        }),
+      });
 
-    if (node.id === 'root') {
-      // 如果是根节点，显示完整答案
-      setStreamedAnswer(initialAnswerRef.current);
-      setViewingChildNode(false);
-    } else {
-      // 如果是子节点，显示该节点的内容
-      setViewingChildNode(true);
-      const explanation = nodeExplanations[node.id];
-      if (explanation) {
-        setStreamedAnswer(explanation);
-      } else {
-        setStreamedAnswer('No detailed explanation available for this node.');
+      if (!response.ok) {
+        throw new Error('Failed to fetch node explanation');
       }
-    }
 
-    setIsLoadingNodeExplanation(false);
-    setLoadingMessage('');
-  }, [nodeExplanations, initialAnswerRef]);
+      const data = await response.json();
+      setNodeExplanation(data.explanation);
+    } catch (error) {
+      console.error('Error fetching node explanation:', error);
+      setNodeExplanation('无法获取节点解释');
+    }
+  }, [q, knowledgeGraphData]);
+
+  const handleCloseDialog = useCallback(() => {
+    setShowNodeDialog(false);
+    setSelectedNode(null);
+    setNodeExplanation('');
+  }, []);
 
   const handleNodeDragStop = useCallback((node) => {
     setGraphHistory(prev => {
@@ -733,6 +746,53 @@ export default function Search() {
           </div>
         </div>
       </div>
+
+      {/* 添加节点解释弹框 */}
+      {showNodeDialog && selectedNode && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm flex items-center justify-center z-50">
+          <div className="w-full max-w-2xl mx-4">
+            <div className="bg-white rounded-lg shadow-xl">
+              {/* 弹框头部 */}
+              <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
+                <h3 className="text-xl font-semibold text-gray-800">
+                  {selectedNode.data.label}
+                </h3>
+                <button 
+                  onClick={handleCloseDialog}
+                  className="text-gray-500 hover:text-gray-700 transition-colors duration-200"
+                >
+                  <FontAwesomeIcon icon={faTimes} className="text-xl" />
+                </button>
+              </div>
+              
+              {/* 弹框内容 */}
+              <div className="px-6 py-4">
+                {nodeExplanation ? (
+                  <div className="prose max-w-none">
+                    <div 
+                      dangerouslySetInnerHTML={{ 
+                        __html: sanitizeHtml(renderMarkdown(nodeExplanation)) 
+                      }} 
+                      className="text-base leading-relaxed text-gray-600"
+                    />
+                  </div>
+                ) : (
+                  <div className="flex items-center justify-center py-8">
+                    <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
+                  </div>
+                )}
+              </div>
+              
+              {/* 弹框底部 */}
+              <div className="px-6 py-4 bg-gray-50 rounded-b-lg">
+                <p className="text-sm text-gray-500">
+                  这是关于"{selectedNode.data.label}"与您的问题"{q}"之间的关联解释
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
