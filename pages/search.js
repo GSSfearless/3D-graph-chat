@@ -1,4 +1,4 @@
-import { faArrowRight } from '@fortawesome/free-solid-svg-icons';
+import { faArrowRight, faUndo, faRedo } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
@@ -585,7 +585,26 @@ export default function Search() {
                 <p className="text-red-500 text-center">{graphError}</p>
               </div>
             ) : knowledgeGraphData && knowledgeGraphData.nodes && knowledgeGraphData.nodes.length > 0 ? (
-              <div className="h-[800px] rounded-lg border border-gray-200 transition-all duration-300 hover:shadow-lg">
+              <div className="h-[800px] rounded-lg border border-gray-200 transition-all duration-300 hover:shadow-lg relative">
+                {/* 左侧工具栏 */}
+                <div className="absolute left-4 top-1/2 -translate-y-1/2 bg-white rounded-lg shadow-lg p-2 space-y-2 border border-gray-200">
+                  <button 
+                    onClick={handleUndo} 
+                    disabled={!hasPreviousGraph}
+                    className="w-10 h-10 flex items-center justify-center rounded-lg hover:bg-gray-100 transition-colors duration-200 disabled:opacity-30 disabled:hover:bg-white"
+                    title="撤销"
+                  >
+                    <FontAwesomeIcon icon={faUndo} className="text-gray-600 text-lg" />
+                  </button>
+                  <button 
+                    onClick={handleRedo} 
+                    disabled={graphFuture.length === 0}
+                    className="w-10 h-10 flex items-center justify-center rounded-lg hover:bg-gray-100 transition-colors duration-200 disabled:opacity-30 disabled:hover:bg-white"
+                    title="重做"
+                  >
+                    <FontAwesomeIcon icon={faRedo} className="text-gray-600 text-lg" />
+                  </button>
+                </div>
                 <KnowledgeGraph 
                   data={knowledgeGraphData} 
                   onNodeClick={handleNodeClick}
@@ -599,24 +618,6 @@ export default function Search() {
                 <p className="text-gray-500">{getText('noGraphData')}</p>
               </div>
             )}
-            <div className="flex justify-center mt-4 space-x-2">
-              <button 
-                onClick={handleUndo} 
-                disabled={!hasPreviousGraph}
-                className="text-2xl opacity-50 hover:opacity-100 transition-opacity disabled:opacity-30"
-                title="Undo last action"
-              >
-                ↩️
-              </button>
-              <button 
-                onClick={handleRedo} 
-                disabled={graphFuture.length === 0}
-                className="text-2xl opacity-50 hover:opacity-100 transition-opacity disabled:opacity-30"
-                title="Redo next action"
-              >
-                ↪️
-              </button>
-            </div>
           </div>
         </div>
       </div>
