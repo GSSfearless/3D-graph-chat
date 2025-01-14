@@ -729,6 +729,7 @@ export default function Search() {
         node={selectedNode}
         isVisible={isNodeContentVisible}
         onClose={handleCloseNodeContent}
+        currentQuestion={currentQuestion}
       />
     </div>
   );

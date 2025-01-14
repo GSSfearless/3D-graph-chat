@@ -3,12 +3,59 @@ import { motion } from 'framer-motion';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faXmark, faMinus, faExpand, faCompress } from '@fortawesome/free-solid-svg-icons';
 
-const NodeContentDialog = ({ node, onClose, isVisible }) => {
+const NodeContentDialog = ({ node, onClose, isVisible, currentQuestion }) => {
   const [isDragging, setIsDragging] = useState(false);
   const [position, setPosition] = useState({ x: window.innerWidth - 420, y: 100 });
   const [isMinimized, setIsMinimized] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [explanation, setExplanation] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
   const constraintsRef = useRef(null);
+
+  useEffect(() => {
+    if (isVisible && node) {
+      loadRelationExplanation();
+    }
+  }, [isVisible, node]);
+
+  const loadRelationExplanation = async () => {
+    if (!node || !currentQuestion) return;
+
+    setIsLoading(true);
+    setExplanation('');
+
+    try {
+      const response = await fetch('/api/nodeRelation', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          nodeContent: node.data.content,
+          nodeLabel: node.data.label,
+          userQuestion: currentQuestion
+        })
+      });
+
+      if (!response.ok) throw new Error('Failed to fetch explanation');
+
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let accumulatedText = '';
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        
+        const text = decoder.decode(value);
+        accumulatedText += text;
+        setExplanation(accumulatedText);
+      }
+    } catch (error) {
+      console.error('Error loading relation explanation:', error);
+      setExplanation('加载解释时出错，请稍后重试。');
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   // 处理拖动结束
   const handleDragEnd = (event, info) => {
@@ -94,9 +141,19 @@ const NodeContentDialog = ({ node, onClose, isVisible }) => {
           {!isMinimized && (
             <div className="flex-1 overflow-y-auto p-6">
               <div className="prose max-w-none">
-                <div dangerouslySetInnerHTML={{ 
-                  __html: node?.data?.content || '暂无内容'
-                }} />
+                {isLoading ? (
+                  <div className="flex items-center justify-center space-x-2">
+                    <div className="animate-spin rounded-full h-4 w-4 border-2 border-blue-500 border-t-transparent"></div>
+                    <span className="text-gray-600">正在分析关联性...</span>
+                  </div>
+                ) : (
+                  <div 
+                    className="markdown-content"
+                    dangerouslySetInnerHTML={{ 
+                      __html: explanation || '正在加载解释...'
+                    }} 
+                  />
+                )}
               </div>
             </div>
           )}
