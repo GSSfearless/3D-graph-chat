@@ -2,6 +2,14 @@ import React, { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faXmark, faMinus, faExpand, faCompress } from '@fortawesome/free-solid-svg-icons';
+import MarkdownIt from 'markdown-it';
+
+const md = new MarkdownIt({
+  html: true,
+  breaks: true,
+  linkify: true,
+  typographer: true
+});
 
 const NodeContentDialog = ({ node, onClose, isVisible, currentQuestion }) => {
   const [isDragging, setIsDragging] = useState(false);
@@ -75,6 +83,12 @@ const NodeContentDialog = ({ node, onClose, isVisible, currentQuestion }) => {
     setIsMinimized(false);
   };
 
+  const renderMarkdown = (content) => {
+    if (!content) return '';
+    const html = md.render(content);
+    return html;
+  };
+
   if (!isVisible) return null;
 
   return (
@@ -140,21 +154,66 @@ const NodeContentDialog = ({ node, onClose, isVisible, currentQuestion }) => {
           {/* 内容区域 */}
           {!isMinimized && (
             <div className="flex-1 overflow-y-auto p-6">
-              <div className="prose max-w-none">
-                {isLoading ? (
-                  <div className="flex items-center justify-center space-x-2">
-                    <div className="animate-spin rounded-full h-4 w-4 border-2 border-blue-500 border-t-transparent"></div>
-                    <span className="text-gray-600">正在分析关联性...</span>
-                  </div>
-                ) : (
+              {isLoading ? (
+                <div className="flex items-center justify-center space-x-2">
+                  <div className="animate-spin rounded-full h-4 w-4 border-2 border-blue-500 border-t-transparent"></div>
+                  <span className="text-gray-600">正在分析关联性...</span>
+                </div>
+              ) : (
+                <div className="markdown-content prose prose-slate max-w-none">
+                  <style jsx global>{`
+                    .markdown-content h1 {
+                      font-size: 1.5rem;
+                      font-weight: 600;
+                      margin-bottom: 1rem;
+                      color: #1a202c;
+                    }
+                    .markdown-content h2 {
+                      font-size: 1.25rem;
+                      font-weight: 600;
+                      margin-bottom: 0.75rem;
+                      color: #2d3748;
+                    }
+                    .markdown-content h3 {
+                      font-size: 1.125rem;
+                      font-weight: 600;
+                      margin-bottom: 0.5rem;
+                      color: #4a5568;
+                    }
+                    .markdown-content p {
+                      margin-bottom: 1rem;
+                      line-height: 1.625;
+                      color: #4a5568;
+                    }
+                    .markdown-content ul {
+                      list-style-type: disc;
+                      margin-left: 1.5rem;
+                      margin-bottom: 1rem;
+                    }
+                    .markdown-content li {
+                      margin-bottom: 0.5rem;
+                      line-height: 1.5;
+                    }
+                    .markdown-content strong {
+                      color: #2b6cb0;
+                      font-weight: 600;
+                    }
+                    .markdown-content blockquote {
+                      border-left: 4px solid #e2e8f0;
+                      padding-left: 1rem;
+                      margin-left: 0;
+                      margin-right: 0;
+                      font-style: italic;
+                      color: #718096;
+                    }
+                  `}</style>
                   <div 
-                    className="markdown-content"
                     dangerouslySetInnerHTML={{ 
-                      __html: explanation || '正在加载解释...'
+                      __html: renderMarkdown(explanation) || '正在加载解释...'
                     }} 
                   />
-                )}
-              </div>
+                </div>
+              )}
             </div>
           )}
         </div>
