@@ -614,7 +614,7 @@ export default function Search() {
 
         {/* 底部搜索框 */}
         <div className="fixed bottom-4 left-1/2 transform -translate-x-1/2 w-full max-w-2xl z-50">
-          <div className="bg-white p-2 rounded-lg shadow-md flex items-center border-2 border-gray-300 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:border-blue-400 group mx-4">
+          <div className="bg-white p-2 rounded-lg shadow-md flex items-center border-2 border-gray-300 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:border-blue-400 group mx-4 relative">
             <div className="flex-grow pr-14">
               <textarea 
                 placeholder={getText('searchPlaceholder')}
@@ -637,12 +637,14 @@ export default function Search() {
                 rows="1"
               />
             </div>
-            <button 
-              className="bg-gradient-to-r from-blue-500 to-yellow-500 text-white rounded-full h-10 w-10 flex items-center justify-center absolute right-4 hover:from-blue-600 hover:to-yellow-600 transition duration-300 group-hover:scale-110" 
-              onClick={handleButtonClick}
-            >
-              <FontAwesomeIcon icon={faArrowRight} />
-            </button>
+            <div className="absolute right-4 top-1/2 -translate-y-1/2 transform transition-transform duration-300 group-hover:scale-110 origin-center">
+              <button 
+                className="bg-gradient-to-r from-blue-500 to-yellow-500 text-white rounded-full h-10 w-10 flex items-center justify-center hover:from-blue-600 hover:to-yellow-600 transition-colors duration-300" 
+                onClick={handleButtonClick}
+              >
+                <FontAwesomeIcon icon={faArrowRight} />
+              </button>
+            </div>
           </div>
         </div>
 
