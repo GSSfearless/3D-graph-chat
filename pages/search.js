@@ -587,7 +587,7 @@ export default function Search() {
             ) : knowledgeGraphData && knowledgeGraphData.nodes && knowledgeGraphData.nodes.length > 0 ? (
               <div className="h-[800px] rounded-lg border border-gray-200 transition-all duration-300 hover:shadow-lg relative">
                 {/* 左侧工具栏 */}
-                <div className="absolute left-4 top-1/2 -translate-y-1/2 bg-white rounded-lg shadow-lg p-2 space-y-2 border border-gray-200">
+                <div className="absolute left-4 top-1/2 -translate-y-1/2 bg-white rounded-lg shadow-lg p-2 space-y-2 border border-gray-200 z-10">
                   <button 
                     onClick={handleUndo} 
                     disabled={!hasPreviousGraph}
@@ -605,13 +605,15 @@ export default function Search() {
                     <FontAwesomeIcon icon={faRedo} className="text-gray-600 text-lg" />
                   </button>
                 </div>
-                <KnowledgeGraph 
-                  data={knowledgeGraphData} 
-                  onNodeClick={handleNodeClick}
-                  onNodeDragStop={handleNodeDragStop}
-                  onNodeDelete={handleNodeDelete}
-                  layout={currentLayout}
-                />
+                <div className="relative w-full h-full">
+                  <KnowledgeGraph 
+                    data={knowledgeGraphData} 
+                    onNodeClick={handleNodeClick}
+                    onNodeDragStop={handleNodeDragStop}
+                    onNodeDelete={handleNodeDelete}
+                    layout={currentLayout}
+                  />
+                </div>
               </div>
             ) : (
               <div className="h-[800px] bg-gray-50 rounded-lg flex items-center justify-center">
