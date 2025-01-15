@@ -1,12 +1,12 @@
 import dynamic from 'next/dynamic';
 import { useCallback, useEffect, useState } from 'react';
+import dagre from 'dagre';
 
 const ReactFlow = dynamic(() => import('react-flow-renderer').then(mod => mod.default), {
   ssr: false,
   loading: () => <p>Loading knowledge graph...</p>
 });
 
-// 导入 Controls 和 Background 组件
 const Controls = dynamic(() => import('react-flow-renderer').then(mod => mod.Controls), {
   ssr: false
 });
@@ -15,45 +15,158 @@ const Background = dynamic(() => import('react-flow-renderer').then(mod => mod.B
   ssr: false
 });
 
+// 定义不同层级节点的样式
+const nodeStyles = {
+  root: {
+    background: 'linear-gradient(45deg, #FF6B6B, #FF8E53)',
+    border: '2px solid #FF6B6B',
+    borderRadius: '30px',
+    padding: '20px',
+    fontSize: '16px',
+    color: 'white',
+    fontWeight: 'bold',
+    minWidth: '200px',
+    textAlign: 'center',
+    boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
+  },
+  mainBranch: {
+    background: 'linear-gradient(45deg, #4ECDC4, #45B7AF)',
+    border: '2px solid #4ECDC4',
+    borderRadius: '25px',
+    padding: '15px',
+    fontSize: '14px',
+    color: 'white',
+    fontWeight: '600',
+    minWidth: '180px',
+    textAlign: 'center',
+    boxShadow: '0 3px 5px rgba(0, 0, 0, 0.1)',
+  },
+  subBranch: {
+    background: 'linear-gradient(45deg, #96CDEF, #7FB2D2)',
+    border: '2px solid #96CDEF',
+    borderRadius: '20px',
+    padding: '12px',
+    fontSize: '13px',
+    color: 'white',
+    fontWeight: '500',
+    minWidth: '160px',
+    textAlign: 'center',
+    boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
+  }
+};
+
+// 定义边的样式
+const edgeStyles = {
+  mainBranch: {
+    stroke: '#FF6B6B',
+    strokeWidth: 3,
+  },
+  subBranch: {
+    stroke: '#4ECDC4',
+    strokeWidth: 2,
+  }
+};
+
+const getLayoutedElements = (nodes, edges, direction = 'TB') => {
+  const dagreGraph = new dagre.graphlib.Graph();
+  dagreGraph.setDefaultEdgeLabel(() => ({}));
+
+  // 设置图的布局方向和节点间距
+  dagreGraph.setGraph({
+    rankdir: direction,
+    nodesep: 80,
+    ranksep: 100,
+    marginx: 50,
+    marginy: 50,
+  });
+
+  // 添加节点
+  nodes.forEach((node) => {
+    dagreGraph.setNode(node.id, {
+      width: node.data.level === 'root' ? 200 : node.data.level === 'mainBranch' ? 180 : 160,
+      height: node.data.level === 'root' ? 80 : node.data.level === 'mainBranch' ? 60 : 50,
+    });
+  });
+
+  // 添加边
+  edges.forEach((edge) => {
+    dagreGraph.setEdge(edge.source, edge.target);
+  });
+
+  // 计算布局
+  dagre.layout(dagreGraph);
+
+  // 获取布局后的节点位置
+  const layoutedNodes = nodes.map((node) => {
+    const nodeWithPosition = dagreGraph.node(node.id);
+    return {
+      ...node,
+      position: {
+        x: nodeWithPosition.x - nodeWithPosition.width / 2,
+        y: nodeWithPosition.y - nodeWithPosition.height / 2,
+      },
+      style: {
+        ...nodeStyles[node.data.level || 'subBranch'],
+        width: nodeWithPosition.width,
+      },
+    };
+  });
+
+  // 设置边的样式
+  const layoutedEdges = edges.map((edge) => {
+    const sourceNode = nodes.find(n => n.id === edge.source);
+    return {
+      ...edge,
+      style: edgeStyles[sourceNode?.data.level === 'root' ? 'mainBranch' : 'subBranch'],
+      type: 'smoothstep',
+      animated: true,
+    };
+  });
+
+  return { nodes: layoutedNodes, edges: layoutedEdges };
+};
+
 const KnowledgeGraph = ({ data, onNodeClick, onNodeDragStop, onNodeDelete }) => {
-  console.log('KnowledgeGraph rendered with data:', data);
-
   const [mounted, setMounted] = useState(false);
-  const [nodes, setNodes] = useState(data.nodes);
-  const [edges, setEdges] = useState(data.edges);
-  const [hoveredNode, setHoveredNode] = useState(null);
-  const [showNodeDialog, setShowNodeDialog] = useState(false);
-  const [selectedNode, setSelectedNode] = useState(null);
-  const [suggestedQuestions, setSuggestedQuestions] = useState([]);
-  const [userInput, setUserInput] = useState('');
-  const [isLoadingQuestions, setIsLoadingQuestions] = useState(false);
-
-  const MAX_NODES = 50; // 设置一个合理的最大节点数
+  const [nodes, setNodes] = useState([]);
+  const [edges, setEdges] = useState([]);
 
   useEffect(() => {
     setMounted(true);
-    setNodes(data.nodes);
-    setEdges(data.edges);
-  }, [data]);
+  }, []);
 
   useEffect(() => {
     if (data && data.nodes && data.edges) {
       try {
-        // 限制节点数量
-        const limitedNodes = data.nodes.slice(0, MAX_NODES);
-        const limitedEdges = data.edges.filter(edge => 
-          limitedNodes.some(node => node.id === edge.source) && 
-          limitedNodes.some(node => node.id === edge.target)
+        // 为节点添加层级信息
+        const nodesWithLevels = data.nodes.map(node => {
+          let level = 'subBranch';
+          if (node.id === 'root') {
+            level = 'root';
+          } else if (data.edges.some(edge => edge.source === 'root' && edge.target === node.id)) {
+            level = 'mainBranch';
+          }
+          return {
+            ...node,
+            data: {
+              ...node.data,
+              level,
+            },
+          };
+        });
+
+        // 应用布局
+        const { nodes: layoutedNodes, edges: layoutedEdges } = getLayoutedElements(
+          nodesWithLevels,
+          data.edges,
+          'TB'
         );
 
-        // 始终使用金字塔布局
-        const { nodes: layoutedNodes, edges: layoutedEdges } = relayoutGraph(limitedNodes, limitedEdges, 'pyramid');
         setNodes(layoutedNodes);
         setEdges(layoutedEdges);
       } catch (error) {
         console.error('Error in layout calculation:', error);
-        // 如果布局计算失败，至少显示原始节点
-        setNodes(data.nodes.slice(0, MAX_NODES));
+        setNodes(data.nodes);
         setEdges(data.edges);
       }
     }
@@ -63,99 +176,18 @@ const KnowledgeGraph = ({ data, onNodeClick, onNodeDragStop, onNodeDelete }) => 
     reactFlowInstance.fitView({ padding: 0.2, includeHiddenNodes: false });
   }, []);
 
-  const handleNodeClick = useCallback(async (event, node) => {
+  const handleNodeClick = useCallback((event, node) => {
     event.preventDefault();
-    // 直接调用父组件传入的 onNodeClick
     if (onNodeClick) {
       onNodeClick(node);
     }
   }, [onNodeClick]);
 
-  const handleQuestionSelect = async (question) => {
-    setUserInput(question);
-  };
-
-  const handleSubmit = async () => {
-    if (!userInput.trim()) return;
-
-    try {
-      const response = await fetch('/api/expandNode', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          nodeId: selectedNode.id,
-          label: selectedNode.data.label,
-          userInput: userInput,
-          parentPosition: selectedNode.position,
-          existingNodes: nodes
-        })
-      });
-
-      if (!response.ok) throw new Error('Failed to expand node');
-      
-      const newData = await response.json();
-      
-      setNodes(prev => [...prev, ...newData.nodes]);
-      setEdges(prev => [...prev, ...newData.edges]);
-      
-      setShowNodeDialog(false);
-      setUserInput('');
-      setSelectedNode(null);
-    } catch (error) {
-      console.error('Error expanding node:', error);
-    }
-  };
-
-  const handleNodeDragStart = useCallback((event, node) => {
-    // You can add any logic here for when dragging starts
-  }, []);
-
-  const handleNodeDrag = useCallback((event, node) => {
-    setNodes((nds) =>
-      nds.map((n) => (n.id === node.id ? { ...n, position: node.position } : n))
-    );
-  }, [setNodes]);
-
   const handleNodeDragStop = useCallback((event, node) => {
-    console.log('Node dragged in KnowledgeGraph:', node);
-    onNodeDragStop(node);
+    if (onNodeDragStop) {
+      onNodeDragStop(node);
+    }
   }, [onNodeDragStop]);
-
-  const handleNodeDelete = useCallback((event, node) => {
-    event.stopPropagation(); // Prevent triggering onNodeClick
-    console.log('Node deleted in KnowledgeGraph:', node);
-    onNodeDelete(node);
-  }, [onNodeDelete]);
-
-  const handleNodeMouseEnter = useCallback((event, node) => {
-    setHoveredNode(node);
-    setNodes((nds) =>
-      nds.map((n) => {
-        if (n.id === node.id || edges.some(e => (e.source === node.id && e.target === n.id) || (e.target === node.id && e.source === n.id))) {
-          return { ...n, style: { ...n.style, opacity: 1, border: '2px solid #ffa500' } };
-        }
-        return { ...n, style: { ...n.style, opacity: 0.3 } };
-      })
-    );
-    setEdges((eds) =>
-      eds.map((e) => {
-        if (e.source === node.id || e.target === node.id) {
-          return { ...e, style: { ...e.style, stroke: '#ffa500', strokeWidth: 3 } };
-        }
-        return { ...e, style: { ...e.style, opacity: 0.3 } };
-      })
-    );
-  }, [edges]);
-
-  const handleNodeMouseLeave = useCallback(() => {
-    setHoveredNode(null);
-    setNodes((nds) =>
-      nds.map((n) => ({ ...n, style: { ...n.style, opacity: 1, border: '1px solid #ddd' } }))
-    );
-    setEdges((eds) =>
-      eds.map((e) => ({ ...e, style: { ...e.style, stroke: '#888', strokeWidth: 2, opacity: 1 } }))
-    );
-  }, []);
 
   if (!mounted) return null;
 
@@ -169,11 +201,7 @@ const KnowledgeGraph = ({ data, onNodeClick, onNodeDragStop, onNodeDelete }) => 
         nodes={nodes}
         edges={edges}
         onNodeClick={handleNodeClick}
-        onNodeDragStart={handleNodeDragStart}
-        onNodeDrag={handleNodeDrag}
         onNodeDragStop={handleNodeDragStop}
-        onNodeMouseEnter={handleNodeMouseEnter}
-        onNodeMouseLeave={handleNodeMouseLeave}
         onInit={onInit}
         nodesDraggable={true}
         nodesConnectable={false}
@@ -184,14 +212,11 @@ const KnowledgeGraph = ({ data, onNodeClick, onNodeDragStop, onNodeDelete }) => 
         minZoom={0.1}
         maxZoom={4}
         defaultZoom={1}
-        onlyRenderVisibleElements={true}
-        edgeUpdaterRadius={10}
+        fitView
       >
         <Controls />
-        <Background color="#aaa" gap={16} />
+        <Background color="#f0f0f0" gap={16} size={1} />
       </ReactFlow>
-
-      {/* 移除节点交互弹窗 */}
     </div>
   );
 };
