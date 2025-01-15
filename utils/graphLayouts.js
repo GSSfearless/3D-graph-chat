@@ -4,8 +4,8 @@ const NODE_COLORS = [
   'linear-gradient(135deg, #4F46E5 0%, #7C3AED 100%)',
   'linear-gradient(135deg, #2563EB 0%, #3B82F6 100%)',
   'linear-gradient(135deg, #059669 0%, #10B981 100%)',
-  'linear-gradient(135deg, #DC2626 0%, #EF4444 100%)',
-  'linear-gradient(135deg, #D97706 0%, #F59E0B 100%)'
+  'linear-gradient(135deg, #EA580C 0%, #F97316 100%)',
+  'linear-gradient(135deg, #0EA5E9 0%, #38BDF8 100%)'
 ];
 
 function centerLayout(nodes) {
@@ -189,9 +189,16 @@ export function createDownwardTreeLayout(nodes, edges) {
   });
 
   const levelMap = new Map();
-  const horizontalSpacing = 250; // 增加水平间距
-  const verticalSpacing = 150; // 增加垂直间距
+  const horizontalSpacing = 280; // 增加水平间距
+  const verticalSpacing = 180; // 增加垂直间距
   
+  // 计算每个节点的层级和子树大小
+  function calculateTreeSize(nodeId) {
+    const children = childrenMap.get(nodeId) || [];
+    if (children.length === 0) return 1;
+    return children.reduce((sum, childId) => sum + calculateTreeSize(childId), 0);
+  }
+
   // 计算每个节点的层级
   function calculateLevels(nodeId, level = 0) {
     if (!levelMap.has(nodeId)) {
@@ -205,54 +212,196 @@ export function createDownwardTreeLayout(nodes, edges) {
     calculateLevels(rootNode.id);
   }
 
-  // 计算每层节点数量
+  // 计算每层节点数量和位置
   const levelCounts = new Map();
+  const levelPositions = new Map();
+  const nodePositions = new Map();
+
+  // 首先计算每层节点数量
   levelMap.forEach((level, nodeId) => {
     levelCounts.set(level, (levelCounts.get(level) || 0) + 1);
   });
 
-  // 计算每层节点的位置
-  const levelPositions = new Map();
-  levelMap.forEach((level, nodeId) => {
-    if (!levelPositions.has(level)) {
-      levelPositions.set(level, 0);
-    }
+  // 计算节点位置，考虑子树大小
+  function calculateNodePositions(nodeId, level, xOffset = 0) {
     const node = nodes.find(n => n.id === nodeId);
-    if (node) {
-      const nodesInLevel = levelCounts.get(level);
-      const levelWidth = nodesInLevel * NODE_WIDTH + (nodesInLevel - 1) * horizontalSpacing;
-      const startX = 600 - levelWidth / 2;
-      
-      node.position = {
-        x: startX + levelPositions.get(level) * (NODE_WIDTH + horizontalSpacing),
-        y: 100 + level * verticalSpacing
-      };
+    if (!node) return 0;
 
-      // 优化节点样式
-      node.style = {
-        width: NODE_WIDTH,
-        height: NODE_HEIGHT,
-        background: NODE_COLORS[level % NODE_COLORS.length],
-        borderRadius: '12px',
-        border: level === 0 ? '2px solid rgba(255,255,255,0.5)' : '1px solid rgba(255,255,255,0.3)',
-        padding: '10px',
-        fontSize: level === 0 ? '16px' : '14px',
-        fontWeight: level === 0 ? 'bold' : '500',
-        color: '#FFFFFF',
-        boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
-        transition: 'all 0.3s ease',
-        cursor: 'pointer',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        textAlign: 'center',
-        wordWrap: 'break-word',
-        backdropFilter: 'blur(8px)',
-        WebkitBackdropFilter: 'blur(8px)'
-      };
-      
-      levelPositions.set(level, levelPositions.get(level) + 1);
+    const children = childrenMap.get(nodeId) || [];
+    const treeSize = calculateTreeSize(nodeId);
+    const totalWidth = treeSize * (NODE_WIDTH + horizontalSpacing) - horizontalSpacing;
+    
+    // 计算节点的x位置
+    const x = xOffset + totalWidth / 2 - NODE_WIDTH / 2;
+    const y = 100 + level * verticalSpacing;
+    
+    // 存储节点位置
+    nodePositions.set(nodeId, { x, y });
+
+    // 递归计算子节点位置
+    let childOffset = xOffset;
+    children.forEach(childId => {
+      const childWidth = calculateTreeSize(childId) * (NODE_WIDTH + horizontalSpacing) - horizontalSpacing;
+      calculateNodePositions(childId, level + 1, childOffset);
+      childOffset += childWidth + horizontalSpacing;
+    });
+
+    return totalWidth;
+  }
+
+  if (rootNode) {
+    const totalWidth = calculateTreeSize(rootNode.id) * (NODE_WIDTH + horizontalSpacing) - horizontalSpacing;
+    calculateNodePositions(rootNode.id, 0, 600 - totalWidth / 2);
+  }
+
+  // 应用计算好的位置和样式
+  nodes.forEach(node => {
+    const level = levelMap.get(node.id) || 0;
+    const position = nodePositions.get(node.id);
+    if (position) {
+      node.position = position;
     }
+
+    // 根据层级设置节点大小和样式
+    const scale = Math.max(1 - level * 0.1, 0.7); // 随层级逐渐缩小，但不小于0.7
+    const nodeWidth = NODE_WIDTH * scale;
+    const nodeHeight = NODE_HEIGHT * scale;
+
+    node.style = {
+      width: nodeWidth,
+      height: nodeHeight,
+      background: NODE_COLORS[level % NODE_COLORS.length],
+      borderRadius: '12px',
+      border: level === 0 ? '2px solid rgba(255,255,255,0.5)' : '1px solid rgba(255,255,255,0.3)',
+      padding: '10px',
+      fontSize: level === 0 ? '16px' : `${14 * scale}px`,
+      fontWeight: level === 0 ? 'bold' : '500',
+      color: '#FFFFFF',
+      boxShadow: `0 ${4 * scale}px ${6 * scale}px -1px rgba(0, 0, 0, 0.1), 0 ${2 * scale}px ${4 * scale}px -1px rgba(0, 0, 0, 0.06)`,
+      transition: 'all 0.3s ease',
+      cursor: 'pointer',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      textAlign: 'center',
+      wordWrap: 'break-word',
+      backdropFilter: 'blur(8px)',
+      WebkitBackdropFilter: 'blur(8px)',
+      transform: `scale(${scale})`,
+      opacity: Math.max(1 - level * 0.1, 0.7), // 透明度也随层级变化
+      zIndex: 1000 - level // 确保上层节点在上面
+    };
+  });
+
+  return centerLayout(nodes);
+}
+
+export function createRightLogicalLayout(nodes, edges) {
+  const rootNode = nodes.find(node => !edges.some(edge => edge.target === node.id));
+  const childrenMap = new Map();
+  
+  // 构建父子节点映射
+  edges.forEach(edge => {
+    if (!childrenMap.has(edge.source)) {
+      childrenMap.set(edge.source, []);
+    }
+    childrenMap.get(edge.source).push(edge.target);
+  });
+
+  const levelMap = new Map();
+  const horizontalSpacing = 220; // 水平间距
+  const verticalSpacing = 80;   // 垂直间距
+  const subtreeGap = 40;        // 子树之间的间距
+
+  // 计算节点的层级
+  function calculateLevels(nodeId, level = 0) {
+    if (!levelMap.has(nodeId)) {
+      levelMap.set(nodeId, level);
+      const children = childrenMap.get(nodeId) || [];
+      children.forEach(childId => calculateLevels(childId, level + 1));
+    }
+  }
+
+  // 计算子树高度
+  function calculateSubtreeHeight(nodeId) {
+    const children = childrenMap.get(nodeId) || [];
+    if (children.length === 0) return NODE_HEIGHT;
+    
+    const childrenHeights = children.map(calculateSubtreeHeight);
+    const totalChildrenHeight = childrenHeights.reduce((sum, height) => sum + height, 0);
+    const gapsHeight = (children.length - 1) * subtreeGap;
+    
+    return Math.max(NODE_HEIGHT, totalChildrenHeight + gapsHeight);
+  }
+
+  // 计算节点位置
+  function calculateNodePositions(nodeId, x = 100, y = 0, availableHeight = 0) {
+    const node = nodes.find(n => n.id === nodeId);
+    if (!node) return { height: 0, lastY: y };
+
+    const level = levelMap.get(nodeId) || 0;
+    const children = childrenMap.get(nodeId) || [];
+    const subtreeHeight = calculateSubtreeHeight(nodeId);
+
+    // 如果是叶子节点或没有子节点，直接放置在中间
+    if (children.length === 0) {
+      node.position = { x, y: y + (availableHeight - NODE_HEIGHT) / 2 };
+      return { height: NODE_HEIGHT, lastY: node.position.y + NODE_HEIGHT };
+    }
+
+    // 计算节点自身的位置
+    const nodeY = y + (subtreeHeight - NODE_HEIGHT) / 2;
+    node.position = { x, y: nodeY };
+
+    // 计算子节点位置
+    let currentY = y;
+    children.forEach((childId, index) => {
+      const childSubtreeHeight = calculateSubtreeHeight(childId);
+      const result = calculateNodePositions(
+        childId,
+        x + horizontalSpacing,
+        currentY,
+        childSubtreeHeight
+      );
+      currentY = result.lastY + subtreeGap;
+    });
+
+    return { height: subtreeHeight, lastY: y + subtreeHeight };
+  }
+
+  if (rootNode) {
+    calculateLevels(rootNode.id);
+    calculateNodePositions(rootNode.id);
+  }
+
+  // 应用样式
+  nodes.forEach(node => {
+    const level = levelMap.get(node.id) || 0;
+    const scale = Math.max(1 - level * 0.1, 0.7);
+
+    node.style = {
+      width: NODE_WIDTH,
+      height: NODE_HEIGHT,
+      background: NODE_COLORS[level % NODE_COLORS.length],
+      borderRadius: '12px',
+      border: level === 0 ? '2px solid rgba(255,255,255,0.5)' : '1px solid rgba(255,255,255,0.3)',
+      padding: '10px',
+      fontSize: level === 0 ? '16px' : '14px',
+      fontWeight: level === 0 ? 'bold' : '500',
+      color: '#FFFFFF',
+      boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+      transition: 'all 0.3s ease',
+      cursor: 'pointer',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      textAlign: 'center',
+      wordWrap: 'break-word',
+      backdropFilter: 'blur(8px)',
+      WebkitBackdropFilter: 'blur(8px)',
+      opacity: Math.max(1 - level * 0.05, 0.85), // 减小透明度变化
+      zIndex: 1000 - level
+    };
   });
 
   return centerLayout(nodes);
@@ -262,6 +411,9 @@ export function relayoutGraph(nodes, edges, layoutType) {
   let layoutedNodes;
   
   switch (layoutType) {
+    case 'rightLogical':
+      layoutedNodes = createRightLogicalLayout(nodes, edges);
+      break;
     case 'downwardTree':
       layoutedNodes = createDownwardTreeLayout(nodes, edges);
       break;
@@ -279,22 +431,28 @@ export function relayoutGraph(nodes, edges, layoutType) {
   
   return {
     nodes: layoutedNodes,
-    edges: edges.map(edge => ({
-      ...edge,
-      type: 'smoothstep',
-      animated: true,
-      style: { 
-        stroke: 'url(#edge-gradient)',
-        strokeWidth: 2.5,
-        opacity: 0.8,
-      },
-      markerEnd: {
-        type: 'arrowclosed',
-        color: '#6366F1',
-        width: 20,
-        height: 20,
-      },
-    })),
+    edges: edges.map(edge => {
+      const sourceNode = nodes.find(n => n.id === edge.source);
+      const targetNode = nodes.find(n => n.id === edge.target);
+      const sourceLevel = sourceNode ? levelMap?.get(sourceNode.id) || 0 : 0;
+      
+      return {
+        ...edge,
+        type: 'smoothstep',
+        animated: true,
+        style: { 
+          stroke: NODE_COLORS[sourceLevel % NODE_COLORS.length].split(')')[0] + ', 0.5)', // 使用节点颜色作为边的颜色
+          strokeWidth: Math.max(2.5 - sourceLevel * 0.3, 1.5),
+          opacity: 0.8,
+        },
+        markerEnd: {
+          type: 'arrowclosed',
+          color: NODE_COLORS[sourceLevel % NODE_COLORS.length].split(')')[0] + ', 0.5)',
+          width: 15,
+          height: 15,
+        },
+      };
+    }),
   };
 }
 
