@@ -1,55 +1,64 @@
-import React, { useState, useCallback, useRef } from 'react';
-import ReactFlow, { 
-  Background,
-  Controls,
-  Handle,
-  Position,
-  useNodesState,
-  useEdgesState,
-} from 'reactflow';
-import 'reactflow/dist/style.css';
-import NodeContentDialog from './NodeContentDialog';
+import dynamic from 'next/dynamic';
+import { useCallback, useEffect, useState, useRef } from 'react';
+import { Handle, Position } from 'react-flow-renderer';
 
+const ReactFlow = dynamic(() => import('react-flow-renderer').then(mod => mod.default), {
+  ssr: false,
+  loading: () => <p>Loading knowledge graph...</p>
+});
+
+const Controls = dynamic(() => import('react-flow-renderer').then(mod => mod.Controls), {
+  ssr: false
+});
+
+const Background = dynamic(() => import('react-flow-renderer').then(mod => mod.Background), {
+  ssr: false
+});
+
+// 定义节点样式
 const nodeStyles = {
   root: {
-    fontSize: '16px',
+    fontSize: '20px',
+    color: '#2C5282', // 深蓝色
     fontWeight: 'bold',
-    color: '#2D3748',
-    background: '#EDF2F7',
-    border: '2px solid #4A5568',
-    borderRadius: '8px',
-    padding: '12px 20px',
+    background: '#EBF8FF', // 浅蓝色背景
+    border: '2px solid #4299E1',
+    borderRadius: '25px',
+    padding: '12px 24px',
     minWidth: '150px',
     maxWidth: '250px',
     boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
     textAlign: 'center',
   },
   mainBranch: {
-    fontSize: '14px',
-    color: '#4A5568',
+    fontSize: '16px',
+    color: '#2D3748',
+    fontWeight: '600',
     background: '#F7FAFC',
-    border: '1.5px solid #718096',
-    borderRadius: '6px',
-    padding: '10px 16px',
+    border: '2px solid #A0AEC0',
+    borderRadius: '20px',
+    padding: '8px 16px',
     minWidth: '120px',
     maxWidth: '200px',
-    boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
-    textAlign: 'left',
+    boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+    textAlign: 'center',
   },
   subBranch: {
-    fontSize: '12px',
-    color: '#718096',
+    fontSize: '14px',
+    color: '#4A5568',
+    fontWeight: '500',
     background: '#FFFFFF',
-    border: '1px solid #A0AEC0',
-    borderRadius: '4px',
-    padding: '8px 12px',
+    border: '1px solid #CBD5E0',
+    borderRadius: '15px',
+    padding: '6px 12px',
     minWidth: '100px',
     maxWidth: '180px',
-    boxShadow: '0 1px 2px rgba(0,0,0,0.03)',
-    textAlign: 'left',
+    boxShadow: '0 1px 2px rgba(0,0,0,0.05)',
+    textAlign: 'center',
   }
 };
 
+// 自定义节点组件
 const CustomNode = ({ data, isConnectable, selected }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [label, setLabel] = useState(data.label);
@@ -57,32 +66,45 @@ const CustomNode = ({ data, isConnectable, selected }) => {
 
   const handleDoubleClick = () => {
     setIsEditing(true);
-    setTimeout(() => {
-      inputRef.current?.focus();
-      inputRef.current?.select();
-    }, 0);
   };
 
   const handleBlur = () => {
     setIsEditing(false);
-    if (label.length > 20) {
-      setLabel(label.substring(0, 20) + '...');
+    // 如果标签太长，自动截断并添加省略号
+    const truncatedLabel = label.length > 20 ? label.substring(0, 20) + '...' : label;
+    if (data.onLabelChange) {
+      data.onLabelChange(truncatedLabel);
     }
   };
 
+  const handleKeyDown = (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      handleBlur();
+    }
+  };
+
+  useEffect(() => {
+    if (isEditing && inputRef.current) {
+      inputRef.current.focus();
+      inputRef.current.select();
+    }
+  }, [isEditing]);
+
   const nodeStyle = {
     ...nodeStyles[data.level || 'subBranch'],
-    border: selected ? '2px solid #3182CE' : nodeStyles[data.level || 'subBranch'].border,
+    border: selected ? `2px solid #3182CE` : nodeStyles[data.level || 'subBranch'].border,
     transition: 'all 0.2s ease',
+    transform: selected ? 'scale(1.05)' : 'scale(1)',
   };
 
   return (
-    <div style={nodeStyle} onDoubleClick={handleDoubleClick}>
+    <div style={nodeStyle}>
       <Handle
         type="target"
-        position={Position.Top}
+        position={data.level === 'root' ? Position.Top : Position.Left}
         isConnectable={isConnectable}
-        style={{ background: '#718096' }}
+        style={{ visibility: 'hidden' }}
       />
       {isEditing ? (
         <input
@@ -90,92 +112,281 @@ const CustomNode = ({ data, isConnectable, selected }) => {
           value={label}
           onChange={(e) => setLabel(e.target.value)}
           onBlur={handleBlur}
-          onKeyPress={(e) => e.key === 'Enter' && handleBlur()}
-          style={{
-            width: '100%',
-            border: 'none',
-            background: 'transparent',
-            fontSize: 'inherit',
+          onKeyDown={handleKeyDown}
+          className="w-full bg-transparent outline-none text-center"
+          style={{ 
+            fontSize: 'inherit', 
+            fontWeight: 'inherit', 
             color: 'inherit',
-            textAlign: 'inherit',
-            outline: 'none',
+            border: 'none',
+            maxWidth: '100%'
           }}
+          placeholder="输入关键词..."
         />
       ) : (
-        <div>{label}</div>
+        <div
+          onDoubleClick={handleDoubleClick}
+          className="w-full text-center cursor-text"
+          style={{
+            wordBreak: 'break-word',
+            whiteSpace: 'pre-wrap',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis'
+          }}
+        >
+          {label}
+        </div>
       )}
       <Handle
         type="source"
-        position={Position.Bottom}
+        position={data.level === 'root' ? Position.Bottom : Position.Right}
         isConnectable={isConnectable}
-        style={{ background: '#718096' }}
+        style={{ visibility: 'hidden' }}
       />
     </div>
   );
 };
 
-const nodeTypes = {
-  custom: CustomNode,
-};
-
-const edgeOptions = {
-  type: 'smoothstep',
-  style: {
-    stroke: '#718096',
+// 定义边的样式
+const edgeStyles = {
+  mainBranch: {
+    stroke: '#3182ce',
     strokeWidth: 2,
+    type: 'smoothstep',
+    animated: false,
+    style: {
+      strokeLinecap: 'round',
+      strokeLinejoin: 'round'
+    }
   },
-  markerEnd: {
-    type: 'arrowclosed',
-  },
+  subBranch: {
+    stroke: '#4a5568',
+    strokeWidth: 1.5,
+    type: 'smoothstep',
+    animated: false,
+    style: {
+      strokeLinecap: 'round',
+      strokeLinejoin: 'round'
+    }
+  }
 };
 
-const KnowledgeGraph = ({ nodes: initialNodes, edges: initialEdges, onNodeClick }) => {
-  const [nodes, setNodes, onNodesChange] = useNodesState(
-    initialNodes.map(node => ({
-      ...node,
-      type: 'custom',
-      position: node.position || { x: 0, y: 0 },
-    }))
+const getLayoutedElements = (nodes, edges) => {
+  // 首先找到根节点和直接连接的主分支
+  const rootNode = nodes.find(n => n.id === 'root');
+  const mainBranches = nodes.filter(n => 
+    edges.some(e => e.source === 'root' && e.target === n.id)
   );
-  const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
-  const [selectedNode, setSelectedNode] = useState(null);
-  const [dialogOpen, setDialogOpen] = useState(false);
+
+  // 将主分支分为左右两组（按标签长度排序，让短标签在上面）
+  const sortedBranches = [...mainBranches].sort((a, b) => 
+    (a.data.label?.length || 0) - (b.data.label?.length || 0)
+  );
+  const leftBranches = sortedBranches.slice(0, Math.ceil(sortedBranches.length / 2));
+  const rightBranches = sortedBranches.slice(Math.ceil(sortedBranches.length / 2));
+
+  const layoutedNodes = [];
+  const VERTICAL_SPACING = 100; // 减小垂直间距
+  const HORIZONTAL_SPACING = 250; // 减小水平间距
+  const ROOT_Y = 300;
+  const BRANCH_ANGLE = 45; // 分支倾斜角度
+
+  // 放置根节点
+  if (rootNode) {
+    layoutedNodes.push({
+      ...rootNode,
+      position: { x: 0, y: ROOT_Y },
+      style: { ...nodeStyles.root },
+      data: { ...rootNode.data, level: 'root' }
+    });
+  }
+
+  // 布局左侧分支（倾斜排列）
+  leftBranches.forEach((branch, index) => {
+    const angle = BRANCH_ANGLE - (index * (BRANCH_ANGLE / leftBranches.length));
+    const radius = HORIZONTAL_SPACING;
+    const x = -Math.cos(angle * Math.PI / 180) * radius;
+    const y = ROOT_Y - Math.sin(angle * Math.PI / 180) * radius;
+
+    layoutedNodes.push({
+      ...branch,
+      position: { x, y },
+      style: { ...nodeStyles.mainBranch },
+      data: { ...branch.data, level: 'mainBranch' }
+    });
+
+    // 找到并布局该主分支的子节点
+    const subNodes = nodes.filter(n =>
+      edges.some(e => e.source === branch.id && e.target === n.id)
+    );
+
+    // 子节点沿着主分支方向延伸
+    subNodes.forEach((subNode, subIndex) => {
+      const subRadius = radius + HORIZONTAL_SPACING * 0.8;
+      const subX = -Math.cos(angle * Math.PI / 180) * subRadius;
+      const subY = ROOT_Y - Math.sin(angle * Math.PI / 180) * subRadius + 
+                   (subIndex - (subNodes.length - 1) / 2) * (VERTICAL_SPACING * 0.5);
+
+      layoutedNodes.push({
+        ...subNode,
+        position: { x: subX, y: subY },
+        style: { ...nodeStyles.subBranch },
+        data: { ...subNode.data, level: 'subBranch' }
+      });
+    });
+  });
+
+  // 布局右侧分支（倾斜排列）
+  rightBranches.forEach((branch, index) => {
+    const angle = -BRANCH_ANGLE + (index * (BRANCH_ANGLE / rightBranches.length));
+    const radius = HORIZONTAL_SPACING;
+    const x = Math.cos(angle * Math.PI / 180) * radius;
+    const y = ROOT_Y - Math.sin(angle * Math.PI / 180) * radius;
+
+    layoutedNodes.push({
+      ...branch,
+      position: { x, y },
+      style: { ...nodeStyles.mainBranch },
+      data: { ...branch.data, level: 'mainBranch' }
+    });
+
+    // 找到并布局该主分支的子节点
+    const subNodes = nodes.filter(n =>
+      edges.some(e => e.source === branch.id && e.target === n.id)
+    );
+
+    // 子节点沿着主分支方向延伸
+    subNodes.forEach((subNode, subIndex) => {
+      const subRadius = radius + HORIZONTAL_SPACING * 0.8;
+      const subX = Math.cos(angle * Math.PI / 180) * subRadius;
+      const subY = ROOT_Y - Math.sin(angle * Math.PI / 180) * subRadius + 
+                   (subIndex - (subNodes.length - 1) / 2) * (VERTICAL_SPACING * 0.5);
+
+      layoutedNodes.push({
+        ...subNode,
+        position: { x: subX, y: subY },
+        style: { ...nodeStyles.subBranch },
+        data: { ...subNode.data, level: 'subBranch' }
+      });
+    });
+  });
+
+  // 设置边的样式
+  const layoutedEdges = edges.map((edge) => {
+    const sourceNode = nodes.find(n => n.id === edge.source);
+    const edgeType = sourceNode?.data.level === 'root' ? 'mainBranch' : 'subBranch';
+    return {
+      ...edge,
+      ...edgeStyles[edgeType],
+    };
+  });
+
+  return { nodes: layoutedNodes, edges: layoutedEdges };
+};
+
+const KnowledgeGraph = ({ data, onNodeClick, onNodeDragStop, onNodeDelete }) => {
+  const [mounted, setMounted] = useState(false);
+  const [nodes, setNodes] = useState([]);
+  const [edges, setEdges] = useState([]);
+  const [explanationCache] = useState(new Map());
+
+  // 处理节点标签更改
+  const handleLabelChange = useCallback((nodeId, newLabel) => {
+    setNodes(nds => 
+      nds.map(node => 
+        node.id === nodeId 
+          ? { ...node, data: { ...node.data, label: newLabel } }
+          : node
+      )
+    );
+  }, []);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (data && data.nodes && data.edges) {
+      try {
+        // 为节点添加标签编辑功能
+        const nodesWithEdit = data.nodes.map(node => ({
+          ...node,
+          data: {
+            ...node.data,
+            onLabelChange: (newLabel) => handleLabelChange(node.id, newLabel)
+          }
+        }));
+
+        const { nodes: layoutedNodes, edges: layoutedEdges } = getLayoutedElements(
+          nodesWithEdit,
+          data.edges
+        );
+
+        setNodes(layoutedNodes);
+        setEdges(layoutedEdges);
+      } catch (error) {
+        console.error('Error in layout calculation:', error);
+        setNodes(data.nodes);
+        setEdges(data.edges);
+      }
+    }
+  }, [data, handleLabelChange]);
 
   const handleNodeClick = useCallback((event, node) => {
-    setSelectedNode(node);
-    setDialogOpen(true);
+    event.preventDefault();
     if (onNodeClick) {
-      onNodeClick(node);
+      // 检查缓存中是否有解释
+      const cachedExplanation = explanationCache.get(node.id);
+      onNodeClick(node, cachedExplanation);
     }
-  }, [onNodeClick]);
+  }, [onNodeClick, explanationCache]);
 
-  const handleCloseDialog = () => {
-    setDialogOpen(false);
-    setSelectedNode(null);
-  };
+  // 缓存节点解释
+  const cacheNodeExplanation = useCallback((nodeId, explanation) => {
+    explanationCache.set(nodeId, explanation);
+  }, []);
+
+  const handleNodeDragStop = useCallback((event, node) => {
+    if (onNodeDragStop) {
+      onNodeDragStop(node);
+    }
+  }, [onNodeDragStop]);
+
+  const onInit = useCallback((reactFlowInstance) => {
+    reactFlowInstance.fitView({ padding: 0.2, includeHiddenNodes: false });
+  }, []);
+
+  if (!mounted) return null;
+
+  if (!data || !data.nodes || !data.edges) {
+    return <div>Invalid graph data</div>;
+  }
 
   return (
-    <div style={{ width: '100%', height: '100vh' }}>
-      <ReactFlow
+    <div style={{ height: '100%', width: '100%', position: 'relative' }}>
+      <ReactFlow 
         nodes={nodes}
         edges={edges}
-        onNodesChange={onNodesChange}
-        onEdgesChange={onEdgesChange}
         onNodeClick={handleNodeClick}
-        nodeTypes={nodeTypes}
-        defaultEdgeOptions={edgeOptions}
+        onNodeDragStop={handleNodeDragStop}
+        onInit={onInit}
+        nodeTypes={{ custom: CustomNode }}
+        nodesDraggable={true}
+        nodesConnectable={false}
+        zoomOnScroll={false}
+        zoomOnPinch={true}
+        panOnScroll={true}
+        panOnScrollMode="free"
+        minZoom={0.1}
+        maxZoom={4}
+        defaultZoom={0.7}
         fitView
+        fitViewOptions={{ padding: 0.3 }}
+        elementsSelectable={true}
       >
-        <Background />
         <Controls />
+        <Background color="#f0f0f0" gap={16} size={1} />
       </ReactFlow>
-      {dialogOpen && selectedNode && (
-        <NodeContentDialog
-          open={dialogOpen}
-          onClose={handleCloseDialog}
-          nodeData={selectedNode.data}
-        />
-      )}
     </div>
   );
 };
