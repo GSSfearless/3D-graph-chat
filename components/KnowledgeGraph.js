@@ -1,6 +1,6 @@
 import dynamic from 'next/dynamic';
-import { useCallback, useEffect, useState } from 'react';
-import dagre from 'dagre';
+import { useCallback, useEffect, useState, useRef } from 'react';
+import { Handle, Position } from 'react-flow-renderer';
 
 const ReactFlow = dynamic(() => import('react-flow-renderer').then(mod => mod.default), {
   ssr: false,
@@ -15,57 +15,122 @@ const Background = dynamic(() => import('react-flow-renderer').then(mod => mod.B
   ssr: false
 });
 
-// 定义不同层级节点的样式
-const nodeStyles = {
-  root: {
-    background: 'linear-gradient(45deg, #FF6B6B, #FF8E53)',
-    border: '2px solid #FF6B6B',
-    borderRadius: '30px',
-    padding: '20px',
-    fontSize: '18px',
-    color: 'white',
-    fontWeight: 'bold',
-    minWidth: '250px',
-    textAlign: 'center',
-    boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
-  },
-  mainBranch: {
-    background: 'linear-gradient(45deg, #4ECDC4, #45B7AF)',
-    border: '2px solid #4ECDC4',
-    borderRadius: '25px',
-    padding: '15px',
-    fontSize: '16px',
-    color: 'white',
-    fontWeight: '600',
-    minWidth: '200px',
-    textAlign: 'center',
-    boxShadow: '0 3px 5px rgba(0, 0, 0, 0.1)',
-  },
-  subBranch: {
-    background: 'linear-gradient(45deg, #96CDEF, #7FB2D2)',
-    border: '2px solid #96CDEF',
-    borderRadius: '20px',
-    padding: '12px',
-    fontSize: '14px',
-    color: 'white',
-    fontWeight: '500',
-    minWidth: '180px',
-    textAlign: 'center',
-    boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
-  }
+// 自定义节点组件
+const CustomNode = ({ data, isConnectable, selected }) => {
+  const [isEditing, setIsEditing] = useState(false);
+  const [label, setLabel] = useState(data.label);
+  const inputRef = useRef(null);
+
+  const handleDoubleClick = () => {
+    setIsEditing(true);
+  };
+
+  const handleBlur = () => {
+    setIsEditing(false);
+    if (data.onLabelChange) {
+      data.onLabelChange(label);
+    }
+  };
+
+  const handleKeyDown = (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      handleBlur();
+    }
+  };
+
+  useEffect(() => {
+    if (isEditing && inputRef.current) {
+      inputRef.current.focus();
+    }
+  }, [isEditing]);
+
+  const nodeStyle = {
+    root: {
+      fontSize: '18px',
+      color: '#1a202c',
+      fontWeight: 'bold',
+      background: '#fff',
+      border: selected ? '2px solid #3182ce' : '2px solid #e2e8f0',
+      borderRadius: '8px',
+      padding: '12px 20px',
+      minWidth: '200px',
+      boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+    },
+    mainBranch: {
+      fontSize: '16px',
+      color: '#2d3748',
+      fontWeight: '600',
+      background: '#fff',
+      border: selected ? '2px solid #3182ce' : '2px solid #e2e8f0',
+      borderRadius: '6px',
+      padding: '10px 16px',
+      minWidth: '180px',
+      boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+    },
+    subBranch: {
+      fontSize: '14px',
+      color: '#4a5568',
+      fontWeight: '500',
+      background: '#fff',
+      border: selected ? '2px solid #3182ce' : '2px solid #e2e8f0',
+      borderRadius: '4px',
+      padding: '8px 12px',
+      minWidth: '160px',
+      boxShadow: '0 1px 2px rgba(0,0,0,0.1)',
+    }
+  };
+
+  return (
+    <div style={nodeStyle[data.level || 'subBranch']}>
+      <Handle
+        type="target"
+        position={data.level === 'root' ? Position.Top : Position.Left}
+        isConnectable={isConnectable}
+        style={{ visibility: 'hidden' }}
+      />
+      {isEditing ? (
+        <input
+          ref={inputRef}
+          value={label}
+          onChange={(e) => setLabel(e.target.value)}
+          onBlur={handleBlur}
+          onKeyDown={handleKeyDown}
+          className="w-full bg-transparent outline-none text-center"
+          style={{ fontSize: 'inherit', fontWeight: 'inherit', color: 'inherit' }}
+        />
+      ) : (
+        <div
+          onDoubleClick={handleDoubleClick}
+          className="w-full text-center cursor-text"
+        >
+          {label}
+        </div>
+      )}
+      <Handle
+        type="source"
+        position={data.level === 'root' ? Position.Bottom : Position.Right}
+        isConnectable={isConnectable}
+        style={{ visibility: 'hidden' }}
+      />
+    </div>
+  );
 };
 
 // 定义边的样式
 const edgeStyles = {
   mainBranch: {
-    stroke: '#FF6B6B',
-    strokeWidth: 3,
+    stroke: '#3182ce',
+    strokeWidth: 2,
   },
   subBranch: {
-    stroke: '#4ECDC4',
-    strokeWidth: 2,
+    stroke: '#4a5568',
+    strokeWidth: 1.5,
   }
 };
+
+// 缓存节点解释
+const explanationCache = new Map();
 
 const getLayoutedElements = (nodes, edges) => {
   // 首先找到根节点和直接连接的主分支
@@ -153,8 +218,8 @@ const getLayoutedElements = (nodes, edges) => {
     return {
       ...edge,
       style: edgeStyles[sourceNode?.data.level === 'root' ? 'mainBranch' : 'subBranch'],
-      type: 'smoothstep',
-      animated: true,
+      type: 'straight', // 使用直线连接
+      animated: false,
     };
   });
 
@@ -166,6 +231,17 @@ const KnowledgeGraph = ({ data, onNodeClick, onNodeDragStop, onNodeDelete }) => 
   const [nodes, setNodes] = useState([]);
   const [edges, setEdges] = useState([]);
 
+  // 处理节点标签更改
+  const handleLabelChange = useCallback((nodeId, newLabel) => {
+    setNodes(nds => 
+      nds.map(node => 
+        node.id === nodeId 
+          ? { ...node, data: { ...node.data, label: newLabel } }
+          : node
+      )
+    );
+  }, []);
+
   useEffect(() => {
     setMounted(true);
   }, []);
@@ -173,8 +249,20 @@ const KnowledgeGraph = ({ data, onNodeClick, onNodeDragStop, onNodeDelete }) => 
   useEffect(() => {
     if (data && data.nodes && data.edges) {
       try {
-        // 应用布局
-        const { nodes: layoutedNodes, edges: layoutedEdges } = getLayoutedElements(data.nodes, data.edges);
+        // 为节点添加标签编辑功能
+        const nodesWithEdit = data.nodes.map(node => ({
+          ...node,
+          data: {
+            ...node.data,
+            onLabelChange: (newLabel) => handleLabelChange(node.id, newLabel)
+          }
+        }));
+
+        const { nodes: layoutedNodes, edges: layoutedEdges } = getLayoutedElements(
+          nodesWithEdit,
+          data.edges
+        );
+
         setNodes(layoutedNodes);
         setEdges(layoutedEdges);
       } catch (error) {
@@ -183,24 +271,25 @@ const KnowledgeGraph = ({ data, onNodeClick, onNodeDragStop, onNodeDelete }) => 
         setEdges(data.edges);
       }
     }
-  }, [data]);
-
-  const onInit = useCallback((reactFlowInstance) => {
-    reactFlowInstance.fitView({ padding: 0.2, includeHiddenNodes: false });
-  }, []);
+  }, [data, handleLabelChange]);
 
   const handleNodeClick = useCallback((event, node) => {
     event.preventDefault();
     if (onNodeClick) {
-      onNodeClick(node);
+      // 检查缓存中是否有解释
+      const cachedExplanation = explanationCache.get(node.id);
+      onNodeClick(node, cachedExplanation);
     }
   }, [onNodeClick]);
 
-  const handleNodeDragStop = useCallback((event, node) => {
-    if (onNodeDragStop) {
-      onNodeDragStop(node);
-    }
-  }, [onNodeDragStop]);
+  // 缓存节点解释
+  const cacheNodeExplanation = useCallback((nodeId, explanation) => {
+    explanationCache.set(nodeId, explanation);
+  }, []);
+
+  const onInit = useCallback((reactFlowInstance) => {
+    reactFlowInstance.fitView({ padding: 0.2, includeHiddenNodes: false });
+  }, []);
 
   if (!mounted) return null;
 
@@ -216,6 +305,7 @@ const KnowledgeGraph = ({ data, onNodeClick, onNodeDragStop, onNodeDelete }) => 
         onNodeClick={handleNodeClick}
         onNodeDragStop={handleNodeDragStop}
         onInit={onInit}
+        nodeTypes={{ custom: CustomNode }}
         nodesDraggable={true}
         nodesConnectable={false}
         zoomOnScroll={false}

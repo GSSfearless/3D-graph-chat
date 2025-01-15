@@ -453,7 +453,7 @@ export default function Search() {
     }
   }, [knowledgeGraphData]);
 
-  const handleNodeClick = useCallback((node) => {
+  const handleNodeClick = useCallback((node, cachedExplanation) => {
     setSelectedNode(node);
     setIsNodeContentVisible(true);
   }, []);
@@ -731,6 +731,7 @@ export default function Search() {
         isVisible={isNodeContentVisible}
         onClose={handleCloseNodeContent}
         currentQuestion={currentQuestion}
+        cachedExplanation={cachedExplanation}
       />
     </div>
   );

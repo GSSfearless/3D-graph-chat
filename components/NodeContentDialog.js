@@ -19,7 +19,7 @@ const thinkingSteps = [
   "马上就好..."
 ];
 
-const NodeContentDialog = ({ node, onClose, isVisible, currentQuestion }) => {
+const NodeContentDialog = ({ node, onClose, isVisible, currentQuestion, cachedExplanation }) => {
   const [isDragging, setIsDragging] = useState(false);
   const [position, setPosition] = useState({ x: window.innerWidth - 420, y: 100 });
   const [isMinimized, setIsMinimized] = useState(false);
@@ -33,14 +33,20 @@ const NodeContentDialog = ({ node, onClose, isVisible, currentQuestion }) => {
 
   useEffect(() => {
     if (isVisible && node) {
-      loadRelationExplanation();
+      if (cachedExplanation) {
+        // 如果有缓存的解释，直接使用
+        setExplanation(cachedExplanation);
+      } else {
+        // 否则加载新的解释
+        loadRelationExplanation();
+      }
     }
     return () => {
       if (thinkingInterval.current) {
         clearInterval(thinkingInterval.current);
       }
     };
-  }, [isVisible, node]);
+  }, [isVisible, node, cachedExplanation]);
 
   // 打字机效果
   useEffect(() => {
@@ -97,6 +103,11 @@ const NodeContentDialog = ({ node, onClose, isVisible, currentQuestion }) => {
         const text = decoder.decode(value);
         accumulatedText += text;
         setExplanation(accumulatedText);
+      }
+
+      // 缓存解释
+      if (node.id && accumulatedText) {
+        explanationCache.set(node.id, accumulatedText);
       }
     } catch (error) {
       console.error('Error loading relation explanation:', error);
