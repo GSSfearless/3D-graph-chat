@@ -9,7 +9,7 @@ import '../styles/globals.css';
 
 const KnowledgeGraph = dynamic(() => import('../components/KnowledgeGraph'), {
   ssr: false,
-  loading: () => <p>Loading knowledge graph...</p>
+  loading: () => <p>{getText('loadingGraph')}</p>
 });
 
 const NodeContentDialog = dynamic(() => import('../components/NodeContentDialog'), {
@@ -175,7 +175,7 @@ export default function Search() {
   const [isLoadingNodeExplanation, setIsLoadingNodeExplanation] = useState(false);
   const initialAnswerRef = useRef('');
   const [viewingChildNode, setViewingChildNode] = useState(false);
-  const [currentLayout, setCurrentLayout] = useState('radialTree');
+  const [currentLayout, setCurrentLayout] = useState('downwardTree');
   const [currentLang, setCurrentLang] = useState('en');
   const [selectedNode, setSelectedNode] = useState(null);
   const [isNodeContentVisible, setIsNodeContentVisible] = useState(false);

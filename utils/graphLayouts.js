@@ -176,9 +176,93 @@ export function createRadialTreeLayout(nodes, edges) {
   return centerLayout(nodes);
 }
 
+export function createDownwardTreeLayout(nodes, edges) {
+  const rootNode = nodes.find(node => !edges.some(edge => edge.target === node.id));
+  const childrenMap = new Map();
+  
+  // 构建父子节点映射
+  edges.forEach(edge => {
+    if (!childrenMap.has(edge.source)) {
+      childrenMap.set(edge.source, []);
+    }
+    childrenMap.get(edge.source).push(edge.target);
+  });
+
+  const levelMap = new Map();
+  const horizontalSpacing = 200;
+  const verticalSpacing = 120;
+  
+  // 计算每个节点的层级
+  function calculateLevels(nodeId, level = 0) {
+    if (!levelMap.has(nodeId)) {
+      levelMap.set(nodeId, level);
+      const children = childrenMap.get(nodeId) || [];
+      children.forEach(childId => calculateLevels(childId, level + 1));
+    }
+  }
+
+  if (rootNode) {
+    calculateLevels(rootNode.id);
+  }
+
+  // 计算每层节点数量
+  const levelCounts = new Map();
+  levelMap.forEach((level, nodeId) => {
+    levelCounts.set(level, (levelCounts.get(level) || 0) + 1);
+  });
+
+  // 计算每层节点的位置
+  const levelPositions = new Map();
+  levelMap.forEach((level, nodeId) => {
+    if (!levelPositions.has(level)) {
+      levelPositions.set(level, 0);
+    }
+    const node = nodes.find(n => n.id === nodeId);
+    if (node) {
+      const nodesInLevel = levelCounts.get(level);
+      const levelWidth = nodesInLevel * NODE_WIDTH + (nodesInLevel - 1) * horizontalSpacing;
+      const startX = 600 - levelWidth / 2;
+      
+      node.position = {
+        x: startX + levelPositions.get(level) * (NODE_WIDTH + horizontalSpacing),
+        y: 100 + level * verticalSpacing
+      };
+      node.style = {
+        width: NODE_WIDTH,
+        height: NODE_HEIGHT,
+        background: NODE_COLORS[level % NODE_COLORS.length],
+        borderRadius: '8px',
+        border: level === 0 ? '2px solid #FFD700' : '1px solid #ddd',
+        padding: '5px',
+        fontSize: level === 0 ? '14px' : '12px',
+        fontWeight: level === 0 ? 'bold' : 'normal'
+      };
+      
+      levelPositions.set(level, levelPositions.get(level) + 1);
+    }
+  });
+
+  return centerLayout(nodes);
+}
+
 export function relayoutGraph(nodes, edges, layoutType) {
-  // 暂时忽略 layoutType 参数，始终使用金字塔布局
-  const layoutedNodes = createPyramidLayout(nodes);
+  let layoutedNodes;
+  
+  switch (layoutType) {
+    case 'downwardTree':
+      layoutedNodes = createDownwardTreeLayout(nodes, edges);
+      break;
+    case 'radialTree':
+      layoutedNodes = createRadialTreeLayout(nodes, edges);
+      break;
+    case 'mindMap':
+      layoutedNodes = createMindMapLayout(nodes);
+      break;
+    case 'pyramid':
+    default:
+      layoutedNodes = createPyramidLayout(nodes);
+      break;
+  }
   
   return {
     nodes: layoutedNodes,
