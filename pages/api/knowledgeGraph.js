@@ -22,9 +22,11 @@ function createGraphFromStructure(structure) {
   ];
 
   const edges = [];
+  let nodeCounter = 0;
 
+  // 处理主要分支
   structure.subNodes.forEach((subNode, index) => {
-    const nodeId = `node-${index}`;
+    const nodeId = `node-${nodeCounter++}`;
     nodes.push({
       id: nodeId,
       data: { 
@@ -34,22 +36,34 @@ function createGraphFromStructure(structure) {
     });
 
     edges.push({
-      id: `edge-${index}`,
+      id: `edge-${nodeCounter}`,
       source: 'root',
       target: nodeId,
-      label: '包含',
       type: 'smoothstep',
       animated: true,
-      labelStyle: { fill: '#888', fontWeight: 700 },
-      labelBgStyle: { fill: '#fff', fillOpacity: 0.7 },
-      labelBgPadding: [8, 4],
-      labelBgBorderRadius: 4,
-      style: { stroke: '#888' },
-      markerEnd: {
-        type: 'arrowclosed',
-        color: '#888',
-      }
     });
+
+    // 处理子分支（如果存在）
+    if (subNode.children && Array.isArray(subNode.children)) {
+      subNode.children.forEach((childNode) => {
+        const childId = `node-${nodeCounter++}`;
+        nodes.push({
+          id: childId,
+          data: {
+            label: childNode.title,
+            content: childNode.content
+          }
+        });
+
+        edges.push({
+          id: `edge-${nodeCounter}`,
+          source: nodeId,
+          target: childId,
+          type: 'smoothstep',
+          animated: true,
+        });
+      });
+    }
   });
 
   return { nodes, edges };

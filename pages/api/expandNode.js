@@ -50,9 +50,17 @@ export default async function handler(req, res) {
     const completion = await openai.chat.completions.create({
       model: "gpt-3.5-turbo",
       messages: [
-        {role: "system", content: "你是一个专家，能够深入解析复杂概念。请提供一个 JSON 格式的响应，包含 'nodes' 数组。每个节点应该有 'id' 和 'label' 属性。请只生成两个新节点，这两个节点应该是对给定概念的更详细解释或延伸。"},
-        {role: "user", content: `请为以下概念提供两个更详细的解释或相关概念：${label}`}
+        {
+          role: "system", 
+          content: "你是一个专家，能够深入解析复杂概念。请提供一个 JSON 格式的响应，包含 'nodes' 数组。每个节点应该有 'id' 和 'label' 属性。请生成3-5个新节点，这些节点应该从不同角度解释或延伸给定概念，使用简短的关键词或短语（不超过10个字），确保内容既相关又有深度。"
+        },
+        {
+          role: "user", 
+          content: `请为以下概念提供多个角度的解释或相关概念，使用简短的关键词或短语：${label}`
+        }
       ],
+      temperature: 0.8, // 增加创造性
+      max_tokens: 500,
     });
 
     console.log('OpenAI API response:', completion.choices[0].message.content);
@@ -65,54 +73,42 @@ export default async function handler(req, res) {
 
     if (!expandedData || !expandedData.nodes || !Array.isArray(expandedData.nodes) || expandedData.nodes.length === 0) {
       console.error('Invalid expandedData structure:', expandedData);
+      // 提供默认的扩展节点
       expandedData = {
         nodes: [
-          { id: `${nodeId}-child-1`, label: `Aspect 1 of ${label}` },
-          { id: `${nodeId}-child-2`, label: `Aspect 2 of ${label}` }
+          { id: `${nodeId}-child-1`, label: `定义与概念` },
+          { id: `${nodeId}-child-2`, label: `应用场景` },
+          { id: `${nodeId}-child-3`, label: `关键特点` },
+          { id: `${nodeId}-child-4`, label: `发展趋势` }
         ]
       };
     }
 
-    const processedNodes = expandedData.nodes.map((node, index) => ({
-      id: node.id || `${nodeId}-child-${index + 1}`,
-      data: { label: node.label || `Aspect ${index + 1} of ${label}` },
-    }));
+    // 确保至少有3个节点
+    while (expandedData.nodes.length < 3) {
+      const index = expandedData.nodes.length + 1;
+      expandedData.nodes.push({
+        id: `${nodeId}-child-${index}`,
+        label: `扩展视角 ${index}`
+      });
+    }
 
-    const parentNode = { id: nodeId, position: parentPosition || { x: 0, y: 0 } };
-    const existingNodes = req.body.existingNodes || [];
-    const layoutedNodes = createExpandLayout(processedNodes, parentNode, existingNodes);
+    // 限制最多5个节点
+    if (expandedData.nodes.length > 5) {
+      expandedData.nodes = expandedData.nodes.slice(0, 5);
+    }
 
-    const newEdges = layoutedNodes.map(node => ({
-      id: `${nodeId}-${node.id}`,
-      source: nodeId,
-      target: node.id,
-      label: '详细',
-      type: 'smoothstep',
-      animated: true,
-      labelStyle: { fill: '#888', fontWeight: 700 },
-      labelBgStyle: { fill: '#fff', fillOpacity: 0.7 },
-      labelBgPadding: [8, 4],
-      labelBgBorderRadius: 4,
-      style: { stroke: '#888', strokeWidth: 2 },
-      markerEnd: {
-        type: 'arrowclosed',
-        color: '#888',
-      },
-    }));
-
-    const responseData = {
-      nodes: layoutedNodes,
-      edges: newEdges,
-    };
-    console.log('Sending response:', responseData);
-    res.status(200).json(responseData);
+    res.status(200).json(expandedData);
   } catch (error) {
-    console.error('展开节点时出错:', error);
+    console.error('Error in expandNode:', error);
     res.status(500).json({ 
-      message: '展开节点时出错', 
+      message: 'Error expanding node',
       error: error.message,
-      stack: error.stack,
-      details: error.toString()
+      nodes: [
+        { id: `${nodeId}-child-1`, label: `定义与概念` },
+        { id: `${nodeId}-child-2`, label: `应用场景` },
+        { id: `${nodeId}-child-3`, label: `关键特点` }
+      ]
     });
   }
 }

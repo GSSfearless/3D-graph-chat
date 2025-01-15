@@ -176,23 +176,125 @@ export function createRadialTreeLayout(nodes, edges) {
   return centerLayout(nodes);
 }
 
-export function relayoutGraph(nodes, edges, layoutType) {
-  // 暂时忽略 layoutType 参数，始终使用金字塔布局
-  const layoutedNodes = createPyramidLayout(nodes);
+// 新增：创建向下组织结构布局
+function createDownwardLayout(nodes, edges) {
+  const LEVEL_HEIGHT = 150; // 层级之间的垂直间距
+  const MIN_NODE_SPACING = 200; // 同一层级节点之间的最小水平间距
   
-  return {
-    nodes: layoutedNodes,
-    edges: edges.map(edge => ({
+  // 计算节点层级
+  const nodeLevels = new Map();
+  const nodeChildren = new Map();
+  
+  // 初始化节点层级和子节点映射
+  nodes.forEach(node => {
+    nodeLevels.set(node.id, 0);
+    nodeChildren.set(node.id, []);
+  });
+
+  // 构建父子关系图
+  edges.forEach(edge => {
+    const childrenList = nodeChildren.get(edge.source) || [];
+    childrenList.push(edge.target);
+    nodeChildren.set(edge.source, childrenList);
+  });
+
+  // 计算每个节点的层级
+  function calculateLevels(nodeId, level) {
+    nodeLevels.set(nodeId, Math.max(nodeLevels.get(nodeId), level));
+    const children = nodeChildren.get(nodeId) || [];
+    children.forEach(childId => calculateLevels(childId, level + 1));
+  }
+
+  // 从根节点开始计算层级
+  const rootNode = nodes.find(n => n.id === 'root');
+  if (rootNode) {
+    calculateLevels(rootNode.id, 0);
+  }
+
+  // 按层级对节点进行分组
+  const levelGroups = new Map();
+  nodes.forEach(node => {
+    const level = nodeLevels.get(node.id);
+    if (!levelGroups.has(level)) {
+      levelGroups.set(level, []);
+    }
+    levelGroups.get(level).push(node);
+  });
+
+  // 计算每一层的节点位置
+  const layoutedNodes = [];
+  levelGroups.forEach((nodesInLevel, level) => {
+    const levelWidth = nodesInLevel.length * NODE_WIDTH + (nodesInLevel.length - 1) * MIN_NODE_SPACING;
+    const startX = -levelWidth / 2;
+    
+    nodesInLevel.forEach((node, index) => {
+      const x = startX + index * (NODE_WIDTH + MIN_NODE_SPACING);
+      const y = level * LEVEL_HEIGHT;
+      
+      // 为不同层级设置不同的样式
+      const nodeStyle = {
+        width: NODE_WIDTH,
+        height: NODE_HEIGHT,
+        background: NODE_COLORS[level % NODE_COLORS.length],
+        borderRadius: '8px',
+        border: '1px solid #ddd',
+        padding: '10px',
+        fontSize: level === 0 ? '16px' : '14px',
+        fontWeight: level === 0 ? '600' : '400',
+      };
+
+      layoutedNodes.push({
+        ...node,
+        position: { x, y },
+        style: {
+          ...node.style,
+          ...nodeStyle,
+        },
+        data: {
+          ...node.data,
+          level: level === 0 ? 'root' : level === 1 ? 'mainBranch' : 'subBranch'
+        }
+      });
+    });
+  });
+
+  return layoutedNodes;
+}
+
+// 修改主布局函数，使用向下布局
+export function relayoutGraph(nodes, edges, layoutType = 'downward') {
+  let layoutedNodes;
+  
+  switch (layoutType) {
+    case 'pyramid':
+      layoutedNodes = createPyramidLayout(nodes);
+      break;
+    case 'downward':
+    default:
+      layoutedNodes = createDownwardLayout(nodes, edges);
+      break;
+  }
+
+  // 优化边的样式
+  const layoutedEdges = edges.map(edge => {
+    const sourceNode = nodes.find(n => n.id === edge.source);
+    const targetNode = nodes.find(n => n.id === edge.target);
+    const isMainBranch = sourceNode?.data?.level === 'root';
+    
+    return {
       ...edge,
       type: 'smoothstep',
-      animated: true,
-      style: { stroke: '#888', strokeWidth: 2 },
-      markerEnd: {
-        type: 'arrowclosed',
-        color: '#888',
-      },
-    })),
-  };
+      animated: false,
+      style: {
+        stroke: isMainBranch ? '#3182ce' : '#4a5568',
+        strokeWidth: isMainBranch ? 2 : 1.5,
+        strokeLinecap: 'round',
+        strokeLinejoin: 'round'
+      }
+    };
+  });
+
+  return { nodes: layoutedNodes, edges: layoutedEdges };
 }
 
 function isOverlapping(node1, node2) {
