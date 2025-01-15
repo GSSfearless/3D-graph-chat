@@ -129,19 +129,23 @@ const edgeOptions = {
   },
 };
 
-const KnowledgeGraph = ({ nodes: initialNodes, edges: initialEdges, onNodeClick }) => {
+const KnowledgeGraph = ({ nodes: initialNodes = [], edges: initialEdges = [], onNodeClick }) => {
+  const safeInitialNodes = initialNodes || [];
+  const safeInitialEdges = initialEdges || [];
+
   const [nodes, setNodes, onNodesChange] = useNodesState(
-    initialNodes.map(node => ({
+    safeInitialNodes.map(node => ({
       ...node,
       type: 'custom',
       position: node.position || { x: 0, y: 0 },
     }))
   );
-  const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
+  const [edges, setEdges, onEdgesChange] = useEdgesState(safeInitialEdges);
   const [selectedNode, setSelectedNode] = useState(null);
   const [dialogOpen, setDialogOpen] = useState(false);
 
   const handleNodeClick = useCallback((event, node) => {
+    if (!node) return;
     setSelectedNode(node);
     setDialogOpen(true);
     if (onNodeClick) {
@@ -153,6 +157,14 @@ const KnowledgeGraph = ({ nodes: initialNodes, edges: initialEdges, onNodeClick 
     setDialogOpen(false);
     setSelectedNode(null);
   };
+
+  if (!safeInitialNodes.length) {
+    return (
+      <div className="w-full h-full flex items-center justify-center bg-gray-50">
+        <p className="text-gray-500">暂无图谱数据</p>
+      </div>
+    );
+  }
 
   return (
     <div style={{ width: '100%', height: '100vh' }}>

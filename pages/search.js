@@ -598,7 +598,8 @@ export default function Search() {
               </div>
               <div className="w-full h-full">
                 <KnowledgeGraph 
-                  data={knowledgeGraphData} 
+                  nodes={knowledgeGraphData?.nodes || []}
+                  edges={knowledgeGraphData?.edges || []}
                   onNodeClick={handleNodeClick}
                   onNodeDragStop={handleNodeDragStop}
                   onNodeDelete={handleNodeDelete}
