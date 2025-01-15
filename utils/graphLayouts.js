@@ -1,11 +1,11 @@
 const NODE_WIDTH = 180;
 const NODE_HEIGHT = 60;
 const NODE_COLORS = [
-  'linear-gradient(135deg, #4F46E5 0%, #7C3AED 100%)',
-  'linear-gradient(135deg, #2563EB 0%, #3B82F6 100%)',
-  'linear-gradient(135deg, #059669 0%, #10B981 100%)',
-  'linear-gradient(135deg, #DC2626 0%, #EF4444 100%)',
-  'linear-gradient(135deg, #D97706 0%, #F59E0B 100%)'
+  'linear-gradient(135deg, #E3F2FD 0%, #90CAF9 100%)',
+  'linear-gradient(135deg, #F3E5F5 0%, #CE93D8 100%)',
+  'linear-gradient(135deg, #E8F5E9 0%, #A5D6A7 100%)',
+  'linear-gradient(135deg, #FFF3E0 0%, #FFCC80 100%)',
+  'linear-gradient(135deg, #E1F5FE 0%, #81D4FA 100%)'
 ];
 
 function centerLayout(nodes) {
@@ -303,12 +303,12 @@ export function createRightLogicalLayout(nodes, edges) {
       height: NODE_HEIGHT,
       background: NODE_COLORS[level % NODE_COLORS.length],
       borderRadius: '12px',
-      border: level === 0 ? '2px solid rgba(255,255,255,0.5)' : '1px solid rgba(255,255,255,0.3)',
+      border: '1px solid rgba(0,0,0,0.1)',
       padding: '10px',
       fontSize: level === 0 ? '16px' : '14px',
       fontWeight: level === 0 ? 'bold' : '500',
-      color: '#FFFFFF',
-      boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+      color: '#2D3748',
+      boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03)',
       transition: 'all 0.3s ease',
       cursor: 'pointer',
       display: 'flex',
@@ -316,8 +316,7 @@ export function createRightLogicalLayout(nodes, edges) {
       justifyContent: 'center',
       textAlign: 'center',
       wordWrap: 'break-word',
-      backdropFilter: 'blur(8px)',
-      WebkitBackdropFilter: 'blur(8px)'
+      fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif'
     };
 
     // 布局子节点
@@ -365,17 +364,17 @@ export function relayoutGraph(nodes, edges, layoutType) {
     edges: edges.map(edge => ({
       ...edge,
       type: 'smoothstep',
-      animated: true,
+      animated: false,
       style: { 
-        stroke: 'url(#edge-gradient)',
-        strokeWidth: 2.5,
+        stroke: '#94A3B8',
+        strokeWidth: 1.5,
         opacity: 0.8,
       },
       markerEnd: {
         type: 'arrowclosed',
-        color: '#6366F1',
-        width: 20,
-        height: 20,
+        color: '#94A3B8',
+        width: 15,
+        height: 15,
       },
     })),
   };
