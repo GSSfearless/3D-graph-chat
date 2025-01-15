@@ -175,7 +175,7 @@ export default function Search() {
   const [isLoadingNodeExplanation, setIsLoadingNodeExplanation] = useState(false);
   const initialAnswerRef = useRef('');
   const [viewingChildNode, setViewingChildNode] = useState(false);
-  const [currentLayout, setCurrentLayout] = useState('downwardTree');
+  const [currentLayout, setCurrentLayout] = useState('rightLogical');
   const [currentLang, setCurrentLang] = useState('en');
   const [selectedNode, setSelectedNode] = useState(null);
   const [isNodeContentVisible, setIsNodeContentVisible] = useState(false);

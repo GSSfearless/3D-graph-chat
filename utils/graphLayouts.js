@@ -258,10 +258,93 @@ export function createDownwardTreeLayout(nodes, edges) {
   return centerLayout(nodes);
 }
 
+export function createRightLogicalLayout(nodes, edges) {
+  const rootNode = nodes.find(node => !edges.some(edge => edge.target === node.id));
+  const childrenMap = new Map();
+  
+  // 构建父子节点映射
+  edges.forEach(edge => {
+    if (!childrenMap.has(edge.source)) {
+      childrenMap.set(edge.source, []);
+    }
+    childrenMap.get(edge.source).push(edge.target);
+  });
+
+  const horizontalGap = 280; // 水平间距
+  const verticalGap = 100;   // 垂直间距
+  const startX = 100;        // 起始X坐标
+  
+  // 计算子树高度
+  function calculateSubtreeHeight(nodeId) {
+    const children = childrenMap.get(nodeId) || [];
+    if (children.length === 0) return NODE_HEIGHT;
+    
+    const childrenHeights = children.map(childId => calculateSubtreeHeight(childId));
+    const totalChildrenHeight = childrenHeights.reduce((sum, height) => sum + height, 0);
+    const gapsHeight = (children.length - 1) * verticalGap;
+    
+    return Math.max(NODE_HEIGHT, totalChildrenHeight + gapsHeight);
+  }
+
+  // 布局子树
+  function layoutSubtree(nodeId, x, y, level = 0) {
+    const node = nodes.find(n => n.id === nodeId);
+    if (!node) return 0;
+
+    const children = childrenMap.get(nodeId) || [];
+    const subtreeHeight = calculateSubtreeHeight(nodeId);
+    
+    // 设置当前节点位置
+    node.position = { x, y: y + (subtreeHeight - NODE_HEIGHT) / 2 };
+    
+    // 设置节点样式
+    node.style = {
+      width: NODE_WIDTH,
+      height: NODE_HEIGHT,
+      background: NODE_COLORS[level % NODE_COLORS.length],
+      borderRadius: '12px',
+      border: level === 0 ? '2px solid rgba(255,255,255,0.5)' : '1px solid rgba(255,255,255,0.3)',
+      padding: '10px',
+      fontSize: level === 0 ? '16px' : '14px',
+      fontWeight: level === 0 ? 'bold' : '500',
+      color: '#FFFFFF',
+      boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+      transition: 'all 0.3s ease',
+      cursor: 'pointer',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      textAlign: 'center',
+      wordWrap: 'break-word',
+      backdropFilter: 'blur(8px)',
+      WebkitBackdropFilter: 'blur(8px)'
+    };
+
+    // 布局子节点
+    let currentY = y;
+    children.forEach(childId => {
+      const childSubtreeHeight = calculateSubtreeHeight(childId);
+      layoutSubtree(childId, x + horizontalGap, currentY, level + 1);
+      currentY += childSubtreeHeight + verticalGap;
+    });
+
+    return subtreeHeight;
+  }
+
+  if (rootNode) {
+    layoutSubtree(rootNode.id, startX, 100);
+  }
+
+  return centerLayout(nodes);
+}
+
 export function relayoutGraph(nodes, edges, layoutType) {
   let layoutedNodes;
   
   switch (layoutType) {
+    case 'rightLogical':
+      layoutedNodes = createRightLogicalLayout(nodes, edges);
+      break;
     case 'downwardTree':
       layoutedNodes = createDownwardTreeLayout(nodes, edges);
       break;
