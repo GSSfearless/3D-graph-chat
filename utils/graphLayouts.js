@@ -1,11 +1,11 @@
 const NODE_WIDTH = 180;
 const NODE_HEIGHT = 60;
 const NODE_COLORS = [
-  'linear-gradient(135deg, #F5F7FA 0%, #C3CFE2 100%)',
-  'linear-gradient(135deg, #E0EAFC 0%, #CFDEF3 100%)',
-  'linear-gradient(135deg, #E0F2F1 0%, #B2DFDB 100%)',
-  'linear-gradient(135deg, #FFF8E1 0%, #FFECB3 100%)',
-  'linear-gradient(135deg, #F3E5F5 0%, #E1BEE7 100%)'
+  'linear-gradient(135deg, #4F46E5 0%, #7C3AED 100%)',
+  'linear-gradient(135deg, #2563EB 0%, #3B82F6 100%)',
+  'linear-gradient(135deg, #059669 0%, #10B981 100%)',
+  'linear-gradient(135deg, #DC2626 0%, #EF4444 100%)',
+  'linear-gradient(135deg, #D97706 0%, #F59E0B 100%)'
 ];
 
 function centerLayout(nodes) {
@@ -189,8 +189,8 @@ export function createDownwardTreeLayout(nodes, edges) {
   });
 
   const levelMap = new Map();
-  const horizontalSpacing = 200;
-  const verticalSpacing = 120;
+  const horizontalSpacing = 250; // 增加水平间距
+  const verticalSpacing = 150; // 增加垂直间距
   
   // 计算每个节点的层级
   function calculateLevels(nodeId, level = 0) {
@@ -227,15 +227,28 @@ export function createDownwardTreeLayout(nodes, edges) {
         x: startX + levelPositions.get(level) * (NODE_WIDTH + horizontalSpacing),
         y: 100 + level * verticalSpacing
       };
+
+      // 优化节点样式
       node.style = {
         width: NODE_WIDTH,
         height: NODE_HEIGHT,
         background: NODE_COLORS[level % NODE_COLORS.length],
-        borderRadius: '8px',
-        border: level === 0 ? '2px solid #FFD700' : '1px solid #ddd',
-        padding: '5px',
-        fontSize: level === 0 ? '14px' : '12px',
-        fontWeight: level === 0 ? 'bold' : 'normal'
+        borderRadius: '12px',
+        border: level === 0 ? '2px solid rgba(255,255,255,0.5)' : '1px solid rgba(255,255,255,0.3)',
+        padding: '10px',
+        fontSize: level === 0 ? '16px' : '14px',
+        fontWeight: level === 0 ? 'bold' : '500',
+        color: '#FFFFFF',
+        boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+        transition: 'all 0.3s ease',
+        cursor: 'pointer',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        textAlign: 'center',
+        wordWrap: 'break-word',
+        backdropFilter: 'blur(8px)',
+        WebkitBackdropFilter: 'blur(8px)'
       };
       
       levelPositions.set(level, levelPositions.get(level) + 1);
@@ -270,10 +283,16 @@ export function relayoutGraph(nodes, edges, layoutType) {
       ...edge,
       type: 'smoothstep',
       animated: true,
-      style: { stroke: '#888', strokeWidth: 2 },
+      style: { 
+        stroke: 'url(#edge-gradient)',
+        strokeWidth: 2.5,
+        opacity: 0.8,
+      },
       markerEnd: {
         type: 'arrowclosed',
-        color: '#888',
+        color: '#6366F1',
+        width: 20,
+        height: 20,
       },
     })),
   };
