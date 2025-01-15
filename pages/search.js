@@ -467,18 +467,15 @@ export default function Search() {
   }, []);
 
   const handleNodeDragStop = useCallback((node) => {
-    setGraphHistory(prev => {
-      const newHistory = [...prev, knowledgeGraphData];
-      setHasPreviousGraph(newHistory.length > 0);
-      return newHistory;
-    });
-    setGraphFuture([]); // Clear future states
-    setKnowledgeGraphData(prevData => {
-      const updatedNodes = prevData.nodes.map(n => 
+    if (knowledgeGraphData) {
+      const updatedNodes = knowledgeGraphData.nodes.map(n => 
         n.id === node.id ? { ...n, position: node.position } : n
       );
-      return { ...prevData, nodes: updatedNodes };
-    });
+      setKnowledgeGraphData(prev => ({
+        ...prev,
+        nodes: updatedNodes
+      }));
+    }
   }, [knowledgeGraphData]);
 
   const handleNodeDelete = useCallback((node) => {

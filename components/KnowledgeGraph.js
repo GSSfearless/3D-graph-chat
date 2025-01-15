@@ -223,6 +223,43 @@ const getLayoutedElements = (nodes, edges) => {
   return { nodes: layoutedNodes, edges: layoutedEdges };
 };
 
+// 定义节点样式
+const nodeStyles = {
+  root: {
+    fontSize: '18px',
+    color: '#1a202c',
+    fontWeight: 'bold',
+    background: '#fff',
+    border: '2px solid #e2e8f0',
+    borderRadius: '8px',
+    padding: '12px 20px',
+    minWidth: '200px',
+    boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+  },
+  mainBranch: {
+    fontSize: '16px',
+    color: '#2d3748',
+    fontWeight: '600',
+    background: '#fff',
+    border: '2px solid #e2e8f0',
+    borderRadius: '6px',
+    padding: '10px 16px',
+    minWidth: '180px',
+    boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+  },
+  subBranch: {
+    fontSize: '14px',
+    color: '#4a5568',
+    fontWeight: '500',
+    background: '#fff',
+    border: '2px solid #e2e8f0',
+    borderRadius: '4px',
+    padding: '8px 12px',
+    minWidth: '160px',
+    boxShadow: '0 1px 2px rgba(0,0,0,0.1)',
+  }
+};
+
 const KnowledgeGraph = ({ data, onNodeClick, onNodeDragStop, onNodeDelete }) => {
   const [mounted, setMounted] = useState(false);
   const [nodes, setNodes] = useState([]);
@@ -285,6 +322,12 @@ const KnowledgeGraph = ({ data, onNodeClick, onNodeDragStop, onNodeDelete }) => 
     explanationCache.set(nodeId, explanation);
   }, []);
 
+  const handleNodeDragStop = useCallback((event, node) => {
+    if (onNodeDragStop) {
+      onNodeDragStop(node);
+    }
+  }, [onNodeDragStop]);
+
   const onInit = useCallback((reactFlowInstance) => {
     reactFlowInstance.fitView({ padding: 0.2, includeHiddenNodes: false });
   }, []);
@@ -315,6 +358,7 @@ const KnowledgeGraph = ({ data, onNodeClick, onNodeDragStop, onNodeDelete }) => 
         defaultZoom={0.7}
         fitView
         fitViewOptions={{ padding: 0.3 }}
+        elementsSelectable={true}
       >
         <Controls />
         <Background color="#f0f0f0" gap={16} size={1} />
