@@ -104,11 +104,6 @@ const NodeContentDialog = ({ node, onClose, isVisible, currentQuestion, cachedEx
         accumulatedText += text;
         setExplanation(accumulatedText);
       }
-
-      // 缓存解释
-      if (node.id && accumulatedText) {
-        explanationCache.set(node.id, accumulatedText);
-      }
     } catch (error) {
       console.error('Error loading relation explanation:', error);
       setExplanation('加载解释时出错，请稍后重试。');

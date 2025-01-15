@@ -179,6 +179,7 @@ export default function Search() {
   const [currentLang, setCurrentLang] = useState('en');
   const [selectedNode, setSelectedNode] = useState(null);
   const [isNodeContentVisible, setIsNodeContentVisible] = useState(false);
+  const [cachedExplanations, setCachedExplanations] = useState(new Map());
 
   const defaultQuery = "What is the answer to life, the universe, and everything?";
 
@@ -456,6 +457,9 @@ export default function Search() {
   const handleNodeClick = useCallback((node, cachedExplanation) => {
     setSelectedNode(node);
     setIsNodeContentVisible(true);
+    if (cachedExplanation) {
+      setCachedExplanations(prev => new Map(prev).set(node.id, cachedExplanation));
+    }
   }, []);
 
   const handleCloseNodeContent = useCallback(() => {
@@ -731,7 +735,7 @@ export default function Search() {
         isVisible={isNodeContentVisible}
         onClose={handleCloseNodeContent}
         currentQuestion={currentQuestion}
-        cachedExplanation={cachedExplanation}
+        cachedExplanation={selectedNode ? cachedExplanations.get(selectedNode.id) : null}
       />
     </div>
   );

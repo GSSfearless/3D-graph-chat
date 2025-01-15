@@ -129,9 +129,6 @@ const edgeStyles = {
   }
 };
 
-// 缓存节点解释
-const explanationCache = new Map();
-
 const getLayoutedElements = (nodes, edges) => {
   // 首先找到根节点和直接连接的主分支
   const rootNode = nodes.find(n => n.id === 'root');
@@ -230,6 +227,7 @@ const KnowledgeGraph = ({ data, onNodeClick, onNodeDragStop, onNodeDelete }) => 
   const [mounted, setMounted] = useState(false);
   const [nodes, setNodes] = useState([]);
   const [edges, setEdges] = useState([]);
+  const [explanationCache] = useState(new Map());
 
   // 处理节点标签更改
   const handleLabelChange = useCallback((nodeId, newLabel) => {
@@ -280,7 +278,7 @@ const KnowledgeGraph = ({ data, onNodeClick, onNodeDragStop, onNodeDelete }) => 
       const cachedExplanation = explanationCache.get(node.id);
       onNodeClick(node, cachedExplanation);
     }
-  }, [onNodeClick]);
+  }, [onNodeClick, explanationCache]);
 
   // 缓存节点解释
   const cacheNodeExplanation = useCallback((nodeId, explanation) => {
