@@ -1,5 +1,5 @@
-const NODE_WIDTH = 180;
-const NODE_HEIGHT = 60;
+const NODE_WIDTH = 200;
+const NODE_HEIGHT = 50;
 const NODE_COLORS = [
   'linear-gradient(135deg, #E3F2FD 0%, #90CAF9 100%)',
   'linear-gradient(135deg, #F3E5F5 0%, #CE93D8 100%)',
@@ -7,6 +7,21 @@ const NODE_COLORS = [
   'linear-gradient(135deg, #FFF3E0 0%, #FFCC80 100%)',
   'linear-gradient(135deg, #E1F5FE 0%, #81D4FA 100%)'
 ];
+
+const NODE_STYLE = {
+  background: '#FFFFFF',
+  border: '1.5px solid #2D3748',
+  borderRadius: '4px',
+  padding: '8px',
+  fontSize: '14px',
+  color: '#2D3748',
+  boxShadow: '0 1px 2px rgba(0, 0, 0, 0.05)',
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  textAlign: 'center',
+  fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif'
+};
 
 function centerLayout(nodes) {
   const minX = Math.min(...nodes.map(node => node.position.x));
@@ -189,8 +204,8 @@ export function createDownwardTreeLayout(nodes, edges) {
   });
 
   const levelMap = new Map();
-  const horizontalSpacing = 250; // 增加水平间距
-  const verticalSpacing = 150; // 增加垂直间距
+  const horizontalSpacing = 50;  // 减小水平间距
+  const verticalSpacing = 80;    // 减小垂直间距
   
   // 计算每个节点的层级
   function calculateLevels(nodeId, level = 0) {
@@ -205,54 +220,40 @@ export function createDownwardTreeLayout(nodes, edges) {
     calculateLevels(rootNode.id);
   }
 
-  // 计算每层节点数量
-  const levelCounts = new Map();
+  // 计算每层节点数量和位置
+  const levelNodes = new Map(); // 存储每层的节点
   levelMap.forEach((level, nodeId) => {
-    levelCounts.set(level, (levelCounts.get(level) || 0) + 1);
+    if (!levelNodes.has(level)) {
+      levelNodes.set(level, []);
+    }
+    levelNodes.get(level).push(nodeId);
   });
 
   // 计算每层节点的位置
-  const levelPositions = new Map();
-  levelMap.forEach((level, nodeId) => {
-    if (!levelPositions.has(level)) {
-      levelPositions.set(level, 0);
-    }
-    const node = nodes.find(n => n.id === nodeId);
-    if (node) {
-      const nodesInLevel = levelCounts.get(level);
-      const levelWidth = nodesInLevel * NODE_WIDTH + (nodesInLevel - 1) * horizontalSpacing;
-      const startX = 600 - levelWidth / 2;
-      
-      node.position = {
-        x: startX + levelPositions.get(level) * (NODE_WIDTH + horizontalSpacing),
-        y: 100 + level * verticalSpacing
-      };
+  levelNodes.forEach((nodeIds, level) => {
+    const levelWidth = nodeIds.length * NODE_WIDTH + (nodeIds.length - 1) * horizontalSpacing;
+    const startX = -levelWidth / 2;
+    
+    nodeIds.forEach((nodeId, index) => {
+      const node = nodes.find(n => n.id === nodeId);
+      if (node) {
+        // 计算节点位置
+        node.position = {
+          x: startX + index * (NODE_WIDTH + horizontalSpacing),
+          y: level * verticalSpacing
+        };
 
-      // 优化节点样式
-      node.style = {
-        width: NODE_WIDTH,
-        height: NODE_HEIGHT,
-        background: NODE_COLORS[level % NODE_COLORS.length],
-        borderRadius: '12px',
-        border: level === 0 ? '2px solid rgba(255,255,255,0.5)' : '1px solid rgba(255,255,255,0.3)',
-        padding: '10px',
-        fontSize: level === 0 ? '16px' : '14px',
-        fontWeight: level === 0 ? 'bold' : '500',
-        color: '#FFFFFF',
-        boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
-        transition: 'all 0.3s ease',
-        cursor: 'pointer',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        textAlign: 'center',
-        wordWrap: 'break-word',
-        backdropFilter: 'blur(8px)',
-        WebkitBackdropFilter: 'blur(8px)'
-      };
-      
-      levelPositions.set(level, levelPositions.get(level) + 1);
-    }
+        // 设置节点样式
+        node.style = {
+          ...NODE_STYLE,
+          width: NODE_WIDTH,
+          height: NODE_HEIGHT,
+          // 根节点样式特殊处理
+          fontWeight: level === 0 ? 'bold' : 'normal',
+          fontSize: level === 0 ? '16px' : '14px',
+        };
+      }
+    });
   });
 
   return centerLayout(nodes);
@@ -342,20 +343,20 @@ export function relayoutGraph(nodes, edges, layoutType) {
   
   switch (layoutType) {
     case 'rightLogical':
-      layoutedNodes = createRightLogicalLayout(nodes, edges);
+      layoutedNodes = createDownwardTreeLayout(nodes, edges);  // 默认使用向下布局
       break;
     case 'downwardTree':
       layoutedNodes = createDownwardTreeLayout(nodes, edges);
       break;
     case 'radialTree':
-      layoutedNodes = createRadialTreeLayout(nodes, edges);
+      layoutedNodes = createDownwardTreeLayout(nodes, edges);  // 统一使用向下布局
       break;
     case 'mindMap':
-      layoutedNodes = createMindMapLayout(nodes);
+      layoutedNodes = createDownwardTreeLayout(nodes, edges);  // 统一使用向下布局
       break;
     case 'pyramid':
     default:
-      layoutedNodes = createPyramidLayout(nodes);
+      layoutedNodes = createDownwardTreeLayout(nodes, edges);  // 统一使用向下布局
       break;
   }
   
@@ -363,18 +364,18 @@ export function relayoutGraph(nodes, edges, layoutType) {
     nodes: layoutedNodes,
     edges: edges.map(edge => ({
       ...edge,
-      type: 'smoothstep',
+      type: 'step',           // 使用直角连接线
       animated: false,
       style: { 
-        stroke: '#94A3B8',
-        strokeWidth: 1.5,
-        opacity: 0.8,
+        stroke: '#2D3748',    // 使用深灰色
+        strokeWidth: 1,       // 细线
+        opacity: 1,           // 不透明
       },
       markerEnd: {
         type: 'arrowclosed',
-        color: '#94A3B8',
-        width: 15,
-        height: 15,
+        color: '#2D3748',     // 箭头颜色与线条一致
+        width: 12,
+        height: 12,
       },
     })),
   };
