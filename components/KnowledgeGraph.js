@@ -15,6 +15,49 @@ const Background = dynamic(() => import('react-flow-renderer').then(mod => mod.B
   ssr: false
 });
 
+// 定义节点样式
+const nodeStyles = {
+  root: {
+    fontSize: '20px',
+    color: '#2C5282', // 深蓝色
+    fontWeight: 'bold',
+    background: '#EBF8FF', // 浅蓝色背景
+    border: '2px solid #4299E1',
+    borderRadius: '25px',
+    padding: '12px 24px',
+    minWidth: '150px',
+    maxWidth: '250px',
+    boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+    textAlign: 'center',
+  },
+  mainBranch: {
+    fontSize: '16px',
+    color: '#2D3748',
+    fontWeight: '600',
+    background: '#F7FAFC',
+    border: '2px solid #A0AEC0',
+    borderRadius: '20px',
+    padding: '8px 16px',
+    minWidth: '120px',
+    maxWidth: '200px',
+    boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+    textAlign: 'center',
+  },
+  subBranch: {
+    fontSize: '14px',
+    color: '#4A5568',
+    fontWeight: '500',
+    background: '#FFFFFF',
+    border: '1px solid #CBD5E0',
+    borderRadius: '15px',
+    padding: '6px 12px',
+    minWidth: '100px',
+    maxWidth: '180px',
+    boxShadow: '0 1px 2px rgba(0,0,0,0.05)',
+    textAlign: 'center',
+  }
+};
+
 // 自定义节点组件
 const CustomNode = ({ data, isConnectable, selected }) => {
   const [isEditing, setIsEditing] = useState(false);
@@ -27,8 +70,10 @@ const CustomNode = ({ data, isConnectable, selected }) => {
 
   const handleBlur = () => {
     setIsEditing(false);
+    // 如果标签太长，自动截断并添加省略号
+    const truncatedLabel = label.length > 20 ? label.substring(0, 20) + '...' : label;
     if (data.onLabelChange) {
-      data.onLabelChange(label);
+      data.onLabelChange(truncatedLabel);
     }
   };
 
@@ -42,47 +87,19 @@ const CustomNode = ({ data, isConnectable, selected }) => {
   useEffect(() => {
     if (isEditing && inputRef.current) {
       inputRef.current.focus();
+      inputRef.current.select();
     }
   }, [isEditing]);
 
   const nodeStyle = {
-    root: {
-      fontSize: '18px',
-      color: '#1a202c',
-      fontWeight: 'bold',
-      background: '#fff',
-      border: selected ? '2px solid #3182ce' : '2px solid #e2e8f0',
-      borderRadius: '8px',
-      padding: '12px 20px',
-      minWidth: '200px',
-      boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-    },
-    mainBranch: {
-      fontSize: '16px',
-      color: '#2d3748',
-      fontWeight: '600',
-      background: '#fff',
-      border: selected ? '2px solid #3182ce' : '2px solid #e2e8f0',
-      borderRadius: '6px',
-      padding: '10px 16px',
-      minWidth: '180px',
-      boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
-    },
-    subBranch: {
-      fontSize: '14px',
-      color: '#4a5568',
-      fontWeight: '500',
-      background: '#fff',
-      border: selected ? '2px solid #3182ce' : '2px solid #e2e8f0',
-      borderRadius: '4px',
-      padding: '8px 12px',
-      minWidth: '160px',
-      boxShadow: '0 1px 2px rgba(0,0,0,0.1)',
-    }
+    ...nodeStyles[data.level || 'subBranch'],
+    border: selected ? `2px solid #3182CE` : nodeStyles[data.level || 'subBranch'].border,
+    transition: 'all 0.2s ease',
+    transform: selected ? 'scale(1.05)' : 'scale(1)',
   };
 
   return (
-    <div style={nodeStyle[data.level || 'subBranch']}>
+    <div style={nodeStyle}>
       <Handle
         type="target"
         position={data.level === 'root' ? Position.Top : Position.Left}
@@ -97,12 +114,25 @@ const CustomNode = ({ data, isConnectable, selected }) => {
           onBlur={handleBlur}
           onKeyDown={handleKeyDown}
           className="w-full bg-transparent outline-none text-center"
-          style={{ fontSize: 'inherit', fontWeight: 'inherit', color: 'inherit' }}
+          style={{ 
+            fontSize: 'inherit', 
+            fontWeight: 'inherit', 
+            color: 'inherit',
+            border: 'none',
+            maxWidth: '100%'
+          }}
+          placeholder="输入关键词..."
         />
       ) : (
         <div
           onDoubleClick={handleDoubleClick}
           className="w-full text-center cursor-text"
+          style={{
+            wordBreak: 'break-word',
+            whiteSpace: 'pre-wrap',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis'
+          }}
         >
           {label}
         </div>
@@ -122,10 +152,22 @@ const edgeStyles = {
   mainBranch: {
     stroke: '#3182ce',
     strokeWidth: 2,
+    type: 'smoothstep',
+    animated: false,
+    style: {
+      strokeLinecap: 'round',
+      strokeLinejoin: 'round'
+    }
   },
   subBranch: {
     stroke: '#4a5568',
     strokeWidth: 1.5,
+    type: 'smoothstep',
+    animated: false,
+    style: {
+      strokeLinecap: 'round',
+      strokeLinejoin: 'round'
+    }
   }
 };
 
@@ -136,14 +178,18 @@ const getLayoutedElements = (nodes, edges) => {
     edges.some(e => e.source === 'root' && e.target === n.id)
   );
 
-  // 将主分支分为左右两组
-  const leftBranches = mainBranches.slice(0, Math.ceil(mainBranches.length / 2));
-  const rightBranches = mainBranches.slice(Math.ceil(mainBranches.length / 2));
+  // 将主分支分为左右两组（按标签长度排序，让短标签在上面）
+  const sortedBranches = [...mainBranches].sort((a, b) => 
+    (a.data.label?.length || 0) - (b.data.label?.length || 0)
+  );
+  const leftBranches = sortedBranches.slice(0, Math.ceil(sortedBranches.length / 2));
+  const rightBranches = sortedBranches.slice(Math.ceil(sortedBranches.length / 2));
 
   const layoutedNodes = [];
-  const VERTICAL_SPACING = 120;
-  const HORIZONTAL_SPACING = 300;
-  const ROOT_Y = 300; // 根节点的垂直位置
+  const VERTICAL_SPACING = 100; // 减小垂直间距
+  const HORIZONTAL_SPACING = 250; // 减小水平间距
+  const ROOT_Y = 300;
+  const BRANCH_ANGLE = 45; // 分支倾斜角度
 
   // 放置根节点
   if (rootNode) {
@@ -155,12 +201,16 @@ const getLayoutedElements = (nodes, edges) => {
     });
   }
 
-  // 布局左侧分支
+  // 布局左侧分支（倾斜排列）
   leftBranches.forEach((branch, index) => {
-    const y = ROOT_Y - (leftBranches.length * VERTICAL_SPACING / 2) + (index * VERTICAL_SPACING);
+    const angle = BRANCH_ANGLE - (index * (BRANCH_ANGLE / leftBranches.length));
+    const radius = HORIZONTAL_SPACING;
+    const x = -Math.cos(angle * Math.PI / 180) * radius;
+    const y = ROOT_Y - Math.sin(angle * Math.PI / 180) * radius;
+
     layoutedNodes.push({
       ...branch,
-      position: { x: -HORIZONTAL_SPACING, y },
+      position: { x, y },
       style: { ...nodeStyles.mainBranch },
       data: { ...branch.data, level: 'mainBranch' }
     });
@@ -170,24 +220,32 @@ const getLayoutedElements = (nodes, edges) => {
       edges.some(e => e.source === branch.id && e.target === n.id)
     );
 
-    const SUB_HORIZONTAL_SPACING = HORIZONTAL_SPACING * 2;
+    // 子节点沿着主分支方向延伸
     subNodes.forEach((subNode, subIndex) => {
-      const subY = y - (subNodes.length * VERTICAL_SPACING / 3 / 2) + (subIndex * VERTICAL_SPACING / 3);
+      const subRadius = radius + HORIZONTAL_SPACING * 0.8;
+      const subX = -Math.cos(angle * Math.PI / 180) * subRadius;
+      const subY = ROOT_Y - Math.sin(angle * Math.PI / 180) * subRadius + 
+                   (subIndex - (subNodes.length - 1) / 2) * (VERTICAL_SPACING * 0.5);
+
       layoutedNodes.push({
         ...subNode,
-        position: { x: -SUB_HORIZONTAL_SPACING, y: subY },
+        position: { x: subX, y: subY },
         style: { ...nodeStyles.subBranch },
         data: { ...subNode.data, level: 'subBranch' }
       });
     });
   });
 
-  // 布局右侧分支
+  // 布局右侧分支（倾斜排列）
   rightBranches.forEach((branch, index) => {
-    const y = ROOT_Y - (rightBranches.length * VERTICAL_SPACING / 2) + (index * VERTICAL_SPACING);
+    const angle = -BRANCH_ANGLE + (index * (BRANCH_ANGLE / rightBranches.length));
+    const radius = HORIZONTAL_SPACING;
+    const x = Math.cos(angle * Math.PI / 180) * radius;
+    const y = ROOT_Y - Math.sin(angle * Math.PI / 180) * radius;
+
     layoutedNodes.push({
       ...branch,
-      position: { x: HORIZONTAL_SPACING, y },
+      position: { x, y },
       style: { ...nodeStyles.mainBranch },
       data: { ...branch.data, level: 'mainBranch' }
     });
@@ -197,12 +255,16 @@ const getLayoutedElements = (nodes, edges) => {
       edges.some(e => e.source === branch.id && e.target === n.id)
     );
 
-    const SUB_HORIZONTAL_SPACING = HORIZONTAL_SPACING * 2;
+    // 子节点沿着主分支方向延伸
     subNodes.forEach((subNode, subIndex) => {
-      const subY = y - (subNodes.length * VERTICAL_SPACING / 3 / 2) + (subIndex * VERTICAL_SPACING / 3);
+      const subRadius = radius + HORIZONTAL_SPACING * 0.8;
+      const subX = Math.cos(angle * Math.PI / 180) * subRadius;
+      const subY = ROOT_Y - Math.sin(angle * Math.PI / 180) * subRadius + 
+                   (subIndex - (subNodes.length - 1) / 2) * (VERTICAL_SPACING * 0.5);
+
       layoutedNodes.push({
         ...subNode,
-        position: { x: SUB_HORIZONTAL_SPACING, y: subY },
+        position: { x: subX, y: subY },
         style: { ...nodeStyles.subBranch },
         data: { ...subNode.data, level: 'subBranch' }
       });
@@ -212,52 +274,14 @@ const getLayoutedElements = (nodes, edges) => {
   // 设置边的样式
   const layoutedEdges = edges.map((edge) => {
     const sourceNode = nodes.find(n => n.id === edge.source);
+    const edgeType = sourceNode?.data.level === 'root' ? 'mainBranch' : 'subBranch';
     return {
       ...edge,
-      style: edgeStyles[sourceNode?.data.level === 'root' ? 'mainBranch' : 'subBranch'],
-      type: 'straight', // 使用直线连接
-      animated: false,
+      ...edgeStyles[edgeType],
     };
   });
 
   return { nodes: layoutedNodes, edges: layoutedEdges };
-};
-
-// 定义节点样式
-const nodeStyles = {
-  root: {
-    fontSize: '18px',
-    color: '#1a202c',
-    fontWeight: 'bold',
-    background: '#fff',
-    border: '2px solid #e2e8f0',
-    borderRadius: '8px',
-    padding: '12px 20px',
-    minWidth: '200px',
-    boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-  },
-  mainBranch: {
-    fontSize: '16px',
-    color: '#2d3748',
-    fontWeight: '600',
-    background: '#fff',
-    border: '2px solid #e2e8f0',
-    borderRadius: '6px',
-    padding: '10px 16px',
-    minWidth: '180px',
-    boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
-  },
-  subBranch: {
-    fontSize: '14px',
-    color: '#4a5568',
-    fontWeight: '500',
-    background: '#fff',
-    border: '2px solid #e2e8f0',
-    borderRadius: '4px',
-    padding: '8px 12px',
-    minWidth: '160px',
-    boxShadow: '0 1px 2px rgba(0,0,0,0.1)',
-  }
 };
 
 const KnowledgeGraph = ({ data, onNodeClick, onNodeDragStop, onNodeDelete }) => {
