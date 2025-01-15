@@ -9,7 +9,7 @@ import '../styles/globals.css';
 
 const KnowledgeGraph = dynamic(() => import('../components/KnowledgeGraph'), {
   ssr: false,
-  loading: () => <p>{getText('loadingGraph')}</p>
+  loading: () => <p>正在加载知识图谱...</p>
 });
 
 const NodeContentDialog = dynamic(() => import('../components/NodeContentDialog'), {
