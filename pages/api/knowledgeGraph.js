@@ -17,7 +17,10 @@ function createGraphFromStructure(structure) {
   const nodes = [
     {
       id: 'root',
-      data: { label: structure.mainNode }
+      data: { 
+        label: structure.mainNode,
+        level: 'root'
+      }
     }
   ];
 
@@ -31,7 +34,8 @@ function createGraphFromStructure(structure) {
       id: nodeId,
       data: { 
         label: subNode.title,
-        content: subNode.content 
+        content: subNode.content,
+        level: 'mainBranch'
       }
     });
 
@@ -40,7 +44,7 @@ function createGraphFromStructure(structure) {
       source: 'root',
       target: nodeId,
       type: 'smoothstep',
-      animated: true,
+      animated: false,
     });
 
     // 处理子分支（如果存在）
@@ -51,7 +55,8 @@ function createGraphFromStructure(structure) {
           id: childId,
           data: {
             label: childNode.title,
-            content: childNode.content
+            content: childNode.content,
+            level: 'subBranch'
           }
         });
 
@@ -60,8 +65,31 @@ function createGraphFromStructure(structure) {
           source: nodeId,
           target: childId,
           type: 'smoothstep',
-          animated: true,
+          animated: false,
         });
+
+        // 处理第三层节点（如果存在）
+        if (childNode.children && Array.isArray(childNode.children)) {
+          childNode.children.forEach((grandChild) => {
+            const grandChildId = `node-${nodeCounter++}`;
+            nodes.push({
+              id: grandChildId,
+              data: {
+                label: grandChild.title,
+                content: grandChild.content,
+                level: 'subBranch'
+              }
+            });
+
+            edges.push({
+              id: `edge-${nodeCounter}`,
+              source: childId,
+              target: grandChildId,
+              type: 'smoothstep',
+              animated: false,
+            });
+          });
+        }
       });
     }
   });
@@ -84,8 +112,8 @@ export default async function handler(req, res) {
     // 直接使用传入的结构生成图谱
     const graphData = createGraphFromStructure(structure);
     
-    // 应用布局
-    const { nodes: layoutedNodes, edges: layoutedEdges } = relayoutGraph(graphData.nodes, graphData.edges, 'pyramid');
+    // 应用向下布局
+    const { nodes: layoutedNodes, edges: layoutedEdges } = relayoutGraph(graphData.nodes, graphData.edges, 'downward');
     
     const finalGraphData = {
       nodes: layoutedNodes,
