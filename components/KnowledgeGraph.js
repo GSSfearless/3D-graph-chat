@@ -70,8 +70,7 @@ const CustomNode = ({ data, isConnectable }) => {
   const inputRef = useRef(null);
   const nodeRef = useRef(null);
 
-  const handleClick = (e) => {
-    e.stopPropagation();
+  const handleClick = () => {
     setIsEditing(true);
     setShowToolbar(true);
   };
@@ -154,29 +153,8 @@ const CustomNode = ({ data, isConnectable }) => {
   }, []);
 
   return (
-    <div 
-      ref={nodeRef} 
-      className="relative group cursor-pointer" 
-      onClick={handleClick}
-      style={{
-        minWidth: '100px',
-        minHeight: '40px',
-        userSelect: 'none'
-      }}
-    >
-      <div 
-        style={{ 
-          ...data.style, 
-          ...style,
-          padding: '8px 12px',
-          background: '#fff',
-          border: '1px solid #ccc',
-          borderRadius: '4px',
-          transition: 'all 0.2s ease',
-          cursor: 'pointer'
-        }}
-        className="hover:shadow-md hover:border-blue-400"
-      >
+    <div ref={nodeRef} className="relative group" onClick={handleClick}>
+      <div style={{ ...data.style, ...style }}>
         <Handle
           type="target"
           position={Position.Left}
@@ -199,14 +177,12 @@ const CustomNode = ({ data, isConnectable }) => {
               border: 'none',
               fontStyle: 'inherit',
               textDecoration: 'inherit',
-              minHeight: '1.5em',
-              cursor: 'text'
+              minHeight: '1.5em'
             }}
             onClick={(e) => e.stopPropagation()}
-            autoFocus
           />
         ) : (
-          <div className="w-full text-center">
+          <div className="w-full text-center cursor-text">
             {label}
           </div>
         )}
@@ -220,7 +196,7 @@ const CustomNode = ({ data, isConnectable }) => {
 
         {/* 关联按钮 */}
         <button
-          className="absolute -right-8 top-1/2 transform -translate-y-1/2 bg-blue-500 hover:bg-blue-600 text-white rounded-full w-6 h-6 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-10"
+          className="absolute -right-8 top-1/2 transform -translate-y-1/2 bg-blue-500 hover:bg-blue-600 text-white rounded-full w-6 h-6 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200"
           onClick={handleRelationClick}
           title="查看关联"
         >
@@ -229,10 +205,7 @@ const CustomNode = ({ data, isConnectable }) => {
 
         {/* 工具栏 */}
         {showToolbar && (
-          <div 
-            className="absolute -top-12 left-1/2 transform -translate-x-1/2 bg-white shadow-lg rounded-lg px-2 py-1 flex items-center space-x-2 z-20"
-            onClick={(e) => e.stopPropagation()}
-          >
+          <div className="absolute -top-12 left-1/2 transform -translate-x-1/2 bg-white shadow-lg rounded-lg px-2 py-1 flex items-center space-x-2 z-10">
             <button
               onClick={(e) => { e.stopPropagation(); toggleBold(); }}
               className={`p-1 rounded hover:bg-gray-100 ${style.fontWeight === 'bold' ? 'bg-gray-200' : ''}`}
@@ -256,7 +229,7 @@ const CustomNode = ({ data, isConnectable }) => {
             </button>
             <select
               onChange={(e) => { e.stopPropagation(); changeFontSize(e.target.value); }}
-              className="outline-none border rounded p-1 text-sm cursor-pointer"
+              className="outline-none border rounded p-1 text-sm"
               value={style.fontSize || '14px'}
               onClick={(e) => e.stopPropagation()}
             >
@@ -305,11 +278,10 @@ const KnowledgeGraph = ({ data, onNodeClick, onNodeDragStop, onNodeDelete, layou
       try {
         const nodesWithEdit = data.nodes.map(node => ({
           ...node,
-          type: 'custom',
           data: {
             ...node.data,
             onLabelChange: (newLabel) => handleLabelChange(node.id, newLabel),
-            onRelationClick: (nodeData) => onNodeClick && onNodeClick(event, nodeData)
+            onRelationClick: (nodeData) => onNodeClick && onNodeClick(null, nodeData)
           }
         }));
 
@@ -328,6 +300,10 @@ const KnowledgeGraph = ({ data, onNodeClick, onNodeDragStop, onNodeDelete, layou
       }
     }
   }, [data, handleLabelChange, layout, onNodeClick]);
+
+  const handleNodeClick = useCallback((event, node) => {
+    // 不再直接触发onNodeClick
+  }, []);
 
   const handleNodeDragStop = useCallback((event, node) => {
     if (onNodeDragStop) {
@@ -350,6 +326,7 @@ const KnowledgeGraph = ({ data, onNodeClick, onNodeDragStop, onNodeDelete, layou
       <ReactFlow 
         nodes={nodes}
         edges={edges}
+        onNodeClick={handleNodeClick}
         onNodeDragStop={handleNodeDragStop}
         onInit={onInit}
         nodeTypes={{ custom: CustomNode }}
