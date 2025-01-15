@@ -22,10 +22,10 @@ const nodeStyles = {
     border: '2px solid #FF6B6B',
     borderRadius: '30px',
     padding: '20px',
-    fontSize: '16px',
+    fontSize: '18px',
     color: 'white',
     fontWeight: 'bold',
-    minWidth: '200px',
+    minWidth: '250px',
     textAlign: 'center',
     boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
   },
@@ -34,10 +34,10 @@ const nodeStyles = {
     border: '2px solid #4ECDC4',
     borderRadius: '25px',
     padding: '15px',
-    fontSize: '14px',
+    fontSize: '16px',
     color: 'white',
     fontWeight: '600',
-    minWidth: '180px',
+    minWidth: '200px',
     textAlign: 'center',
     boxShadow: '0 3px 5px rgba(0, 0, 0, 0.1)',
   },
@@ -46,10 +46,10 @@ const nodeStyles = {
     border: '2px solid #96CDEF',
     borderRadius: '20px',
     padding: '12px',
-    fontSize: '13px',
+    fontSize: '14px',
     color: 'white',
     fontWeight: '500',
-    minWidth: '160px',
+    minWidth: '180px',
     textAlign: 'center',
     boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
   }
@@ -67,49 +67,84 @@ const edgeStyles = {
   }
 };
 
-const getLayoutedElements = (nodes, edges, direction = 'TB') => {
-  const dagreGraph = new dagre.graphlib.Graph();
-  dagreGraph.setDefaultEdgeLabel(() => ({}));
+const getLayoutedElements = (nodes, edges) => {
+  // 首先找到根节点和直接连接的主分支
+  const rootNode = nodes.find(n => n.id === 'root');
+  const mainBranches = nodes.filter(n => 
+    edges.some(e => e.source === 'root' && e.target === n.id)
+  );
 
-  // 设置图的布局方向和节点间距
-  dagreGraph.setGraph({
-    rankdir: direction,
-    nodesep: 80,
-    ranksep: 100,
-    marginx: 50,
-    marginy: 50,
-  });
+  // 将主分支分为左右两组
+  const leftBranches = mainBranches.slice(0, Math.ceil(mainBranches.length / 2));
+  const rightBranches = mainBranches.slice(Math.ceil(mainBranches.length / 2));
 
-  // 添加节点
-  nodes.forEach((node) => {
-    dagreGraph.setNode(node.id, {
-      width: node.data.level === 'root' ? 200 : node.data.level === 'mainBranch' ? 180 : 160,
-      height: node.data.level === 'root' ? 80 : node.data.level === 'mainBranch' ? 60 : 50,
+  const layoutedNodes = [];
+  const VERTICAL_SPACING = 120;
+  const HORIZONTAL_SPACING = 300;
+  const ROOT_Y = 300; // 根节点的垂直位置
+
+  // 放置根节点
+  if (rootNode) {
+    layoutedNodes.push({
+      ...rootNode,
+      position: { x: 0, y: ROOT_Y },
+      style: { ...nodeStyles.root },
+      data: { ...rootNode.data, level: 'root' }
+    });
+  }
+
+  // 布局左侧分支
+  leftBranches.forEach((branch, index) => {
+    const y = ROOT_Y - (leftBranches.length * VERTICAL_SPACING / 2) + (index * VERTICAL_SPACING);
+    layoutedNodes.push({
+      ...branch,
+      position: { x: -HORIZONTAL_SPACING, y },
+      style: { ...nodeStyles.mainBranch },
+      data: { ...branch.data, level: 'mainBranch' }
+    });
+
+    // 找到并布局该主分支的子节点
+    const subNodes = nodes.filter(n =>
+      edges.some(e => e.source === branch.id && e.target === n.id)
+    );
+
+    const SUB_HORIZONTAL_SPACING = HORIZONTAL_SPACING * 2;
+    subNodes.forEach((subNode, subIndex) => {
+      const subY = y - (subNodes.length * VERTICAL_SPACING / 3 / 2) + (subIndex * VERTICAL_SPACING / 3);
+      layoutedNodes.push({
+        ...subNode,
+        position: { x: -SUB_HORIZONTAL_SPACING, y: subY },
+        style: { ...nodeStyles.subBranch },
+        data: { ...subNode.data, level: 'subBranch' }
+      });
     });
   });
 
-  // 添加边
-  edges.forEach((edge) => {
-    dagreGraph.setEdge(edge.source, edge.target);
-  });
+  // 布局右侧分支
+  rightBranches.forEach((branch, index) => {
+    const y = ROOT_Y - (rightBranches.length * VERTICAL_SPACING / 2) + (index * VERTICAL_SPACING);
+    layoutedNodes.push({
+      ...branch,
+      position: { x: HORIZONTAL_SPACING, y },
+      style: { ...nodeStyles.mainBranch },
+      data: { ...branch.data, level: 'mainBranch' }
+    });
 
-  // 计算布局
-  dagre.layout(dagreGraph);
+    // 找到并布局该主分支的子节点
+    const subNodes = nodes.filter(n =>
+      edges.some(e => e.source === branch.id && e.target === n.id)
+    );
 
-  // 获取布局后的节点位置
-  const layoutedNodes = nodes.map((node) => {
-    const nodeWithPosition = dagreGraph.node(node.id);
-    return {
-      ...node,
-      position: {
-        x: nodeWithPosition.x - nodeWithPosition.width / 2,
-        y: nodeWithPosition.y - nodeWithPosition.height / 2,
-      },
-      style: {
-        ...nodeStyles[node.data.level || 'subBranch'],
-        width: nodeWithPosition.width,
-      },
-    };
+    const SUB_HORIZONTAL_SPACING = HORIZONTAL_SPACING * 2;
+    subNodes.forEach((subNode, subIndex) => {
+      const subY = y - (subNodes.length * VERTICAL_SPACING / 3 / 2) + (subIndex * VERTICAL_SPACING / 3);
+      layoutedNodes.push({
+        ...subNode,
+        position: { x: SUB_HORIZONTAL_SPACING, y: subY },
+        style: { ...nodeStyles.subBranch },
+        data: { ...subNode.data, level: 'subBranch' }
+      });
+    });
   });
 
   // 设置边的样式
@@ -138,30 +173,8 @@ const KnowledgeGraph = ({ data, onNodeClick, onNodeDragStop, onNodeDelete }) => 
   useEffect(() => {
     if (data && data.nodes && data.edges) {
       try {
-        // 为节点添加层级信息
-        const nodesWithLevels = data.nodes.map(node => {
-          let level = 'subBranch';
-          if (node.id === 'root') {
-            level = 'root';
-          } else if (data.edges.some(edge => edge.source === 'root' && edge.target === node.id)) {
-            level = 'mainBranch';
-          }
-          return {
-            ...node,
-            data: {
-              ...node.data,
-              level,
-            },
-          };
-        });
-
         // 应用布局
-        const { nodes: layoutedNodes, edges: layoutedEdges } = getLayoutedElements(
-          nodesWithLevels,
-          data.edges,
-          'TB'
-        );
-
+        const { nodes: layoutedNodes, edges: layoutedEdges } = getLayoutedElements(data.nodes, data.edges);
         setNodes(layoutedNodes);
         setEdges(layoutedEdges);
       } catch (error) {
@@ -211,8 +224,9 @@ const KnowledgeGraph = ({ data, onNodeClick, onNodeDragStop, onNodeDelete }) => 
         panOnScrollMode="free"
         minZoom={0.1}
         maxZoom={4}
-        defaultZoom={1}
+        defaultZoom={0.7}
         fitView
+        fitViewOptions={{ padding: 0.3 }}
       >
         <Controls />
         <Background color="#f0f0f0" gap={16} size={1} />
