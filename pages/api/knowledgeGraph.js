@@ -61,11 +61,14 @@ function createGraphFromStructure(structure) {
 
     // 如果有子内容，创建子分支
     if (subNode.content) {
+      // 分割内容并过滤空行
       const contentPoints = subNode.content
         .split('\n')
-        .filter(point => point.trim())
+        .map(point => point.trim())
+        .filter(point => point && point.length > 0)
         .map(point => point.replace(/^[•\s]+/, '').trim());
       
+      // 为每个关键词创建单独的子节点
       contentPoints.forEach((point, pointIndex) => {
         const subBranchId = `${branchId}-sub-${pointIndex}`;
         
@@ -83,9 +86,9 @@ function createGraphFromStructure(structure) {
           id: `edge-to-subbranch-${index}-${pointIndex}`,
           source: branchId,
           target: subBranchId,
-          type: 'mindmap',  // 使用思维导图类型的连接线
+          type: 'mindmap',
           animated: true,
-          style: { stroke: '#888', strokeWidth: 1 },  // 子分支线条稍细
+          style: { stroke: '#888', strokeWidth: 1 },
           markerEnd: {
             type: 'arrowclosed',
             color: '#888',

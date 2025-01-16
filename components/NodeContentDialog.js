@@ -127,9 +127,41 @@ const NodeContentDialog = ({
 
   // 处理拖动结束
   const handleDragEnd = (event, info) => {
-    setPosition({ x: info.point.x, y: info.point.y });
+    // 获取窗口尺寸
+    const windowWidth = window.innerWidth;
+    const windowHeight = window.innerHeight;
+    
+    // 获取对话框尺寸
+    const dialogWidth = isFullscreen ? windowWidth : isMinimized ? 300 : 400;
+    const dialogHeight = isFullscreen ? windowHeight : isMinimized ? 60 : 600;
+    
+    // 计算有效的位置范围
+    const maxX = windowWidth - dialogWidth;
+    const maxY = windowHeight - dialogHeight;
+    
+    // 限制位置在有效范围内
+    const boundedX = Math.min(Math.max(0, info.point.x), maxX);
+    const boundedY = Math.min(Math.max(0, info.point.y), maxY);
+    
+    setPosition({ x: boundedX, y: boundedY });
     setIsDragging(false);
   };
+
+  // 初始化位置
+  useEffect(() => {
+    if (isVisible) {
+      const windowWidth = window.innerWidth;
+      const windowHeight = window.innerHeight;
+      const dialogWidth = isFullscreen ? windowWidth : isMinimized ? 300 : 400;
+      const dialogHeight = isFullscreen ? windowHeight : isMinimized ? 60 : 600;
+      
+      // 设置初始位置在右侧中间
+      setPosition({ 
+        x: windowWidth - dialogWidth - 20,
+        y: (windowHeight - dialogHeight) / 2
+      });
+    }
+  }, [isVisible, isFullscreen, isMinimized]);
 
   // 处理最小化/最大化
   const toggleMinimize = () => {
@@ -160,7 +192,7 @@ const NodeContentDialog = ({
         dragConstraints={constraintsRef}
         onDragStart={() => setIsDragging(true)}
         onDragEnd={handleDragEnd}
-        initial={position}
+        initial={false}
         animate={{
           x: isFullscreen ? 0 : position.x,
           y: isFullscreen ? 0 : position.y,
