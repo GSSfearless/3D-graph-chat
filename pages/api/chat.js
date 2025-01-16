@@ -146,32 +146,59 @@ ${context.map((item, index) => `标题: ${item.title}\n摘要: ${item.snippet}`)
       const jsonMatch = fullResponse.match(/\{[\s\S]*\}/);
       if (jsonMatch) {
         try {
-          const responseData = JSON.parse(jsonMatch[0]);
-          // 验证响应数据的格式
-          if (!responseData.content || typeof responseData.content !== 'string') {
-            throw new Error('Invalid response format: missing or invalid content');
+          // 清理可能的控制字符和非法字符
+          const cleanedJson = jsonMatch[0].replace(/[\u0000-\u001F\u007F-\u009F]/g, '')
+            .replace(/\\[^"\/bfnrtu]/g, '\\\\')
+            .replace(/\t/g, '\\t')
+            .replace(/\n/g, '\\n')
+            .replace(/\r/g, '\\r')
+            .replace(/\f/g, '\\f')
+            .replace(/\b/g, '\\b');
+
+          const responseData = JSON.parse(cleanedJson);
+          
+          // 验证和清理响应数据
+          const cleanedData = {
+            content: typeof responseData.content === 'string' 
+              ? responseData.content.trim() 
+              : '内容格式错误',
+            structure: {
+              mainNode: typeof responseData.structure?.mainNode === 'string'
+                ? responseData.structure.mainNode.trim()
+                : '主题',
+              subNodes: Array.isArray(responseData.structure?.subNodes)
+                ? responseData.structure.subNodes.map(node => ({
+                    title: typeof node.title === 'string' ? node.title.trim() : '分支',
+                    content: typeof node.content === 'string' ? node.content.trim() : ''
+                  }))
+                : []
+            }
+          };
+
+          // 验证数据完整性
+          if (!cleanedData.content || !cleanedData.structure.mainNode || cleanedData.structure.subNodes.length === 0) {
+            throw new Error('数据结构不完整');
           }
-          if (!responseData.structure || typeof responseData.structure !== 'object') {
-            throw new Error('Invalid response format: missing or invalid structure');
-          }
-          return new Response(JSON.stringify(responseData), {
+
+          return new Response(JSON.stringify(cleanedData), {
             headers: { 'Content-Type': 'application/json' }
           });
         } catch (parseError) {
           console.error('Error parsing or validating JSON response:', parseError);
           // 创建格式化的错误响应
           const errorResponse = {
-            content: "抱歉，处理响应时出现格式错误。",
+            content: "抱歉，处理响应时出现格式错误，正在重试...",
             structure: {
-              mainNode: "错误",
+              mainNode: "处理中",
               subNodes: [{
-                title: "错误信息",
-                content: parseError.message
+                title: "请稍候",
+                content: "系统正在重新处理您的请求"
               }]
             }
           };
           return new Response(JSON.stringify(errorResponse), {
-            headers: { 'Content-Type': 'application/json' }
+            headers: { 'Content-Type': 'application/json' },
+            status: 500
           });
         }
       }
@@ -181,20 +208,21 @@ ${context.map((item, index) => `标题: ${item.title}\n摘要: ${item.snippet}`)
 
     // 如果无法解析JSON，返回一个格式化的默认结构
     const defaultResponse = {
-      content: fullResponse,
+      content: "抱歉，生成回答时出现问题，请重试。",
       structure: {
-        mainNode: query,
+        mainNode: "处理出错",
         subNodes: [
           {
-            title: "主要内容",
-            content: fullResponse
+            title: "建议操作",
+            content: "请刷新页面重新尝试"
           }
         ]
       }
     };
 
     return new Response(JSON.stringify(defaultResponse), {
-      headers: { 'Content-Type': 'application/json' }
+      headers: { 'Content-Type': 'application/json' },
+      status: 500
     });
   } catch (error) {
     console.error('Chat API error:', error);
