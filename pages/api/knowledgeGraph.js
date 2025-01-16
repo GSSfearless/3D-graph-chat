@@ -63,10 +63,20 @@ function createGraphFromStructure(structure) {
     if (subNode.content) {
       // 分割内容并过滤空行
       const contentPoints = subNode.content
-        .split('\n')
-        .map(point => point.trim())
-        .filter(point => point && point.length > 0)
-        .map(point => point.replace(/^[•\s]+/, '').trim());
+        .split('\n')  // 先按换行符分割
+        .map(point => point.trim())  // 去除每行首尾空格
+        .filter(point => point && point.length > 0)  // 过滤空行
+        .map(point => {
+          // 移除开头的符号（如 •、-、* 等）
+          point = point.replace(/^[•\-\*\s]+/, '').trim();
+          // 如果包含逗号或分号，进一步分割
+          if (point.includes('，') || point.includes('、') || point.includes(';') || point.includes('；')) {
+            return point.split(/[，、;；]/).map(p => p.trim()).filter(p => p);
+          }
+          return point;
+        })
+        .flat()  // 展平数组
+        .filter(point => point && point.length > 0);  // 再次过滤空值
       
       // 为每个关键词创建单独的子节点
       contentPoints.forEach((point, pointIndex) => {
