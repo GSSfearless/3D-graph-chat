@@ -226,112 +226,124 @@ export default function Search() {
     setGraphError(null);
     setSearchResults([]);
 
-    try {
-      // 使用fetch发送POST请求
-      const response = await fetch('/api/rag-search', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ query: searchQuery }),
-      });
+    const maxRetries = 3;
+    let retryCount = 0;
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const searchData = await response.json();
-      if (searchData.results) {
-        setSearchResults(searchData.results);
-      }
-
-      setIsCollecting(false);
-      setIsProcessing(true);
-
-      // Get AI answer
-      setStreamedAnswer('');
-      const chatResponse = await fetch('/api/chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ context: searchData.results, query: searchQuery }),
-      });
-
-      if (!chatResponse.ok) {
-        throw new Error(`HTTP error! status: ${chatResponse.status}`);
-      }
-
-      const chatData = await chatResponse.json();
-      
-      // 添加数据格式验证
-      if (!chatData || typeof chatData !== 'object') {
-        throw new Error('Invalid response format: response is not an object');
-      }
-      
-      if (!chatData.content || typeof chatData.content !== 'string') {
-        throw new Error('Invalid response format: missing or invalid content');
-      }
-      
-      if (!chatData.structure || typeof chatData.structure !== 'object') {
-        throw new Error('Invalid response format: missing or invalid structure');
-      }
-      
-      setStreamedAnswer(chatData.content);
-      
-      // 创建初始回答节点
-      setInitialAnswerNode({
-        id: 'initial-answer',
-        data: {
-          label: '完整回答',
-          content: chatData.content,
-          type: 'center'
-        }
-      });
-      setInitialAnswerVisible(true);
-      
-      // 使用相同的结构生成知识图谱
+    async function tryRequest() {
       try {
-        const graphResponse = await fetch('/api/knowledgeGraph', {
+        const response = await fetch('/api/rag-search', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ structure: chatData.structure }),
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ query: searchQuery }),
         });
 
-        if (!graphResponse.ok) {
-          throw new Error(`HTTP error! status: ${graphResponse.status}`);
+        if (!response.ok) {
+          if (response.status === 504 && retryCount < maxRetries) {
+            retryCount++;
+            console.log(`重试第 ${retryCount} 次...`);
+            await new Promise(resolve => setTimeout(resolve, 2000 * retryCount)); // 递增延迟
+            return tryRequest();
+          }
+          throw new Error(`HTTP error! status: ${response.status}`);
         }
 
-        const graphData = await graphResponse.json();
+        const searchData = await response.json();
+        if (searchData.results) {
+          setSearchResults(searchData.results);
+        }
+
+        setIsCollecting(false);
+        setIsProcessing(true);
+
+        // Get AI answer
+        setStreamedAnswer('');
+        const chatResponse = await fetch('/api/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ context: searchData.results, query: searchQuery }),
+        });
+
+        if (!chatResponse.ok) {
+          throw new Error(`Chat API error! status: ${chatResponse.status}`);
+        }
+
+        const chatData = await chatResponse.json();
         
-        if (graphData && graphData.nodes && graphData.edges) {
-          setKnowledgeGraphData(graphData);
-          // 保存节点解释
-          const explanations = {};
-          graphData.nodes.forEach(node => {
-            if (node.data.content) {
-              explanations[node.id] = node.data.content;
-            }
-          });
-          setNodeExplanations(explanations);
-        } else {
-          console.error('Invalid graph data structure:', graphData);
-          setGraphError('Invalid graph data structure');
+        if (!chatData || typeof chatData !== 'object') {
+          throw new Error('Invalid response format: response is not an object');
         }
-      } catch (error) {
-        console.error('Error fetching knowledge graph:', error);
-        setGraphError('Failed to load knowledge graph');
-      }
+        
+        if (!chatData.content || typeof chatData.content !== 'string') {
+          throw new Error('Invalid response format: missing or invalid content');
+        }
+        
+        if (!chatData.structure || typeof chatData.structure !== 'object') {
+          throw new Error('Invalid response format: missing or invalid structure');
+        }
+        
+        setStreamedAnswer(chatData.content);
+        
+        // 创建初始回答节点
+        setInitialAnswerNode({
+          id: 'initial-answer',
+          data: {
+            label: '完整回答',
+            content: chatData.content,
+            type: 'center'
+          }
+        });
+        setInitialAnswerVisible(true);
+        
+        try {
+          const graphResponse = await fetch('/api/knowledgeGraph', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ structure: chatData.structure }),
+          });
 
-      // After all processing is complete
-      setIsProcessing(false);
-      setIsCollecting(false);
-      setCollectedPages(0);
-      setTotalPages(0);
-    } catch (error) {
-      console.error('Error during search:', error);
-      setIsProcessing(false);
-      setIsCollecting(false);
+          if (!graphResponse.ok) {
+            throw new Error(`Knowledge Graph API error! status: ${graphResponse.status}`);
+          }
+
+          const graphData = await graphResponse.json();
+          
+          if (graphData && graphData.nodes && graphData.edges) {
+            setKnowledgeGraphData(graphData);
+            const explanations = {};
+            graphData.nodes.forEach(node => {
+              if (node.data.content) {
+                explanations[node.id] = node.data.content;
+              }
+            });
+            setNodeExplanations(explanations);
+          } else {
+            console.error('Invalid graph data structure:', graphData);
+            setGraphError('知识图谱数据格式无效');
+          }
+        } catch (error) {
+          console.error('Error fetching knowledge graph:', error);
+          setGraphError('知识图谱生成失败，请稍后重试');
+        }
+
+      } catch (error) {
+        console.error('Error during search:', error);
+        if (error.message.includes('504')) {
+          setGraphError('服务暂时无响应，请稍后重试');
+        } else {
+          setGraphError('搜索过程中出现错误，请重试');
+        }
+        setIsProcessing(false);
+        setIsCollecting(false);
+      }
     }
-    setLoading(false);
+
+    try {
+      await tryRequest();
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
   useEffect(() => {
