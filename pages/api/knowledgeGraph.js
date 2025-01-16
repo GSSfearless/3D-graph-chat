@@ -61,7 +61,11 @@ function createGraphFromStructure(structure) {
 
     // 如果有子内容，创建子分支
     if (subNode.content) {
-      const contentPoints = subNode.content.split('•').filter(point => point.trim());
+      const contentPoints = subNode.content
+        .split('\n')
+        .filter(point => point.trim())
+        .map(point => point.replace(/^[•\s]+/, '').trim());
+      
       contentPoints.forEach((point, pointIndex) => {
         const subBranchId = `${branchId}-sub-${pointIndex}`;
         
@@ -69,7 +73,7 @@ function createGraphFromStructure(structure) {
         nodes.push({
           id: subBranchId,
           data: { 
-            label: point.trim(),
+            label: point,
             type: 'subbranch'  // 标记为子分支
           }
         });

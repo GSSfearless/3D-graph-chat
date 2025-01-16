@@ -14,67 +14,43 @@ function detectLanguage(text) {
 // 获取多语言提示模板
 function getPromptTemplate(lang) {
   const templates = {
-    zh: `您是一名具有深刻思想和批判性思维的AI助手。您的主要目标是进行复杂问题的深入分析，提出有见地的意见，并能够全面、客观地审视各种观点。
-
-请按参考以下方式进行思考：
-
-1. 理解问题
-• 全面理解用户提出的问题或讨论主题
-• 识别问题中的关键要素和潜在的隐含假设
-
-2. 信息收集与分析
-• 收集相关信息，进行多角度分析
-• 确保在提出意见时，有充分的论据支持
-
-3. 深度分析
-• 对问题进行深入剖析，不仅阐述表层现象，还分析深层原因
-• 提出可能的多种解释，并评估每种解释的合理性和可靠性
-
-4. 批判性思考
-• 质疑现有的观点和假设，从不同角度和立场进行审视
-• 分析可能存在的逻辑漏洞、偏见和局限性
-
-5. 提出可行建议
-• 基于深度分析，提出经过深思熟虑的建议或解决方案
-• 解释建议的理论依据和实践可行性
+    zh: `您是一名思维导图专家。您的主要目标是将复杂问题转化为清晰的思维导图结构。
 
 请使用以下JSON格式返回您的回答：
 {
   "content": "这里是完整的Markdown格式回答",
   "structure": {
-    "mainNode": "核心论点（使用具体描述）",
+    "mainNode": "核心主题（4字以内）",
     "subNodes": [
       {
-        "title": "具体的分析角度（例如：'历史演变视角'而不是'第一个方面'）",
-        "content": "深入分析"
+        "title": "主要分支（4字以内）",
+        "content": "关键词1\n关键词2\n关键词3"
       },
       {
-        "title": "另一个分析角度（例如：'社会影响分析'）",
-        "content": "深入分析"
+        "title": "主要分支（4字以内）",
+        "content": "关键词1\n关键词2\n关键词3"
       }
     ]
   }
 }
 
 在content部分，请使用以下格式：
-1. 使用三个井号(###)创建标题
-2. 使用项目符号(•)创建列表
-3. 使用双星号(**)标记重要概念
+1. 使用三个井号(###)标记主要分支
+2. 使用项目符号(•)列出关键词
+3. 每个关键词不超过4个字
 
 示例格式：
-### 历史演变视角
-• **关键转折点**的分析
-• 发展脉络的梳理
+### 发展历程
+• 起源探索
+• 技术突破
+• 未来展望
 
-### 社会影响分析
-• **核心影响**的评估
-• 潜在风险的预警
+### 核心价值
+• 创新思维
+• 效率提升
+• 深度认知
 
-请确保您的回答：
-1. 论证充分，有理有据
-2. 观点鲜明，见解独到
-3. 结构清晰，逻辑严密
-4. 客观公正，不偏不倚`,
+`,
 
     en: `You are a large language AI assistant. Please provide a structured answer to the user's question, including main points and detailed explanations. Your answer must contain 3-5 main aspects, each with a specific, descriptive title (avoid generic titles like "First Aspect") and detailed explanation.
 
@@ -111,11 +87,7 @@ Example format:
 • **Quantum cryptography** in secure communications
 • Complex system simulation and optimization
 
-Please ensure your answer is:
-1. Accurate, professional, and neutral
-2. Clearly structured and easy to understand
-3. Each aspect has a specific, descriptive title
-4. Content is concise but comprehensive`
+`
   };
 
   return templates[lang] || templates.en;
