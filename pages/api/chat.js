@@ -147,101 +147,125 @@ ${context.map((item, index) => `标题: ${item.title}\n摘要: ${item.snippet}`)
       if (jsonMatch) {
         try {
           // 清理可能的控制字符和非法字符
-          const cleanedJson = jsonMatch[0].replace(/[\u0000-\u001F\u007F-\u009F]/g, '')
+          const cleanedJson = jsonMatch[0]
+            .replace(/[\u0000-\u001F\u007F-\u009F]/g, '')
             .replace(/\\[^"\/bfnrtu]/g, '\\\\')
-            .replace(/\t/g, '\\t')
-            .replace(/\n/g, '\\n')
-            .replace(/\r/g, '\\r')
-            .replace(/\f/g, '\\f')
-            .replace(/\b/g, '\\b');
+            .replace(/[\t\n\r\f\b]/g, ' ')
+            .replace(/\s+/g, ' ');
 
-          const responseData = JSON.parse(cleanedJson);
+          let responseData;
+          try {
+            responseData = JSON.parse(cleanedJson);
+          } catch (jsonError) {
+            console.error('JSON parse error:', jsonError);
+            // 如果JSON解析失败，创建一个基本的响应结构
+            responseData = {
+              content: fullResponse,
+              structure: {
+                mainNode: query.slice(0, 10) + '...',
+                subNodes: [
+                  {
+                    title: '主要内容',
+                    content: fullResponse
+                  }
+                ]
+              }
+            };
+          }
           
           // 验证和清理响应数据
           const cleanedData = {
             content: typeof responseData.content === 'string' 
               ? responseData.content.trim() 
-              : '内容格式错误',
+              : fullResponse,
             structure: {
               mainNode: typeof responseData.structure?.mainNode === 'string'
                 ? responseData.structure.mainNode.trim()
-                : '主题',
+                : query.slice(0, 10) + '...',
               subNodes: Array.isArray(responseData.structure?.subNodes)
                 ? responseData.structure.subNodes.map(node => ({
                     title: typeof node.title === 'string' ? node.title.trim() : '分支',
                     content: typeof node.content === 'string' ? node.content.trim() : ''
                   }))
-                : []
+                : [
+                    {
+                      title: '主要内容',
+                      content: fullResponse
+                    }
+                  ]
             }
           };
-
-          // 验证数据完整性
-          if (!cleanedData.content || !cleanedData.structure.mainNode || cleanedData.structure.subNodes.length === 0) {
-            throw new Error('数据结构不完整');
-          }
 
           return new Response(JSON.stringify(cleanedData), {
             headers: { 'Content-Type': 'application/json' }
           });
-        } catch (parseError) {
-          console.error('Error parsing or validating JSON response:', parseError);
-          // 创建格式化的错误响应
-          const errorResponse = {
-            content: "抱歉，处理响应时出现格式错误，正在重试...",
+        } catch (error) {
+          console.error('Error in response processing:', error);
+          // 返回一个基本的响应结构
+          return new Response(JSON.stringify({
+            content: fullResponse,
             structure: {
-              mainNode: "处理中",
-              subNodes: [{
-                title: "请稍候",
-                content: "系统正在重新处理您的请求"
-              }]
+              mainNode: query.slice(0, 10) + '...',
+              subNodes: [
+                {
+                  title: '完整回答',
+                  content: fullResponse
+                }
+              ]
             }
-          };
-          return new Response(JSON.stringify(errorResponse), {
-            headers: { 'Content-Type': 'application/json' },
-            status: 500
+          }), {
+            headers: { 'Content-Type': 'application/json' }
           });
         }
       }
-    } catch (parseError) {
-      console.error('Error parsing JSON response:', parseError);
-    }
 
-    // 如果无法解析JSON，返回一个格式化的默认结构
-    const defaultResponse = {
-      content: "抱歉，生成回答时出现问题，请重试。",
+      // 如果没有找到JSON结构，返回基本响应
+      return new Response(JSON.stringify({
+        content: fullResponse,
+        structure: {
+          mainNode: query.slice(0, 10) + '...',
+          subNodes: [
+            {
+              title: '完整回答',
+              content: fullResponse
+            }
+          ]
+        }
+      }), {
+        headers: { 'Content-Type': 'application/json' }
+      });
+    } catch (parseError) {
+      console.error('Error in response parsing:', parseError);
+      return new Response(JSON.stringify({
+        content: fullResponse,
+        structure: {
+          mainNode: query.slice(0, 10) + '...',
+          subNodes: [
+            {
+              title: '完整回答',
+              content: fullResponse
+            }
+          ]
+        }
+      }), {
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
+  } catch (error) {
+    console.error('Chat API error:', error);
+    return new Response(JSON.stringify({
+      content: "抱歉，处理您的请求时出现错误，请稍后重试。",
       structure: {
-        mainNode: "处理出错",
+        mainNode: "处理中",
         subNodes: [
           {
-            title: "建议操作",
-            content: "请刷新页面重新尝试"
+            title: "系统提示",
+            content: "正在尝试重新处理您的请求"
           }
         ]
       }
-    };
-
-    return new Response(JSON.stringify(defaultResponse), {
-      headers: { 'Content-Type': 'application/json' },
-      status: 500
+    }), {
+      headers: { 'Content-Type': 'application/json' }
     });
-  } catch (error) {
-    console.error('Chat API error:', error);
-    return new Response(
-      JSON.stringify({ 
-        error: error.message,
-        content: "抱歉，处理您的请求时出现错误。",
-        structure: {
-          mainNode: "错误",
-          subNodes: [{
-            title: "错误信息",
-            content: error.message
-          }]
-        }
-      }), 
-      { 
-        status: 500,
-        headers: { 'Content-Type': 'application/json' }
-      }
-    );
   }
 }
