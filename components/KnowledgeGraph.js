@@ -176,9 +176,10 @@ const KnowledgeGraph = ({ data, onNodeClick, onNodeDragStop, onNodeDelete, layou
   useEffect(() => {
     if (data && data.nodes && data.edges) {
       try {
-        // 为节点添加标签编辑功能
+        // 为节点添加标签编辑功能和类型
         const nodesWithEdit = data.nodes.map(node => ({
           ...node,
+          type: 'custom', // 添加自定义节点类型
           data: {
             ...node.data,
             onLabelChange: (newLabel) => handleLabelChange(node.id, newLabel)
@@ -196,7 +197,15 @@ const KnowledgeGraph = ({ data, onNodeClick, onNodeDragStop, onNodeDelete, layou
         setEdges(layoutedEdges);
       } catch (error) {
         console.error('Error in layout calculation:', error);
-        setNodes(data.nodes);
+        // 即使出错也要确保节点使用自定义类型
+        setNodes(data.nodes.map(node => ({
+          ...node,
+          type: 'custom',
+          data: {
+            ...node.data,
+            onLabelChange: (newLabel) => handleLabelChange(node.id, newLabel)
+          }
+        })));
         setEdges(data.edges);
       }
     }
