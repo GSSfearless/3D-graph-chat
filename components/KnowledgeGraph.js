@@ -23,7 +23,6 @@ const nodeStyles = {
     color: '#2C5282',
     fontWeight: 'bold',
     background: '#EBF8FF',
-    border: '3px solid #4299E1',
     borderRadius: '30px',
     padding: '15px 30px',
     minWidth: '200px',
@@ -36,7 +35,6 @@ const nodeStyles = {
     color: '#2D3748',
     fontWeight: '600',
     background: '#F7FAFC',
-    border: '2px solid #A0AEC0',
     borderRadius: '25px',
     padding: '12px 24px',
     minWidth: '150px',
@@ -49,7 +47,6 @@ const nodeStyles = {
     color: '#4A5568',
     fontWeight: '500',
     background: '#FFFFFF',
-    border: '1px solid #CBD5E0',
     borderRadius: '20px',
     padding: '8px 16px',
     minWidth: '120px',
@@ -71,13 +68,14 @@ const CustomNode = ({ data, isConnectable, selected }) => {
     if (selected) {
       return {
         ...baseStyle,
-        boxShadow: '0 0 0 2px #4299E1',
+        background: '#EBF8FF',
       };
     }
     return baseStyle;
   };
 
-  const handleDoubleClick = () => {
+  const handleClick = (e) => {
+    e.stopPropagation();
     setIsEditing(true);
   };
 
@@ -132,7 +130,7 @@ const CustomNode = ({ data, isConnectable, selected }) => {
         />
       ) : (
         <div
-          onDoubleClick={handleDoubleClick}
+          onClick={handleClick}
           className="w-full text-center cursor-text"
           style={{
             wordBreak: 'break-word',
@@ -205,12 +203,8 @@ const KnowledgeGraph = ({ data, onNodeClick, onNodeDragStop, onNodeDelete, layou
   }, [data, handleLabelChange, layout]);
 
   const handleNodeClick = useCallback((event, node) => {
-    event.preventDefault();
-    if (onNodeClick) {
-      const cachedExplanation = explanationCache.get(node.id);
-      onNodeClick(node, cachedExplanation);
-    }
-  }, [onNodeClick, explanationCache]);
+    // 不再触发搜索，让节点组件自己处理点击事件
+  }, []);
 
   const handleNodeDragStop = useCallback((event, node) => {
     if (onNodeDragStop) {
