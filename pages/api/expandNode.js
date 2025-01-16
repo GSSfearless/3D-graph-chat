@@ -39,7 +39,7 @@ export default async function handler(req, res) {
     return res.status(405).json({ message: '只允许 POST 请求' });
   }
 
-  const { nodeId, label, parentPosition } = req.body;
+  const { nodeId, label, parentPosition, nodeType } = req.body;
 
   if (!nodeId || !label) {
     return res.status(400).json({ message: '缺少必要的参数' });
@@ -50,8 +50,21 @@ export default async function handler(req, res) {
     const completion = await openai.chat.completions.create({
       model: "gpt-3.5-turbo",
       messages: [
-        {role: "system", content: "你是一个专家，能够深入解析复杂概念。请提供一个 JSON 格式的响应，包含 'nodes' 数组。每个节点应该有 'id' 和 'label' 属性。请只生成两个新节点，这两个节点应该是对给定概念的更详细解释或延伸。"},
-        {role: "user", content: `请为以下概念提供两个更详细的解释或相关概念：${label}`}
+        {
+          role: "system", 
+          content: `你是一个思维导图专家，请为给定的主题生成相关的分支概念。
+          规则：
+          1. 生成的内容要简洁，每个分支不超过4个字
+          2. 内容要有逻辑性和关联性
+          3. 生成的分支数量：
+             - 如果是主分支，生成3个分支
+             - 如果是子分支，生成2个更细节的分支
+          4. 返回格式为JSON，包含nodes数组，每个节点有id和label属性`
+        },
+        {
+          role: "user", 
+          content: `请为主题"${label}"生成${nodeType === 'branch' ? '2' : '3'}个分支概念`
+        }
       ],
     });
 
@@ -63,19 +76,27 @@ export default async function handler(req, res) {
     let expandedData = parseJSONSafely(cleanedResponse);
     console.log('Parsed expanded data:', expandedData);
 
-    if (!expandedData || !expandedData.nodes || !Array.isArray(expandedData.nodes) || expandedData.nodes.length === 0) {
+    if (!expandedData || !expandedData.nodes || !Array.isArray(expandedData.nodes)) {
       console.error('Invalid expandedData structure:', expandedData);
+      // 生成默认分支
       expandedData = {
-        nodes: [
-          { id: `${nodeId}-child-1`, label: `Aspect 1 of ${label}` },
-          { id: `${nodeId}-child-2`, label: `Aspect 2 of ${label}` }
+        nodes: nodeType === 'branch' ? [
+          { id: `${nodeId}-sub-1`, label: '要点一' },
+          { id: `${nodeId}-sub-2`, label: '要点二' }
+        ] : [
+          { id: `${nodeId}-branch-1`, label: '分支一' },
+          { id: `${nodeId}-branch-2`, label: '分支二' },
+          { id: `${nodeId}-branch-3`, label: '分支三' }
         ]
       };
     }
 
     const processedNodes = expandedData.nodes.map((node, index) => ({
-      id: node.id || `${nodeId}-child-${index + 1}`,
-      data: { label: node.label || `Aspect ${index + 1} of ${label}` },
+      id: node.id || `${nodeId}-${nodeType === 'branch' ? 'sub' : 'branch'}-${index + 1}`,
+      data: { 
+        label: node.label || `${nodeType === 'branch' ? '要点' : '分支'}${index + 1}`,
+        type: nodeType === 'branch' ? 'subbranch' : 'branch'
+      },
     }));
 
     const parentNode = { id: nodeId, position: parentPosition || { x: 0, y: 0 } };
@@ -86,14 +107,12 @@ export default async function handler(req, res) {
       id: `${nodeId}-${node.id}`,
       source: nodeId,
       target: node.id,
-      label: '详细',
-      type: 'smoothstep',
+      type: 'mindmap',
       animated: true,
-      labelStyle: { fill: '#888', fontWeight: 700 },
-      labelBgStyle: { fill: '#fff', fillOpacity: 0.7 },
-      labelBgPadding: [8, 4],
-      labelBgBorderRadius: 4,
-      style: { stroke: '#888', strokeWidth: 2 },
+      style: { 
+        stroke: '#888', 
+        strokeWidth: nodeType === 'branch' ? 1 : 2 
+      },
       markerEnd: {
         type: 'arrowclosed',
         color: '#888',
@@ -104,6 +123,7 @@ export default async function handler(req, res) {
       nodes: layoutedNodes,
       edges: newEdges,
     };
+    
     console.log('Sending response:', responseData);
     res.status(200).json(responseData);
   } catch (error) {

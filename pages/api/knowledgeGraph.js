@@ -14,42 +14,81 @@ function detectLanguage(text) {
 }
 
 function createGraphFromStructure(structure) {
+  // 创建中心主题节点
   const nodes = [
     {
       id: 'root',
-      data: { label: structure.mainNode }
+      data: { 
+        label: structure.mainNode,
+        type: 'center'  // 标记为中心节点
+      }
     }
   ];
 
   const edges = [];
-
+  
+  // 处理主要分支
   structure.subNodes.forEach((subNode, index) => {
-    const nodeId = `node-${index}`;
+    const branchId = `branch-${index}`;
+    
+    // 添加主分支节点
     nodes.push({
-      id: nodeId,
+      id: branchId,
       data: { 
         label: subNode.title,
-        content: subNode.content 
+        content: subNode.content,
+        type: 'branch'  // 标记为主分支
       }
     });
 
+    // 连接中心节点和主分支
     edges.push({
-      id: `edge-${index}`,
+      id: `edge-to-branch-${index}`,
       source: 'root',
-      target: nodeId,
-      label: '包含',
-      type: 'smoothstep',
+      target: branchId,
+      type: 'mindmap',  // 使用思维导图类型的连接线
       animated: true,
+      style: { stroke: '#888', strokeWidth: 2 },
       labelStyle: { fill: '#888', fontWeight: 700 },
       labelBgStyle: { fill: '#fff', fillOpacity: 0.7 },
       labelBgPadding: [8, 4],
       labelBgBorderRadius: 4,
-      style: { stroke: '#888' },
       markerEnd: {
         type: 'arrowclosed',
         color: '#888',
       }
     });
+
+    // 如果有子内容，创建子分支
+    if (subNode.content) {
+      const contentPoints = subNode.content.split('•').filter(point => point.trim());
+      contentPoints.forEach((point, pointIndex) => {
+        const subBranchId = `${branchId}-sub-${pointIndex}`;
+        
+        // 添加子分支节点
+        nodes.push({
+          id: subBranchId,
+          data: { 
+            label: point.trim(),
+            type: 'subbranch'  // 标记为子分支
+          }
+        });
+
+        // 连接主分支和子分支
+        edges.push({
+          id: `edge-to-subbranch-${index}-${pointIndex}`,
+          source: branchId,
+          target: subBranchId,
+          type: 'mindmap',  // 使用思维导图类型的连接线
+          animated: true,
+          style: { stroke: '#888', strokeWidth: 1 },  // 子分支线条稍细
+          markerEnd: {
+            type: 'arrowclosed',
+            color: '#888',
+          }
+        });
+      });
+    }
   });
 
   return { nodes, edges };

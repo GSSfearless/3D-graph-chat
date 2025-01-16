@@ -18,42 +18,42 @@ const Background = dynamic(() => import('react-flow-renderer').then(mod => mod.B
 
 // 定义节点样式
 const nodeStyles = {
-  root: {
-    fontSize: '20px',
+  center: {
+    fontSize: '24px',
     color: '#2C5282',
     fontWeight: 'bold',
     background: '#EBF8FF',
-    border: '2px solid #4299E1',
-    borderRadius: '25px',
-    padding: '12px 24px',
-    minWidth: '150px',
-    maxWidth: '250px',
-    boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+    border: '3px solid #4299E1',
+    borderRadius: '30px',
+    padding: '15px 30px',
+    minWidth: '200px',
+    maxWidth: '300px',
+    boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
     textAlign: 'center',
   },
-  mainBranch: {
-    fontSize: '16px',
+  branch: {
+    fontSize: '18px',
     color: '#2D3748',
     fontWeight: '600',
     background: '#F7FAFC',
     border: '2px solid #A0AEC0',
-    borderRadius: '20px',
-    padding: '8px 16px',
-    minWidth: '120px',
-    maxWidth: '200px',
-    boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+    borderRadius: '25px',
+    padding: '12px 24px',
+    minWidth: '150px',
+    maxWidth: '250px',
+    boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
     textAlign: 'center',
   },
-  subBranch: {
-    fontSize: '14px',
+  subbranch: {
+    fontSize: '16px',
     color: '#4A5568',
     fontWeight: '500',
     background: '#FFFFFF',
     border: '1px solid #CBD5E0',
-    borderRadius: '15px',
-    padding: '6px 12px',
-    minWidth: '100px',
-    maxWidth: '180px',
+    borderRadius: '20px',
+    padding: '8px 16px',
+    minWidth: '120px',
+    maxWidth: '200px',
     boxShadow: '0 1px 2px rgba(0,0,0,0.05)',
     textAlign: 'center',
   }
@@ -65,13 +65,27 @@ const CustomNode = ({ data, isConnectable, selected }) => {
   const [label, setLabel] = useState(data.label);
   const inputRef = useRef(null);
 
+  // 根据节点类型获取样式
+  const getNodeStyle = () => {
+    const baseStyle = nodeStyles[data.type || 'branch'];
+    if (selected) {
+      return {
+        ...baseStyle,
+        boxShadow: '0 0 0 2px #4299E1',
+      };
+    }
+    return baseStyle;
+  };
+
   const handleDoubleClick = () => {
     setIsEditing(true);
   };
 
   const handleBlur = () => {
     setIsEditing(false);
-    const truncatedLabel = label.length > 20 ? label.substring(0, 20) + '...' : label;
+    // 根据节点类型设置不同的标签长度限制
+    const maxLength = data.type === 'center' ? 30 : data.type === 'branch' ? 25 : 20;
+    const truncatedLabel = label.length > maxLength ? label.substring(0, maxLength) + '...' : label;
     if (data.onLabelChange) {
       data.onLabelChange(truncatedLabel);
     }
@@ -92,7 +106,7 @@ const CustomNode = ({ data, isConnectable, selected }) => {
   }, [isEditing]);
 
   return (
-    <div style={data.style || {}}>
+    <div style={getNodeStyle()}>
       <Handle
         type="target"
         position={Position.Left}
