@@ -180,6 +180,8 @@ export default function Search() {
   const [selectedNode, setSelectedNode] = useState(null);
   const [isNodeContentVisible, setIsNodeContentVisible] = useState(false);
   const [cachedExplanations, setCachedExplanations] = useState(new Map());
+  const [initialAnswerVisible, setInitialAnswerVisible] = useState(false);
+  const [initialAnswerNode, setInitialAnswerNode] = useState(null);
 
   const defaultQuery = "What is the answer to life, the universe, and everything?";
 
@@ -274,6 +276,17 @@ export default function Search() {
       }
       
       setStreamedAnswer(chatData.content);
+      
+      // 创建初始回答节点
+      setInitialAnswerNode({
+        id: 'initial-answer',
+        data: {
+          label: '完整回答',
+          content: chatData.content,
+          type: 'center'
+        }
+      });
+      setInitialAnswerVisible(true);
       
       // 使用相同的结构生成知识图谱
       try {
@@ -728,11 +741,19 @@ export default function Search() {
       )}
 
       <NodeContentDialog
-        node={selectedNode}
-        isVisible={isNodeContentVisible}
-        onClose={handleCloseNodeContent}
+        node={selectedNode || initialAnswerNode}
+        isVisible={isNodeContentVisible || initialAnswerVisible}
+        onClose={() => {
+          if (selectedNode) {
+            setIsNodeContentVisible(false);
+            setSelectedNode(null);
+          } else {
+            setInitialAnswerVisible(false);
+          }
+        }}
         currentQuestion={currentQuestion}
         cachedExplanation={selectedNode ? cachedExplanations.get(selectedNode.id) : null}
+        isInitialAnswer={!selectedNode && initialAnswerVisible}
       />
     </div>
   );

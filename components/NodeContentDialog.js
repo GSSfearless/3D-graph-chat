@@ -19,7 +19,14 @@ const thinkingSteps = [
   "马上就好..."
 ];
 
-const NodeContentDialog = ({ node, onClose, isVisible, currentQuestion, cachedExplanation }) => {
+const NodeContentDialog = ({ 
+  node, 
+  onClose, 
+  isVisible, 
+  currentQuestion, 
+  cachedExplanation,
+  isInitialAnswer = false 
+}) => {
   const [isDragging, setIsDragging] = useState(false);
   const [position, setPosition] = useState({ x: window.innerWidth - 420, y: 100 });
   const [isMinimized, setIsMinimized] = useState(false);
@@ -33,7 +40,10 @@ const NodeContentDialog = ({ node, onClose, isVisible, currentQuestion, cachedEx
 
   useEffect(() => {
     if (isVisible && node) {
-      if (cachedExplanation) {
+      if (isInitialAnswer) {
+        // 如果是初始回答，直接使用内容
+        setExplanation(node.data.content);
+      } else if (cachedExplanation) {
         // 如果有缓存的解释，直接使用
         setExplanation(cachedExplanation);
       } else {
@@ -46,7 +56,7 @@ const NodeContentDialog = ({ node, onClose, isVisible, currentQuestion, cachedEx
         clearInterval(thinkingInterval.current);
       }
     };
-  }, [isVisible, node, cachedExplanation]);
+  }, [isVisible, node, cachedExplanation, isInitialAnswer]);
 
   // 打字机效果
   useEffect(() => {
@@ -172,7 +182,7 @@ const NodeContentDialog = ({ node, onClose, isVisible, currentQuestion, cachedEx
           {/* 标题栏 */}
           <div className="flex items-center justify-between p-4 bg-gray-50/80 border-b border-gray-200 cursor-grab">
             <h3 className="text-lg font-semibold text-gray-700 truncate pr-4">
-              {node?.data?.label || '节点内容'}
+              {isInitialAnswer ? '完整回答' : (node?.data?.label || '节点内容')}
             </h3>
             <div className="flex items-center space-x-2">
               <button
@@ -228,52 +238,6 @@ const NodeContentDialog = ({ node, onClose, isVisible, currentQuestion, cachedEx
                 </div>
               ) : (
                 <div className="markdown-content prose prose-slate max-w-none">
-                  <style jsx global>{`
-                    .markdown-content h1 {
-                      font-size: 1.5rem;
-                      font-weight: 600;
-                      margin-bottom: 1rem;
-                      color: #1a202c;
-                    }
-                    .markdown-content h2 {
-                      font-size: 1.25rem;
-                      font-weight: 600;
-                      margin-bottom: 0.75rem;
-                      color: #2d3748;
-                    }
-                    .markdown-content h3 {
-                      font-size: 1.125rem;
-                      font-weight: 600;
-                      margin-bottom: 0.5rem;
-                      color: #4a5568;
-                    }
-                    .markdown-content p {
-                      margin-bottom: 1rem;
-                      line-height: 1.625;
-                      color: #4a5568;
-                    }
-                    .markdown-content ul {
-                      list-style-type: disc;
-                      margin-left: 1.5rem;
-                      margin-bottom: 1rem;
-                    }
-                    .markdown-content li {
-                      margin-bottom: 0.5rem;
-                      line-height: 1.5;
-                    }
-                    .markdown-content strong {
-                      color: #2b6cb0;
-                      font-weight: 600;
-                    }
-                    .markdown-content blockquote {
-                      border-left: 4px solid #e2e8f0;
-                      padding-left: 1rem;
-                      margin-left: 0;
-                      margin-right: 0;
-                      font-style: italic;
-                      color: #718096;
-                    }
-                  `}</style>
                   <div 
                     dangerouslySetInnerHTML={{ 
                       __html: renderMarkdown(displayedExplanation) || '正在加载解释...'
