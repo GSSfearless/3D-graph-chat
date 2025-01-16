@@ -61,19 +61,10 @@ function createGraphFromStructure(structure) {
 
     // 如果有子内容，创建子分支
     if (subNode.content) {
-      // 分割内容并清理
       const contentPoints = subNode.content
-        .split(/[\n•]/) // 同时处理换行符和项目符号
-        .map(point => point.trim())
-        .filter(point => point.length > 0)
-        .reduce((acc, point) => {
-          // 如果一个点包含多个关键词（用逗号或分号分隔），则拆分它们
-          const keywords = point
-            .split(/[,，;；、]/)
-            .map(k => k.trim())
-            .filter(k => k.length > 0);
-          return [...acc, ...keywords];
-        }, []);
+        .split('\n')
+        .filter(point => point.trim())
+        .map(point => point.replace(/^[•\s]+/, '').trim());
       
       contentPoints.forEach((point, pointIndex) => {
         const subBranchId = `${branchId}-sub-${pointIndex}`;

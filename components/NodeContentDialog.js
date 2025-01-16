@@ -156,9 +156,8 @@ const NodeContentDialog = ({
       <motion.div
         drag
         dragMomentum={false}
-        dragElastic={0.1}
+        dragElastic={0}
         dragConstraints={constraintsRef}
-        dragTransition={{ bounceStiffness: 300, bounceDamping: 20 }}
         onDragStart={() => setIsDragging(true)}
         onDragEnd={handleDragEnd}
         initial={position}
@@ -172,20 +171,13 @@ const NodeContentDialog = ({
         className="fixed pointer-events-auto"
         style={{ 
           touchAction: 'none',
-          zIndex: 100,
-          position: 'fixed',
-          left: 0,
-          top: 0,
-          transform: `translate(${position.x}px, ${position.y}px)`,
-          maxWidth: '90vw',
-          maxHeight: '90vh'
+          zIndex: 100
         }}
       >
         <div className={`
           bg-white/90 backdrop-blur-md rounded-lg shadow-2xl border border-gray-200
           flex flex-col w-full h-full overflow-hidden
           ${isDragging ? 'cursor-grabbing' : 'cursor-grab'}
-          transition-transform duration-200
         `}>
           {/* 标题栏 */}
           <div className="flex items-center justify-between p-4 bg-gray-50/80 border-b border-gray-200 cursor-grab">
