@@ -16,43 +16,56 @@ const Background = dynamic(() => import('react-flow-renderer').then(mod => mod.B
   ssr: false
 });
 
-// 更新节点样式定义
+// 定义节点样式
 const nodeStyles = {
-  method: {
-    fontSize: '16px',
-    color: '#1E40AF',
-    fontWeight: '600',
-    background: '#F0F9FF',
-    border: '2px solid #93C5FD',
-    borderRadius: '30px',
-    padding: '10px 20px',
-    minWidth: '180px',
-    maxWidth: '250px',
-    boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
-    textAlign: 'center',
-  },
-  promotion: {
-    fontSize: '18px',
-    color: '#1E3A8A',
+  center: {
+    fontSize: '24px',
+    color: '#2C5282',
     fontWeight: 'bold',
-    background: '#FFF',
-    border: '2.5px solid #3B82F6',
-    borderRadius: '35px',
-    padding: '15px 25px',
+    background: '#EBF8FF',
+    border: '3px solid #4299E1',
+    borderRadius: '30px',
+    padding: '15px 30px',
     minWidth: '200px',
     maxWidth: '300px',
     boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
     textAlign: 'center',
   },
-  skills: {
-    fontSize: '16px',
-    color: '#166534',
+  inspiration: {
+    fontSize: '18px',
+    color: '#2D3748',
     fontWeight: '600',
-    background: '#F0FDF4',
-    border: '2px solid #86EFAC',
-    borderRadius: '30px',
-    padding: '10px 20px',
-    minWidth: '180px',
+    background: '#FFF5F5',
+    border: '2px solid #FC8181',
+    borderRadius: '25px',
+    padding: '12px 24px',
+    minWidth: '150px',
+    maxWidth: '250px',
+    boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
+    textAlign: 'center',
+  },
+  research: {
+    fontSize: '18px',
+    color: '#2D3748',
+    fontWeight: '600',
+    background: '#F0FFF4',
+    border: '2px solid #68D391',
+    borderRadius: '25px',
+    padding: '12px 24px',
+    minWidth: '150px',
+    maxWidth: '250px',
+    boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
+    textAlign: 'center',
+  },
+  reflection: {
+    fontSize: '18px',
+    color: '#2D3748',
+    fontWeight: '600',
+    background: '#EBF8FF',
+    border: '2px solid #63B3ED',
+    borderRadius: '25px',
+    padding: '12px 24px',
+    minWidth: '150px',
     maxWidth: '250px',
     boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
     textAlign: 'center',
@@ -69,11 +82,11 @@ const CustomNode = ({ data, isConnectable, selected }) => {
 
   // 根据节点类型获取样式
   const getNodeStyle = () => {
-    const baseStyle = nodeStyles[data.type || 'promotion'];
+    const baseStyle = nodeStyles[data.type || 'center'];
     if (selected) {
       return {
         ...baseStyle,
-        boxShadow: '0 0 0 2px #3B82F6',
+        boxShadow: '0 0 0 2px #4299E1',
       };
     }
     return baseStyle;
@@ -136,7 +149,7 @@ const CustomNode = ({ data, isConnectable, selected }) => {
             >
               {label}
             </div>
-            {data.type !== 'promotion' && (
+            {data.type !== 'center' && (
               <div className="mt-2">
                 <button
                   onClick={handleAddNote}
@@ -182,7 +195,7 @@ const CustomNode = ({ data, isConnectable, selected }) => {
   );
 };
 
-const KnowledgeGraph = ({ data, onNodeClick, onNodeDragStop, onNodeDelete, layout = 'verticalMethod' }) => {
+const KnowledgeGraph = ({ data, onNodeClick, onNodeDragStop, onNodeDelete, layout = 'thinkingCycle' }) => {
   const [mounted, setMounted] = useState(false);
   const [nodes, setNodes] = useState([]);
   const [edges, setEdges] = useState([]);
