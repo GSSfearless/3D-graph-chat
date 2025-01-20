@@ -22,25 +22,20 @@ const NodeContentDialog = ({ node, onClose, onMinimize, isMinimized, onMaximize,
   const constraintsRef = useRef(null);
   const thinkingInterval = useRef(null);
 
+  if (!node) {
+    return null;
+  }
+
   useEffect(() => {
     if (node?.data?.content) {
       setContent(node.data.content);
     }
-    
-    // 保存当前的 interval ref
-    const currentInterval = thinkingInterval.current;
-    
     return () => {
-      if (currentInterval) {
-        clearInterval(currentInterval);
+      if (thinkingInterval.current) {
+        clearInterval(thinkingInterval.current);
       }
     };
   }, [node]);
-
-  // 如果没有节点，提前返回null
-  if (!node) {
-    return null;
-  }
 
   const dialogClasses = `fixed ${
     isMinimized
