@@ -144,11 +144,11 @@ const i18n = {
   }
 };
 
-// 添加布局选择器组件
+// 更新布局选择器组件
 const LayoutSelector = ({ currentLayout, onLayoutChange }) => {
   const layouts = [
+    { id: 'verticalMethod', name: '垂直方法', icon: '📊' },
     { id: 'thinkingCycle', name: '思考环', icon: '🔄' },
-    { id: 'rightLogical', name: '逻辑树', icon: '🌲' },
     { id: 'mindMap', name: '思维导图', icon: '🧠' }
   ];
 
@@ -203,7 +203,7 @@ export default function Search() {
   const [isLoadingNodeExplanation, setIsLoadingNodeExplanation] = useState(false);
   const initialAnswerRef = useRef('');
   const [viewingChildNode, setViewingChildNode] = useState(false);
-  const [currentLayout, setCurrentLayout] = useState('thinkingCycle');
+  const [currentLayout, setCurrentLayout] = useState('verticalMethod');
   const [currentLang, setCurrentLang] = useState('en');
   const [selectedNode, setSelectedNode] = useState(null);
   const [isNodeContentVisible, setIsNodeContentVisible] = useState(false);

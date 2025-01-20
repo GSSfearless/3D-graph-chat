@@ -414,10 +414,139 @@ export function createThinkingCycleLayout(nodes, edges) {
   };
 }
 
+export function createVerticalMethodLayout(nodes, edges) {
+  const centerX = 600;
+  const startY = 100;
+  const verticalGap = 200;
+  const horizontalGap = 400;
+  
+  // 按层级分组节点
+  const levels = {
+    method: [],    // 方法层
+    promotion: [], // 产品推广层
+    skills: []     // 技巧层
+  };
+  
+  nodes.forEach(node => {
+    switch(node.data.type) {
+      case 'method':
+        levels.method.push(node);
+        break;
+      case 'promotion':
+        levels.promotion.push(node);
+        break;
+      case 'skills':
+        levels.skills.push(node);
+        break;
+      default:
+        levels.promotion.push(node); // 默认放在中间层
+    }
+  });
+
+  const layoutedNodes = [];
+  
+  // 布局方法层
+  levels.method.forEach((node, index) => {
+    layoutedNodes.push({
+      ...node,
+      position: {
+        x: centerX - (levels.method.length - 1) * horizontalGap / 2 + index * horizontalGap,
+        y: startY
+      },
+      style: {
+        width: 180,
+        height: 60,
+        background: '#F0F9FF',
+        border: '2px solid #93C5FD',
+        borderRadius: '30px',
+        fontSize: '16px',
+        fontWeight: '600',
+        color: '#1E40AF',
+        padding: '10px',
+        textAlign: 'center'
+      }
+    });
+  });
+
+  // 布局产品推广层
+  levels.promotion.forEach((node, index) => {
+    layoutedNodes.push({
+      ...node,
+      position: {
+        x: centerX - (levels.promotion.length - 1) * horizontalGap / 2 + index * horizontalGap,
+        y: startY + verticalGap
+      },
+      style: {
+        width: 200,
+        height: 70,
+        background: '#FFF',
+        border: '2.5px solid #3B82F6',
+        borderRadius: '35px',
+        fontSize: '18px',
+        fontWeight: 'bold',
+        color: '#1E3A8A',
+        padding: '15px',
+        textAlign: 'center',
+        boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+      }
+    });
+  });
+
+  // 布局技巧层
+  levels.skills.forEach((node, index) => {
+    layoutedNodes.push({
+      ...node,
+      position: {
+        x: centerX - (levels.skills.length - 1) * horizontalGap / 2 + index * horizontalGap,
+        y: startY + verticalGap * 2
+      },
+      style: {
+        width: 180,
+        height: 60,
+        background: '#F0FDF4',
+        border: '2px solid #86EFAC',
+        borderRadius: '30px',
+        fontSize: '16px',
+        fontWeight: '600',
+        color: '#166534',
+        padding: '10px',
+        textAlign: 'center'
+      }
+    });
+  });
+
+  // 修改边的样式为虚线
+  const layoutedEdges = edges.map(edge => ({
+    ...edge,
+    type: 'smoothstep',
+    animated: false,
+    style: {
+      stroke: '#94A3B8',
+      strokeWidth: 1.5,
+      strokeDasharray: '5,5', // 添加虚线样式
+      opacity: 0.6
+    },
+    markerEnd: {
+      type: 'arrowclosed',
+      color: '#94A3B8',
+      width: 8,
+      height: 8
+    }
+  }));
+
+  return {
+    nodes: layoutedNodes,
+    edges: layoutedEdges
+  };
+}
+
 export function relayoutGraph(nodes, edges, layoutType) {
   let layoutedGraph;
   
   switch (layoutType) {
+    case 'verticalMethod':
+      layoutedGraph = createVerticalMethodLayout(nodes, edges);
+      break;
     case 'thinkingCycle':
       layoutedGraph = createThinkingCycleLayout(nodes, edges);
       break;
