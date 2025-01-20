@@ -540,10 +540,124 @@ export function createVerticalMethodLayout(nodes, edges) {
   };
 }
 
+export function createThinkingProcessLayout(nodes, edges) {
+  const centerX = 600;
+  const centerY = 450;
+  const radius = 250;
+  
+  // 按思考阶段分组节点
+  const stages = {
+    collect: [],
+    research: [],
+    discuss: [],
+    reflect: []
+  };
+  
+  nodes.forEach(node => {
+    if (stages[node.data.stage]) {
+      stages[node.data.stage].push(node);
+    } else {
+      stages.collect.push(node); // 默认放入收集阶段
+    }
+  });
+
+  const layoutedNodes = [];
+  const stageAngles = {
+    collect: -Math.PI / 2,        // 上方
+    research: 0,                  // 右方
+    discuss: Math.PI / 2,         // 下方
+    reflect: Math.PI             // 左方
+  };
+
+  // 布局每个阶段的节点
+  Object.entries(stages).forEach(([stage, stageNodes]) => {
+    const baseAngle = stageAngles[stage];
+    const angleSpread = Math.PI / 6; // 30度的扩散角度
+    
+    stageNodes.forEach((node, index) => {
+      const angle = baseAngle - angleSpread / 2 + (angleSpread * index / Math.max(stageNodes.length - 1, 1));
+      const x = centerX + radius * Math.cos(angle);
+      const y = centerY + radius * Math.sin(angle);
+
+      layoutedNodes.push({
+        ...node,
+        position: { x: x - 90, y: y - 30 },
+        style: {
+          ...node.style,
+          zIndex: 100
+        }
+      });
+    });
+  });
+
+  // 修改边的样式为曲线，并添加循环指示
+  const layoutedEdges = edges.map(edge => ({
+    ...edge,
+    type: 'smoothstep',
+    animated: true,
+    style: {
+      stroke: '#94A3B8',
+      strokeWidth: 1.5,
+      strokeDasharray: '5,5',
+      opacity: 0.6
+    },
+    markerEnd: {
+      type: 'arrowclosed',
+      color: '#94A3B8',
+      width: 8,
+      height: 8
+    }
+  }));
+
+  // 添加阶段指示边
+  const stageIndicatorEdges = [
+    {
+      id: 'stage-flow-1',
+      source: 'collect',
+      target: 'research',
+      type: 'smoothstep',
+      animated: true,
+      style: { stroke: '#4B5563', strokeWidth: 2, opacity: 0.4 }
+    },
+    {
+      id: 'stage-flow-2',
+      source: 'research',
+      target: 'discuss',
+      type: 'smoothstep',
+      animated: true,
+      style: { stroke: '#4B5563', strokeWidth: 2, opacity: 0.4 }
+    },
+    {
+      id: 'stage-flow-3',
+      source: 'discuss',
+      target: 'reflect',
+      type: 'smoothstep',
+      animated: true,
+      style: { stroke: '#4B5563', strokeWidth: 2, opacity: 0.4 }
+    },
+    {
+      id: 'stage-flow-4',
+      source: 'reflect',
+      target: 'collect',
+      type: 'smoothstep',
+      animated: true,
+      style: { stroke: '#4B5563', strokeWidth: 2, opacity: 0.4 }
+    }
+  ];
+
+  return {
+    nodes: layoutedNodes,
+    edges: [...layoutedEdges, ...stageIndicatorEdges]
+  };
+}
+
 export function relayoutGraph(nodes, edges, layoutType) {
   let layoutedGraph;
   
   switch (layoutType) {
+    case 'thinkingProcess':
+      layoutedGraph = createThinkingProcessLayout(nodes, edges);
+      break;
     case 'verticalMethod':
       layoutedGraph = createVerticalMethodLayout(nodes, edges);
       break;

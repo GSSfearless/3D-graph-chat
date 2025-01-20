@@ -16,9 +16,17 @@ const Background = dynamic(() => import('react-flow-renderer').then(mod => mod.B
   ssr: false
 });
 
+// 添加思考阶段定义
+const THINKING_STAGES = {
+  COLLECT: 'collect',
+  RESEARCH: 'research',
+  DISCUSS: 'discuss',
+  REFLECT: 'reflect'
+};
+
 // 更新节点样式定义
 const nodeStyles = {
-  method: {
+  collect: {
     fontSize: '16px',
     color: '#1E40AF',
     fontWeight: '600',
@@ -31,25 +39,38 @@ const nodeStyles = {
     boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
     textAlign: 'center',
   },
-  promotion: {
-    fontSize: '18px',
-    color: '#1E3A8A',
-    fontWeight: 'bold',
-    background: '#FFF',
-    border: '2.5px solid #3B82F6',
-    borderRadius: '35px',
-    padding: '15px 25px',
-    minWidth: '200px',
-    maxWidth: '300px',
-    boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
-    textAlign: 'center',
-  },
-  skills: {
+  research: {
     fontSize: '16px',
     color: '#166534',
     fontWeight: '600',
     background: '#F0FDF4',
     border: '2px solid #86EFAC',
+    borderRadius: '30px',
+    padding: '10px 20px',
+    minWidth: '180px',
+    maxWidth: '250px',
+    boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
+    textAlign: 'center',
+  },
+  discuss: {
+    fontSize: '16px',
+    color: '#9D174D',
+    fontWeight: '600',
+    background: '#FDF2F8',
+    border: '2px solid #F472B6',
+    borderRadius: '30px',
+    padding: '10px 20px',
+    minWidth: '180px',
+    maxWidth: '250px',
+    boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
+    textAlign: 'center',
+  },
+  reflect: {
+    fontSize: '16px',
+    color: '#7E22CE',
+    fontWeight: '600',
+    background: '#FAF5FF',
+    border: '2px solid #C084FC',
     borderRadius: '30px',
     padding: '10px 20px',
     minWidth: '180px',
@@ -64,12 +85,14 @@ const CustomNode = ({ data, isConnectable, selected }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [label, setLabel] = useState(data.label);
   const [isAddingNote, setIsAddingNote] = useState(false);
+  const [isAddingResource, setIsAddingResource] = useState(false);
   const inputRef = useRef(null);
   const noteInputRef = useRef(null);
+  const resourceInputRef = useRef(null);
 
-  // 根据节点类型获取样式
+  // 获取节点样式
   const getNodeStyle = () => {
-    const baseStyle = nodeStyles[data.type || 'promotion'];
+    const baseStyle = nodeStyles[data.stage || 'collect'];
     if (selected) {
       return {
         ...baseStyle,
@@ -102,6 +125,35 @@ const CustomNode = ({ data, isConnectable, selected }) => {
     setIsAddingNote(false);
   };
 
+  // 添加资源处理
+  const handleAddResource = () => {
+    setIsAddingResource(true);
+  };
+
+  const handleResourceSubmit = () => {
+    const resourceContent = resourceInputRef.current.value;
+    if (resourceContent && data.onAddResource) {
+      data.onAddResource(resourceContent);
+    }
+    setIsAddingResource(false);
+  };
+
+  // 获取阶段提示
+  const getStageTip = () => {
+    switch (data.stage) {
+      case THINKING_STAGES.COLLECT:
+        return '收集想法和灵感';
+      case THINKING_STAGES.RESEARCH:
+        return '深入调研和分析';
+      case THINKING_STAGES.DISCUSS:
+        return '讨论和交流';
+      case THINKING_STAGES.REFLECT:
+        return '思考和总结';
+      default:
+        return '';
+    }
+  };
+
   useEffect(() => {
     if (isEditing && inputRef.current) {
       inputRef.current.focus();
@@ -109,7 +161,10 @@ const CustomNode = ({ data, isConnectable, selected }) => {
     if (isAddingNote && noteInputRef.current) {
       noteInputRef.current.focus();
     }
-  }, [isEditing, isAddingNote]);
+    if (isAddingResource && resourceInputRef.current) {
+      resourceInputRef.current.focus();
+    }
+  }, [isEditing, isAddingNote, isAddingResource]);
 
   return (
     <div style={getNodeStyle()}>
@@ -136,19 +191,26 @@ const CustomNode = ({ data, isConnectable, selected }) => {
             >
               {label}
             </div>
-            {data.type !== 'promotion' && (
-              <div className="mt-2">
-                <button
-                  onClick={handleAddNote}
-                  className="text-xs text-blue-600 hover:text-blue-800"
-                >
-                  + 添加笔记
-                </button>
-              </div>
-            )}
+            <div className="mt-1 text-xs text-gray-500">{getStageTip()}</div>
+            <div className="mt-2 flex space-x-2">
+              <button
+                onClick={handleAddNote}
+                className="text-xs text-blue-600 hover:text-blue-800"
+              >
+                📝 添加笔记
+              </button>
+              <button
+                onClick={handleAddResource}
+                className="text-xs text-green-600 hover:text-green-800"
+              >
+                📚 添加资源
+              </button>
+            </div>
           </>
         )}
       </div>
+      
+      {/* 笔记输入框 */}
       {isAddingNote && (
         <div className="absolute top-full left-0 w-full mt-2 bg-white rounded-lg shadow-lg p-2 z-50">
           <textarea
@@ -173,6 +235,33 @@ const CustomNode = ({ data, isConnectable, selected }) => {
           </div>
         </div>
       )}
+
+      {/* 资源输入框 */}
+      {isAddingResource && (
+        <div className="absolute top-full left-0 w-full mt-2 bg-white rounded-lg shadow-lg p-2 z-50">
+          <textarea
+            ref={resourceInputRef}
+            className="w-full p-2 border rounded"
+            placeholder="添加链接或上传文件..."
+            rows={3}
+          />
+          <div className="flex justify-end mt-2">
+            <button
+              onClick={() => setIsAddingResource(false)}
+              className="mr-2 px-2 py-1 text-sm text-gray-600 hover:text-gray-800"
+            >
+              取消
+            </button>
+            <button
+              onClick={handleResourceSubmit}
+              className="px-2 py-1 text-sm bg-green-500 text-white rounded hover:bg-green-600"
+            >
+              添加
+            </button>
+          </div>
+        </div>
+      )}
+
       <Handle
         type="source"
         position={Position.Right}
