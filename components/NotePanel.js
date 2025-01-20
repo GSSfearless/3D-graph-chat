@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faSave, faTrash, faEdit } from '@fortawesome/free-solid-svg-icons';
 
-const NotePanel = ({ nodeId, nodeName }) => {
+const NotePanel = ({ nodeId = 'unknown', nodeName = '未命名节点' }) => {
   const [notes, setNotes] = useState([]);
   const [currentNote, setCurrentNote] = useState('');
   const [isEditing, setIsEditing] = useState(false);
@@ -11,38 +11,58 @@ const NotePanel = ({ nodeId, nodeName }) => {
   useEffect(() => {
     // 从localStorage加载笔记
     const loadNotes = () => {
-      const savedNotes = localStorage.getItem(`notes-${nodeId}`);
-      if (savedNotes) {
-        setNotes(JSON.parse(savedNotes));
+      try {
+        const savedNotes = localStorage.getItem(`notes-${nodeId}`);
+        if (savedNotes) {
+          const parsedNotes = JSON.parse(savedNotes);
+          if (Array.isArray(parsedNotes)) {
+            setNotes(parsedNotes);
+          } else {
+            setNotes([]);
+          }
+        }
+      } catch (error) {
+        console.error('Error loading notes:', error);
+        setNotes([]);
       }
     };
-    loadNotes();
+    
+    if (nodeId && nodeId !== 'unknown') {
+      loadNotes();
+    } else {
+      setNotes([]);
+    }
   }, [nodeId]);
 
   const saveNote = () => {
-    if (!currentNote.trim()) return;
+    if (!currentNote.trim() || !nodeId || nodeId === 'unknown') return;
 
-    const newNotes = isEditing
-      ? notes.map(note =>
-          note.id === editingNoteId
-            ? { ...note, content: currentNote, updatedAt: new Date().toISOString() }
-            : note
-        )
-      : [
-          ...notes,
-          {
-            id: Date.now(),
-            content: currentNote,
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString(),
-          },
-        ];
+    try {
+      const newNotes = isEditing
+        ? notes.map(note =>
+            note.id === editingNoteId
+              ? { ...note, content: currentNote, updatedAt: new Date().toISOString() }
+              : note
+          )
+        : [
+            ...notes,
+            {
+              id: Date.now(),
+              content: currentNote,
+              createdAt: new Date().toISOString(),
+              updatedAt: new Date().toISOString(),
+            },
+          ];
 
-    setNotes(newNotes);
-    localStorage.setItem(`notes-${nodeId}`, JSON.stringify(newNotes));
-    setCurrentNote('');
-    setIsEditing(false);
-    setEditingNoteId(null);
+      setNotes(newNotes);
+      localStorage.setItem(`notes-${nodeId}`, JSON.stringify(newNotes));
+      setCurrentNote('');
+      setIsEditing(false);
+      setEditingNoteId(null);
+    } catch (error) {
+      console.error('Error saving note:', error);
+      alert('保存笔记时出错，请重试');
+    }
   };
 
   const editNote = (note) => {
@@ -52,10 +72,25 @@ const NotePanel = ({ nodeId, nodeName }) => {
   };
 
   const deleteNote = (noteId) => {
-    const newNotes = notes.filter(note => note.id !== noteId);
-    setNotes(newNotes);
-    localStorage.setItem(`notes-${nodeId}`, JSON.stringify(newNotes));
+    try {
+      const newNotes = notes.filter(note => note.id !== noteId);
+      setNotes(newNotes);
+      localStorage.setItem(`notes-${nodeId}`, JSON.stringify(newNotes));
+    } catch (error) {
+      console.error('Error deleting note:', error);
+      alert('删除笔记时出错，请重试');
+    }
   };
+
+  if (!nodeId || nodeId === 'unknown') {
+    return (
+      <div className="bg-white rounded-lg shadow p-4">
+        <div className="text-center text-gray-500">
+          请先选择一个有效的节点
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="bg-white rounded-lg shadow p-4">
