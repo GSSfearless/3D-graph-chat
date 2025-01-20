@@ -22,12 +22,8 @@ const NodeContentDialog = ({ node, onClose, onMinimize, isMinimized, onMaximize,
   const constraintsRef = useRef(null);
   const thinkingInterval = useRef(null);
 
-  if (!node) {
-    return null;
-  }
-
   useEffect(() => {
-    if (node?.data?.content) {
+    if (node.data.content) {
       setContent(node.data.content);
     }
     return () => {
@@ -48,7 +44,7 @@ const NodeContentDialog = ({ node, onClose, onMinimize, isMinimized, onMaximize,
   return (
     <div className={dialogClasses} ref={constraintsRef}>
       <div className="flex justify-between items-center p-4 border-b bg-gray-50">
-        <h2 className="text-xl font-semibold truncate">{node?.data?.label || '未命名节点'}</h2>
+        <h2 className="text-xl font-semibold truncate">{node.data.label}</h2>
         <div className="flex items-center space-x-2">
           <button
             onClick={onMinimize}
@@ -118,8 +114,8 @@ const NodeContentDialog = ({ node, onClose, onMinimize, isMinimized, onMaximize,
               </div>
             ) : (
               <NotePanel
-                nodeId={node?.id || 'unknown'}
-                nodeName={node?.data?.label || '未命名节点'}
+                nodeId={node.id}
+                nodeName={node.data.label}
               />
             )}
           </div>
