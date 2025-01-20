@@ -31,12 +31,12 @@ const nodeStyles = {
     boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
     textAlign: 'center',
   },
-  branch: {
+  inspiration: {
     fontSize: '18px',
     color: '#2D3748',
     fontWeight: '600',
-    background: '#F7FAFC',
-    border: '2px solid #A0AEC0',
+    background: '#FFF5F5',
+    border: '2px solid #FC8181',
     borderRadius: '25px',
     padding: '12px 24px',
     minWidth: '150px',
@@ -44,17 +44,30 @@ const nodeStyles = {
     boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
     textAlign: 'center',
   },
-  subbranch: {
-    fontSize: '16px',
-    color: '#4A5568',
-    fontWeight: '500',
-    background: '#FFFFFF',
-    border: '1px solid #CBD5E0',
-    borderRadius: '20px',
-    padding: '8px 16px',
-    minWidth: '120px',
-    maxWidth: '200px',
-    boxShadow: '0 1px 2px rgba(0,0,0,0.05)',
+  research: {
+    fontSize: '18px',
+    color: '#2D3748',
+    fontWeight: '600',
+    background: '#F0FFF4',
+    border: '2px solid #68D391',
+    borderRadius: '25px',
+    padding: '12px 24px',
+    minWidth: '150px',
+    maxWidth: '250px',
+    boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
+    textAlign: 'center',
+  },
+  reflection: {
+    fontSize: '18px',
+    color: '#2D3748',
+    fontWeight: '600',
+    background: '#EBF8FF',
+    border: '2px solid #63B3ED',
+    borderRadius: '25px',
+    padding: '12px 24px',
+    minWidth: '150px',
+    maxWidth: '250px',
+    boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
     textAlign: 'center',
   }
 };
@@ -63,11 +76,13 @@ const nodeStyles = {
 const CustomNode = ({ data, isConnectable, selected }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [label, setLabel] = useState(data.label);
+  const [isAddingNote, setIsAddingNote] = useState(false);
   const inputRef = useRef(null);
+  const noteInputRef = useRef(null);
 
   // 根据节点类型获取样式
   const getNodeStyle = () => {
-    const baseStyle = nodeStyles[data.type || 'branch'];
+    const baseStyle = nodeStyles[data.type || 'center'];
     if (selected) {
       return {
         ...baseStyle,
@@ -83,27 +98,31 @@ const CustomNode = ({ data, isConnectable, selected }) => {
 
   const handleBlur = () => {
     setIsEditing(false);
-    // 根据节点类型设置不同的标签长度限制
-    const maxLength = data.type === 'center' ? 30 : data.type === 'branch' ? 25 : 20;
-    const truncatedLabel = label.length > maxLength ? label.substring(0, maxLength) + '...' : label;
     if (data.onLabelChange) {
-      data.onLabelChange(truncatedLabel);
+      data.onLabelChange(label);
     }
   };
 
-  const handleKeyDown = (e) => {
-    if (e.key === 'Enter') {
-      e.preventDefault();
-      handleBlur();
+  const handleAddNote = () => {
+    setIsAddingNote(true);
+  };
+
+  const handleNoteSubmit = () => {
+    const noteContent = noteInputRef.current.value;
+    if (noteContent && data.onAddNote) {
+      data.onAddNote(noteContent);
     }
+    setIsAddingNote(false);
   };
 
   useEffect(() => {
     if (isEditing && inputRef.current) {
       inputRef.current.focus();
-      inputRef.current.select();
     }
-  }, [isEditing]);
+    if (isAddingNote && noteInputRef.current) {
+      noteInputRef.current.focus();
+    }
+  }, [isEditing, isAddingNote]);
 
   return (
     <div style={getNodeStyle()}>
@@ -111,50 +130,72 @@ const CustomNode = ({ data, isConnectable, selected }) => {
         type="target"
         position={Position.Left}
         isConnectable={isConnectable}
-        style={{ visibility: 'hidden' }}
       />
-      {isEditing ? (
-        <input
-          ref={inputRef}
-          value={label}
-          onChange={(e) => setLabel(e.target.value)}
-          onBlur={handleBlur}
-          onKeyDown={handleKeyDown}
-          className="w-full bg-transparent outline-none text-center"
-          style={{ 
-            fontSize: 'inherit', 
-            fontWeight: 'inherit', 
-            color: 'inherit',
-            border: 'none',
-            maxWidth: '100%'
-          }}
-          placeholder="输入关键词..."
-        />
-      ) : (
-        <div
-          onDoubleClick={handleDoubleClick}
-          className="w-full text-center cursor-text"
-          style={{
-            wordBreak: 'break-word',
-            whiteSpace: 'pre-wrap',
-            overflow: 'hidden',
-            textOverflow: 'ellipsis'
-          }}
-        >
-          {label}
+      <div className="flex flex-col items-center">
+        {isEditing ? (
+          <input
+            ref={inputRef}
+            value={label}
+            onChange={(e) => setLabel(e.target.value)}
+            onBlur={handleBlur}
+            className="w-full bg-transparent outline-none text-center"
+            style={{ fontSize: 'inherit', fontWeight: 'inherit' }}
+          />
+        ) : (
+          <>
+            <div
+              onDoubleClick={handleDoubleClick}
+              className="w-full text-center cursor-text"
+            >
+              {label}
+            </div>
+            {data.type !== 'center' && (
+              <div className="mt-2">
+                <button
+                  onClick={handleAddNote}
+                  className="text-xs text-blue-600 hover:text-blue-800"
+                >
+                  + 添加笔记
+                </button>
+              </div>
+            )}
+          </>
+        )}
+      </div>
+      {isAddingNote && (
+        <div className="absolute top-full left-0 w-full mt-2 bg-white rounded-lg shadow-lg p-2 z-50">
+          <textarea
+            ref={noteInputRef}
+            className="w-full p-2 border rounded"
+            placeholder="输入笔记内容..."
+            rows={3}
+          />
+          <div className="flex justify-end mt-2">
+            <button
+              onClick={() => setIsAddingNote(false)}
+              className="mr-2 px-2 py-1 text-sm text-gray-600 hover:text-gray-800"
+            >
+              取消
+            </button>
+            <button
+              onClick={handleNoteSubmit}
+              className="px-2 py-1 text-sm bg-blue-500 text-white rounded hover:bg-blue-600"
+            >
+              保存
+            </button>
+          </div>
         </div>
       )}
       <Handle
         type="source"
         position={Position.Right}
         isConnectable={isConnectable}
-        style={{ visibility: 'hidden' }}
       />
     </div>
   );
 };
 
-const KnowledgeGraph = ({ data, onNodeClick, onNodeDragStop, onNodeDelete, layout = 'rightLogical' }) => {
+const KnowledgeGraph = ({ data, onNodeClick, onNodeDragStop, onNodeDelete, layout = 'thinkingCycle' }) => {
   const [mounted, setMounted] = useState(false);
   const [nodes, setNodes] = useState([]);
   const [edges, setEdges] = useState([]);
@@ -171,6 +212,22 @@ const KnowledgeGraph = ({ data, onNodeClick, onNodeDragStop, onNodeDelete, layou
     );
   }, []);
 
+  const handleAddNote = useCallback((nodeId, noteContent) => {
+    setNodes(nds =>
+      nds.map(node =>
+        node.id === nodeId
+          ? {
+              ...node,
+              data: {
+                ...node.data,
+                notes: [...(node.data.notes || []), noteContent]
+              }
+            }
+          : node
+      )
+    );
+  }, []);
+
   useEffect(() => {
     setMounted(true);
   }, []);
@@ -178,18 +235,18 @@ const KnowledgeGraph = ({ data, onNodeClick, onNodeDragStop, onNodeDelete, layou
   useEffect(() => {
     if (data && data.nodes && data.edges) {
       try {
-        // 为节点添加标签编辑功能
-        const nodesWithEdit = data.nodes.map(node => ({
+        // 为节点添加笔记功能
+        const nodesWithFeatures = data.nodes.map(node => ({
           ...node,
           data: {
             ...node.data,
-            onLabelChange: (newLabel) => handleLabelChange(node.id, newLabel)
+            onLabelChange: (newLabel) => handleLabelChange(node.id, newLabel),
+            onAddNote: (noteContent) => handleAddNote(node.id, noteContent)
           }
         }));
 
-        // 使用我们的布局系统
         const { nodes: layoutedNodes, edges: layoutedEdges } = relayoutGraph(
-          nodesWithEdit,
+          nodesWithFeatures,
           data.edges,
           layout
         );
@@ -198,11 +255,9 @@ const KnowledgeGraph = ({ data, onNodeClick, onNodeDragStop, onNodeDelete, layou
         setEdges(layoutedEdges);
       } catch (error) {
         console.error('Error in layout calculation:', error);
-        setNodes(data.nodes);
-        setEdges(data.edges);
       }
     }
-  }, [data, handleLabelChange, layout]);
+  }, [data, handleLabelChange, handleAddNote, layout]);
 
   const handleNodeClick = useCallback((event, node) => {
     event.preventDefault();

@@ -338,47 +338,108 @@ export function createRightLogicalLayout(nodes, edges) {
   return centerLayout(nodes);
 }
 
+export function createThinkingCycleLayout(nodes, edges) {
+  const centerX = 600;
+  const centerY = 450;
+  const radius = 300;
+  
+  // 找到中心节点（通常是第一个节点）
+  const centerNode = nodes[0];
+  const otherNodes = nodes.slice(1);
+  
+  // 设置中心节点位置
+  const layoutedNodes = [{
+    ...centerNode,
+    position: { x: centerX - 90, y: centerY - 30 },
+    style: {
+      ...centerNode.style,
+      width: 180,
+      height: 60,
+      background: '#EBF8FF',
+      border: '3px solid #4299E1',
+      borderRadius: '30px',
+      fontSize: '16px',
+      fontWeight: 'bold',
+      color: '#2C5282',
+      zIndex: 1000
+    }
+  }];
+
+  // 计算其他节点的位置
+  const angleStep = (2 * Math.PI) / otherNodes.length;
+  otherNodes.forEach((node, index) => {
+    const angle = index * angleStep - Math.PI / 2; // 从上方开始
+    const x = centerX + radius * Math.cos(angle);
+    const y = centerY + radius * Math.sin(angle);
+
+    layoutedNodes.push({
+      ...node,
+      position: { x: x - 75, y: y - 25 },
+      style: {
+        ...node.style,
+        width: 150,
+        height: 50,
+        background: '#F7FAFC',
+        border: '2px solid #A0AEC0',
+        borderRadius: '25px',
+        fontSize: '14px',
+        fontWeight: '600',
+        color: '#2D3748',
+        zIndex: 100
+      }
+    });
+  });
+
+  // 修改边的样式为曲线
+  const layoutedEdges = edges.map(edge => ({
+    ...edge,
+    type: 'smoothstep',
+    animated: true,
+    style: {
+      stroke: '#718096',
+      strokeWidth: 2,
+      opacity: 0.8
+    },
+    markerEnd: {
+      type: 'arrowclosed',
+      color: '#718096',
+      width: 10,
+      height: 10
+    }
+  }));
+
+  return {
+    nodes: layoutedNodes,
+    edges: layoutedEdges
+  };
+}
+
 export function relayoutGraph(nodes, edges, layoutType) {
-  let layoutedNodes;
+  let layoutedGraph;
   
   switch (layoutType) {
+    case 'thinkingCycle':
+      layoutedGraph = createThinkingCycleLayout(nodes, edges);
+      break;
     case 'rightLogical':
-      layoutedNodes = createDownwardTreeLayout(nodes, edges);  // 默认使用向下布局
+      layoutedGraph = { nodes: createDownwardTreeLayout(nodes, edges), edges };
       break;
     case 'downwardTree':
-      layoutedNodes = createDownwardTreeLayout(nodes, edges);
+      layoutedGraph = { nodes: createDownwardTreeLayout(nodes, edges), edges };
       break;
     case 'radialTree':
-      layoutedNodes = createDownwardTreeLayout(nodes, edges);  // 统一使用向下布局
+      layoutedGraph = { nodes: createDownwardTreeLayout(nodes, edges), edges };
       break;
     case 'mindMap':
-      layoutedNodes = createDownwardTreeLayout(nodes, edges);  // 统一使用向下布局
+      layoutedGraph = { nodes: createDownwardTreeLayout(nodes, edges), edges };
       break;
     case 'pyramid':
     default:
-      layoutedNodes = createDownwardTreeLayout(nodes, edges);  // 统一使用向下布局
+      layoutedGraph = { nodes: createDownwardTreeLayout(nodes, edges), edges };
       break;
   }
   
-  return {
-    nodes: layoutedNodes,
-    edges: edges.map(edge => ({
-      ...edge,
-      type: 'step',           // 使用直角连接线
-      animated: false,
-      style: { 
-        stroke: '#2D3748',    // 使用深灰色
-        strokeWidth: 1,       // 细线
-        opacity: 1,           // 不透明
-      },
-      markerEnd: {
-        type: 'arrowclosed',
-        color: '#2D3748',     // 箭头颜色与线条一致
-        width: 12,
-        height: 12,
-      },
-    })),
-  };
+  return layoutedGraph;
 }
 
 function isOverlapping(node1, node2) {

@@ -144,6 +144,34 @@ const i18n = {
   }
 };
 
+// 添加布局选择器组件
+const LayoutSelector = ({ currentLayout, onLayoutChange }) => {
+  const layouts = [
+    { id: 'thinkingCycle', name: '思考环', icon: '🔄' },
+    { id: 'rightLogical', name: '逻辑树', icon: '🌲' },
+    { id: 'mindMap', name: '思维导图', icon: '🧠' }
+  ];
+
+  return (
+    <div className="absolute right-4 top-4 bg-white rounded-lg shadow-lg p-2 space-y-2 border border-gray-200 z-10">
+      {layouts.map(layout => (
+        <button
+          key={layout.id}
+          onClick={() => onLayoutChange(layout.id)}
+          className={`w-full flex items-center px-3 py-2 rounded-lg transition-colors duration-200 ${
+            currentLayout === layout.id
+              ? 'bg-blue-100 text-blue-700'
+              : 'hover:bg-gray-100'
+          }`}
+        >
+          <span className="mr-2">{layout.icon}</span>
+          <span className="text-sm">{layout.name}</span>
+        </button>
+      ))}
+    </div>
+  );
+};
+
 export default function Search() {
   const router = useRouter();
   const { q, side = 'both' } = router.query;
@@ -175,7 +203,7 @@ export default function Search() {
   const [isLoadingNodeExplanation, setIsLoadingNodeExplanation] = useState(false);
   const initialAnswerRef = useRef('');
   const [viewingChildNode, setViewingChildNode] = useState(false);
-  const [currentLayout, setCurrentLayout] = useState('rightLogical');
+  const [currentLayout, setCurrentLayout] = useState('thinkingCycle');
   const [currentLang, setCurrentLang] = useState('en');
   const [selectedNode, setSelectedNode] = useState(null);
   const [isNodeContentVisible, setIsNodeContentVisible] = useState(false);
@@ -621,6 +649,30 @@ export default function Search() {
     }
   }, [q]);
 
+  // 处理节点笔记
+  const handleNodeNote = useCallback((nodeId, noteContent) => {
+    // 更新节点的笔记
+    if (knowledgeGraphData) {
+      const updatedNodes = knowledgeGraphData.nodes.map(node => {
+        if (node.id === nodeId) {
+          return {
+            ...node,
+            data: {
+              ...node.data,
+              notes: [...(node.data.notes || []), noteContent]
+            }
+          };
+        }
+        return node;
+      });
+
+      setKnowledgeGraphData({
+        ...knowledgeGraphData,
+        nodes: updatedNodes
+      });
+    }
+  }, [knowledgeGraphData]);
+
   return (
     <div className="fixed inset-0 overflow-hidden">
       <div className="w-full h-full relative">
@@ -638,32 +690,18 @@ export default function Search() {
             </div>
           ) : knowledgeGraphData && knowledgeGraphData.nodes && knowledgeGraphData.nodes.length > 0 ? (
             <div className="w-full h-full relative">
-              {/* 左侧工具栏 */}
-              <div className="absolute left-4 top-1/2 -translate-y-1/2 bg-white rounded-lg shadow-lg p-2 space-y-2 border border-gray-200 z-10">
-                <button 
-                  onClick={handleUndo} 
-                  disabled={!hasPreviousGraph}
-                  className="w-10 h-10 flex items-center justify-center rounded-lg hover:bg-gray-100 transition-colors duration-200 disabled:opacity-30 disabled:hover:bg-white"
-                  title="撤销"
-                >
-                  <FontAwesomeIcon icon={faUndo} className="text-gray-600 text-lg" />
-                </button>
-                <button 
-                  onClick={handleRedo} 
-                  disabled={graphFuture.length === 0}
-                  className="w-10 h-10 flex items-center justify-center rounded-lg hover:bg-gray-100 transition-colors duration-200 disabled:opacity-30 disabled:hover:bg-white"
-                  title="重做"
-                >
-                  <FontAwesomeIcon icon={faRedo} className="text-gray-600 text-lg" />
-                </button>
-              </div>
+              <LayoutSelector
+                currentLayout={currentLayout}
+                onLayoutChange={setCurrentLayout}
+              />
               <div className="w-full h-full">
-                <KnowledgeGraph 
-                  data={knowledgeGraphData} 
+                <KnowledgeGraph
+                  data={knowledgeGraphData}
                   onNodeClick={handleNodeClick}
                   onNodeDragStop={handleNodeDragStop}
                   onNodeDelete={handleNodeDelete}
                   layout={currentLayout}
+                  onNodeNote={handleNodeNote}
                 />
               </div>
             </div>
