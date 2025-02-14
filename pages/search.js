@@ -1,7 +1,6 @@
 import { faArrowRight } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import dynamic from 'next/dynamic';
-import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { useState, useCallback, useEffect, useRef } from 'react';
 import 'tailwindcss/tailwind.css';
@@ -17,13 +16,9 @@ export default function Search() {
   const { q } = router.query;
 
   const [query, setQuery] = useState('');
-  const [largeSearchQuery, setLargeSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState([]);
-  const [aiAnswer, setAiAnswer] = useState('');
-  const [renderedAnswer, setRenderedAnswer] = useState('');
   const [loading, setLoading] = useState(false);
   const [initialLoad, setInitialLoad] = useState(true);
-  const [showLargeSearch, setShowLargeSearch] = useState(false);
   const [collectedPages, setCollectedPages] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
   const [isCollecting, setIsCollecting] = useState(false);
@@ -31,7 +26,6 @@ export default function Search() {
   const [processingStep, setProcessingStep] = useState(0);
   const [streamedAnswer, setStreamedAnswer] = useState('');
   const [loadingMessage, setLoadingMessage] = useState('🎨 Preparing the canvas...');
-  const initialAnswerRef = useRef('');
   const [contentType, setContentType] = useState('markdown');
   const [mermaidContent, setMermaidContent] = useState('');
 
@@ -61,49 +55,79 @@ export default function Search() {
     // 从回答中提取关键信息并生成Mermaid图表
     const lines = answer.split('\n');
     let nodes = [];
-    let relationships = [];
+    let currentTopic = null;
     
-    // 简单的处理逻辑示例
+    // 处理每一行
     lines.forEach((line, index) => {
-      if (line.startsWith('•') || line.startsWith('- ')) {
-        const content = line.replace(/^[•-]\s+/, '').trim();
-        nodes.push({
-          id: `node${index}`,
-          content: content
-        });
-        if (nodes.length > 1) {
-          relationships.push({
-            from: 'main',
-            to: `node${index}`
+      // 清理行内容
+      const cleanLine = line.trim();
+      
+      // 跳过空行
+      if (!cleanLine) return;
+      
+      // 处理标题作为主题
+      if (cleanLine.startsWith('#')) {
+        currentTopic = {
+          id: `topic${index}`,
+          content: cleanLine.replace(/^#+\s+/, '').trim()
+        };
+        nodes.push(currentTopic);
+      }
+      // 处理列表项
+      else if (cleanLine.startsWith('•') || cleanLine.startsWith('-')) {
+        const content = cleanLine.replace(/^[•-]\s+/, '').trim();
+        // 确保内容不为空
+        if (content) {
+          nodes.push({
+            id: `node${index}`,
+            content: content,
+            parentId: currentTopic ? currentTopic.id : 'main'
           });
         }
       }
     });
 
+    // 如果没有提取到任何节点，创建一个默认节点
+    if (nodes.length === 0) {
+      nodes.push({
+        id: 'main',
+        content: '主要内容',
+        parentId: null
+      });
+    }
+
     // 生成Mermaid语法
     let mermaidCode = 'graph TD\n';
-    mermaidCode += '    main[回答]\n';
     
     // 添加节点
     nodes.forEach(node => {
-      mermaidCode += `    ${node.id}["${node.content}"]\n`;
+      // 使用双引号包裹内容，避免特殊字符问题
+      const safeContent = node.content.replace(/"/g, '\\"');
+      mermaidCode += `    ${node.id}["${safeContent}"]\n`;
     });
     
     // 添加关系
-    relationships.forEach(rel => {
-      mermaidCode += `    ${rel.from} --> ${rel.to}\n`;
+    nodes.forEach(node => {
+      if (node.parentId) {
+        mermaidCode += `    ${node.parentId} --> ${node.id}\n`;
+      }
     });
 
+    console.log('Generated Mermaid code:', mermaidCode);
     return mermaidCode;
   };
 
   const handleSearch = useCallback(async (searchQuery) => {
+    if (!searchQuery.trim()) return;
+    
     setLoading(true);
     setIsCollecting(true);
     setIsProcessing(false);
     setCollectedPages(0);
     setTotalPages(0);
     setSearchResults([]);
+    setStreamedAnswer('');
+    setMermaidContent('');
 
     try {
       const eventSource = new EventSource(`/api/rag-search?query=${encodeURIComponent(searchQuery)}`);
@@ -129,7 +153,6 @@ export default function Search() {
       };
 
       // Get AI answer
-      setStreamedAnswer('');
       const chatResponse = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -142,19 +165,22 @@ export default function Search() {
 
       const reader = chatResponse.body.getReader();
       const decoder = new TextDecoder();
-      let done = false;
-
-      while (!done) {
-        const { value, done: doneReading } = await reader.read();
-        done = doneReading;
+      let answer = '';
+      
+      while (true) {
+        const { value, done } = await reader.read();
+        if (done) break;
+        
         const chunkValue = decoder.decode(value);
-        setStreamedAnswer((prev) => prev + chunkValue);
+        answer += chunkValue;
+        setStreamedAnswer(answer);
       }
 
-      // Store the initial answer
-      initialAnswerRef.current = streamedAnswer;
+      // 生成Mermaid图表
+      const mermaidDiagram = generateMermaidContent(answer);
+      setMermaidContent(mermaidDiagram);
 
-      // After all processing is complete
+      // 完成处理
       setIsProcessing(false);
       setIsCollecting(false);
       setQuery('');
@@ -166,7 +192,7 @@ export default function Search() {
       setIsCollecting(false);
     }
     setLoading(false);
-  }, []);
+  }, [searchResults]);
 
   useEffect(() => {
     let interval;
@@ -176,7 +202,7 @@ export default function Search() {
       }, 2000);
     }
     return () => clearInterval(interval);
-  }, [isProcessing]);
+  }, [isProcessing, processingMessages.length]);
 
   useEffect(() => {
     let interval;
@@ -190,70 +216,62 @@ export default function Search() {
       }, 1000);
     }
     return () => clearInterval(interval);
-  }, [loading]);
+  }, [loading, loadingMessages]);
 
   useEffect(() => {
-    if (streamedAnswer) {
-      // 生成并设置Mermaid内容
-      const mermaidDiagram = generateMermaidContent(streamedAnswer);
-      setMermaidContent(mermaidDiagram);
+    if (q && initialLoad) {
+      handleSearch(q);
+      setInitialLoad(false);
     }
-  }, [streamedAnswer]);
-
-  const handleChange = (e) => {
-    setQuery(e.target.value);
-  };
-
-  const handleLargeSearchChange = (e) => {
-    setLargeSearchQuery(e.target.value);
-  };
-
-  const handleKeyPress = (e) => {
-    if (e.key === 'Enter' && query.trim()) {
-      handleSearch(query);
-    }
-  };
-
-  const handleButtonClick = () => {
-    if (query.trim()) {
-      handleSearch(query);
-    }
-  };
+  }, [q, initialLoad, handleSearch]);
 
   return (
-    <div className="min-h-screen bg-gray-100">
-      <div className="container mx-auto px-4 py-8">
-        <div className="flex flex-col lg:flex-row gap-4">
+    <div className="min-h-screen bg-gray-50">
+      {/* 顶部导航栏 */}
+      <nav className="bg-white shadow-sm">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between h-16">
+            <div className="flex-shrink-0 flex items-center">
+              <h1 className="text-2xl font-bold text-gray-900">Think Graph</h1>
+            </div>
+          </div>
+        </div>
+      </nav>
+
+      {/* 主要内容区域 */}
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
           {/* 左侧搜索区域 */}
-          <div className="lg:w-1/4">
-            <div className="bg-white rounded-lg shadow p-4">
-              <div className="flex items-center space-x-2 mb-4">
+          <div className="lg:col-span-3">
+            <div className="bg-white rounded-lg shadow-sm p-4">
+              <div className="flex items-center space-x-2">
                 <input
                   type="text"
                   value={query}
-                  onChange={handleChange}
-                  onKeyPress={handleKeyPress}
+                  onChange={(e) => setQuery(e.target.value)}
+                  onKeyPress={(e) => e.key === 'Enter' && handleSearch(query)}
                   placeholder={defaultQuery}
-                  className="flex-1 p-2 border rounded"
+                  className="flex-1 p-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 />
                 <button
-                  onClick={handleButtonClick}
-                  className="bg-blue-500 text-white p-2 rounded hover:bg-blue-600"
+                  onClick={() => handleSearch(query)}
+                  className="bg-blue-500 text-white p-2 rounded-lg hover:bg-blue-600 transition-colors"
+                  disabled={loading}
                 >
                   <FontAwesomeIcon icon={faArrowRight} />
                 </button>
               </div>
               
-              {/* 搜索结果和状态显示 */}
+              {/* 状态显示 */}
               {(isCollecting || isProcessing) && (
-                <div className="text-sm text-gray-600">
+                <div className="mt-4 text-sm text-gray-600">
                   {isCollecting ? (
                     <div>
-                      <p>{loadingMessage}</p>
+                      <p className="font-medium">{loadingMessage}</p>
                       <p>已收集 {collectedPages} / {totalPages} 页</p>
                     </div>
                   ) : (
-                    <p>{processingMessages[processingStep]}</p>
+                    <p className="font-medium">{processingMessages[processingStep]}</p>
                   )}
                 </div>
               )}
@@ -261,50 +279,68 @@ export default function Search() {
           </div>
 
           {/* 中间内容显示区域 */}
-          <div className="lg:w-1/2">
-            <div className="bg-white rounded-lg shadow p-4">
-              <div className="flex space-x-4 mb-4">
-                <button
-                  className={`px-4 py-2 rounded ${
-                    contentType === 'markdown' ? 'bg-blue-500 text-white' : 'bg-gray-200'
-                  }`}
-                  onClick={() => setContentType('markdown')}
-                >
-                  Markdown视图
-                </button>
-                <button
-                  className={`px-4 py-2 rounded ${
-                    contentType === 'mermaid' ? 'bg-blue-500 text-white' : 'bg-gray-200'
-                  }`}
-                  onClick={() => setContentType('mermaid')}
-                >
-                  流程图视图
-                </button>
+          <div className="lg:col-span-6">
+            <div className="bg-white rounded-lg shadow-sm">
+              <div className="border-b border-gray-200">
+                <div className="flex p-4">
+                  <button
+                    className={`px-4 py-2 rounded-lg mr-2 ${
+                      contentType === 'markdown'
+                        ? 'bg-blue-500 text-white'
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    }`}
+                    onClick={() => setContentType('markdown')}
+                  >
+                    Markdown视图
+                  </button>
+                  <button
+                    className={`px-4 py-2 rounded-lg ${
+                      contentType === 'mermaid'
+                        ? 'bg-blue-500 text-white'
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    }`}
+                    onClick={() => setContentType('mermaid')}
+                  >
+                    流程图视图
+                  </button>
+                </div>
               </div>
               
-              <div className="h-[calc(100vh-200px)]">
+              <div className="p-4" style={{ minHeight: '500px' }}>
                 {loading ? (
                   <div className="flex items-center justify-center h-full">
-                    <p className="text-gray-500">{loadingMessage}</p>
+                    <p className="text-gray-500 text-lg">{loadingMessage}</p>
                   </div>
-                ) : (
+                ) : streamedAnswer ? (
                   <ContentViewer
                     content={contentType === 'markdown' ? streamedAnswer : mermaidContent}
                     type={contentType}
                   />
+                ) : (
+                  <div className="flex items-center justify-center h-full">
+                    <p className="text-gray-400">在左侧输入问题开始查询</p>
+                  </div>
                 )}
               </div>
             </div>
           </div>
 
-          {/* 右侧回答区域 */}
-          <div className="lg:w-1/4">
-            <div className="bg-white rounded-lg shadow p-4">
-              <div className="prose max-w-none" dangerouslySetInnerHTML={{ __html: renderedAnswer }} />
+          {/* 右侧参考资料区域 */}
+          <div className="lg:col-span-3">
+            <div className="bg-white rounded-lg shadow-sm p-4">
+              <h3 className="text-lg font-medium text-gray-900 mb-4">参考资料</h3>
+              <div className="space-y-4">
+                {searchResults.map((result, index) => (
+                  <div key={index} className="text-sm text-gray-600">
+                    <p className="font-medium">{result.title}</p>
+                    <p className="mt-1">{result.content}</p>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         </div>
-      </div>
+      </main>
     </div>
   );
 }
