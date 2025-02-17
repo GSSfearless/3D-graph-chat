@@ -156,43 +156,51 @@ export default function Search() {
       };
 
       // Get AI answer
-      const chatResponse = await fetch('/api/chat', {
+      const response = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ context: searchResults, query: searchQuery }),
       });
 
-      if (!chatResponse.ok) {
-        throw new Error(`HTTP error! status: ${chatResponse.status}`);
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
 
-      const reader = chatResponse.body.getReader();
-      const decoder = new TextDecoder();
+      // 创建新的 EventSource 来处理流式响应
+      const chatEventSource = new EventSource(`/api/chat?query=${encodeURIComponent(searchQuery)}`);
       let answer = '';
-      
-      while (true) {
-        const { value, done } = await reader.read();
-        if (done) break;
-        
-        const chunkValue = decoder.decode(value);
-        answer += chunkValue;
-        setStreamedAnswer(answer);
-      }
 
-      // 生成Mermaid图表
-      const mermaidDiagram = generateMermaidContent(answer);
-      setMermaidContent(mermaidDiagram);
+      chatEventSource.onmessage = (event) => {
+        if (event.data === '[DONE]') {
+          chatEventSource.close();
+          // 生成Mermaid图表
+          const mermaidDiagram = generateMermaidContent(answer);
+          setMermaidContent(mermaidDiagram);
+          
+          // 完成处理
+          setIsProcessing(false);
+          setIsCollecting(false);
+          setQuery('');
+          setCollectedPages(0);
+          setTotalPages(0);
+        } else {
+          answer += event.data;
+          setStreamedAnswer(answer);
+        }
+      };
 
-      // 完成处理
-      setIsProcessing(false);
-      setIsCollecting(false);
-      setQuery('');
-      setCollectedPages(0);
-      setTotalPages(0);
+      chatEventSource.onerror = (error) => {
+        console.error('Chat EventSource failed:', error);
+        chatEventSource.close();
+        setIsProcessing(false);
+        setIsCollecting(false);
+      };
+
     } catch (error) {
       console.error('Error during search:', error);
       setIsProcessing(false);
       setIsCollecting(false);
+      alert('搜索过程中出错，请重试');
     }
     setLoading(false);
   }, [searchResults]);

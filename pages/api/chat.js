@@ -23,9 +23,15 @@ export default async function handler(req, res) {
 4. 确保信息准确且来源于上下文
 5. 如果上下文信息不足，请明确指出`;
 
-    const response = await axios.post(
-      DEEPSEEK_API_URL,
-      {
+    // 设置响应头
+    res.setHeader('Content-Type', 'text/event-stream');
+    res.setHeader('Cache-Control', 'no-cache');
+    res.setHeader('Connection', 'keep-alive');
+
+    const response = await axios({
+      method: 'post',
+      url: DEEPSEEK_API_URL,
+      data: {
         model: 'deepseek-chat',
         messages: [
           {
@@ -41,24 +47,40 @@ export default async function handler(req, res) {
         max_tokens: 2000,
         stream: true
       },
-      {
-        headers: {
-          'Authorization': `Bearer ${DEEPSEEK_API_KEY}`,
-          'Content-Type': 'application/json'
-        },
-        responseType: 'stream'
+      headers: {
+        'Authorization': `Bearer ${DEEPSEEK_API_KEY}`,
+        'Content-Type': 'application/json',
+        'Accept': 'text/event-stream'
+      },
+      responseType: 'stream'
+    });
+
+    // 处理流式响应
+    response.data.on('data', (chunk) => {
+      const lines = chunk.toString().split('\n');
+      for (const line of lines) {
+        if (line.startsWith('data: ')) {
+          const data = line.slice(6);
+          if (data === '[DONE]') {
+            res.write('data: [DONE]\n\n');
+          } else {
+            try {
+              const parsed = JSON.parse(data);
+              if (parsed.choices && parsed.choices[0].delta.content) {
+                res.write(`data: ${parsed.choices[0].delta.content}\n\n`);
+              }
+            } catch (e) {
+              console.error('Error parsing chunk:', e);
+            }
+          }
+        }
       }
-    );
+    });
 
-    // 设置响应头
-    res.setHeader('Content-Type', 'text/event-stream');
-    res.setHeader('Cache-Control', 'no-cache');
-    res.setHeader('Connection', 'keep-alive');
+    response.data.on('end', () => {
+      res.end();
+    });
 
-    // 转发流式响应
-    response.data.pipe(res);
-
-    // 错误处理
     response.data.on('error', (error) => {
       console.error('Stream error:', error);
       res.end();
