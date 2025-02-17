@@ -130,13 +130,15 @@ const callClaudeAPI = async (messages, stream = false) => {
           content: `${systemMessage}\n\n${userMessage}`
         }
       ],
-      max_tokens: 4000,
-      stream
+      max_tokens: 2000,
+      stream,
+      temperature: 0.7
     },
     headers: {
       'x-api-key': config.key,
       'anthropic-version': '2023-06-01',
-      'Content-Type': 'application/json'
+      'Content-Type': 'application/json',
+      'Accept': stream ? 'text/event-stream' : 'application/json'
     },
     responseType: stream ? 'stream' : 'json',
     retry: 3,
@@ -145,7 +147,7 @@ const callClaudeAPI = async (messages, stream = false) => {
 };
 
 // Gemini API 调用
-const callGeminiAPI = async (messages) => {
+const callGeminiAPI = async (messages, stream = false) => {
   const config = API_CONFIG.gemini;
   if (!config.key) throw new Error('Gemini API key not configured');
 
@@ -166,11 +168,14 @@ const callGeminiAPI = async (messages) => {
         temperature: 0.7,
         topP: 0.8,
         maxOutputTokens: 2000
-      }
+      },
+      stream
     },
     headers: {
-      'Content-Type': 'application/json'
+      'Content-Type': 'application/json',
+      'Accept': stream ? 'text/event-stream' : 'application/json'
     },
+    responseType: stream ? 'stream' : 'json',
     retry: 3,
     retryDelay: 1000
   });

@@ -74,22 +74,40 @@ export default async function handler(req, res) {
               if (!parsed) continue;
 
               let content = '';
-              if (parsed.choices && parsed.choices[0]) {
-                const choice = parsed.choices[0];
-                
-                if (choice.delta && choice.delta.content) {
-                  content = choice.delta.content;
-                } else if (choice.message && choice.message.content) {
-                  content = choice.message.content;
-                }
+              
+              // 处理不同API的响应格式
+              switch (provider) {
+                case 'openai':
+                case 'deepseek':
+                  if (parsed.choices && parsed.choices[0]) {
+                    const choice = parsed.choices[0];
+                    if (choice.delta && choice.delta.content) {
+                      content = choice.delta.content;
+                    }
+                  }
+                  break;
+                case 'claude':
+                  if (parsed.type === 'content_block_delta') {
+                    content = parsed.delta.text;
+                  }
+                  break;
+                case 'gemini':
+                  if (parsed.candidates && parsed.candidates[0]) {
+                    const candidate = parsed.candidates[0];
+                    if (candidate.content && candidate.content.parts) {
+                      content = candidate.content.parts[0].text;
+                    }
+                  }
+                  break;
+              }
 
-                if (content) {
-                  responseText += content;
-                  res.write(`data: {"type":"delta","content":"${encodeURIComponent(content)}"}\n\n`);
-                }
+              if (content) {
+                responseText += content;
+                res.write(`data: {"type":"delta","content":"${encodeURIComponent(content)}"}\n\n`);
               }
             } catch (e) {
               console.error('Error parsing chunk:', e, 'Raw data:', data);
+              console.error('Provider:', provider);
             }
           }
         }
@@ -109,23 +127,41 @@ export default async function handler(req, res) {
 
             try {
               const parsed = JSON.parse(data);
-              if (parsed.choices && parsed.choices[0]) {
-                let content = '';
-                const choice = parsed.choices[0];
-                
-                if (choice.delta && choice.delta.content) {
-                  content = choice.delta.content;
-                } else if (choice.message && choice.message.content) {
-                  content = choice.message.content;
-                }
+              let content = '';
+              
+              // 处理不同API的响应格式
+              switch (provider) {
+                case 'openai':
+                case 'deepseek':
+                  if (parsed.choices && parsed.choices[0]) {
+                    const choice = parsed.choices[0];
+                    if (choice.delta && choice.delta.content) {
+                      content = choice.delta.content;
+                    }
+                  }
+                  break;
+                case 'claude':
+                  if (parsed.type === 'content_block_delta') {
+                    content = parsed.delta.text;
+                  }
+                  break;
+                case 'gemini':
+                  if (parsed.candidates && parsed.candidates[0]) {
+                    const candidate = parsed.candidates[0];
+                    if (candidate.content && candidate.content.parts) {
+                      content = candidate.content.parts[0].text;
+                    }
+                  }
+                  break;
+              }
 
-                if (content) {
-                  responseText += content;
-                  res.write(`data: {"type":"delta","content":"${encodeURIComponent(content)}"}\n\n`);
-                }
+              if (content) {
+                responseText += content;
+                res.write(`data: {"type":"delta","content":"${encodeURIComponent(content)}"}\n\n`);
               }
             } catch (e) {
               console.error('Error processing final buffer:', e);
+              console.error('Provider:', provider);
             }
           }
         }
