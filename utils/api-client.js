@@ -55,130 +55,191 @@ const addRetryInterceptor = (api) => {
 // 创建带有重试的 axios 实例
 const api = addRetryInterceptor(createAxiosInstance());
 
+// API 状态监控
+const logApiDetails = (api, status, details = '') => {
+  const timestamp = new Date().toLocaleTimeString();
+  const style = status === 'success' 
+    ? 'color: #22c55e; font-weight: bold;'
+    : status === 'error'
+    ? 'color: #ef4444; font-weight: bold;'
+    : status === 'warning'
+    ? 'color: #f59e0b; font-weight: bold;'
+    : 'color: #3b82f6; font-weight: bold;';
+  
+  console.log(
+    `%c[${timestamp}] [${api}] ${status.toUpperCase()}${details ? ': ' + details : ''}`,
+    style
+  );
+};
+
 // OpenAI API 调用
 const callOpenAIAPI = async (messages, stream = false) => {
   const config = API_CONFIG.openai;
-  if (!config.key) throw new Error('OpenAI API key not configured');
+  if (!config.key) {
+    logApiDetails('OpenAI', 'error', 'API key not configured');
+    throw new Error('OpenAI API key not configured');
+  }
 
-  return api({
-    method: 'post',
-    url: config.url,
-    data: {
-      model: config.model,
-      messages,
-      temperature: 0.7,
-      max_tokens: 2000,
-      stream,
-      top_p: 0.8,
-      frequency_penalty: 0.5
-    },
-    headers: {
-      'Authorization': `Bearer ${config.key}`,
-      'Content-Type': 'application/json',
-      'Accept': stream ? 'text/event-stream' : 'application/json'
-    },
-    responseType: stream ? 'stream' : 'json',
-    retry: 3,
-    retryDelay: 1000
-  });
+  logApiDetails('OpenAI', 'info', `Calling API with ${messages.length} messages, stream: ${stream}`);
+  try {
+    const response = await api({
+      method: 'post',
+      url: config.url,
+      data: {
+        model: config.model,
+        messages,
+        temperature: 0.7,
+        max_tokens: 2000,
+        stream,
+        top_p: 0.8,
+        frequency_penalty: 0.5
+      },
+      headers: {
+        'Authorization': `Bearer ${config.key}`,
+        'Content-Type': 'application/json',
+        'Accept': stream ? 'text/event-stream' : 'application/json'
+      },
+      responseType: stream ? 'stream' : 'json',
+      retry: 3,
+      retryDelay: 1000
+    });
+    logApiDetails('OpenAI', 'success', 'API call successful');
+    return response;
+  } catch (error) {
+    logApiDetails('OpenAI', 'error', `API call failed: ${error.message}`);
+    throw error;
+  }
 };
 
 // DeepSeek API 调用
 const callDeepSeekAPI = async (messages, stream = false) => {
   const config = API_CONFIG.deepseek;
-  if (!config.key) throw new Error('DeepSeek API key not configured');
+  if (!config.key) {
+    logApiDetails('DeepSeek', 'error', 'API key not configured');
+    throw new Error('DeepSeek API key not configured');
+  }
 
-  return api({
-    method: 'post',
-    url: config.url,
-    data: {
-      model: config.model,
-      messages,
-      temperature: 0.7,
-      max_tokens: 2000,
-      stream,
-      top_p: 0.8,
-      frequency_penalty: 0.5
-    },
-    headers: {
-      'Authorization': `Bearer ${config.key}`,
-      'Content-Type': 'application/json',
-      'Accept': stream ? 'text/event-stream' : 'application/json'
-    },
-    responseType: stream ? 'stream' : 'json',
-    retry: 3,
-    retryDelay: 1000
-  });
+  logApiDetails('DeepSeek', 'info', `Calling API with ${messages.length} messages, stream: ${stream}`);
+  try {
+    const response = await api({
+      method: 'post',
+      url: config.url,
+      data: {
+        model: config.model,
+        messages,
+        temperature: 0.7,
+        max_tokens: 2000,
+        stream,
+        top_p: 0.8,
+        frequency_penalty: 0.5
+      },
+      headers: {
+        'Authorization': `Bearer ${config.key}`,
+        'Content-Type': 'application/json',
+        'Accept': stream ? 'text/event-stream' : 'application/json'
+      },
+      responseType: stream ? 'stream' : 'json',
+      retry: 3,
+      retryDelay: 1000
+    });
+    logApiDetails('DeepSeek', 'success', 'API call successful');
+    return response;
+  } catch (error) {
+    logApiDetails('DeepSeek', 'error', `API call failed: ${error.message}`);
+    throw error;
+  }
 };
 
 // Claude API 调用
 const callClaudeAPI = async (messages, stream = false) => {
   const config = API_CONFIG.claude;
-  if (!config.key) throw new Error('Claude API key not configured');
+  if (!config.key) {
+    logApiDetails('Claude', 'error', 'API key not configured');
+    throw new Error('Claude API key not configured');
+  }
 
   const systemMessage = messages.find(m => m.role === 'system')?.content || '';
   const userMessage = messages.find(m => m.role === 'user')?.content || '';
 
-  return api({
-    method: 'post',
-    url: config.url,
-    data: {
-      model: config.model,
-      messages: [
-        {
-          role: 'user',
-          content: `${systemMessage}\n\n${userMessage}`
-        }
-      ],
-      max_tokens: 2000,
-      stream,
-      temperature: 0.7
-    },
-    headers: {
-      'x-api-key': config.key,
-      'anthropic-version': '2023-06-01',
-      'Content-Type': 'application/json',
-      'Accept': stream ? 'text/event-stream' : 'application/json'
-    },
-    responseType: stream ? 'stream' : 'json',
-    retry: 3,
-    retryDelay: 1000
-  });
+  logApiDetails('Claude', 'info', `Calling API with system and user messages, stream: ${stream}`);
+  try {
+    const response = await api({
+      method: 'post',
+      url: config.url,
+      data: {
+        model: config.model,
+        messages: [
+          {
+            role: 'user',
+            content: `${systemMessage}\n\n${userMessage}`
+          }
+        ],
+        max_tokens: 2000,
+        stream,
+        temperature: 0.7
+      },
+      headers: {
+        'x-api-key': config.key,
+        'anthropic-version': '2023-06-01',
+        'Content-Type': 'application/json',
+        'Accept': stream ? 'text/event-stream' : 'application/json'
+      },
+      responseType: stream ? 'stream' : 'json',
+      retry: 3,
+      retryDelay: 1000
+    });
+    logApiDetails('Claude', 'success', 'API call successful');
+    return response;
+  } catch (error) {
+    logApiDetails('Claude', 'error', `API call failed: ${error.message}`);
+    throw error;
+  }
 };
 
 // Gemini API 调用
 const callGeminiAPI = async (messages, stream = false) => {
   const config = API_CONFIG.gemini;
-  if (!config.key) throw new Error('Gemini API key not configured');
+  if (!config.key) {
+    logApiDetails('Gemini', 'error', 'API key not configured');
+    throw new Error('Gemini API key not configured');
+  }
 
   const systemMessage = messages.find(m => m.role === 'system')?.content || '';
   const userMessage = messages.find(m => m.role === 'user')?.content || '';
 
-  return api({
-    method: 'post',
-    url: `${config.url}?key=${config.key}`,
-    data: {
-      contents: [
-        {
-          role: 'user',
-          parts: [{ text: `${systemMessage}\n\n${userMessage}` }]
-        }
-      ],
-      generationConfig: {
-        temperature: 0.7,
-        topP: 0.8,
-        maxOutputTokens: 2000
+  logApiDetails('Gemini', 'info', `Calling API with system and user messages, stream: ${stream}`);
+  try {
+    const response = await api({
+      method: 'post',
+      url: `${config.url}?key=${config.key}`,
+      data: {
+        contents: [
+          {
+            role: 'user',
+            parts: [{ text: `${systemMessage}\n\n${userMessage}` }]
+          }
+        ],
+        generationConfig: {
+          temperature: 0.7,
+          topP: 0.8,
+          maxOutputTokens: 2000
+        },
+        stream
       },
-      stream
-    },
-    headers: {
-      'Content-Type': 'application/json',
-      'Accept': stream ? 'text/event-stream' : 'application/json'
-    },
-    responseType: stream ? 'stream' : 'json',
-    retry: 3,
-    retryDelay: 1000
-  });
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': stream ? 'text/event-stream' : 'application/json'
+      },
+      responseType: stream ? 'stream' : 'json',
+      retry: 3,
+      retryDelay: 1000
+    });
+    logApiDetails('Gemini', 'success', 'API call successful');
+    return response;
+  } catch (error) {
+    logApiDetails('Gemini', 'error', `API call failed: ${error.message}`);
+    throw error;
+  }
 };
 
 // 故障转移调用
@@ -190,18 +251,21 @@ const callWithFallback = async (messages, stream = false) => {
     { name: 'gemini', fn: callGeminiAPI }
   ];
 
+  logApiDetails('Fallback', 'info', 'Starting API fallback sequence');
+  
   for (const api of apis) {
     try {
-      console.log(`Trying ${api.name} API...`);
+      logApiDetails('Fallback', 'info', `Attempting ${api.name} API`);
       const response = await api.fn(messages, stream);
-      console.log(`Successfully used ${api.name} API`);
+      logApiDetails('Fallback', 'success', `Successfully used ${api.name} API`);
       return { provider: api.name, response };
     } catch (error) {
-      console.error(`Error with ${api.name} API:`, error);
+      logApiDetails('Fallback', 'warning', `${api.name} API failed: ${error.message}`);
       continue;
     }
   }
 
+  logApiDetails('Fallback', 'error', 'All API calls failed');
   throw new Error('All API calls failed');
 };
 
