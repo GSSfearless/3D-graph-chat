@@ -130,7 +130,7 @@ const callClaudeAPI = async (messages, stream = false) => {
           content: `${systemMessage}\n\n${userMessage}`
         }
       ],
-      max_tokens: 2000,
+      max_tokens: 4000,
       stream
     },
     headers: {

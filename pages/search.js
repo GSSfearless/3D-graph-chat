@@ -24,6 +24,7 @@ export default function Search() {
   const [streamedAnswer, setStreamedAnswer] = useState('');
   const [contentType, setContentType] = useState('answer');
   const [mermaidContent, setMermaidContent] = useState('');
+  const [markdownMindMap, setMarkdownMindMap] = useState('');
   const [useWebSearch, setUseWebSearch] = useState(true);
 
   const defaultQuery = "What is the answer to life, the universe, and everything?";
@@ -162,20 +163,50 @@ export default function Search() {
                     break;
                   case 'end':
                     logApiStatus('Chat API', 'success', `生成完成，共 ${tokenCount} 个token`);
-                    // 自动生成思维导图
+                    // 自动生成流程图和思维导图
                     if (answer) {
-                      logApiStatus('Mind Map', 'start', '开始生成思维导图');
+                      // 生成流程图
+                      logApiStatus('Flow Chart', 'start', '开始生成流程图');
                       try {
                         const response = await fetch('/api/generate-mindmap', {
                           method: 'POST',
                           headers: { 'Content-Type': 'application/json' },
-                          body: JSON.stringify({ content: answer }),
+                          body: JSON.stringify({ 
+                            content: answer,
+                            type: 'flowchart'
+                          }),
                         });
 
                         if (response.ok) {
                           const { mermaidCode } = await response.json();
                           if (mermaidCode) {
                             setMermaidContent(mermaidCode);
+                            logApiStatus('Flow Chart', 'success', '流程图生成完成');
+                          }
+                        } else {
+                          logApiStatus('Flow Chart', 'error', `HTTP ${response.status}`);
+                        }
+                      } catch (error) {
+                        logApiStatus('Flow Chart', 'error', error.message);
+                        console.error('Flow chart generation error:', error);
+                      }
+
+                      // 生成 Markdown 思维导图
+                      logApiStatus('Mind Map', 'start', '开始生成思维导图');
+                      try {
+                        const response = await fetch('/api/generate-mindmap', {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({ 
+                            content: answer,
+                            type: 'markdown'
+                          }),
+                        });
+
+                        if (response.ok) {
+                          const { markdownContent } = await response.json();
+                          if (markdownContent) {
+                            setMarkdownMindMap(markdownContent);
                             logApiStatus('Mind Map', 'success', '思维导图生成完成');
                           }
                         } else {
@@ -267,11 +298,21 @@ export default function Search() {
                 </button>
                 <button
                   className={`px-6 py-2 rounded-lg transition-all ${
-                    contentType === 'mermaid'
+                    contentType === 'flowchart'
                       ? 'bg-blue-500 text-white shadow-md hover:bg-blue-600'
                       : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                   }`}
-                  onClick={() => setContentType('mermaid')}
+                  onClick={() => setContentType('flowchart')}
+                >
+                  流程图
+                </button>
+                <button
+                  className={`px-6 py-2 rounded-lg transition-all ${
+                    contentType === 'mindmap'
+                      ? 'bg-blue-500 text-white shadow-md hover:bg-blue-600'
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }`}
+                  onClick={() => setContentType('mindmap')}
                 >
                   思维导图
                 </button>
@@ -294,11 +335,17 @@ export default function Search() {
                         {streamedAnswer}
                       </ReactMarkdown>
                     </div>
-                  ) : (
+                  ) : contentType === 'flowchart' ? (
                     <ContentViewer
                       content={mermaidContent}
                       type="mermaid"
                     />
+                  ) : (
+                    <div className="prose max-w-none">
+                      <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                        {markdownMindMap}
+                      </ReactMarkdown>
+                    </div>
                   )
                 ) : (
                   <div className="flex items-center justify-center h-full">
