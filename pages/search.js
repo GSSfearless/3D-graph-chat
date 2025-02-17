@@ -24,6 +24,7 @@ export default function Search() {
   const [streamedAnswer, setStreamedAnswer] = useState('');
   const [contentType, setContentType] = useState('answer');
   const [mermaidContent, setMermaidContent] = useState('');
+  const [useWebSearch, setUseWebSearch] = useState(true);
 
   const defaultQuery = "What is the answer to life, the universe, and everything?";
 
@@ -49,52 +50,54 @@ export default function Search() {
     };
 
     try {
-      // 先获取搜索结果
-      logApiStatus('RAG Search', 'start', '开始搜索相关内容');
-      const searchResponse = await fetch(`/api/rag-search?query=${encodeURIComponent(searchQuery)}`);
-      if (!searchResponse.ok) {
-        logApiStatus('RAG Search', 'error', `HTTP ${searchResponse.status}`);
-        throw new Error('搜索请求失败');
-      }
+      // 只在启用联网搜索时执行 RAG 搜索
+      if (useWebSearch) {
+        logApiStatus('RAG Search', 'start', '开始搜索相关内容');
+        const searchResponse = await fetch(`/api/rag-search?query=${encodeURIComponent(searchQuery)}`);
+        if (!searchResponse.ok) {
+          logApiStatus('RAG Search', 'error', `HTTP ${searchResponse.status}`);
+          throw new Error('搜索请求失败');
+        }
 
-      // 读取搜索响应流
-      const searchReader = searchResponse.body.getReader();
-      const searchDecoder = new TextDecoder();
-      let searchResults = [];
-      let searchResultCount = 0;
+        // 读取搜索响应流
+        const searchReader = searchResponse.body.getReader();
+        const searchDecoder = new TextDecoder();
+        let searchResults = [];
+        let searchResultCount = 0;
 
-      try {
-        while (true) {
-          const { value, done } = await searchReader.read();
-          if (done) break;
+        try {
+          while (true) {
+            const { value, done } = await searchReader.read();
+            if (done) break;
 
-          const chunk = searchDecoder.decode(value);
-          const lines = chunk.split('\n');
+            const chunk = searchDecoder.decode(value);
+            const lines = chunk.split('\n');
 
-          for (const line of lines) {
-            if (line.startsWith('data: ')) {
-              const data = line.slice(6);
-              if (data === '[DONE]') continue;
+            for (const line of lines) {
+              if (line.startsWith('data: ')) {
+                const data = line.slice(6);
+                if (data === '[DONE]') continue;
 
-              try {
-                const parsed = JSON.parse(data);
-                if (parsed.result) {
-                  searchResults.push(parsed.result);
-                  searchResultCount++;
+                try {
+                  const parsed = JSON.parse(data);
+                  if (parsed.result) {
+                    searchResults.push(parsed.result);
+                    searchResultCount++;
+                  }
+                } catch (e) {
+                  logApiStatus('RAG Search', 'error', '解析搜索结果失败');
+                  console.error('Search result parse error:', e);
                 }
-              } catch (e) {
-                logApiStatus('RAG Search', 'error', '解析搜索结果失败');
-                console.error('Search result parse error:', e);
               }
             }
           }
+          logApiStatus('RAG Search', 'success', `找到 ${searchResultCount} 条相关内容`);
+        } finally {
+          searchReader.releaseLock();
         }
-        logApiStatus('RAG Search', 'success', `找到 ${searchResultCount} 条相关内容`);
-      } finally {
-        searchReader.releaseLock();
-      }
 
-      setSearchResults(searchResults);
+        setSearchResults(searchResults);
+      }
 
       // 发送聊天请求
       logApiStatus('Chat API', 'start', '开始生成回答');
@@ -102,7 +105,7 @@ export default function Search() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
-          context: searchResults,
+          context: useWebSearch ? searchResults : [],
           query: searchQuery 
         }),
       });
@@ -202,7 +205,7 @@ export default function Search() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [useWebSearch]);
 
   useEffect(() => {
     if (q && initialLoad) {
@@ -310,22 +313,41 @@ export default function Search() {
         {/* 底部搜索区域 */}
         <div className="fixed bottom-8 left-1/2 transform -translate-x-1/2 w-full max-w-2xl px-4">
           <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-gray-100 p-4">
-            <div className="flex items-center space-x-2">
-              <input
-                type="text"
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                onKeyPress={(e) => e.key === 'Enter' && handleSearch(query)}
-                placeholder={defaultQuery}
-                className="flex-1 p-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all bg-white/50"
-              />
-              <button
-                onClick={() => handleSearch(query)}
-                className="bg-gradient-to-r from-blue-500 to-blue-600 text-white p-3 rounded-xl hover:from-blue-600 hover:to-blue-700 transition-all shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
-                disabled={loading}
-              >
-                <FontAwesomeIcon icon={faArrowRight} className="w-5 h-5" />
-              </button>
+            <div className="flex flex-col space-y-2">
+              <div className="flex items-center justify-between px-2">
+                <div className="flex items-center space-x-2">
+                  <span className="text-sm text-gray-600">联网搜索</span>
+                  <button
+                    onClick={() => setUseWebSearch(!useWebSearch)}
+                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${
+                      useWebSearch ? 'bg-blue-500' : 'bg-gray-300'
+                    }`}
+                  >
+                    <span
+                      className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                        useWebSearch ? 'translate-x-6' : 'translate-x-1'
+                      }`}
+                    />
+                  </button>
+                </div>
+              </div>
+              <div className="flex items-center space-x-2">
+                <input
+                  type="text"
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  onKeyPress={(e) => e.key === 'Enter' && handleSearch(query)}
+                  placeholder={defaultQuery}
+                  className="flex-1 p-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all bg-white/50"
+                />
+                <button
+                  onClick={() => handleSearch(query)}
+                  className="bg-gradient-to-r from-blue-500 to-blue-600 text-white p-3 rounded-xl hover:from-blue-600 hover:to-blue-700 transition-all shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+                  disabled={loading}
+                >
+                  <FontAwesomeIcon icon={faArrowRight} className="w-5 h-5" />
+                </button>
+              </div>
             </div>
           </div>
         </div>

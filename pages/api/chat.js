@@ -53,11 +53,20 @@ export default async function handler(req, res) {
           isFirstChunk = false;
         }
 
-        buffer += chunk.toString();
-        const lines = buffer.split('\n');
-        buffer = lines.pop() || '';
+        const chunkText = chunk.toString();
+        buffer += chunkText;
 
-        for (const line of lines) {
+        // 尝试按完整的 data: 行分割
+        while (true) {
+          const dataStart = buffer.indexOf('data: ');
+          if (dataStart === -1) break;
+          
+          const dataEnd = buffer.indexOf('\n', dataStart);
+          if (dataEnd === -1) break;
+
+          const line = buffer.slice(dataStart, dataEnd);
+          buffer = buffer.slice(dataEnd + 1);
+
           if (line.startsWith('data: ')) {
             const data = line.slice(6);
             if (data === '[DONE]') {
@@ -69,32 +78,17 @@ export default async function handler(req, res) {
               const parsed = JSON.parse(data);
               let content = '';
 
-              // 处理不同 API 的响应格式
               if (parsed.choices && parsed.choices[0]) {
                 const choice = parsed.choices[0];
                 
-                // OpenAI/DeepSeek 流式响应格式
                 if (choice.delta) {
                   if (choice.delta.content) {
                     content = choice.delta.content;
                     responseText += content;
                     res.write(`data: {"type":"delta","content":"${encodeURIComponent(content)}"}\n\n`);
                   }
-                  if (choice.delta.role === 'assistant') {
-                    res.write(`data: {"type":"role","content":"assistant"}\n\n`);
-                  }
-                }
-                // Claude/其他 API 完整响应格式
-                else if (choice.message) {
-                  if (choice.message.reasoning_content) {
-                    content = choice.message.reasoning_content;
-                    responseText += content + '\n\n';
-                    res.write(`data: {"type":"reasoning","content":"${encodeURIComponent(content)}"}\n\n`);
-                    
-                    content = choice.message.content;
-                    responseText += content;
-                    res.write(`data: {"type":"answer","content":"${encodeURIComponent(content)}"}\n\n`);
-                  } else if (choice.message.content) {
+                } else if (choice.message) {
+                  if (choice.message.content) {
                     content = choice.message.content;
                     responseText += content;
                     res.write(`data: {"type":"content","content":"${encodeURIComponent(content)}"}\n\n`);
