@@ -35,29 +35,80 @@ export default function Search() {
     setMermaidContent('');
     setSearchResults([]);
 
+    const logApiStatus = (api, status, details = '') => {
+      const style = status === 'success' 
+        ? 'color: #22c55e; font-weight: bold;'
+        : status === 'error'
+        ? 'color: #ef4444; font-weight: bold;'
+        : 'color: #3b82f6; font-weight: bold;';
+      
+      console.log(
+        `%c[${api}] ${status.toUpperCase()}${details ? ': ' + details : ''}`,
+        style
+      );
+    };
+
     try {
-      // 并行发送搜索和聊天请求
-      const [searchPromise, chatPromise] = [
-        // RAG 搜索
-        fetch(`/api/rag-search?query=${encodeURIComponent(searchQuery)}`).then(res => res.json()),
-        // 聊天请求
-        fetch('/api/chat', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ 
-            context: [], // 初始为空，后续更新
-            query: searchQuery 
-          }),
-        })
-      ];
+      // 先获取搜索结果
+      logApiStatus('RAG Search', 'start', '开始搜索相关内容');
+      const searchResponse = await fetch(`/api/rag-search?query=${encodeURIComponent(searchQuery)}`);
+      if (!searchResponse.ok) {
+        logApiStatus('RAG Search', 'error', `HTTP ${searchResponse.status}`);
+        throw new Error('搜索请求失败');
+      }
 
-      // 处理搜索结果
-      const searchData = await searchPromise;
-      setSearchResults(searchData.results || []);
+      // 读取搜索响应流
+      const searchReader = searchResponse.body.getReader();
+      const searchDecoder = new TextDecoder();
+      let searchResults = [];
+      let searchResultCount = 0;
 
-      // 处理聊天响应
-      const chatResponse = await chatPromise;
+      try {
+        while (true) {
+          const { value, done } = await searchReader.read();
+          if (done) break;
+
+          const chunk = searchDecoder.decode(value);
+          const lines = chunk.split('\n');
+
+          for (const line of lines) {
+            if (line.startsWith('data: ')) {
+              const data = line.slice(6);
+              if (data === '[DONE]') continue;
+
+              try {
+                const parsed = JSON.parse(data);
+                if (parsed.result) {
+                  searchResults.push(parsed.result);
+                  searchResultCount++;
+                }
+              } catch (e) {
+                logApiStatus('RAG Search', 'error', '解析搜索结果失败');
+                console.error('Search result parse error:', e);
+              }
+            }
+          }
+        }
+        logApiStatus('RAG Search', 'success', `找到 ${searchResultCount} 条相关内容`);
+      } finally {
+        searchReader.releaseLock();
+      }
+
+      setSearchResults(searchResults);
+
+      // 发送聊天请求
+      logApiStatus('Chat API', 'start', '开始生成回答');
+      const chatResponse = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          context: searchResults,
+          query: searchQuery 
+        }),
+      });
+
       if (!chatResponse.ok) {
+        logApiStatus('Chat API', 'error', `HTTP ${chatResponse.status}`);
         throw new Error(`HTTP error! status: ${chatResponse.status}`);
       }
 
@@ -65,6 +116,7 @@ export default function Search() {
       const decoder = new TextDecoder();
       let answer = '';
       let buffer = '';
+      let tokenCount = 0;
 
       try {
         while (true) {
@@ -93,6 +145,7 @@ export default function Search() {
                       const decodedContent = decodeURIComponent(parsed.content);
                       answer += decodedContent;
                       setStreamedAnswer(answer);
+                      tokenCount++;
                     }
                     break;
                   case 'complete':
@@ -105,8 +158,10 @@ export default function Search() {
                     }
                     break;
                   case 'end':
+                    logApiStatus('Chat API', 'success', `生成完成，共 ${tokenCount} 个token`);
                     // 自动生成思维导图
                     if (answer) {
+                      logApiStatus('Mind Map', 'start', '开始生成思维导图');
                       try {
                         const response = await fetch('/api/generate-mindmap', {
                           method: 'POST',
@@ -118,17 +173,22 @@ export default function Search() {
                           const { mermaidCode } = await response.json();
                           if (mermaidCode) {
                             setMermaidContent(mermaidCode);
+                            logApiStatus('Mind Map', 'success', '思维导图生成完成');
                           }
+                        } else {
+                          logApiStatus('Mind Map', 'error', `HTTP ${response.status}`);
                         }
                       } catch (error) {
-                        console.error('Error generating mind map:', error);
+                        logApiStatus('Mind Map', 'error', error.message);
+                        console.error('Mind map generation error:', error);
                       }
                     }
                     break;
                 }
               } catch (e) {
-                console.error('Error parsing message:', e, 'Raw data:', data);
-                continue; // 跳过解析错误的数据
+                logApiStatus('Chat API', 'error', '解析响应数据失败');
+                console.error('Message parse error:', e, 'Raw data:', data);
+                continue;
               }
             }
           }
@@ -137,10 +197,11 @@ export default function Search() {
         reader.releaseLock();
       }
     } catch (error) {
-      console.error('Error during search:', error);
-      alert(error.message === 'Failed to fetch' ? '连接服务器失败，请检查网络连接' : '搜索过程中出错，请重试');
+      console.error('Search process error:', error);
+      alert('搜索过程中出错，请重试');
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   }, []);
 
   useEffect(() => {
