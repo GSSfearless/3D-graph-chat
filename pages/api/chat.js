@@ -56,16 +56,11 @@ export default async function handler(req, res) {
         const chunkText = chunk.toString();
         buffer += chunkText;
 
-        // 尝试按完整的 data: 行分割
-        while (true) {
-          const dataStart = buffer.indexOf('data: ');
-          if (dataStart === -1) break;
-          
-          const dataEnd = buffer.indexOf('\n', dataStart);
-          if (dataEnd === -1) break;
-
-          const line = buffer.slice(dataStart, dataEnd);
-          buffer = buffer.slice(dataEnd + 1);
+        // 处理完整的数据行
+        while (buffer.includes('\n')) {
+          const newlineIndex = buffer.indexOf('\n');
+          const line = buffer.slice(0, newlineIndex);
+          buffer = buffer.slice(newlineIndex + 1);
 
           if (line.startsWith('data: ')) {
             const data = line.slice(6);
@@ -76,23 +71,21 @@ export default async function handler(req, res) {
 
             try {
               const parsed = JSON.parse(data);
-              let content = '';
+              if (!parsed) continue;
 
+              let content = '';
               if (parsed.choices && parsed.choices[0]) {
                 const choice = parsed.choices[0];
                 
-                if (choice.delta) {
-                  if (choice.delta.content) {
-                    content = choice.delta.content;
-                    responseText += content;
-                    res.write(`data: {"type":"delta","content":"${encodeURIComponent(content)}"}\n\n`);
-                  }
-                } else if (choice.message) {
-                  if (choice.message.content) {
-                    content = choice.message.content;
-                    responseText += content;
-                    res.write(`data: {"type":"content","content":"${encodeURIComponent(content)}"}\n\n`);
-                  }
+                if (choice.delta && choice.delta.content) {
+                  content = choice.delta.content;
+                } else if (choice.message && choice.message.content) {
+                  content = choice.message.content;
+                }
+
+                if (content) {
+                  responseText += content;
+                  res.write(`data: {"type":"delta","content":"${encodeURIComponent(content)}"}\n\n`);
                 }
               }
             } catch (e) {
@@ -107,25 +100,38 @@ export default async function handler(req, res) {
 
     response.data.on('end', () => {
       // 处理缓冲区中剩余的数据
-      if (buffer) {
-        try {
-          if (buffer.startsWith('data: ')) {
-            const data = buffer.slice(6);
-            if (data && data !== '[DONE]') {
+      if (buffer.length > 0) {
+        const lines = buffer.split('\n');
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            const data = line.slice(6);
+            if (data === '[DONE]') continue;
+
+            try {
               const parsed = JSON.parse(data);
-              if (parsed.choices && parsed.choices[0].delta && parsed.choices[0].delta.content) {
-                const content = parsed.choices[0].delta.content;
-                responseText += content;
-                res.write(`data: {"type":"delta","content":"${encodeURIComponent(content)}"}\n\n`);
+              if (parsed.choices && parsed.choices[0]) {
+                let content = '';
+                const choice = parsed.choices[0];
+                
+                if (choice.delta && choice.delta.content) {
+                  content = choice.delta.content;
+                } else if (choice.message && choice.message.content) {
+                  content = choice.message.content;
+                }
+
+                if (content) {
+                  responseText += content;
+                  res.write(`data: {"type":"delta","content":"${encodeURIComponent(content)}"}\n\n`);
+                }
               }
+            } catch (e) {
+              console.error('Error processing final buffer:', e);
             }
           }
-        } catch (e) {
-          console.error('Error processing final buffer:', e);
         }
       }
 
-      // 发送完整的响应文本用于验证
+      // 发送完整的响应文本
       if (responseText) {
         res.write(`data: {"type":"complete","content":"${encodeURIComponent(responseText)}"}\n\n`);
       }
