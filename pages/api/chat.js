@@ -43,11 +43,11 @@ export default async function handler(req, res) {
 
     let isFirstChunk = true;
     let buffer = '';
+    let responseText = '';
 
     // 处理流式响应
     response.data.on('data', (chunk) => {
       try {
-        // 如果是第一个数据块，发送一个开始标记
         if (isFirstChunk) {
           res.write('data: {"type":"start","provider":"' + provider + '"}\n\n');
           isFirstChunk = false;
@@ -55,36 +55,54 @@ export default async function handler(req, res) {
 
         buffer += chunk.toString();
         const lines = buffer.split('\n');
-        buffer = lines.pop(); // 保留最后一个不完整的行
+        buffer = lines.pop() || '';
 
         for (const line of lines) {
           if (line.startsWith('data: ')) {
             const data = line.slice(6);
             if (data === '[DONE]') {
               res.write('data: [DONE]\n\n');
-            } else {
-              try {
-                const parsed = JSON.parse(data);
-                if (parsed.choices && parsed.choices[0].message) {
-                  const message = parsed.choices[0].message;
-                  if (message.reasoning_content) {
-                    res.write(`data: {"type":"reasoning","content":"${encodeURIComponent(message.reasoning_content)}"}\n\n`);
-                    res.write(`data: {"type":"answer","content":"${encodeURIComponent(message.content)}"}\n\n`);
-                  } else if (message.content) {
-                    res.write(`data: {"type":"content","content":"${encodeURIComponent(message.content)}"}\n\n`);
+              continue;
+            }
+
+            try {
+              const parsed = JSON.parse(data);
+              let content = '';
+
+              // 处理不同 API 的响应格式
+              if (parsed.choices && parsed.choices[0]) {
+                const choice = parsed.choices[0];
+                
+                // OpenAI/DeepSeek 流式响应格式
+                if (choice.delta) {
+                  if (choice.delta.content) {
+                    content = choice.delta.content;
+                    responseText += content;
+                    res.write(`data: {"type":"delta","content":"${encodeURIComponent(content)}"}\n\n`);
                   }
-                } else if (parsed.choices && parsed.choices[0].delta) {
-                  if (parsed.choices[0].delta.content) {
-                    res.write(`data: {"type":"delta","content":"${encodeURIComponent(parsed.choices[0].delta.content)}"}\n\n`);
-                  }
-                  // OpenAI 格式处理
-                  if (parsed.choices[0].delta.role === 'assistant') {
+                  if (choice.delta.role === 'assistant') {
                     res.write(`data: {"type":"role","content":"assistant"}\n\n`);
                   }
                 }
-              } catch (e) {
-                console.error('Error parsing chunk:', e);
+                // Claude/其他 API 完整响应格式
+                else if (choice.message) {
+                  if (choice.message.reasoning_content) {
+                    content = choice.message.reasoning_content;
+                    responseText += content + '\n\n';
+                    res.write(`data: {"type":"reasoning","content":"${encodeURIComponent(content)}"}\n\n`);
+                    
+                    content = choice.message.content;
+                    responseText += content;
+                    res.write(`data: {"type":"answer","content":"${encodeURIComponent(content)}"}\n\n`);
+                  } else if (choice.message.content) {
+                    content = choice.message.content;
+                    responseText += content;
+                    res.write(`data: {"type":"content","content":"${encodeURIComponent(content)}"}\n\n`);
+                  }
+                }
               }
+            } catch (e) {
+              console.error('Error parsing chunk:', e, 'Raw data:', data);
             }
           }
         }
@@ -94,19 +112,30 @@ export default async function handler(req, res) {
     });
 
     response.data.on('end', () => {
+      // 处理缓冲区中剩余的数据
       if (buffer) {
         try {
-          const data = buffer.slice(6);
-          if (data && data !== '[DONE]') {
-            const parsed = JSON.parse(data);
-            if (parsed.choices && parsed.choices[0].delta.content) {
-              res.write(`data: {"type":"delta","content":"${encodeURIComponent(parsed.choices[0].delta.content)}"}\n\n`);
+          if (buffer.startsWith('data: ')) {
+            const data = buffer.slice(6);
+            if (data && data !== '[DONE]') {
+              const parsed = JSON.parse(data);
+              if (parsed.choices && parsed.choices[0].delta && parsed.choices[0].delta.content) {
+                const content = parsed.choices[0].delta.content;
+                responseText += content;
+                res.write(`data: {"type":"delta","content":"${encodeURIComponent(content)}"}\n\n`);
+              }
             }
           }
         } catch (e) {
           console.error('Error processing final buffer:', e);
         }
       }
+
+      // 发送完整的响应文本用于验证
+      if (responseText) {
+        res.write(`data: {"type":"complete","content":"${encodeURIComponent(responseText)}"}\n\n`);
+      }
+      
       res.write('data: {"type":"end"}\n\n');
       res.end();
     });

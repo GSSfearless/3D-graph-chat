@@ -210,6 +210,14 @@ export default function Search() {
                     answer += decodeURIComponent(parsed.content);
                     setStreamedAnswer(answer);
                     break;
+                  case 'complete':
+                    // 验证完整响应
+                    const completeAnswer = decodeURIComponent(parsed.content);
+                    if (completeAnswer.length > answer.length) {
+                      answer = completeAnswer;
+                      setStreamedAnswer(answer);
+                    }
+                    break;
                   case 'error':
                     throw new Error(parsed.message);
                   case 'end':
