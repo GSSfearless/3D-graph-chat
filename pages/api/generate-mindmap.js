@@ -1,7 +1,7 @@
 import axios from 'axios';
 
-const DEEPSEEK_API_KEY = process.env.DEEPSEEK_API_KEY;
-const DEEPSEEK_API_URL = 'https://api.siliconflow.com/v1/chat/completions';
+const API_KEY = 'sk-fgrhdqqyqtwcxdjnqqvcenmzykhrbttrklkizypndnpfxdbf';
+const API_URL = 'https://api.siliconflow.cn/v1/chat/completions';
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -34,39 +34,53 @@ export default async function handler(req, res) {
    - 将长文本适当简化，保持节点文本简洁
    - 保持逻辑关系清晰
 
-请分析以下内容并生成符合上述规则的 Mermaid 代码：
+请分析以下内容并生成符合上述规则的 Mermaid 代码。只返回 Mermaid 代码，不需要其他解释：
 
-${content}
-
-只返回 Mermaid 代码，不需要其他解释。确保代码可以直接在 Mermaid 中渲染。`;
+${content}`;
 
     const response = await axios.post(
-      DEEPSEEK_API_URL,
+      API_URL,
       {
-        model: 'deepseek-chat',
+        model: 'deepseek-ai/DeepSeek-R1',
         messages: [
+          {
+            role: 'system',
+            content: '你是一个专业的思维导图生成助手，擅长将文本转换为结构化的 Mermaid 图表。'
+          },
           {
             role: 'user',
             content: prompt
           }
         ],
-        temperature: 0.7,
-        max_tokens: 2000
+        temperature: 0.3,  // 降低温度以获得更稳定的输出
+        max_tokens: 2000,
+        top_p: 0.8,
+        frequency_penalty: 0.3
       },
       {
         headers: {
-          'Authorization': `Bearer ${DEEPSEEK_API_KEY}`,
+          'Authorization': `Bearer ${API_KEY}`,
           'Content-Type': 'application/json'
         }
       }
     );
 
     // 提取 Mermaid 代码
-    const mermaidCode = response.data.choices[0].message.content.trim();
+    let mermaidCode = response.data.choices[0].message.content.trim();
+    
+    // 如果返回的内容包含了额外的解释文本，尝试提取出 Mermaid 代码部分
+    if (mermaidCode.includes('graph TD')) {
+      const startIndex = mermaidCode.indexOf('graph TD');
+      const possibleEndIndex = mermaidCode.indexOf('```', startIndex);
+      mermaidCode = mermaidCode.substring(
+        startIndex,
+        possibleEndIndex > startIndex ? possibleEndIndex : undefined
+      ).trim();
+    }
     
     res.status(200).json({ mermaidCode });
   } catch (error) {
-    console.error('Error calling DeepSeek API:', error);
+    console.error('Error calling API:', error);
     res.status(500).json({ 
       message: 'Error generating mind map',
       error: error.message 

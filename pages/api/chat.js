@@ -1,7 +1,7 @@
 import axios from 'axios';
 
-const DEEPSEEK_API_KEY = process.env.DEEPSEEK_API_KEY;
-const DEEPSEEK_API_URL = 'https://api.siliconflow.com/v1/chat/completions';
+const API_KEY = 'sk-fgrhdqqyqtwcxdjnqqvcenmzykhrbttrklkizypndnpfxdbf';
+const API_URL = 'https://api.siliconflow.cn/v1/chat/completions';
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -17,11 +17,12 @@ export default async function handler(req, res) {
       .join('\n\n');
 
     const systemPrompt = `你是一个专业的知识助手。请基于提供的上下文信息，以清晰、结构化的方式回答问题。回答应该：
-1. 使用markdown格式
+1. 使用markdown格式，确保层次分明
 2. 包含清晰的标题和小标题
 3. 适当使用列表和要点
 4. 确保信息准确且来源于上下文
-5. 如果上下文信息不足，请明确指出`;
+5. 如果上下文信息不足，请明确指出
+6. 在回答的最后，总结关键要点`;
 
     // 设置响应头
     res.setHeader('Content-Type', 'text/event-stream');
@@ -30,9 +31,9 @@ export default async function handler(req, res) {
 
     const response = await axios({
       method: 'post',
-      url: DEEPSEEK_API_URL,
+      url: API_URL,
       data: {
-        model: 'deepseek-chat',
+        model: 'deepseek-ai/DeepSeek-R1',  // 使用 DeepSeek-R1 模型
         messages: [
           {
             role: 'system',
@@ -45,10 +46,12 @@ export default async function handler(req, res) {
         ],
         temperature: 0.7,
         max_tokens: 2000,
-        stream: true
+        stream: true,
+        top_p: 0.8,
+        frequency_penalty: 0.5
       },
       headers: {
-        'Authorization': `Bearer ${DEEPSEEK_API_KEY}`,
+        'Authorization': `Bearer ${API_KEY}`,
         'Content-Type': 'application/json',
         'Accept': 'text/event-stream'
       },
@@ -66,7 +69,16 @@ export default async function handler(req, res) {
           } else {
             try {
               const parsed = JSON.parse(data);
-              if (parsed.choices && parsed.choices[0].delta.content) {
+              // 检查是否有推理内容
+              if (parsed.choices && parsed.choices[0].message) {
+                const message = parsed.choices[0].message;
+                if (message.reasoning_content) {
+                  // 如果有推理内容，将其添加到回答中
+                  res.write(`data: ### 思维过程：\n${message.reasoning_content}\n\n### 最终回答：\n${message.content}\n\n`);
+                } else if (message.content) {
+                  res.write(`data: ${message.content}\n\n`);
+                }
+              } else if (parsed.choices && parsed.choices[0].delta.content) {
                 res.write(`data: ${parsed.choices[0].delta.content}\n\n`);
               }
             } catch (e) {
@@ -87,7 +99,7 @@ export default async function handler(req, res) {
     });
 
   } catch (error) {
-    console.error('Error calling DeepSeek API:', error);
+    console.error('Error calling API:', error);
     res.status(500).json({ 
       message: 'Error processing chat request',
       error: error.message 
