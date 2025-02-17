@@ -39,7 +39,7 @@ export default function Search() {
       // 并行发送搜索和聊天请求
       const [searchPromise, chatPromise] = [
         // RAG 搜索
-        fetch(`/api/rag-search?query=${encodeURIComponent(searchQuery)}`),
+        fetch(`/api/rag-search?query=${encodeURIComponent(searchQuery)}`).then(res => res.json()),
         // 聊天请求
         fetch('/api/chat', {
           method: 'POST',
@@ -52,12 +52,7 @@ export default function Search() {
       ];
 
       // 处理搜索结果
-      const searchResponse = await searchPromise;
-      if (!searchResponse.ok) {
-        throw new Error('搜索请求失败');
-      }
-
-      const searchData = await searchResponse.json();
+      const searchData = await searchPromise;
       setSearchResults(searchData.results || []);
 
       // 处理聊天响应
@@ -87,43 +82,53 @@ export default function Search() {
 
               try {
                 const parsed = JSON.parse(data);
+                if (!parsed) continue;
+
                 switch (parsed.type) {
                   case 'reasoning':
                   case 'answer':
                   case 'content':
                   case 'delta':
-                    answer += decodeURIComponent(parsed.content);
-                    setStreamedAnswer(answer);
+                    if (parsed.content) {
+                      const decodedContent = decodeURIComponent(parsed.content);
+                      answer += decodedContent;
+                      setStreamedAnswer(answer);
+                    }
                     break;
                   case 'complete':
-                    const completeAnswer = decodeURIComponent(parsed.content);
-                    if (completeAnswer.length > answer.length) {
-                      answer = completeAnswer;
-                      setStreamedAnswer(answer);
+                    if (parsed.content) {
+                      const completeAnswer = decodeURIComponent(parsed.content);
+                      if (completeAnswer.length > answer.length) {
+                        answer = completeAnswer;
+                        setStreamedAnswer(answer);
+                      }
                     }
                     break;
                   case 'end':
                     // 自动生成思维导图
-                    try {
-                      const response = await fetch('/api/generate-mindmap', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ content: answer }),
-                      });
+                    if (answer) {
+                      try {
+                        const response = await fetch('/api/generate-mindmap', {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({ content: answer }),
+                        });
 
-                      if (response.ok) {
-                        const { mermaidCode } = await response.json();
-                        if (mermaidCode) {
-                          setMermaidContent(mermaidCode);
+                        if (response.ok) {
+                          const { mermaidCode } = await response.json();
+                          if (mermaidCode) {
+                            setMermaidContent(mermaidCode);
+                          }
                         }
+                      } catch (error) {
+                        console.error('Error generating mind map:', error);
                       }
-                    } catch (error) {
-                      console.error('Error generating mind map:', error);
                     }
                     break;
                 }
               } catch (e) {
-                console.error('Error parsing message:', e);
+                console.error('Error parsing message:', e, 'Raw data:', data);
+                continue; // 跳过解析错误的数据
               }
             }
           }
