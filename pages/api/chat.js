@@ -1,11 +1,11 @@
 import axios from 'axios';
 
-const API_KEY = 'sk-fgrhdqqyqtwcxdjnqqvcenmzykhrbttrklkizypndnpfxdbf';
+const API_KEY = process.env.SILICONFLOW_API_KEY;
 const API_URL = 'https://api.siliconflow.cn/v1/chat/completions';
 
 // 创建一个带有超时设置的 axios 实例
 const api = axios.create({
-  timeout: 60000, // 60秒超时
+  timeout: 120000, // 120秒超时，Vercel 函数最长执行时间是 10 分钟
   maxContentLength: Infinity,
   maxBodyLength: Infinity
 });
@@ -29,6 +29,13 @@ api.interceptors.response.use(undefined, async (err) => {
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ message: 'Method not allowed' });
+  }
+
+  if (!API_KEY) {
+    return res.status(500).json({ 
+      message: 'API key not configured',
+      error: 'Please set the SILICONFLOW_API_KEY environment variable' 
+    });
   }
 
   const { query, context } = req.body;

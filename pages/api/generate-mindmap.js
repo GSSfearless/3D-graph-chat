@@ -1,11 +1,18 @@
 import axios from 'axios';
 
-const API_KEY = 'sk-fgrhdqqyqtwcxdjnqqvcenmzykhrbttrklkizypndnpfxdbf';
+const API_KEY = process.env.SILICONFLOW_API_KEY;
 const API_URL = 'https://api.siliconflow.cn/v1/chat/completions';
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ message: 'Method not allowed' });
+  }
+
+  if (!API_KEY) {
+    return res.status(500).json({ 
+      message: 'API key not configured',
+      error: 'Please set the SILICONFLOW_API_KEY environment variable' 
+    });
   }
 
   try {
@@ -52,7 +59,7 @@ ${content}`;
             content: prompt
           }
         ],
-        temperature: 0.3,  // 降低温度以获得更稳定的输出
+        temperature: 0.3,
         max_tokens: 2000,
         top_p: 0.8,
         frequency_penalty: 0.3
@@ -61,7 +68,8 @@ ${content}`;
         headers: {
           'Authorization': `Bearer ${API_KEY}`,
           'Content-Type': 'application/json'
-        }
+        },
+        timeout: 120000 // 120秒超时
       }
     );
 
