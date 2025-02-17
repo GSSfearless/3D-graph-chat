@@ -5,6 +5,8 @@ import { useRouter } from 'next/router';
 import { useState, useCallback, useEffect, useRef } from 'react';
 import 'tailwindcss/tailwind.css';
 import '../styles/globals.css';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 
 const ContentViewer = dynamic(() => import('../components/ContentViewer'), {
   ssr: false,
@@ -26,8 +28,9 @@ export default function Search() {
   const [processingStep, setProcessingStep] = useState(0);
   const [streamedAnswer, setStreamedAnswer] = useState('');
   const [loadingMessage, setLoadingMessage] = useState('🎨 Preparing the canvas...');
-  const [contentType, setContentType] = useState('markdown');
+  const [contentType, setContentType] = useState('answer');
   const [mermaidContent, setMermaidContent] = useState('');
+  const [isGeneratingMindMap, setIsGeneratingMindMap] = useState(false);
 
   const defaultQuery = "What is the answer to life, the universe, and everything?";
 
@@ -194,6 +197,40 @@ export default function Search() {
     setLoading(false);
   }, [searchResults]);
 
+  const generateMindMap = async () => {
+    if (!streamedAnswer) return;
+    
+    setIsGeneratingMindMap(true);
+    try {
+      const response = await fetch('/api/generate-mindmap', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          content: streamedAnswer,
+          model: 'deepseek-chat'
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const { mermaidCode } = await response.json();
+      if (mermaidCode) {
+        setMermaidContent(mermaidCode);
+        setContentType('mermaid');
+      } else {
+        throw new Error('No mermaid code received');
+      }
+    } catch (error) {
+      console.error('Error generating mind map:', error);
+      // 显示错误提示
+      alert('生成思维导图时出错，请重试');
+    } finally {
+      setIsGeneratingMindMap(false);
+    }
+  };
+
   useEffect(() => {
     let interval;
     if (isProcessing) {
@@ -270,48 +307,58 @@ export default function Search() {
       {/* 主要内容区域 */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-          {/* 左侧流程图区域 */}
-          <div className="lg:col-span-5 xl:col-span-4">
-            <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-              <div className="border-b border-gray-100">
-                <div className="flex p-4">
-                  <button
-                    className={`px-4 py-2 rounded-lg mr-2 transition-all ${
-                      contentType === 'markdown'
-                        ? 'bg-blue-500 text-white shadow-md hover:bg-blue-600'
-                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                    }`}
-                    onClick={() => setContentType('markdown')}
-                  >
-                    Markdown视图
-                  </button>
-                  <button
-                    className={`px-4 py-2 rounded-lg transition-all ${
-                      contentType === 'mermaid'
-                        ? 'bg-blue-500 text-white shadow-md hover:bg-blue-600'
-                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                    }`}
-                    onClick={() => setContentType('mermaid')}
-                  >
-                    流程图视图
-                  </button>
-                </div>
-              </div>
-              <div className="h-[calc(100vh-16rem)] overflow-auto">
-                {contentType === 'mermaid' && (
-                  <ContentViewer
-                    content={mermaidContent}
-                    type="mermaid"
-                  />
-                )}
+          {/* 视图切换按钮区域 */}
+          <div className="lg:col-span-12">
+            <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
+              <div className="flex justify-center space-x-4">
+                <button
+                  className={`px-6 py-2 rounded-lg transition-all ${
+                    contentType === 'answer'
+                      ? 'bg-blue-500 text-white shadow-md hover:bg-blue-600'
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }`}
+                  onClick={() => setContentType('answer')}
+                >
+                  AI回答
+                </button>
+                <button
+                  className={`px-6 py-2 rounded-lg transition-all ${
+                    contentType === 'mermaid'
+                      ? 'bg-blue-500 text-white shadow-md hover:bg-blue-600'
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }`}
+                  onClick={() => setContentType('mermaid')}
+                >
+                  流程图
+                </button>
+                <button
+                  className={`px-6 py-2 rounded-lg transition-all ${
+                    isGeneratingMindMap
+                      ? 'bg-gray-300 cursor-not-allowed'
+                      : streamedAnswer
+                      ? 'bg-green-500 text-white shadow-md hover:bg-green-600'
+                      : 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                  }`}
+                  onClick={generateMindMap}
+                  disabled={isGeneratingMindMap || !streamedAnswer}
+                >
+                  {isGeneratingMindMap ? (
+                    <span className="flex items-center">
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                      生成中...
+                    </span>
+                  ) : (
+                    '生成思维导图'
+                  )}
+                </button>
               </div>
             </div>
           </div>
 
-          {/* 右侧内容显示区域 */}
-          <div className="lg:col-span-7 xl:col-span-8">
+          {/* 内容显示区域 */}
+          <div className="lg:col-span-12">
             <div className="bg-white rounded-xl shadow-sm border border-gray-100">
-              <div className="h-[calc(100vh-16rem)] overflow-auto p-6">
+              <div className="h-[calc(100vh-24rem)] overflow-auto p-6">
                 {loading ? (
                   <div className="flex items-center justify-center h-full">
                     <div className="text-center">
@@ -320,10 +367,16 @@ export default function Search() {
                     </div>
                   </div>
                 ) : streamedAnswer ? (
-                  contentType === 'markdown' && (
+                  contentType === 'answer' ? (
+                    <div className="prose max-w-none">
+                      <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                        {streamedAnswer}
+                      </ReactMarkdown>
+                    </div>
+                  ) : (
                     <ContentViewer
-                      content={streamedAnswer}
-                      type="markdown"
+                      content={mermaidContent}
+                      type="mermaid"
                     />
                   )
                 ) : (

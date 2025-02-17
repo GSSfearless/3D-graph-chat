@@ -1,60 +1,74 @@
-import { OpenAIStream } from '../../utils/OpenAIStream';
+import axios from 'axios';
 
-export const config = {
-  runtime: 'edge',
-};
+const DEEPSEEK_API_KEY = process.env.DEEPSEEK_API_KEY;
+const DEEPSEEK_API_URL = 'https://api.siliconflow.com/v1/chat/completions';
 
-export default async function handler(req) {
-  const { context, query } = await req.json();
-
-  if (!context || !query) {
-    return new Response('Context and query are required', { status: 400 });
+export default async function handler(req, res) {
+  if (req.method !== 'POST') {
+    return res.status(405).json({ message: 'Method not allowed' });
   }
 
-  const prompt = `
-You are a large language AI assistant. Please provide a concise and accurate answer to the user's question. You will receive a set of context information related to the question. Your answer must be correct, accurate, and written in a professional and neutral tone. Please limit it to 1024 tokens. Do not provide information unrelated to the question, and do not repeat yourself.
+  const { query, context } = req.body;
 
-Please strictly use the following format to organize your answer:
-1. Use double asterisks (**) to surround important concepts or keywords to indicate bold. For example: **important concept**.
-2. Use a bullet point (•) followed by a space to create bulleted lists. Each new point should start on a new line.
-3. Use three hash symbols (###) to create subheadings, ensuring the subheading is on its own line. Do not use more than three hash symbols.
-4. Use a single line break to separate paragraphs.
+  try {
+    // 构建上下文提示词
+    const contextText = context
+      .map(item => `${item.title}\n${item.content}`)
+      .join('\n\n');
 
-Example format:
-### Key Points
-• **First important concept**
-• **Second important concept**
-• **Third important concept**
+    const systemPrompt = `你是一个专业的知识助手。请基于提供的上下文信息，以清晰、结构化的方式回答问题。回答应该：
+1. 使用markdown格式
+2. 包含清晰的标题和小标题
+3. 适当使用列表和要点
+4. 确保信息准确且来源于上下文
+5. 如果上下文信息不足，请明确指出`;
 
-### Detailed Explanation
-• Explanation of the first concept
-  • Additional details
-  • More information
-• Explanation of the second concept
-• Explanation of the third concept
+    const response = await axios.post(
+      DEEPSEEK_API_URL,
+      {
+        model: 'deepseek-chat',
+        messages: [
+          {
+            role: 'system',
+            content: systemPrompt
+          },
+          {
+            role: 'user',
+            content: `上下文信息：\n${contextText}\n\n问题：${query}`
+          }
+        ],
+        temperature: 0.7,
+        max_tokens: 2000,
+        stream: true
+      },
+      {
+        headers: {
+          'Authorization': `Bearer ${DEEPSEEK_API_KEY}`,
+          'Content-Type': 'application/json'
+        },
+        responseType: 'stream'
+      }
+    );
 
-Do not use more than three hash symbols (###) for headings. Do not reference any context numbers or sources. Focus on providing an informative and well-structured answer.
+    // 设置响应头
+    res.setHeader('Content-Type', 'text/event-stream');
+    res.setHeader('Cache-Control', 'no-cache');
+    res.setHeader('Connection', 'keep-alive');
 
-Here is the set of context information:
+    // 转发流式响应
+    response.data.pipe(res);
 
-${context.map((item, index) => `Title: ${item.title}\nSummary: ${item.snippet}`).join('\n\n')}
+    // 错误处理
+    response.data.on('error', (error) => {
+      console.error('Stream error:', error);
+      res.end();
+    });
 
-Remember, don't blindly repeat the context. Here is the user's question:
-"${query}"
-`;
-
-  const payload = {
-    model: 'gpt-3.5-turbo',
-    messages: [{ role: 'user', content: prompt }],
-    temperature: 0.7,
-    top_p: 1,
-    frequency_penalty: 0,
-    presence_penalty: 0,
-    max_tokens: 1024,
-    stream: true,
-    n: 1,
-  };
-
-  const stream = await OpenAIStream(payload);
-  return new Response(stream);
+  } catch (error) {
+    console.error('Error calling DeepSeek API:', error);
+    res.status(500).json({ 
+      message: 'Error processing chat request',
+      error: error.message 
+    });
+  }
 }
