@@ -153,9 +153,10 @@ export default function Search() {
         eventSource.close();
         setIsCollecting(false);
         setIsProcessing(false);
+        alert('搜索资料时出错，请重试');
       };
 
-      // Get AI answer
+      // 发送聊天请求
       const response = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -166,41 +167,81 @@ export default function Search() {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 
-      // 创建新的 EventSource 来处理流式响应
-      const chatEventSource = new EventSource(`/api/chat?query=${encodeURIComponent(searchQuery)}`);
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
       let answer = '';
+      let buffer = '';
 
-      chatEventSource.onmessage = (event) => {
-        if (event.data === '[DONE]') {
-          chatEventSource.close();
-          // 生成Mermaid图表
-          const mermaidDiagram = generateMermaidContent(answer);
-          setMermaidContent(mermaidDiagram);
-          
-          // 完成处理
-          setIsProcessing(false);
-          setIsCollecting(false);
-          setQuery('');
-          setCollectedPages(0);
-          setTotalPages(0);
-        } else {
-          answer += event.data;
-          setStreamedAnswer(answer);
+      try {
+        while (true) {
+          const { value, done } = await reader.read();
+          if (done) break;
+
+          buffer += decoder.decode(value, { stream: true });
+          const lines = buffer.split('\n');
+          buffer = lines.pop() || '';
+
+          for (const line of lines) {
+            if (line.startsWith('data: ')) {
+              const data = line.slice(6);
+              if (data === '[DONE]') {
+                continue;
+              }
+
+              try {
+                const parsed = JSON.parse(data);
+                switch (parsed.type) {
+                  case 'start':
+                    // 开始接收数据
+                    break;
+                  case 'reasoning':
+                    answer += `### 思维过程：\n${decodeURIComponent(parsed.content)}\n\n`;
+                    setStreamedAnswer(answer);
+                    break;
+                  case 'answer':
+                    answer += `### 最终回答：\n${decodeURIComponent(parsed.content)}\n\n`;
+                    setStreamedAnswer(answer);
+                    break;
+                  case 'content':
+                    answer += decodeURIComponent(parsed.content);
+                    setStreamedAnswer(answer);
+                    break;
+                  case 'delta':
+                    answer += decodeURIComponent(parsed.content);
+                    setStreamedAnswer(answer);
+                    break;
+                  case 'error':
+                    throw new Error(parsed.message);
+                  case 'end':
+                    // 生成 Mermaid 图表
+                    const mermaidDiagram = generateMermaidContent(answer);
+                    setMermaidContent(mermaidDiagram);
+                    break;
+                }
+              } catch (e) {
+                console.error('Error parsing message:', e);
+              }
+            }
+          }
         }
-      };
+      } catch (error) {
+        console.error('Error reading stream:', error);
+        throw error;
+      } finally {
+        reader.releaseLock();
+      }
 
-      chatEventSource.onerror = (error) => {
-        console.error('Chat EventSource failed:', error);
-        chatEventSource.close();
-        setIsProcessing(false);
-        setIsCollecting(false);
-      };
-
+      // 完成处理
+      setIsProcessing(false);
+      setIsCollecting(false);
+      setQuery('');
+      setCollectedPages(0);
+      setTotalPages(0);
     } catch (error) {
       console.error('Error during search:', error);
       setIsProcessing(false);
       setIsCollecting(false);
-      alert('搜索过程中出错，请重试');
+      alert(error.message === 'Failed to fetch' ? '连接服务器失败，请检查网络连接' : '搜索过程中出错，请重试');
     }
     setLoading(false);
   }, [searchResults]);

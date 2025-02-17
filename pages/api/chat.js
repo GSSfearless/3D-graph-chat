@@ -3,6 +3,29 @@ import axios from 'axios';
 const API_KEY = 'sk-fgrhdqqyqtwcxdjnqqvcenmzykhrbttrklkizypndnpfxdbf';
 const API_URL = 'https://api.siliconflow.cn/v1/chat/completions';
 
+// 创建一个带有超时设置的 axios 实例
+const api = axios.create({
+  timeout: 60000, // 60秒超时
+  maxContentLength: Infinity,
+  maxBodyLength: Infinity
+});
+
+// 添加重试逻辑
+api.interceptors.response.use(undefined, async (err) => {
+  const { config } = err;
+  if (!config || !config.retry) {
+    return Promise.reject(err);
+  }
+  config.currentRetryAttempt = config.currentRetryAttempt || 0;
+  if (config.currentRetryAttempt >= config.retry) {
+    return Promise.reject(err);
+  }
+  config.currentRetryAttempt += 1;
+  const delayMs = config.retryDelay || 1000;
+  await new Promise(resolve => setTimeout(resolve, delayMs));
+  return api(config);
+});
+
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ message: 'Method not allowed' });
@@ -29,11 +52,11 @@ export default async function handler(req, res) {
     res.setHeader('Cache-Control', 'no-cache');
     res.setHeader('Connection', 'keep-alive');
 
-    const response = await axios({
+    const response = await api({
       method: 'post',
       url: API_URL,
       data: {
-        model: 'deepseek-ai/DeepSeek-R1',  // 使用 DeepSeek-R1 模型
+        model: 'deepseek-ai/DeepSeek-R1',
         messages: [
           {
             role: 'system',
@@ -55,46 +78,81 @@ export default async function handler(req, res) {
         'Content-Type': 'application/json',
         'Accept': 'text/event-stream'
       },
-      responseType: 'stream'
+      responseType: 'stream',
+      // 添加重试配置
+      retry: 3,
+      retryDelay: 1000,
+      timeout: 60000
     });
+
+    let isFirstChunk = true;
+    let buffer = '';
 
     // 处理流式响应
     response.data.on('data', (chunk) => {
-      const lines = chunk.toString().split('\n');
-      for (const line of lines) {
-        if (line.startsWith('data: ')) {
-          const data = line.slice(6);
-          if (data === '[DONE]') {
-            res.write('data: [DONE]\n\n');
-          } else {
-            try {
-              const parsed = JSON.parse(data);
-              // 检查是否有推理内容
-              if (parsed.choices && parsed.choices[0].message) {
-                const message = parsed.choices[0].message;
-                if (message.reasoning_content) {
-                  // 如果有推理内容，将其添加到回答中
-                  res.write(`data: ### 思维过程：\n${message.reasoning_content}\n\n### 最终回答：\n${message.content}\n\n`);
-                } else if (message.content) {
-                  res.write(`data: ${message.content}\n\n`);
+      try {
+        // 如果是第一个数据块，发送一个开始标记
+        if (isFirstChunk) {
+          res.write('data: {"type":"start"}\n\n');
+          isFirstChunk = false;
+        }
+
+        buffer += chunk.toString();
+        const lines = buffer.split('\n');
+        buffer = lines.pop(); // 保留最后一个不完整的行
+
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            const data = line.slice(6);
+            if (data === '[DONE]') {
+              res.write('data: [DONE]\n\n');
+            } else {
+              try {
+                const parsed = JSON.parse(data);
+                if (parsed.choices && parsed.choices[0].message) {
+                  const message = parsed.choices[0].message;
+                  if (message.reasoning_content) {
+                    res.write(`data: {"type":"reasoning","content":"${encodeURIComponent(message.reasoning_content)}"}\n\n`);
+                    res.write(`data: {"type":"answer","content":"${encodeURIComponent(message.content)}"}\n\n`);
+                  } else if (message.content) {
+                    res.write(`data: {"type":"content","content":"${encodeURIComponent(message.content)}"}\n\n`);
+                  }
+                } else if (parsed.choices && parsed.choices[0].delta.content) {
+                  res.write(`data: {"type":"delta","content":"${encodeURIComponent(parsed.choices[0].delta.content)}"}\n\n`);
                 }
-              } else if (parsed.choices && parsed.choices[0].delta.content) {
-                res.write(`data: ${parsed.choices[0].delta.content}\n\n`);
+              } catch (e) {
+                console.error('Error parsing chunk:', e);
               }
-            } catch (e) {
-              console.error('Error parsing chunk:', e);
             }
           }
         }
+      } catch (error) {
+        console.error('Error processing chunk:', error);
       }
     });
 
     response.data.on('end', () => {
+      if (buffer) {
+        // 处理缓冲区中剩余的数据
+        try {
+          const data = buffer.slice(6);
+          if (data && data !== '[DONE]') {
+            const parsed = JSON.parse(data);
+            if (parsed.choices && parsed.choices[0].delta.content) {
+              res.write(`data: {"type":"delta","content":"${encodeURIComponent(parsed.choices[0].delta.content)}"}\n\n`);
+            }
+          }
+        } catch (e) {
+          console.error('Error processing final buffer:', e);
+        }
+      }
+      res.write('data: {"type":"end"}\n\n');
       res.end();
     });
 
     response.data.on('error', (error) => {
       console.error('Stream error:', error);
+      res.write(`data: {"type":"error","message":"${error.message}"}\n\n`);
       res.end();
     });
 
