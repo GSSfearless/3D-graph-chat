@@ -1,41 +1,8 @@
-import axios from 'axios';
-
-const API_KEY = process.env.SILICONFLOW_API_KEY;
-const API_URL = 'https://api.siliconflow.cn/v1/chat/completions';
-
-// 创建一个带有超时设置的 axios 实例
-const api = axios.create({
-  timeout: 120000, // 120秒超时，Vercel 函数最长执行时间是 10 分钟
-  maxContentLength: Infinity,
-  maxBodyLength: Infinity
-});
-
-// 添加重试逻辑
-api.interceptors.response.use(undefined, async (err) => {
-  const { config } = err;
-  if (!config || !config.retry) {
-    return Promise.reject(err);
-  }
-  config.currentRetryAttempt = config.currentRetryAttempt || 0;
-  if (config.currentRetryAttempt >= config.retry) {
-    return Promise.reject(err);
-  }
-  config.currentRetryAttempt += 1;
-  const delayMs = config.retryDelay || 1000;
-  await new Promise(resolve => setTimeout(resolve, delayMs));
-  return api(config);
-});
+import { callWithFallback } from '../../utils/api-client';
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ message: 'Method not allowed' });
-  }
-
-  if (!API_KEY) {
-    return res.status(500).json({ 
-      message: 'API key not configured',
-      error: 'Please set the SILICONFLOW_API_KEY environment variable' 
-    });
   }
 
   const { query, context } = req.body;
@@ -59,38 +26,20 @@ export default async function handler(req, res) {
     res.setHeader('Cache-Control', 'no-cache');
     res.setHeader('Connection', 'keep-alive');
 
-    const response = await api({
-      method: 'post',
-      url: API_URL,
-      data: {
-        model: 'deepseek-ai/DeepSeek-R1',
-        messages: [
-          {
-            role: 'system',
-            content: systemPrompt
-          },
-          {
-            role: 'user',
-            content: `上下文信息：\n${contextText}\n\n问题：${query}`
-          }
-        ],
-        temperature: 0.7,
-        max_tokens: 2000,
-        stream: true,
-        top_p: 0.8,
-        frequency_penalty: 0.5
+    const messages = [
+      {
+        role: 'system',
+        content: systemPrompt
       },
-      headers: {
-        'Authorization': `Bearer ${API_KEY}`,
-        'Content-Type': 'application/json',
-        'Accept': 'text/event-stream'
-      },
-      responseType: 'stream',
-      // 添加重试配置
-      retry: 3,
-      retryDelay: 1000,
-      timeout: 60000
-    });
+      {
+        role: 'user',
+        content: `上下文信息：\n${contextText}\n\n问题：${query}`
+      }
+    ];
+
+    // 使用故障转移机制调用 API
+    const { provider, response } = await callWithFallback(messages, true);
+    console.log(`Using ${provider} API for response`);
 
     let isFirstChunk = true;
     let buffer = '';
@@ -100,7 +49,7 @@ export default async function handler(req, res) {
       try {
         // 如果是第一个数据块，发送一个开始标记
         if (isFirstChunk) {
-          res.write('data: {"type":"start"}\n\n');
+          res.write('data: {"type":"start","provider":"' + provider + '"}\n\n');
           isFirstChunk = false;
         }
 
@@ -124,8 +73,14 @@ export default async function handler(req, res) {
                   } else if (message.content) {
                     res.write(`data: {"type":"content","content":"${encodeURIComponent(message.content)}"}\n\n`);
                   }
-                } else if (parsed.choices && parsed.choices[0].delta.content) {
-                  res.write(`data: {"type":"delta","content":"${encodeURIComponent(parsed.choices[0].delta.content)}"}\n\n`);
+                } else if (parsed.choices && parsed.choices[0].delta) {
+                  if (parsed.choices[0].delta.content) {
+                    res.write(`data: {"type":"delta","content":"${encodeURIComponent(parsed.choices[0].delta.content)}"}\n\n`);
+                  }
+                  // OpenAI 格式处理
+                  if (parsed.choices[0].delta.role === 'assistant') {
+                    res.write(`data: {"type":"role","content":"assistant"}\n\n`);
+                  }
                 }
               } catch (e) {
                 console.error('Error parsing chunk:', e);
@@ -140,7 +95,6 @@ export default async function handler(req, res) {
 
     response.data.on('end', () => {
       if (buffer) {
-        // 处理缓冲区中剩余的数据
         try {
           const data = buffer.slice(6);
           if (data && data !== '[DONE]') {

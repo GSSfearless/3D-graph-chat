@@ -1,18 +1,8 @@
-import axios from 'axios';
-
-const API_KEY = process.env.SILICONFLOW_API_KEY;
-const API_URL = 'https://api.siliconflow.cn/v1/chat/completions';
+import { callWithFallback } from '../../utils/api-client';
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ message: 'Method not allowed' });
-  }
-
-  if (!API_KEY) {
-    return res.status(500).json({ 
-      message: 'API key not configured',
-      error: 'Please set the SILICONFLOW_API_KEY environment variable' 
-    });
   }
 
   try {
@@ -45,36 +35,38 @@ export default async function handler(req, res) {
 
 ${content}`;
 
-    const response = await axios.post(
-      API_URL,
+    const messages = [
       {
-        model: 'deepseek-ai/DeepSeek-R1',
-        messages: [
-          {
-            role: 'system',
-            content: '你是一个专业的思维导图生成助手，擅长将文本转换为结构化的 Mermaid 图表。'
-          },
-          {
-            role: 'user',
-            content: prompt
-          }
-        ],
-        temperature: 0.3,
-        max_tokens: 2000,
-        top_p: 0.8,
-        frequency_penalty: 0.3
+        role: 'system',
+        content: '你是一个专业的思维导图生成助手，擅长将文本转换为结构化的 Mermaid 图表。'
       },
       {
-        headers: {
-          'Authorization': `Bearer ${API_KEY}`,
-          'Content-Type': 'application/json'
-        },
-        timeout: 120000 // 120秒超时
+        role: 'user',
+        content: prompt
       }
-    );
+    ];
+
+    // 使用故障转移机制调用 API
+    const { provider, response } = await callWithFallback(messages, false);
+    console.log(`Using ${provider} API for mind map generation`);
 
     // 提取 Mermaid 代码
-    let mermaidCode = response.data.choices[0].message.content.trim();
+    let mermaidCode = '';
+    
+    switch (provider) {
+      case 'openai':
+        mermaidCode = response.data.choices[0].message.content.trim();
+        break;
+      case 'deepseek':
+        mermaidCode = response.data.choices[0].message.content.trim();
+        break;
+      case 'claude':
+        mermaidCode = response.data.content.trim();
+        break;
+      case 'gemini':
+        mermaidCode = response.data.candidates[0].content.parts[0].text.trim();
+        break;
+    }
     
     // 如果返回的内容包含了额外的解释文本，尝试提取出 Mermaid 代码部分
     if (mermaidCode.includes('graph TD')) {
@@ -86,7 +78,7 @@ ${content}`;
       ).trim();
     }
     
-    res.status(200).json({ mermaidCode });
+    res.status(200).json({ mermaidCode, provider });
   } catch (error) {
     console.error('Error calling API:', error);
     res.status(500).json({ 
