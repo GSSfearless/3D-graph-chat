@@ -17,9 +17,7 @@ export default async function handler(req, res) {
 1. 使用markdown格式，确保层次分明
 2. 包含清晰的标题和小标题
 3. 适当使用列表和要点
-4. 确保信息准确且来源于上下文
-5. 如果上下文信息不足，请明确指出
-6. 在回答的最后，总结关键要点`;
+4. 在回答的最后，总结关键要点`;
 
     // 设置响应头
     res.setHeader('Content-Type', 'text/event-stream');
@@ -45,6 +43,7 @@ export default async function handler(req, res) {
     let buffer = '';
     let responseText = '';
 
+    const startTime = Date.now();
     // 处理流式响应
     response.data.on('data', (chunk) => {
       try {
@@ -104,6 +103,9 @@ export default async function handler(req, res) {
               if (content) {
                 responseText += content;
                 res.write(`data: {"type":"delta","content":"${encodeURIComponent(content)}"}\n\n`);
+                console.log('Raw chunk:', chunk.toString());
+                console.log('Parsed content:', content);
+                console.log('Current buffer:', buffer);
               }
             } catch (e) {
               console.error('Error parsing chunk:', e, 'Raw data:', data);
@@ -174,6 +176,9 @@ export default async function handler(req, res) {
       
       res.write('data: {"type":"end"}\n\n');
       res.end();
+
+      const endTime = Date.now();
+      console.log(`${provider} API response time:`, endTime - startTime);
     });
 
     response.data.on('error', (error) => {
