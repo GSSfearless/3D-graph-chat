@@ -221,8 +221,10 @@ export default async function handler(req, res) {
 
       // 发送完整的响应文本
       if (responseText) {
-        console.log('Sending complete response');
+        console.log('准备发送完整回答...');
+        console.log('回答长度:', responseText.length);
         res.write(`data: {"type":"complete","content":"${encodeURIComponent(responseText)}"}\n\n`);
+        console.log('完整回答已发送，等待生成图表...');
       }
       
       res.write('data: {"type":"end"}\n\n');
