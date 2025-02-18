@@ -2,48 +2,84 @@ import React, { useEffect, useState, useRef } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import mermaid from 'mermaid';
-import { ChartParser, updateCharts } from '../utils/chart-parser';
 
 const ContentViewer = ({ content, type }) => {
+  const mermaidRef = useRef(null);
   const [mermaidSvg, setMermaidSvg] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [charts, setCharts] = useState({ flowchart: '', mindmap: '' });
-  const parser = useRef(new ChartParser());
-  const flowchartRef = useRef(null);
-  const mindmapRef = useRef(null);
 
   useEffect(() => {
     mermaid.initialize({
       startOnLoad: true,
       theme: 'default',
       securityLevel: 'loose',
+      flowchart: {
+        useMaxWidth: true,
+        htmlLabels: true,
+        curve: 'linear',
+        defaultRenderer: 'dagre-d3'
+      },
+      mindmap: {
+        padding: 10,
+        useMaxWidth: true
+      },
+      themeVariables: {
+        fontFamily: 'Arial',
+        fontSize: '16px',
+        primaryColor: '#4299E1',
+        primaryTextColor: '#2D3748',
+        primaryBorderColor: '#4299E1',
+        lineColor: '#64748B',
+        secondaryColor: '#9F7AEA',
+        tertiaryColor: '#48BB78'
+      }
     });
   }, []);
 
   useEffect(() => {
-    if (content) {
-      // 更新图表
-      const newCharts = updateCharts(parser.current, content);
-      setCharts(newCharts);
+    const renderMermaid = async () => {
+      if (type === 'mermaid' && content && mermaidRef.current) {
+        setIsLoading(true);
+        try {
+          // 清除之前的内容
+          mermaidRef.current.innerHTML = '';
+          
+          // 生成唯一ID
+          const id = `mermaid-${Math.random().toString(36).substr(2, 9)}`;
+          
+          // 创建一个临时容器
+          const tempContainer = document.createElement('div');
+          tempContainer.id = id;
+          tempContainer.className = 'mermaid';
+          tempContainer.textContent = content;
+          mermaidRef.current.appendChild(tempContainer);
 
-      // 渲染图表
-      if (flowchartRef.current && newCharts.flowchart) {
-        mermaid.render('flowchart-svg', newCharts.flowchart)
-          .then(({ svg }) => {
-            flowchartRef.current.innerHTML = svg;
-          })
-          .catch(console.error);
+          try {
+            // 尝试渲染
+            const { svg } = await mermaid.render(id, content);
+            setMermaidSvg(svg);
+            console.log('✅ Mermaid 图表渲染成功');
+          } catch (error) {
+            console.error('Error rendering mermaid diagram:', error);
+            mermaidRef.current.innerHTML = `
+              <div class="p-4 text-red-500 bg-red-50 rounded-lg">
+                <p class="font-bold">图表渲染失败</p>
+                <p class="text-sm mt-2">${error.message}</p>
+                <pre class="text-xs mt-2 p-2 bg-red-100 rounded">${content}</pre>
+              </div>
+            `;
+          }
+        } catch (error) {
+          console.error('Error in mermaid setup:', error);
+          mermaidRef.current.innerHTML = '图表初始化失败';
+        } finally {
+          setIsLoading(false);
+        }
       }
+    };
 
-      if (mindmapRef.current && newCharts.mindmap) {
-        mermaid.render('mindmap-svg', newCharts.mindmap)
-          .then(({ svg }) => {
-            mindmapRef.current.innerHTML = svg;
-          })
-          .catch(console.error);
-      }
-    }
-  }, [content]);
+    renderMermaid();
+  }, [content, type]);
 
   const renderContent = () => {
     switch (type) {
@@ -69,9 +105,9 @@ const ContentViewer = ({ content, type }) => {
         return (
           <div className="w-full h-full flex items-center justify-center">
             <div
-              ref={flowchartRef}
-              className="mermaid-chart w-full"
-              dangerouslySetInnerHTML={charts.flowchart ? { __html: charts.flowchart } : undefined}
+              ref={mermaidRef}
+              className="mermaid-diagram w-full"
+              dangerouslySetInnerHTML={mermaidSvg ? { __html: mermaidSvg } : undefined}
             />
           </div>
         );
@@ -81,58 +117,8 @@ const ContentViewer = ({ content, type }) => {
   };
 
   return (
-    <div className="content-viewer">
-      <div className="markdown-content">
-        {renderContent()}
-      </div>
-      
-      <div className="charts-container">
-        <div className="chart-wrapper">
-          <h3>流程图</h3>
-          <div ref={flowchartRef} className="mermaid-chart" />
-        </div>
-        <div className="chart-wrapper">
-          <h3>思维导图</h3>
-          <div ref={mindmapRef} className="mermaid-chart" />
-        </div>
-      </div>
-
-      <style jsx>{`
-        .content-viewer {
-          display: flex;
-          gap: 2rem;
-        }
-        
-        .markdown-content {
-          flex: 1;
-          min-width: 0;
-        }
-        
-        .charts-container {
-          flex: 1;
-          min-width: 0;
-          display: flex;
-          flex-direction: column;
-          gap: 1rem;
-        }
-        
-        .chart-wrapper {
-          border: 1px solid #eee;
-          border-radius: 8px;
-          padding: 1rem;
-        }
-        
-        .mermaid-chart {
-          width: 100%;
-          overflow: auto;
-        }
-        
-        h3 {
-          margin: 0 0 1rem 0;
-          font-size: 1.1rem;
-          color: #666;
-        }
-      `}</style>
+    <div className="w-full h-full overflow-auto p-4 bg-white rounded-lg shadow">
+      {renderContent()}
     </div>
   );
 };
