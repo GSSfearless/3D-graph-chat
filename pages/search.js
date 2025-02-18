@@ -156,13 +156,11 @@ export default function Search() {
                   case 'reasoning':
                     if (parsed.content) {
                       const decodedContent = decodeURIComponent(parsed.content);
+                      console.log('📝 收到推理过程:', decodedContent);
                       setReasoningProcess(prev => {
-                        if (prev && !prev.endsWith('\n')) {
-                          return prev + '\n' + decodedContent;
-                        }
-                        return prev + decodedContent;
+                        const newContent = prev.endsWith('\n') ? decodedContent : '\n' + decodedContent;
+                        return prev + newContent;
                       });
-                      console.log('💭 收到思考过程:', decodedContent);
                     }
                     break;
                   case 'answer':

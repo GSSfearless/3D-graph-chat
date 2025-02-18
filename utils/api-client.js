@@ -180,13 +180,12 @@ const callDeepSeekAPI = async (messages, stream = false, useDeepThinking = false
 const callVolcengineAPI = async (messages, stream = false) => {
   const config = API_CONFIG.volcengine;
   
-  logApiDetails('Volcengine', 'info', `
-=== DeepSeek R1 调用开始 ===
-- 模型ID: ${config.model_id}
-- 区域: ${config.region}
-- 流式响应: ${stream ? '是' : '否'}
-- 消息数量: ${messages.length}
-=========================`);
+  console.log('=== DeepSeek R1 调用详情 ===');
+  console.log('模型ID:', config.model_id);
+  console.log('区域:', config.region);
+  console.log('流式响应:', stream ? '是' : '否');
+  console.log('消息数量:', messages.length);
+  console.log('========================');
 
   try {
     const requestData = {
@@ -203,17 +202,17 @@ const callVolcengineAPI = async (messages, stream = false) => {
       reasoning_output: true
     };
 
-    logApiDetails('Volcengine', 'info', '发送请求到火山引擎...');
-    console.log('请求详情:', {
+    console.log('🚀 正在发送请求到火山引擎...');
+    console.log('请求配置:', {
       url: config.url,
+      model: config.model_id,
+      stream: stream,
       headers: {
-        'Authorization': 'Bearer ****',
         'Content-Type': 'application/json',
         'Accept': stream ? 'text/event-stream' : 'application/json',
         'X-Region': config.region,
         'X-Reasoning': 'true'
-      },
-      data: requestData
+      }
     });
 
     const response = await api({
