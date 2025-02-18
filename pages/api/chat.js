@@ -1,6 +1,20 @@
 import { callWithFallback } from '../../utils/api-client';
 
+// 配置API路由
+export const config = {
+  api: {
+    bodyParser: {
+      sizeLimit: '1mb',
+    },
+    responseLimit: false,
+    externalResolver: true,
+  },
+};
+
 export default async function handler(req, res) {
+  // 设置更长的超时时间
+  res.setTimeout(120000); // 120秒超时
+  
   if (req.method !== 'POST') {
     return res.status(405).json({ message: 'Method not allowed' });
   }
@@ -33,6 +47,14 @@ export default async function handler(req, res) {
     res.setHeader('Content-Type', 'text/event-stream');
     res.setHeader('Cache-Control', 'no-cache');
     res.setHeader('Connection', 'keep-alive');
+    res.setHeader('Keep-Alive', 'timeout=120'); // 120秒超时
+
+    // 创建超时处理
+    const timeout = setTimeout(() => {
+      console.error('请求超时');
+      res.write(`data: {"type":"error","message":"请求超时，请重试"}\n\n`);
+      res.end();
+    }, 110000); // 110秒后超时
 
     const messages = [
       {
@@ -221,6 +243,9 @@ ${decodeURIComponent(parsed.content)}`;
     });
 
     response.data.on('end', () => {
+      // 清除超时定时器
+      clearTimeout(timeout);
+      
       console.log('Stream ended');
       console.log('Final buffer:', buffer);
       console.log('Total chunks processed:', chunkCount);
@@ -368,8 +393,9 @@ ${decodeURIComponent(parsed.content)}`;
     });
 
     response.data.on('error', (error) => {
+      clearTimeout(timeout);
       console.error('Stream error:', error);
-      res.write(`data: {"type":"error","message":"${error.message}"}\n\n`);
+      res.write(`data: {"type":"error","message":"处理请求时出错，请重试"}\n\n`);
       res.end();
     });
 

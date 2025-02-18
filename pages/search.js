@@ -156,6 +156,8 @@ export default function Search() {
                 if (!parsed) continue;
 
                 switch (parsed.type) {
+                  case 'error':
+                    throw new Error(parsed.message || '处理请求时出错');
                   case 'reasoning':
                     if (parsed.content) {
                       const decodedContent = decodeURIComponent(parsed.content);
@@ -209,6 +211,9 @@ export default function Search() {
                     break;
                 }
               } catch (e) {
+                if (e.message.includes('请求超时') || e.message.includes('处理请求时出错')) {
+                  throw e;
+                }
                 logApiStatus('Chat API', 'error', '解析响应数据失败');
                 console.error('Message parse error:', e, 'Raw data:', data);
                 continue;
@@ -216,14 +221,24 @@ export default function Search() {
             }
           }
         }
+      } catch (error) {
+        console.error('Search process error:', error);
+        setLoading(false);
+        if (error.message.includes('请求超时')) {
+          alert('请求处理时间过长，请重试或缩短问题内容');
+        } else if (error.message.includes('处理请求时出错')) {
+          alert('处理请求时出错，请重试');
+        } else {
+          alert('搜索过程中出错，请重试');
+        }
+        return;
       } finally {
         reader.releaseLock();
       }
     } catch (error) {
       console.error('Search process error:', error);
-      alert('搜索过程中出错，请重试');
-    } finally {
       setLoading(false);
+      alert('搜索过程中出错，请重试');
     }
   }, [useWebSearch, useDeepThinking]);
 
