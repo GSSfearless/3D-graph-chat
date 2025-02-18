@@ -25,7 +25,7 @@ export default function Search() {
   const [contentType, setContentType] = useState('answer');
   const [mermaidContent, setMermaidContent] = useState('');
   const [markdownMindMap, setMarkdownMindMap] = useState('');
-  const [useWebSearch, setUseWebSearch] = useState(true);
+  const [useWebSearch, setUseWebSearch] = useState(false);
 
   const defaultQuery = "What is the answer to life, the universe, and everything?";
 
@@ -160,82 +160,100 @@ export default function Search() {
                         setStreamedAnswer(answer);
 
                         // 生成流程图
+                        console.group('流程图生成');
                         console.log('开始生成流程图...');
                         try {
-                          console.log('发送流程图生成请求:', {
+                          const flowChartData = { 
                             content: answer,
                             type: 'flowchart'
-                          });
+                          };
+                          console.log('发送流程图生成请求:', flowChartData);
+                          console.log('请求URL:', '/api/generate-mindmap');
+                          console.log('请求方法:', 'POST');
+                          
                           const flowChartResponse = await fetch('/api/generate-mindmap', {
                             method: 'POST',
                             headers: { 
                               'Content-Type': 'application/json',
                               'Accept': 'application/json'
                             },
-                            body: JSON.stringify({ 
-                              content: answer,
-                              type: 'flowchart'
-                            }),
+                            body: JSON.stringify(flowChartData),
                           });
 
                           console.log('流程图响应状态:', flowChartResponse.status);
                           if (flowChartResponse.ok) {
-                            const flowChartData = await flowChartResponse.json();
-                            console.log('流程图生成结果:', flowChartData);
-                            if (flowChartData.mermaidCode) {
-                              setMermaidContent(flowChartData.mermaidCode);
-                              logApiStatus('Flow Chart', 'success', '流程图生成完成');
+                            const flowChartResult = await flowChartResponse.json();
+                            console.log('流程图生成结果:', flowChartResult);
+                            if (flowChartResult.mermaidCode) {
+                              setMermaidContent(flowChartResult.mermaidCode);
+                              console.log('流程图生成成功');
                             } else {
                               console.error('流程图响应缺少 mermaidCode');
                             }
                           } else {
-                            const errorData = await flowChartResponse.text();
-                            console.error('流程图生成失败:', errorData);
-                            logApiStatus('Flow Chart', 'error', `HTTP ${flowChartResponse.status}: ${errorData}`);
+                            const errorText = await flowChartResponse.text();
+                            console.error('流程图生成失败:', {
+                              status: flowChartResponse.status,
+                              statusText: flowChartResponse.statusText,
+                              error: errorText
+                            });
                           }
                         } catch (error) {
-                          console.error('流程图生成错误:', error);
-                          logApiStatus('Flow Chart', 'error', error.message);
+                          console.error('流程图生成错误:', {
+                            name: error.name,
+                            message: error.message,
+                            stack: error.stack
+                          });
                         }
+                        console.groupEnd();
 
                         // 生成思维导图
+                        console.group('思维导图生成');
                         console.log('开始生成思维导图...');
                         try {
-                          console.log('发送思维导图生成请求:', {
+                          const mindMapData = { 
                             content: answer,
                             type: 'markdown'
-                          });
+                          };
+                          console.log('发送思维导图生成请求:', mindMapData);
+                          console.log('请求URL:', '/api/generate-mindmap');
+                          console.log('请求方法:', 'POST');
+                          
                           const mindMapResponse = await fetch('/api/generate-mindmap', {
                             method: 'POST',
                             headers: { 
                               'Content-Type': 'application/json',
                               'Accept': 'application/json'
                             },
-                            body: JSON.stringify({ 
-                              content: answer,
-                              type: 'markdown'
-                            }),
+                            body: JSON.stringify(mindMapData),
                           });
 
                           console.log('思维导图响应状态:', mindMapResponse.status);
                           if (mindMapResponse.ok) {
-                            const mindMapData = await mindMapResponse.json();
-                            console.log('思维导图生成结果:', mindMapData);
-                            if (mindMapData.markdownContent) {
-                              setMarkdownMindMap(mindMapData.markdownContent);
-                              logApiStatus('Mind Map', 'success', '思维导图生成完成');
+                            const mindMapResult = await mindMapResponse.json();
+                            console.log('思维导图生成结果:', mindMapResult);
+                            if (mindMapResult.markdownContent) {
+                              setMarkdownMindMap(mindMapResult.markdownContent);
+                              console.log('思维导图生成成功');
                             } else {
                               console.error('思维导图响应缺少 markdownContent');
                             }
                           } else {
-                            const errorData = await mindMapResponse.text();
-                            console.error('思维导图生成失败:', errorData);
-                            logApiStatus('Mind Map', 'error', `HTTP ${mindMapResponse.status}: ${errorData}`);
+                            const errorText = await mindMapResponse.text();
+                            console.error('思维导图生成失败:', {
+                              status: mindMapResponse.status,
+                              statusText: mindMapResponse.statusText,
+                              error: errorText
+                            });
                           }
                         } catch (error) {
-                          console.error('思维导图生成错误:', error);
-                          logApiStatus('Mind Map', 'error', error.message);
+                          console.error('思维导图生成错误:', {
+                            name: error.name,
+                            message: error.message,
+                            stack: error.stack
+                          });
                         }
+                        console.groupEnd();
                       }
                     }
                     break;
@@ -405,6 +423,8 @@ export default function Search() {
               <div className="flex items-center space-x-2">
                 <input
                   type="text"
+                  id="search-input"
+                  name="search-input"
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
                   onKeyPress={(e) => e.key === 'Enter' && handleSearch(query)}
