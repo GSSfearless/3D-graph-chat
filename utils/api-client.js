@@ -179,14 +179,14 @@ const callDeepSeekAPI = async (messages, stream = false, useDeepThinking = false
 // 火山引擎 API 调用
 const callVolcengineAPI = async (messages, stream = false) => {
   const config = API_CONFIG.volcengine;
-  if (!config.key || !config.model_id) {
-    logApiDetails('Volcengine', 'error', 'API configuration incomplete');
-    throw new Error('Volcengine API configuration incomplete');
-  }
-
-  logApiDetails('Volcengine', 'info', `正在启动深度思考模式 - DeepSeek R1`);
-  logApiDetails('Volcengine', 'info', `模型ID: ${config.model_id}`);
-  logApiDetails('Volcengine', 'info', `区域: ${config.region}`);
+  
+  logApiDetails('Volcengine', 'info', `
+=== DeepSeek R1 调用开始 ===
+- 模型ID: ${config.model_id}
+- 区域: ${config.region}
+- 流式响应: ${stream ? '是' : '否'}
+- 消息数量: ${messages.length}
+=========================`);
 
   try {
     const requestData = {
@@ -203,7 +203,18 @@ const callVolcengineAPI = async (messages, stream = false) => {
       reasoning_output: true
     };
 
-    logApiDetails('Volcengine', 'info', `请求配置: ${JSON.stringify(requestData, null, 2)}`);
+    logApiDetails('Volcengine', 'info', '发送请求到火山引擎...');
+    console.log('请求详情:', {
+      url: config.url,
+      headers: {
+        'Authorization': 'Bearer ****',
+        'Content-Type': 'application/json',
+        'Accept': stream ? 'text/event-stream' : 'application/json',
+        'X-Region': config.region,
+        'X-Reasoning': 'true'
+      },
+      data: requestData
+    });
 
     const response = await api({
       method: 'post',
@@ -222,18 +233,22 @@ const callVolcengineAPI = async (messages, stream = false) => {
     });
 
     if (response.status === 200) {
-      logApiDetails('Volcengine', 'success', '🚀 DeepSeek R1 成功启动并响应');
-      if (!stream) {
-        logApiDetails('Volcengine', 'info', `响应状态: ${response.status}`);
-        logApiDetails('Volcengine', 'info', `响应头: ${JSON.stringify(response.headers, null, 2)}`);
-      }
+      logApiDetails('Volcengine', 'success', `
+=== DeepSeek R1 响应成功 ===
+- 状态码: ${response.status}
+- 响应类型: ${response.headers['content-type']}
+=========================`);
     }
     return response;
   } catch (error) {
-    logApiDetails('Volcengine', 'error', `❌ DeepSeek R1 启动失败: ${error.message}`);
-    if (error.response) {
-      logApiDetails('Volcengine', 'error', `错误状态: ${error.response.status}`);
-      logApiDetails('Volcengine', 'error', `错误详情: ${JSON.stringify(error.response.data, null, 2)}`);
+    logApiDetails('Volcengine', 'error', `
+=== DeepSeek R1 调用失败 ===
+- 错误信息: ${error.message}
+- 状态码: ${error.response?.status || 'N/A'}
+=========================`);
+    
+    if (error.response?.data) {
+      console.error('错误响应数据:', error.response.data);
     }
     throw error;
   }
@@ -290,11 +305,33 @@ const callWithFallback = async (messages, stream = false, useDeepThinking = fals
   // 如果启用深度思考，优先使用火山引擎
   if (useDeepThinking) {
     try {
-      logApiDetails('Fallback', 'info', 'Using Volcengine for deep thinking');
+      logApiDetails('Fallback', 'info', '🔍 检测到深度思考模式已开启');
+      logApiDetails('Fallback', 'info', '🚀 正在尝试调用火山引擎 DeepSeek R1...');
+      
+      // 验证火山引擎配置
+      const config = API_CONFIG.volcengine;
+      if (!config.key || !config.model_id || !config.url) {
+        logApiDetails('Fallback', 'error', '❌ 火山引擎配置不完整');
+        console.error('缺失的配置:', {
+          key: !config.key ? '未配置' : '已配置',
+          model_id: !config.model_id ? '未配置' : '已配置',
+          url: !config.url ? '未配置' : '已配置'
+        });
+        throw new Error('Volcengine configuration incomplete');
+      }
+
+      logApiDetails('Fallback', 'info', `📌 火山引擎配置验证成功:
+        - API URL: ${config.url}
+        - Model ID: ${config.model_id}
+        - Region: ${config.region}`);
+
       const response = await callVolcengineAPI(messages, stream);
+      logApiDetails('Fallback', 'success', '✅ 火山引擎 DeepSeek R1 调用成功');
       return { provider: 'volcengine', response };
     } catch (error) {
-      logApiDetails('Fallback', 'warning', 'Volcengine failed, falling back to other APIs');
+      logApiDetails('Fallback', 'error', `❌ 火山引擎调用失败: ${error.message}`);
+      console.error('详细错误信息:', error);
+      logApiDetails('Fallback', 'warning', '⚠️ 正在切换到备用API...');
     }
   }
 
