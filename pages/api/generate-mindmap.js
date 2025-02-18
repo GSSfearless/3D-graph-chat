@@ -1,15 +1,16 @@
 import { callWithFallback } from '../../utils/api-client';
 
 export default async function handler(req, res) {
+  console.log('=== 图表生成服务启动 ===');
+  
   if (req.method !== 'POST') {
     console.error('❌ 无效的请求方法:', req.method);
     return res.status(405).json({ message: 'Method not allowed' });
   }
 
-  console.log('=== 开始生成图表 ===');
-  
   try {
     const { content, type } = req.body;
+    console.log('收到生成请求:', { type, contentLength: content?.length });
     
     if (!content) {
       console.error('❌ 请求体缺少内容');
@@ -21,12 +22,9 @@ export default async function handler(req, res) {
       return res.status(400).json({ message: 'Invalid type. Must be either "flowchart" or "markdown"' });
     }
 
-    console.log(`📊 正在生成 ${type === 'flowchart' ? '流程图' : '思维导图'}`);
-    console.log('内容长度:', content.length);
-
     let prompt;
     if (type === 'flowchart') {
-      console.log('🔄 构建流程图提示词...');
+      console.log('构建流程图提示词...');
       prompt = `请将以下内容转换为 Mermaid 流程图格式。请严格遵循以下规则：
 
 1. 使用以下格式：
@@ -64,7 +62,7 @@ export default async function handler(req, res) {
 
 ${content}`;
     } else {
-      console.log('🔄 构建思维导图提示词...');
+      console.log('构建思维导图提示词...');
       prompt = `请将以下内容转换为 Markdown 格式的思维导图。请严格遵循以下规则：
 
 1. 使用 Markdown 标题层级表示思维导图的层级关系：
@@ -109,9 +107,9 @@ ${content}`;
       }
     ];
 
-    console.log('🚀 调用 AI 接口生成图表...');
+    console.log('调用 AI 接口生成图表...');
     const { provider, response } = await callWithFallback(messages, false);
-    console.log(`✅ 使用 ${provider} 生成${type === 'flowchart' ? '流程图' : '思维导图'}`);
+    console.log(`使用 ${provider} API 生成${type === 'flowchart' ? '流程图' : '思维导图'}`);
 
     if (type === 'flowchart') {
       let mermaidCode = '';
@@ -121,6 +119,7 @@ ${content}`;
         switch (provider) {
           case 'openai':
           case 'deepseek':
+          case 'volcengine':
             mermaidCode = response.data.choices[0].message.content.trim();
             break;
           case 'claude':
@@ -131,7 +130,7 @@ ${content}`;
             break;
         }
         
-        console.log('Raw Mermaid code:', mermaidCode);
+        console.log('原始 Mermaid 代码:', mermaidCode);
 
         if (mermaidCode.includes('flowchart TD')) {
           const startIndex = mermaidCode.indexOf('flowchart TD');
@@ -141,17 +140,18 @@ ${content}`;
             possibleEndIndex > startIndex ? possibleEndIndex : undefined
           ).trim();
           
-          console.log('Processed Mermaid code:', mermaidCode);
+          console.log('处理后的 Mermaid 代码:', mermaidCode);
         } else {
-          console.error('Invalid Mermaid code format - missing flowchart TD');
+          console.error('❌ 无效的 Mermaid 代码格式 - 缺少 flowchart TD');
           return res.status(400).json({ message: 'Generated code is not a valid flowchart' });
         }
       } catch (error) {
         console.error('❌ Mermaid 代码处理错误:', error);
+        console.error('错误堆栈:', error.stack);
         return res.status(500).json({ message: 'Error processing Mermaid code', error: error.message });
       }
       
-      console.log('✅ 流程图生成成功');
+      console.log('✅ 流程图生成成功，代码长度:', mermaidCode.length);
       res.status(200).json({ mermaidCode, provider });
     } else {
       let markdownContent = '';
@@ -161,6 +161,7 @@ ${content}`;
         switch (provider) {
           case 'openai':
           case 'deepseek':
+          case 'volcengine':
             markdownContent = response.data.choices[0].message.content.trim();
             break;
           case 'claude':
@@ -171,22 +172,24 @@ ${content}`;
             break;
         }
         
-        console.log('Raw Markdown content:', markdownContent);
+        console.log('原始 Markdown 内容:', markdownContent);
 
         if (!markdownContent.includes('#')) {
-          console.error('Invalid Markdown format - missing headers');
+          console.error('❌ 无效的 Markdown 格式 - 缺少标题');
           return res.status(400).json({ message: 'Generated content is not a valid markdown mind map' });
         }
       } catch (error) {
         console.error('❌ Markdown 内容处理错误:', error);
+        console.error('错误堆栈:', error.stack);
         return res.status(500).json({ message: 'Error processing Markdown content', error: error.message });
       }
       
-      console.log('✅ 思维导图生成成功');
+      console.log('✅ 思维导图生成成功，内容长度:', markdownContent.length);
       res.status(200).json({ markdownContent, provider });
     }
   } catch (error) {
     console.error('❌ 图表生成过程出错:', error);
+    console.error('错误堆栈:', error.stack);
     res.status(500).json({ 
       message: 'Error generating diagram',
       error: error.message,

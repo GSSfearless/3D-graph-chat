@@ -170,14 +170,17 @@ export default function Search() {
                       console.log('回答长度:', completeAnswer.length);
                       
                       if (completeAnswer.length > answer.length) {
+                        console.log('检测到新的完整回答，准备更新...');
                         answer = completeAnswer;
                         setStreamedAnswer(answer);
                         
                         // 确保异步操作按顺序执行
                         const generateDiagrams = async () => {
+                          console.log('开始生成图表流程...');
                           try {
                             // 生成流程图
                             console.log('🔄 开始生成流程图...');
+                            console.log('发送到 /api/generate-mindmap 的内容长度:', answer.length);
                             const flowChartResponse = await fetch('/api/generate-mindmap', {
                               method: 'POST',
                               headers: { 'Content-Type': 'application/json' },
@@ -187,17 +190,21 @@ export default function Search() {
                               }),
                             });
 
+                            console.log('流程图请求状态:', flowChartResponse.status);
                             if (flowChartResponse.ok) {
                               const flowChartResult = await flowChartResponse.json();
-                              console.log('✅ 流程图生成成功');
+                              console.log('流程图响应数据:', flowChartResult);
                               if (flowChartResult.mermaidCode) {
+                                console.log('✅ 流程图生成成功');
                                 console.log('流程图代码长度:', flowChartResult.mermaidCode.length);
                                 setMermaidContent(flowChartResult.mermaidCode);
                               } else {
                                 console.error('❌ 流程图响应缺少 mermaidCode');
                               }
                             } else {
+                              const errorText = await flowChartResponse.text();
                               console.error('❌ 流程图生成失败:', flowChartResponse.status);
+                              console.error('错误详情:', errorText);
                             }
 
                             // 生成思维导图
@@ -211,28 +218,39 @@ export default function Search() {
                               }),
                             });
 
+                            console.log('思维导图请求状态:', mindMapResponse.status);
                             if (mindMapResponse.ok) {
                               const mindMapResult = await mindMapResponse.json();
-                              console.log('✅ 思维导图生成成功');
+                              console.log('思维导图响应数据:', mindMapResult);
                               if (mindMapResult.markdownContent) {
+                                console.log('✅ 思维导图生成成功');
                                 console.log('思维导图内容长度:', mindMapResult.markdownContent.length);
                                 setMarkdownMindMap(mindMapResult.markdownContent);
                               } else {
                                 console.error('❌ 思维导图响应缺少 markdownContent');
                               }
                             } else {
+                              const errorText = await mindMapResponse.text();
                               console.error('❌ 思维导图生成失败:', mindMapResponse.status);
+                              console.error('错误详情:', errorText);
                             }
                           } catch (error) {
                             console.error('❌ 图表生成过程出错:', error);
+                            console.error('错误堆栈:', error.stack);
                           }
                         };
 
-                        // 执行图表生成
+                        // 立即执行图表生成
+                        console.log('触发图表生成流程...');
                         generateDiagrams().catch(error => {
                           console.error('❌ 图表生成任务失败:', error);
+                          console.error('错误堆栈:', error.stack);
                         });
+                      } else {
+                        console.log('完整回答长度未增加，跳过图表生成');
                       }
+                    } else {
+                      console.log('complete 信号中没有内容');
                     }
                     break;
                   case 'end':
