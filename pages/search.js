@@ -27,6 +27,7 @@ export default function Search() {
   const [markdownMindMap, setMarkdownMindMap] = useState('');
   const [useWebSearch, setUseWebSearch] = useState(false);
   const [useDeepThinking, setUseDeepThinking] = useState(false);
+  const [reasoningProcess, setReasoningProcess] = useState('');
 
   const defaultQuery = "What is the answer to life, the universe, and everything?";
 
@@ -152,6 +153,12 @@ export default function Search() {
 
                 switch (parsed.type) {
                   case 'reasoning':
+                    if (parsed.content) {
+                      const decodedContent = decodeURIComponent(parsed.content);
+                      console.log('📝 收到思考过程:', decodedContent);
+                      setReasoningProcess(prev => prev + decodedContent);
+                    }
+                    break;
                   case 'answer':
                   case 'content':
                   case 'delta':
@@ -348,24 +355,36 @@ export default function Search() {
                     <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
                   </div>
                 ) : streamedAnswer ? (
-                  contentType === 'answer' ? (
-                    <div className="prose max-w-none">
-                      <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                        {streamedAnswer}
-                      </ReactMarkdown>
-                    </div>
-                  ) : contentType === 'flowchart' ? (
-                    <ContentViewer
-                      content={mermaidContent}
-                      type="mermaid"
-                    />
-                  ) : (
-                    <div className="prose max-w-none">
-                      <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                        {markdownMindMap}
-                      </ReactMarkdown>
-                    </div>
-                  )
+                  <>
+                    {useDeepThinking && reasoningProcess && (
+                      <div className="mb-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
+                        <div className="text-sm font-medium text-gray-500 mb-2">🤔 思考过程</div>
+                        <div className="prose max-w-none text-gray-600">
+                          <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                            {reasoningProcess}
+                          </ReactMarkdown>
+                        </div>
+                      </div>
+                    )}
+                    {contentType === 'answer' ? (
+                      <div className="prose max-w-none">
+                        <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                          {streamedAnswer}
+                        </ReactMarkdown>
+                      </div>
+                    ) : contentType === 'flowchart' ? (
+                      <ContentViewer
+                        content={mermaidContent}
+                        type="mermaid"
+                      />
+                    ) : (
+                      <div className="prose max-w-none">
+                        <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                          {markdownMindMap}
+                        </ReactMarkdown>
+                      </div>
+                    )}
+                  </>
                 ) : (
                   <div className="flex items-center justify-center h-full">
                     <p className="text-gray-400">在下方输入问题开始查询</p>
