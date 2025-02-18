@@ -186,56 +186,59 @@ export default function Search() {
                       
                       // 并行生成图表
                       console.log('开始并行生成图表...');
+
+                      const generateChart = async (content, type, retries = 3) => {
+                        for (let i = 0; i < retries; i++) {
+                          try {
+                            console.log(`🔄 开始生成${type === 'flowchart' ? '流程图' : '思维导图'}... (尝试 ${i + 1}/${retries})`);
+                            const response = await fetch('/api/generate-mindmap', {
+                              method: 'POST',
+                              headers: { 'Content-Type': 'application/json' },
+                              body: JSON.stringify({ content, type }),
+                            });
+
+                            if (!response.ok) {
+                              throw new Error(`HTTP error! status: ${response.status}`);
+                            }
+
+                            const result = await response.json();
+                            console.log(`✅ ${type === 'flowchart' ? '流程图' : '思维导图'}生成成功`);
+                            return result;
+                          } catch (error) {
+                            console.error(`❌ ${type === 'flowchart' ? '流程图' : '思维导图'}生成失败 (尝试 ${i + 1}/${retries}):`, error);
+                            if (i === retries - 1) {
+                              throw error;
+                            }
+                            // 等待一段时间后重试
+                            await new Promise(resolve => setTimeout(resolve, 2000 * (i + 1)));
+                          }
+                        }
+                      };
+
                       Promise.all([
                         // 生成流程图
-                        (async () => {
-                          try {
-                            console.log('🔄 开始生成流程图...');
-                            const flowChartResponse = await fetch('/api/generate-mindmap', {
-                              method: 'POST',
-                              headers: { 'Content-Type': 'application/json' },
-                              body: JSON.stringify({
-                                content: answer,
-                                type: 'flowchart'
-                              }),
-                            });
-
-                            if (flowChartResponse.ok) {
-                              const flowChartResult = await flowChartResponse.json();
-                              if (flowChartResult.mermaidCode) {
-                                console.log('✅ 流程图生成成功');
-                                setMermaidContent(flowChartResult.mermaidCode);
-                              }
+                        generateChart(answer, 'flowchart')
+                          .then(result => {
+                            if (result.mermaidCode) {
+                              setMermaidContent(result.mermaidCode);
                             }
-                          } catch (error) {
-                            console.error('❌ 流程图生成失败:', error);
-                          }
-                        })(),
+                          })
+                          .catch(error => {
+                            console.error('流程图生成最终失败:', error);
+                            setMermaidContent('flowchart TD\nA[生成失败] --> B[请重试]');
+                          }),
                         
                         // 生成思维导图
-                        (async () => {
-                          try {
-                            console.log('🔄 开始生成思维导图...');
-                            const mindMapResponse = await fetch('/api/generate-mindmap', {
-                              method: 'POST',
-                              headers: { 'Content-Type': 'application/json' },
-                              body: JSON.stringify({
-                                content: answer,
-                                type: 'markdown'
-                              }),
-                            });
-
-                            if (mindMapResponse.ok) {
-                              const mindMapResult = await mindMapResponse.json();
-                              if (mindMapResult.markdownContent) {
-                                console.log('✅ 思维导图生成成功');
-                                setMarkdownMindMap(mindMapResult.markdownContent);
-                              }
+                        generateChart(answer, 'markdown')
+                          .then(result => {
+                            if (result.mermaidCode) {
+                              setMarkdownMindMap(result.mermaidCode);
                             }
-                          } catch (error) {
-                            console.error('❌ 思维导图生成失败:', error);
-                          }
-                        })()
+                          })
+                          .catch(error => {
+                            console.error('思维导图生成最终失败:', error);
+                            setMarkdownMindMap('mindmap\n  root((生成失败))\n    请重试');
+                          })
                       ]).then(() => {
                         console.log('✅ 所有图表生成完成');
                       }).catch(error => {
