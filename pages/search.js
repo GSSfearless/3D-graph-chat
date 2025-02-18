@@ -271,7 +271,7 @@ export default function Search() {
     } finally {
       setLoading(false);
     }
-  }, [useWebSearch]);
+  }, [useWebSearch, useDeepThinking]);
 
   useEffect(() => {
     if (q && initialLoad) {
