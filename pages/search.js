@@ -180,7 +180,7 @@ export default function Search() {
                       const completeAnswer = decodeURIComponent(parsed.content);
                       console.log('回答长度:', completeAnswer.length);
                       
-                      // 立即更新回答内容
+                      // 更新回答内容
                       answer = completeAnswer;
                       setStreamedAnswer(answer);
                       
@@ -250,6 +250,22 @@ export default function Search() {
                     break;
                   case 'end':
                     logApiStatus('Chat API', 'success', `生成完成，共 ${tokenCount} 个token`);
+                    break;
+                  case 'flowchart':
+                    console.log('收到流程图数据');
+                    if (parsed.content) {
+                      const flowchartCode = decodeURIComponent(parsed.content);
+                      console.log('流程图代码长度:', flowchartCode.length);
+                      setMermaidContent(flowchartCode);
+                    }
+                    break;
+                  case 'mindmap':
+                    console.log('收到思维导图数据');
+                    if (parsed.content) {
+                      const mindmapCode = decodeURIComponent(parsed.content);
+                      console.log('思维导图代码长度:', mindmapCode.length);
+                      setMarkdownMindMap(mindmapCode);
+                    }
                     break;
                 }
               } catch (e) {
