@@ -79,6 +79,10 @@ export default async function handler(req, res) {
             const data = line.slice(6);
             if (data === '[DONE]') {
               console.log('Received [DONE] signal');
+              if (provider === 'volcengine') {
+                console.log('🎯 DeepSeek R1 会话完成');
+                console.log(`总计处理 ${chunkCount} 个数据块`);
+              }
               res.write('data: [DONE]\n\n');
               continue;
             }
@@ -102,12 +106,15 @@ export default async function handler(req, res) {
                   }
                   break;
                 case 'volcengine':
+                  console.log('处理 DeepSeek R1 响应:', parsed);
                   if (parsed.output && parsed.output.text) {
                     content = parsed.output.text;
+                    console.log('📝 DeepSeek R1 输出:', content);
                   } else if (parsed.choices && parsed.choices[0]) {
                     const choice = parsed.choices[0];
                     if (choice.delta && choice.delta.content) {
                       content = choice.delta.content;
+                      console.log('📝 DeepSeek R1 流式输出:', content);
                     }
                   }
                   break;

@@ -184,21 +184,27 @@ const callVolcengineAPI = async (messages, stream = false) => {
     throw new Error('Volcengine API configuration incomplete');
   }
 
-  logApiDetails('Volcengine', 'info', `Calling API with ${messages.length} messages, stream: ${stream}`);
+  logApiDetails('Volcengine', 'info', `正在启动深度思考模式 - DeepSeek R1`);
+  logApiDetails('Volcengine', 'info', `模型ID: ${config.model_id}`);
+  logApiDetails('Volcengine', 'info', `区域: ${config.region}`);
 
   try {
+    const requestData = {
+      model: config.model_id,
+      messages,
+      temperature: 0.7,
+      max_tokens: 4000,
+      stream,
+      top_p: 0.8,
+      frequency_penalty: 0.5
+    };
+
+    logApiDetails('Volcengine', 'info', `请求配置: ${JSON.stringify(requestData, null, 2)}`);
+
     const response = await api({
       method: 'post',
       url: config.url,
-      data: {
-        model: config.model_id,
-        messages,
-        temperature: 0.7,
-        max_tokens: 4000,
-        stream,
-        top_p: 0.8,
-        frequency_penalty: 0.5
-      },
+      data: requestData,
       headers: {
         'Authorization': `Bearer ${config.key}`,
         'Content-Type': 'application/json',
@@ -210,10 +216,20 @@ const callVolcengineAPI = async (messages, stream = false) => {
       retryDelay: 1000
     });
 
-    logApiDetails('Volcengine', 'success', 'API call successful');
+    if (response.status === 200) {
+      logApiDetails('Volcengine', 'success', '🚀 DeepSeek R1 成功启动并响应');
+      if (!stream) {
+        logApiDetails('Volcengine', 'info', `响应状态: ${response.status}`);
+        logApiDetails('Volcengine', 'info', `响应头: ${JSON.stringify(response.headers, null, 2)}`);
+      }
+    }
     return response;
   } catch (error) {
-    logApiDetails('Volcengine', 'error', `API call failed: ${error.message}`);
+    logApiDetails('Volcengine', 'error', `❌ DeepSeek R1 启动失败: ${error.message}`);
+    if (error.response) {
+      logApiDetails('Volcengine', 'error', `错误状态: ${error.response.status}`);
+      logApiDetails('Volcengine', 'error', `错误详情: ${JSON.stringify(error.response.data, null, 2)}`);
+    }
     throw error;
   }
 };
