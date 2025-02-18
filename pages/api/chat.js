@@ -5,7 +5,7 @@ export default async function handler(req, res) {
     return res.status(405).json({ message: 'Method not allowed' });
   }
 
-  const { query, context, useDeepThinking, useWebSearch } = req.body;
+  const { query, context, useDeepThinking } = req.body;
 
   try {
     // 构建上下文提示词
@@ -44,8 +44,8 @@ export default async function handler(req, res) {
     ];
 
     // 使用故障转移机制调用 API
-    const { provider, response } = await callWithFallback(messages, true, useDeepThinking, useWebSearch);
-    console.log(`Using ${provider} API for response${useDeepThinking ? ' (Deep Thinking Mode)' : ''}${useWebSearch ? ' (Web Search Mode)' : ''}`);
+    const { provider, response } = await callWithFallback(messages, true, useDeepThinking);
+    console.log(`Using ${provider} API for response${useDeepThinking ? ' (Deep Thinking Mode)' : ''}`);
 
     let isFirstChunk = true;
     let buffer = '';
