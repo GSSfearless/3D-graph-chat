@@ -116,6 +116,15 @@ export default async function handler(req, res) {
                       content = choice.delta.content;
                       console.log('📝 DeepSeek R1 流式输出:', content);
                     }
+                    // 处理思考过程
+                    if (choice.reasoning_step) {
+                      console.log('💭 DeepSeek R1 思考步骤:', choice.reasoning_step);
+                      res.write(`data: {"type":"reasoning","content":"${encodeURIComponent(choice.reasoning_step)}"}\n\n`);
+                    }
+                    if (choice.reasoning_output) {
+                      console.log('💭 DeepSeek R1 思考输出:', choice.reasoning_output);
+                      res.write(`data: {"type":"reasoning","content":"${encodeURIComponent(choice.reasoning_output)}"}\n\n`);
+                    }
                   }
                   break;
                 case 'claude':

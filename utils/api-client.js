@@ -196,7 +196,11 @@ const callVolcengineAPI = async (messages, stream = false) => {
       max_tokens: 4000,
       stream,
       top_p: 0.8,
-      frequency_penalty: 0.5
+      frequency_penalty: 0.5,
+      presence_penalty: 0.5,
+      stop: null,
+      reasoning_steps: true,
+      reasoning_output: true
     };
 
     logApiDetails('Volcengine', 'info', `请求配置: ${JSON.stringify(requestData, null, 2)}`);
@@ -209,7 +213,8 @@ const callVolcengineAPI = async (messages, stream = false) => {
         'Authorization': `Bearer ${config.key}`,
         'Content-Type': 'application/json',
         'Accept': stream ? 'text/event-stream' : 'application/json',
-        'X-Region': config.region
+        'X-Region': config.region,
+        'X-Reasoning': 'true'
       },
       responseType: stream ? 'stream' : 'json',
       retry: 3,

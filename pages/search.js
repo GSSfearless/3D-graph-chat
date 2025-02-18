@@ -43,6 +43,7 @@ export default function Search() {
     setStreamedAnswer('');
     setMermaidContent('');
     setSearchResults([]);
+    setReasoningProcess('');
 
     const logApiStatus = (api, status, details = '') => {
       const style = status === 'success' 
@@ -155,8 +156,13 @@ export default function Search() {
                   case 'reasoning':
                     if (parsed.content) {
                       const decodedContent = decodeURIComponent(parsed.content);
-                      console.log('📝 收到思考过程:', decodedContent);
-                      setReasoningProcess(prev => prev + decodedContent);
+                      setReasoningProcess(prev => {
+                        if (prev && !prev.endsWith('\n')) {
+                          return prev + '\n' + decodedContent;
+                        }
+                        return prev + decodedContent;
+                      });
+                      console.log('💭 收到思考过程:', decodedContent);
                     }
                     break;
                   case 'answer':
@@ -355,36 +361,39 @@ export default function Search() {
                     <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
                   </div>
                 ) : streamedAnswer ? (
-                  <>
-                    {useDeepThinking && reasoningProcess && (
-                      <div className="mb-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
-                        <div className="text-sm font-medium text-gray-500 mb-2">🤔 思考过程</div>
-                        <div className="prose max-w-none text-gray-600">
-                          <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                            {reasoningProcess}
-                          </ReactMarkdown>
+                  contentType === 'answer' ? (
+                    <div className="prose max-w-none">
+                      {useDeepThinking && reasoningProcess && (
+                        <div className="mb-6 p-4 bg-purple-50 rounded-lg border border-purple-200">
+                          <div className="flex items-center space-x-2 mb-2">
+                            <h3 className="text-lg font-semibold text-purple-700">💭 思考过程</h3>
+                            <span className="text-sm text-purple-500">(DeepSeek R1)</span>
+                          </div>
+                          <div className="prose prose-purple max-w-none">
+                            <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                              {reasoningProcess}
+                            </ReactMarkdown>
+                          </div>
                         </div>
-                      </div>
-                    )}
-                    {contentType === 'answer' ? (
-                      <div className="prose max-w-none">
+                      )}
+                      <div className={useDeepThinking && reasoningProcess ? "mt-6" : ""}>
                         <ReactMarkdown remarkPlugins={[remarkGfm]}>
                           {streamedAnswer}
                         </ReactMarkdown>
                       </div>
-                    ) : contentType === 'flowchart' ? (
-                      <ContentViewer
-                        content={mermaidContent}
-                        type="mermaid"
-                      />
-                    ) : (
-                      <div className="prose max-w-none">
-                        <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                          {markdownMindMap}
-                        </ReactMarkdown>
-                      </div>
-                    )}
-                  </>
+                    </div>
+                  ) : contentType === 'flowchart' ? (
+                    <ContentViewer
+                      content={mermaidContent}
+                      type="mermaid"
+                    />
+                  ) : (
+                    <div className="prose max-w-none">
+                      <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                        {markdownMindMap}
+                      </ReactMarkdown>
+                    </div>
+                  )
                 ) : (
                   <div className="flex items-center justify-center h-full">
                     <p className="text-gray-400">在下方输入问题开始查询</p>
