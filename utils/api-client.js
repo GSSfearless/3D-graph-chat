@@ -7,7 +7,11 @@ const API_CONFIG = {
     key: process.env.SILICONFLOW_API_KEY,
     models: {
       fast: 'deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B',  // 快速响应模型
-      deep: 'deepseek-ai/DeepSeek-R1'  // 深度思考模型
+      deep: 'deepseek-ai/DeepSeek-R1',  // 深度思考模型
+      chat: 'deepseek-ai/deepseek-chat-7b',  // 通用对话模型
+      coder: 'deepseek-ai/deepseek-coder-7b',  // 代码生成模型
+      math: 'deepseek-ai/deepseek-math-7b',  // 数学推理模型
+      moe: 'deepseek-ai/deepseek-moe-16b'  // 大规模混合专家模型
     }
   },
   openai: {
@@ -117,7 +121,20 @@ const callDeepSeekAPI = async (messages, stream = false, useDeepThinking = false
     throw new Error('DeepSeek API key not configured');
   }
 
-  const model = useDeepThinking ? config.models.deep : config.models.fast;
+  // 根据任务类型选择合适的模型
+  let model;
+  if (useDeepThinking) {
+    model = config.models.deep;
+  } else if (messages.some(m => m.content.includes('代码') || m.content.includes('编程'))) {
+    model = config.models.coder;
+  } else if (messages.some(m => m.content.includes('数学') || m.content.includes('计算'))) {
+    model = config.models.math;
+  } else if (messages.length > 5) {  // 复杂对话使用 MOE 模型
+    model = config.models.moe;
+  } else {
+    model = config.models.fast;  // 默认使用快速模型
+  }
+
   logApiDetails('DeepSeek', 'info', `Using model: ${model}`);
 
   try {
@@ -142,10 +159,10 @@ const callDeepSeekAPI = async (messages, stream = false, useDeepThinking = false
       retry: 3,
       retryDelay: 1000
     });
-    logApiDetails('DeepSeek', 'success', 'API call successful');
+    logApiDetails('DeepSeek', 'success', `API call successful using ${model}`);
     return response;
   } catch (error) {
-    logApiDetails('DeepSeek', 'error', `API call failed: ${error.message}`);
+    logApiDetails('DeepSeek', 'error', `API call failed with ${model}: ${error.message}`);
     throw error;
   }
 };
@@ -198,11 +215,20 @@ const callGeminiAPI = async (messages, stream = false) => {
 
 // 故障转移调用
 const callWithFallback = async (messages, stream = false, useDeepThinking = false) => {
-  const apis = [
-    { name: 'deepseek', fn: (msgs, strm) => callDeepSeekAPI(msgs, strm, useDeepThinking) },
+  // 定义多个 DeepSeek 模型尝试顺序
+  const deepseekModels = [
+    { name: 'deepseek-primary', fn: (msgs, strm) => callDeepSeekAPI(msgs, strm, useDeepThinking) },
+    { name: 'deepseek-backup', fn: (msgs, strm) => callDeepSeekAPI(msgs, strm, false) }  // 使用快速模型作为备选
+  ];
+
+  // 其他 API 作为最后的备选
+  const backupApis = [
     { name: 'openai', fn: callOpenAIAPI },
     { name: 'gemini', fn: callGeminiAPI }
   ];
+
+  // 合并所有 API，确保 DeepSeek 模型优先
+  const apis = [...deepseekModels, ...backupApis];
 
   logApiDetails('Fallback', 'info', 'Starting API fallback sequence');
   
@@ -211,7 +237,7 @@ const callWithFallback = async (messages, stream = false, useDeepThinking = fals
       logApiDetails('Fallback', 'info', `Attempting ${api.name} API`);
       const response = await api.fn(messages, stream);
       logApiDetails('Fallback', 'success', `Successfully used ${api.name} API`);
-      return { provider: api.name, response };
+      return { provider: api.name.split('-')[0], response };
     } catch (error) {
       logApiDetails('Fallback', 'warning', `${api.name} API failed: ${error.message}`);
       continue;
