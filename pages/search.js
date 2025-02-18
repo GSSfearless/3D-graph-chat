@@ -7,6 +7,9 @@ import 'tailwindcss/tailwind.css';
 import '../styles/globals.css';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import remarkMath from 'remark-math';
+import rehypeKatex from 'rehype-katex';
+import 'katex/dist/katex.min.css';
 
 const ContentViewer = dynamic(() => import('../components/ContentViewer'), {
   ssr: false,
@@ -324,14 +327,20 @@ export default function Search() {
                             <span className="text-sm text-purple-500">(DeepSeek R1)</span>
                           </div>
                           <div className="prose prose-purple max-w-none">
-                            <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                            <ReactMarkdown 
+                              remarkPlugins={[remarkGfm, remarkMath]}
+                              rehypePlugins={[rehypeKatex]}
+                            >
                               {reasoningProcess}
                             </ReactMarkdown>
                           </div>
                         </div>
                       )}
                       <div className={useDeepThinking && reasoningProcess ? "mt-6" : ""}>
-                        <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                        <ReactMarkdown 
+                          remarkPlugins={[remarkGfm, remarkMath]}
+                          rehypePlugins={[rehypeKatex]}
+                        >
                           {streamedAnswer}
                         </ReactMarkdown>
                       </div>
