@@ -1,6 +1,19 @@
 import { callWithFallback } from '../../utils/api-client';
 
+export const config = {
+  api: {
+    bodyParser: {
+      sizeLimit: '1mb'
+    },
+    responseLimit: false,
+    externalResolver: true
+  }
+};
+
 export default async function handler(req, res) {
+  // 设置较长的超时时间
+  res.setTimeout(30000); // 30 秒超时
+  
   console.log('=== 图表生成服务启动 ===');
   
   if (req.method !== 'POST') {
@@ -108,8 +121,12 @@ ${content}`;
     ];
 
     console.log('调用 AI 接口生成图表...');
-    const { provider, response } = await callWithFallback(messages, false);
+    const { provider, response } = await callWithFallback(messages, false, false);
     console.log(`使用 ${provider} API 生成${type === 'flowchart' ? '流程图' : '思维导图'}`);
+
+    // 添加更多的日志来追踪 AI 响应
+    console.log('AI 响应状态:', response.status);
+    console.log('AI 响应头:', response.headers);
 
     if (type === 'flowchart') {
       let mermaidCode = '';
