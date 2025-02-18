@@ -14,6 +14,12 @@ const API_CONFIG = {
       moe: 'deepseek-ai/deepseek-moe-16b'  // 大规模混合专家模型
     }
   },
+  volcengine: {
+    url: process.env.VOLCENGINE_API_URL,
+    key: process.env.VOLCENGINE_API_KEY,
+    model_id: process.env.VOLCENGINE_MODEL_ID,
+    region: 'cn-beijing'
+  },
   openai: {
     url: 'https://api.openai.com/v1/chat/completions',
     key: process.env.OPENAI_API_KEY,
@@ -115,6 +121,11 @@ const callOpenAIAPI = async (messages, stream = false) => {
 
 // DeepSeek API 调用
 const callDeepSeekAPI = async (messages, stream = false, useDeepThinking = false) => {
+  // 如果启用深度思考，使用火山引擎
+  if (useDeepThinking) {
+    return callVolcengineAPI(messages, stream);
+  }
+
   const config = API_CONFIG.deepseek;
   if (!config.key) {
     logApiDetails('DeepSeek', 'error', 'API key not configured');
@@ -123,9 +134,7 @@ const callDeepSeekAPI = async (messages, stream = false, useDeepThinking = false
 
   // 根据任务类型选择合适的模型
   let model;
-  if (useDeepThinking) {
-    model = config.models.deep;
-  } else if (messages.some(m => m.content.includes('代码') || m.content.includes('编程'))) {
+  if (messages.some(m => m.content.includes('代码') || m.content.includes('编程'))) {
     model = config.models.coder;
   } else if (messages.some(m => m.content.includes('数学') || m.content.includes('计算'))) {
     model = config.models.math;
@@ -145,7 +154,7 @@ const callDeepSeekAPI = async (messages, stream = false, useDeepThinking = false
         model: model,
         messages,
         temperature: 0.7,
-        max_tokens: useDeepThinking ? 4000 : 2000,
+        max_tokens: 2000,
         stream,
         top_p: 0.8,
         frequency_penalty: 0.5
@@ -163,6 +172,48 @@ const callDeepSeekAPI = async (messages, stream = false, useDeepThinking = false
     return response;
   } catch (error) {
     logApiDetails('DeepSeek', 'error', `API call failed with ${model}: ${error.message}`);
+    throw error;
+  }
+};
+
+// 火山引擎 API 调用
+const callVolcengineAPI = async (messages, stream = false) => {
+  const config = API_CONFIG.volcengine;
+  if (!config.key || !config.model_id) {
+    logApiDetails('Volcengine', 'error', 'API configuration incomplete');
+    throw new Error('Volcengine API configuration incomplete');
+  }
+
+  logApiDetails('Volcengine', 'info', `Calling API with ${messages.length} messages, stream: ${stream}`);
+
+  try {
+    const response = await api({
+      method: 'post',
+      url: config.url,
+      data: {
+        model: config.model_id,
+        messages,
+        temperature: 0.7,
+        max_tokens: 4000,
+        stream,
+        top_p: 0.8,
+        frequency_penalty: 0.5
+      },
+      headers: {
+        'Authorization': `Bearer ${config.key}`,
+        'Content-Type': 'application/json',
+        'Accept': stream ? 'text/event-stream' : 'application/json',
+        'X-Region': config.region
+      },
+      responseType: stream ? 'stream' : 'json',
+      retry: 3,
+      retryDelay: 1000
+    });
+
+    logApiDetails('Volcengine', 'success', 'API call successful');
+    return response;
+  } catch (error) {
+    logApiDetails('Volcengine', 'error', `API call failed: ${error.message}`);
     throw error;
   }
 };
@@ -215,10 +266,21 @@ const callGeminiAPI = async (messages, stream = false) => {
 
 // 故障转移调用
 const callWithFallback = async (messages, stream = false, useDeepThinking = false) => {
+  // 如果启用深度思考，优先使用火山引擎
+  if (useDeepThinking) {
+    try {
+      logApiDetails('Fallback', 'info', 'Using Volcengine for deep thinking');
+      const response = await callVolcengineAPI(messages, stream);
+      return { provider: 'volcengine', response };
+    } catch (error) {
+      logApiDetails('Fallback', 'warning', 'Volcengine failed, falling back to other APIs');
+    }
+  }
+
   // 定义多个 DeepSeek 模型尝试顺序
   const deepseekModels = [
-    { name: 'deepseek-primary', fn: (msgs, strm) => callDeepSeekAPI(msgs, strm, useDeepThinking) },
-    { name: 'deepseek-backup', fn: (msgs, strm) => callDeepSeekAPI(msgs, strm, false) }  // 使用快速模型作为备选
+    { name: 'deepseek-primary', fn: (msgs, strm) => callDeepSeekAPI(msgs, strm, false) },
+    { name: 'deepseek-backup', fn: (msgs, strm) => callDeepSeekAPI(msgs, strm, false) }
   ];
 
   // 其他 API 作为最后的备选

@@ -101,6 +101,16 @@ export default async function handler(req, res) {
                     }
                   }
                   break;
+                case 'volcengine':
+                  if (parsed.output && parsed.output.text) {
+                    content = parsed.output.text;
+                  } else if (parsed.choices && parsed.choices[0]) {
+                    const choice = parsed.choices[0];
+                    if (choice.delta && choice.delta.content) {
+                      content = choice.delta.content;
+                    }
+                  }
+                  break;
                 case 'claude':
                   if (parsed.type === 'content_block_delta') {
                     content = parsed.delta.text;
@@ -158,6 +168,16 @@ export default async function handler(req, res) {
                 case 'openai':
                 case 'deepseek':
                   if (parsed.choices && parsed.choices[0]) {
+                    const choice = parsed.choices[0];
+                    if (choice.delta && choice.delta.content) {
+                      content = choice.delta.content;
+                    }
+                  }
+                  break;
+                case 'volcengine':
+                  if (parsed.output && parsed.output.text) {
+                    content = parsed.output.text;
+                  } else if (parsed.choices && parsed.choices[0]) {
                     const choice = parsed.choices[0];
                     if (choice.delta && choice.delta.content) {
                       content = choice.delta.content;
