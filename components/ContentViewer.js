@@ -19,6 +19,10 @@ const ContentViewer = ({ content, type }) => {
         curve: 'linear',
         defaultRenderer: 'dagre-d3'
       },
+      mindmap: {
+        padding: 10,
+        useMaxWidth: true
+      },
       themeVariables: {
         fontFamily: 'Arial',
         fontSize: '16px',
@@ -54,13 +58,14 @@ const ContentViewer = ({ content, type }) => {
             // 尝试渲染
             const { svg } = await mermaid.render(id, content);
             setMermaidSvg(svg);
+            console.log('✅ Mermaid 图表渲染成功');
           } catch (error) {
             console.error('Error rendering mermaid diagram:', error);
-            // 如果渲染失败，显示错误信息
             mermaidRef.current.innerHTML = `
               <div class="p-4 text-red-500 bg-red-50 rounded-lg">
                 <p class="font-bold">图表渲染失败</p>
                 <p class="text-sm mt-2">${error.message}</p>
+                <pre class="text-xs mt-2 p-2 bg-red-100 rounded">${content}</pre>
               </div>
             `;
           }
