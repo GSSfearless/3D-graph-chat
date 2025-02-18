@@ -42,17 +42,23 @@ export default async function handler(req, res) {
     let isFirstChunk = true;
     let buffer = '';
     let responseText = '';
+    let chunkCount = 0;
 
     const startTime = Date.now();
     // 处理流式响应
     response.data.on('data', (chunk) => {
       try {
+        chunkCount++;
+        console.log(`Processing chunk #${chunkCount}`);
+        
         if (isFirstChunk) {
+          console.log('First chunk received');
           res.write('data: {"type":"start","provider":"' + provider + '"}\n\n');
           isFirstChunk = false;
         }
 
         const chunkText = chunk.toString();
+        console.log('Raw chunk:', chunkText);
         buffer += chunkText;
 
         // 处理完整的数据行
@@ -64,12 +70,14 @@ export default async function handler(req, res) {
           if (line.startsWith('data: ')) {
             const data = line.slice(6);
             if (data === '[DONE]') {
+              console.log('Received [DONE] signal');
               res.write('data: [DONE]\n\n');
               continue;
             }
 
             try {
               const parsed = JSON.parse(data);
+              console.log('Parsed data:', parsed);
               if (!parsed) continue;
 
               let content = '';
@@ -88,6 +96,8 @@ export default async function handler(req, res) {
                 case 'claude':
                   if (parsed.type === 'content_block_delta') {
                     content = parsed.delta.text;
+                  } else if (parsed.type === 'content_block_start' || parsed.type === 'content_block_stop') {
+                    console.log(`Claude content block ${parsed.type}`);
                   }
                   break;
                 case 'gemini':
@@ -101,11 +111,9 @@ export default async function handler(req, res) {
               }
 
               if (content) {
+                console.log('Extracted content:', content);
                 responseText += content;
                 res.write(`data: {"type":"delta","content":"${encodeURIComponent(content)}"}\n\n`);
-                console.log('Raw chunk:', chunk.toString());
-                console.log('Parsed content:', content);
-                console.log('Current buffer:', buffer);
               }
             } catch (e) {
               console.error('Error parsing chunk:', e, 'Raw data:', data);
@@ -119,8 +127,14 @@ export default async function handler(req, res) {
     });
 
     response.data.on('end', () => {
+      console.log('Stream ended');
+      console.log('Final buffer:', buffer);
+      console.log('Total chunks processed:', chunkCount);
+      console.log('Final response length:', responseText.length);
+
       // 处理缓冲区中剩余的数据
       if (buffer.length > 0) {
+        console.log('Processing remaining buffer');
         const lines = buffer.split('\n');
         for (const line of lines) {
           if (line.startsWith('data: ')) {
@@ -158,6 +172,7 @@ export default async function handler(req, res) {
               }
 
               if (content) {
+                console.log('Extracted content from buffer:', content);
                 responseText += content;
                 res.write(`data: {"type":"delta","content":"${encodeURIComponent(content)}"}\n\n`);
               }
@@ -171,6 +186,7 @@ export default async function handler(req, res) {
 
       // 发送完整的响应文本
       if (responseText) {
+        console.log('Sending complete response');
         res.write(`data: {"type":"complete","content":"${encodeURIComponent(responseText)}"}\n\n`);
       }
       

@@ -167,14 +167,14 @@ const callClaudeAPI = async (messages, stream = false) => {
       method: 'post',
       url: config.url,
       data: {
-        model: config.model,
+        model: 'claude-3-sonnet-20240229',
         messages: [
           {
             role: 'user',
             content: `${systemMessage}\n\n${userMessage}`
           }
         ],
-        max_tokens: 2000,
+        max_tokens: 4000,
         stream,
         temperature: 0.7
       },
@@ -245,9 +245,9 @@ const callGeminiAPI = async (messages, stream = false) => {
 // 故障转移调用
 const callWithFallback = async (messages, stream = false) => {
   const apis = [
-    { name: 'openai', fn: callOpenAIAPI },
-    { name: 'deepseek', fn: callDeepSeekAPI },
     { name: 'claude', fn: callClaudeAPI },
+    { name: 'deepseek', fn: callDeepSeekAPI },
+    { name: 'openai', fn: callOpenAIAPI },
     { name: 'gemini', fn: callGeminiAPI }
   ];
 
