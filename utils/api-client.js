@@ -2,20 +2,18 @@ import axios from 'axios';
 
 // API 配置
 const API_CONFIG = {
+  deepseek: {
+    url: 'https://api.siliconflow.cn/v1/chat/completions',
+    key: process.env.SILICONFLOW_API_KEY,
+    models: {
+      fast: 'deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B',  // 快速响应模型
+      deep: 'deepseek-ai/DeepSeek-R1'  // 深度思考模型
+    }
+  },
   openai: {
     url: 'https://api.openai.com/v1/chat/completions',
     key: process.env.OPENAI_API_KEY,
     model: 'gpt-4-turbo-preview'
-  },
-  deepseek: {
-    url: 'https://api.siliconflow.cn/v1/chat/completions',
-    key: process.env.SILICONFLOW_API_KEY,
-    model: 'deepseek-ai/DeepSeek-R1'
-  },
-  claude: {
-    url: 'https://api.anthropic.com/v1/messages',
-    key: process.env.CLAUDE_API_KEY,
-    model: 'claude-3-sonnet-20240229'
   },
   gemini: {
     url: 'https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent',
@@ -112,23 +110,25 @@ const callOpenAIAPI = async (messages, stream = false) => {
 };
 
 // DeepSeek API 调用
-const callDeepSeekAPI = async (messages, stream = false) => {
+const callDeepSeekAPI = async (messages, stream = false, useDeepThinking = false) => {
   const config = API_CONFIG.deepseek;
   if (!config.key) {
     logApiDetails('DeepSeek', 'error', 'API key not configured');
     throw new Error('DeepSeek API key not configured');
   }
 
-  logApiDetails('DeepSeek', 'info', `Calling API with ${messages.length} messages, stream: ${stream}`);
+  const model = useDeepThinking ? config.models.deep : config.models.fast;
+  logApiDetails('DeepSeek', 'info', `Using model: ${model}`);
+
   try {
     const response = await api({
       method: 'post',
       url: config.url,
       data: {
-        model: config.model,
+        model: model,
         messages,
         temperature: 0.7,
-        max_tokens: 2000,
+        max_tokens: useDeepThinking ? 4000 : 2000,
         stream,
         top_p: 0.8,
         frequency_penalty: 0.5
@@ -146,52 +146,6 @@ const callDeepSeekAPI = async (messages, stream = false) => {
     return response;
   } catch (error) {
     logApiDetails('DeepSeek', 'error', `API call failed: ${error.message}`);
-    throw error;
-  }
-};
-
-// Claude API 调用
-const callClaudeAPI = async (messages, stream = false) => {
-  const config = API_CONFIG.claude;
-  if (!config.key) {
-    logApiDetails('Claude', 'error', 'API key not configured');
-    throw new Error('Claude API key not configured');
-  }
-
-  const systemMessage = messages.find(m => m.role === 'system')?.content || '';
-  const userMessage = messages.find(m => m.role === 'user')?.content || '';
-
-  logApiDetails('Claude', 'info', `Calling API with system and user messages, stream: ${stream}`);
-  try {
-    const response = await api({
-      method: 'post',
-      url: config.url,
-      data: {
-        model: 'claude-3-sonnet-20240229',
-        messages: [
-          {
-            role: 'user',
-            content: `${systemMessage}\n\n${userMessage}`
-          }
-        ],
-        max_tokens: 4000,
-        stream,
-        temperature: 0.7
-      },
-      headers: {
-        'x-api-key': config.key,
-        'anthropic-version': '2023-06-01',
-        'Content-Type': 'application/json',
-        'Accept': stream ? 'text/event-stream' : 'application/json'
-      },
-      responseType: stream ? 'stream' : 'json',
-      retry: 3,
-      retryDelay: 1000
-    });
-    logApiDetails('Claude', 'success', 'API call successful');
-    return response;
-  } catch (error) {
-    logApiDetails('Claude', 'error', `API call failed: ${error.message}`);
     throw error;
   }
 };
@@ -243,10 +197,9 @@ const callGeminiAPI = async (messages, stream = false) => {
 };
 
 // 故障转移调用
-const callWithFallback = async (messages, stream = false) => {
+const callWithFallback = async (messages, stream = false, useDeepThinking = false) => {
   const apis = [
-    { name: 'claude', fn: callClaudeAPI },
-    { name: 'deepseek', fn: callDeepSeekAPI },
+    { name: 'deepseek', fn: (msgs, strm) => callDeepSeekAPI(msgs, strm, useDeepThinking) },
     { name: 'openai', fn: callOpenAIAPI },
     { name: 'gemini', fn: callGeminiAPI }
   ];
@@ -273,6 +226,5 @@ export {
   callWithFallback,
   callOpenAIAPI,
   callDeepSeekAPI,
-  callClaudeAPI,
   callGeminiAPI
 }; 

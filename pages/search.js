@@ -26,6 +26,7 @@ export default function Search() {
   const [mermaidContent, setMermaidContent] = useState('');
   const [markdownMindMap, setMarkdownMindMap] = useState('');
   const [useWebSearch, setUseWebSearch] = useState(false);
+  const [useDeepThinking, setUseDeepThinking] = useState(false);
 
   const defaultQuery = "What is the answer to life, the universe, and everything?";
 
@@ -107,7 +108,8 @@ export default function Search() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
           context: useWebSearch ? searchResults : [],
-          query: searchQuery 
+          query: searchQuery,
+          useDeepThinking
         }),
       });
 
@@ -404,20 +406,37 @@ export default function Search() {
           <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-gray-100 p-4">
             <div className="flex flex-col space-y-2">
               <div className="flex items-center justify-between px-2">
-                <div className="flex items-center space-x-2">
-                  <span className="text-sm text-gray-600">联网搜索</span>
-                  <button
-                    onClick={() => setUseWebSearch(!useWebSearch)}
-                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${
-                      useWebSearch ? 'bg-blue-500' : 'bg-gray-300'
-                    }`}
-                  >
-                    <span
-                      className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                        useWebSearch ? 'translate-x-6' : 'translate-x-1'
+                <div className="flex items-center space-x-4">
+                  <div className="flex items-center space-x-2">
+                    <span className="text-sm text-gray-600">联网搜索</span>
+                    <button
+                      onClick={() => setUseWebSearch(!useWebSearch)}
+                      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${
+                        useWebSearch ? 'bg-blue-500' : 'bg-gray-300'
                       }`}
-                    />
-                  </button>
+                    >
+                      <span
+                        className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                          useWebSearch ? 'translate-x-6' : 'translate-x-1'
+                        }`}
+                      />
+                    </button>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <span className="text-sm text-gray-600">深度思考</span>
+                    <button
+                      onClick={() => setUseDeepThinking(!useDeepThinking)}
+                      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${
+                        useDeepThinking ? 'bg-purple-500' : 'bg-gray-300'
+                      }`}
+                    >
+                      <span
+                        className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                          useDeepThinking ? 'translate-x-6' : 'translate-x-1'
+                        }`}
+                      />
+                    </button>
+                  </div>
                 </div>
               </div>
               <div className="flex items-center space-x-2">

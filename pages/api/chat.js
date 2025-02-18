@@ -5,7 +5,7 @@ export default async function handler(req, res) {
     return res.status(405).json({ message: 'Method not allowed' });
   }
 
-  const { query, context } = req.body;
+  const { query, context, useDeepThinking } = req.body;
 
   try {
     // 构建上下文提示词
@@ -13,7 +13,15 @@ export default async function handler(req, res) {
       .map(item => `${item.title}\n${item.content}`)
       .join('\n\n');
 
-    const systemPrompt = `你是一个专业的知识助手。请基于提供的上下文信息，以清晰、结构化的方式回答问题。回答应该：
+    const systemPrompt = useDeepThinking 
+      ? `你是一个专业的知识助手，现在处于深度思考模式。请对问题进行深入分析，考虑多个角度，并提供详尽的见解。回答应该：
+1. 使用markdown格式，确保层次分明
+2. 包含清晰的标题和小标题
+3. 深入分析问题的各个方面
+4. 考虑不同的观点和可能性
+5. 提供具体的例子和解释
+6. 在回答的最后，总结关键要点和见解`
+      : `你是一个专业的知识助手。请基于提供的上下文信息，以清晰、简洁的方式回答问题。回答应该：
 1. 使用markdown格式，确保层次分明
 2. 包含清晰的标题和小标题
 3. 适当使用列表和要点
@@ -36,8 +44,8 @@ export default async function handler(req, res) {
     ];
 
     // 使用故障转移机制调用 API
-    const { provider, response } = await callWithFallback(messages, true);
-    console.log(`Using ${provider} API for response`);
+    const { provider, response } = await callWithFallback(messages, true, useDeepThinking);
+    console.log(`Using ${provider} API for response${useDeepThinking ? ' (Deep Thinking Mode)' : ''}`);
 
     let isFirstChunk = true;
     let buffer = '';
