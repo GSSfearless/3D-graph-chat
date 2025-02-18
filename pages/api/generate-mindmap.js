@@ -2,27 +2,31 @@ import { callWithFallback } from '../../utils/api-client';
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
-    console.error('Invalid method:', req.method);
+    console.error('❌ 无效的请求方法:', req.method);
     return res.status(405).json({ message: 'Method not allowed' });
   }
 
+  console.log('=== 开始生成图表 ===');
+  
   try {
     const { content, type } = req.body;
     
     if (!content) {
-      console.error('Missing content in request body');
+      console.error('❌ 请求体缺少内容');
       return res.status(400).json({ message: 'Content is required' });
     }
 
     if (!type || !['flowchart', 'markdown'].includes(type)) {
-      console.error('Invalid type:', type);
+      console.error('❌ 无效的图表类型:', type);
       return res.status(400).json({ message: 'Invalid type. Must be either "flowchart" or "markdown"' });
     }
 
-    console.log('Generating diagram:', { type, contentLength: content.length });
+    console.log(`📊 正在生成 ${type === 'flowchart' ? '流程图' : '思维导图'}`);
+    console.log('内容长度:', content.length);
 
     let prompt;
     if (type === 'flowchart') {
+      console.log('🔄 构建流程图提示词...');
       prompt = `请将以下内容转换为 Mermaid 流程图格式。请严格遵循以下规则：
 
 1. 使用以下格式：
@@ -60,6 +64,7 @@ export default async function handler(req, res) {
 
 ${content}`;
     } else {
+      console.log('🔄 构建思维导图提示词...');
       prompt = `请将以下内容转换为 Markdown 格式的思维导图。请严格遵循以下规则：
 
 1. 使用 Markdown 标题层级表示思维导图的层级关系：
@@ -104,14 +109,15 @@ ${content}`;
       }
     ];
 
-    console.log('Calling API with messages:', messages.length);
+    console.log('🚀 调用 AI 接口生成图表...');
     const { provider, response } = await callWithFallback(messages, false);
-    console.log(`Using ${provider} API for ${type} generation`);
+    console.log(`✅ 使用 ${provider} 生成${type === 'flowchart' ? '流程图' : '思维导图'}`);
 
     if (type === 'flowchart') {
       let mermaidCode = '';
       
       try {
+        console.log('处理 Mermaid 代码...');
         switch (provider) {
           case 'openai':
           case 'deepseek':
@@ -141,15 +147,17 @@ ${content}`;
           return res.status(400).json({ message: 'Generated code is not a valid flowchart' });
         }
       } catch (error) {
-        console.error('Error processing Mermaid code:', error);
+        console.error('❌ Mermaid 代码处理错误:', error);
         return res.status(500).json({ message: 'Error processing Mermaid code', error: error.message });
       }
       
+      console.log('✅ 流程图生成成功');
       res.status(200).json({ mermaidCode, provider });
     } else {
       let markdownContent = '';
       
       try {
+        console.log('处理 Markdown 内容...');
         switch (provider) {
           case 'openai':
           case 'deepseek':
@@ -170,14 +178,15 @@ ${content}`;
           return res.status(400).json({ message: 'Generated content is not a valid markdown mind map' });
         }
       } catch (error) {
-        console.error('Error processing Markdown content:', error);
+        console.error('❌ Markdown 内容处理错误:', error);
         return res.status(500).json({ message: 'Error processing Markdown content', error: error.message });
       }
       
+      console.log('✅ 思维导图生成成功');
       res.status(200).json({ markdownContent, provider });
     }
   } catch (error) {
-    console.error('Error in generate-mindmap:', error);
+    console.error('❌ 图表生成过程出错:', error);
     res.status(500).json({ 
       message: 'Error generating diagram',
       error: error.message,

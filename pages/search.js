@@ -33,6 +33,11 @@ export default function Search() {
   const handleSearch = useCallback(async (searchQuery) => {
     if (!searchQuery.trim()) return;
     
+    console.log('=== 搜索开始 ===');
+    console.log('查询内容:', searchQuery);
+    console.log('深度思考模式:', useDeepThinking ? '开启' : '关闭');
+    console.log('联网搜索:', useWebSearch ? '开启' : '关闭');
+    
     setLoading(true);
     setStreamedAnswer('');
     setMermaidContent('');
@@ -54,6 +59,7 @@ export default function Search() {
     try {
       // 只在启用联网搜索时执行 RAG 搜索
       if (useWebSearch) {
+        console.group('🔍 执行联网搜索');
         logApiStatus('RAG Search', 'start', '开始搜索相关内容');
         const searchResponse = await fetch(`/api/rag-search?query=${encodeURIComponent(searchQuery)}`);
         if (!searchResponse.ok) {
@@ -102,7 +108,8 @@ export default function Search() {
       }
 
       // 发送聊天请求
-      logApiStatus('Chat API', 'start', '开始生成回答');
+      console.group('🤖 生成AI回答');
+      console.log('准备发送聊天请求...');
       const chatResponse = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -114,10 +121,11 @@ export default function Search() {
       });
 
       if (!chatResponse.ok) {
-        logApiStatus('Chat API', 'error', `HTTP ${chatResponse.status}`);
+        console.error('❌ 聊天请求失败:', chatResponse.status);
         throw new Error(`HTTP error! status: ${chatResponse.status}`);
       }
 
+      console.log('✅ 聊天请求成功，开始接收响应...');
       const reader = chatResponse.body.getReader();
       const decoder = new TextDecoder();
       let answer = '';
@@ -155,65 +163,75 @@ export default function Search() {
                     }
                     break;
                   case 'complete':
+                    console.log('收到 complete 信号');
                     if (parsed.content) {
+                      console.log('开始处理完整回答...');
                       const completeAnswer = decodeURIComponent(parsed.content);
+                      console.log('回答长度:', completeAnswer.length);
+                      
                       if (completeAnswer.length > answer.length) {
                         answer = completeAnswer;
                         setStreamedAnswer(answer);
+                        
+                        // 确保异步操作按顺序执行
+                        const generateDiagrams = async () => {
+                          try {
+                            // 生成流程图
+                            console.log('🔄 开始生成流程图...');
+                            const flowChartResponse = await fetch('/api/generate-mindmap', {
+                              method: 'POST',
+                              headers: { 'Content-Type': 'application/json' },
+                              body: JSON.stringify({
+                                content: answer,
+                                type: 'flowchart'
+                              }),
+                            });
 
-                        // 生成流程图
-                        console.group('生成流程图');
-                        console.log('开始生成流程图...');
-                        try {
-                          const flowChartResponse = await fetch('/api/generate-mindmap', {
-                            method: 'POST',
-                            headers: { 
-                              'Content-Type': 'application/json'
-                            },
-                            body: JSON.stringify({
-                              content: answer,
-                              type: 'flowchart'
-                            }),
-                          });
-
-                          if (flowChartResponse.ok) {
-                            const flowChartResult = await flowChartResponse.json();
-                            if (flowChartResult.mermaidCode) {
-                              console.log('流程图生成成功');
-                              setMermaidContent(flowChartResult.mermaidCode);
+                            if (flowChartResponse.ok) {
+                              const flowChartResult = await flowChartResponse.json();
+                              console.log('✅ 流程图生成成功');
+                              if (flowChartResult.mermaidCode) {
+                                console.log('流程图代码长度:', flowChartResult.mermaidCode.length);
+                                setMermaidContent(flowChartResult.mermaidCode);
+                              } else {
+                                console.error('❌ 流程图响应缺少 mermaidCode');
+                              }
+                            } else {
+                              console.error('❌ 流程图生成失败:', flowChartResponse.status);
                             }
-                          }
-                        } catch (error) {
-                          console.error('流程图生成错误:', error);
-                        }
-                        console.groupEnd();
 
-                        // 生成思维导图
-                        console.group('生成思维导图');
-                        console.log('开始生成思维导图...');
-                        try {
-                          const mindMapResponse = await fetch('/api/generate-mindmap', {
-                            method: 'POST',
-                            headers: { 
-                              'Content-Type': 'application/json'
-                            },
-                            body: JSON.stringify({
-                              content: answer,
-                              type: 'markdown'
-                            }),
-                          });
+                            // 生成思维导图
+                            console.log('🔄 开始生成思维导图...');
+                            const mindMapResponse = await fetch('/api/generate-mindmap', {
+                              method: 'POST',
+                              headers: { 'Content-Type': 'application/json' },
+                              body: JSON.stringify({
+                                content: answer,
+                                type: 'markdown'
+                              }),
+                            });
 
-                          if (mindMapResponse.ok) {
-                            const mindMapResult = await mindMapResponse.json();
-                            if (mindMapResult.markdownContent) {
-                              console.log('思维导图生成成功');
-                              setMarkdownMindMap(mindMapResult.markdownContent);
+                            if (mindMapResponse.ok) {
+                              const mindMapResult = await mindMapResponse.json();
+                              console.log('✅ 思维导图生成成功');
+                              if (mindMapResult.markdownContent) {
+                                console.log('思维导图内容长度:', mindMapResult.markdownContent.length);
+                                setMarkdownMindMap(mindMapResult.markdownContent);
+                              } else {
+                                console.error('❌ 思维导图响应缺少 markdownContent');
+                              }
+                            } else {
+                              console.error('❌ 思维导图生成失败:', mindMapResponse.status);
                             }
+                          } catch (error) {
+                            console.error('❌ 图表生成过程出错:', error);
                           }
-                        } catch (error) {
-                          console.error('思维导图生成错误:', error);
-                        }
-                        console.groupEnd();
+                        };
+
+                        // 执行图表生成
+                        generateDiagrams().catch(error => {
+                          console.error('❌ 图表生成任务失败:', error);
+                        });
                       }
                     }
                     break;

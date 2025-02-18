@@ -221,17 +221,23 @@ export default async function handler(req, res) {
 
       // 发送完整的响应文本
       if (responseText) {
-        console.log('准备发送完整回答...');
-        console.log('回答长度:', responseText.length);
-        res.write(`data: {"type":"complete","content":"${encodeURIComponent(responseText)}"}\n\n`);
-        console.log('完整回答已发送，等待生成图表...');
+        console.log('准备发送完整回答信号...');
+        console.log('完整回答长度:', responseText.length);
+        try {
+          const completeSignal = `data: {"type":"complete","content":"${encodeURIComponent(responseText)}"}\n\n`;
+          res.write(completeSignal);
+          console.log('✅ 完整回答信号已发送');
+        } catch (error) {
+          console.error('❌ 发送完整回答信号失败:', error);
+        }
       }
       
+      console.log('准备结束响应流...');
       res.write('data: {"type":"end"}\n\n');
       res.end();
 
       const endTime = Date.now();
-      console.log(`${provider} API response time:`, endTime - startTime);
+      console.log(`${provider} API 响应总时间:`, endTime - startTime, 'ms');
     });
 
     response.data.on('error', (error) => {
