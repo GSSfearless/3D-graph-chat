@@ -159,56 +159,82 @@ export default function Search() {
                         answer = completeAnswer;
                         setStreamedAnswer(answer);
 
-                        // 在收到完整回答后立即生成图表
-                        logApiStatus('Flow Chart', 'start', '开始生成流程图');
+                        // 生成流程图
+                        console.log('开始生成流程图...');
                         try {
+                          console.log('发送流程图生成请求:', {
+                            content: answer,
+                            type: 'flowchart'
+                          });
                           const flowChartResponse = await fetch('/api/generate-mindmap', {
                             method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
+                            headers: { 
+                              'Content-Type': 'application/json',
+                              'Accept': 'application/json'
+                            },
                             body: JSON.stringify({ 
                               content: answer,
                               type: 'flowchart'
                             }),
                           });
 
+                          console.log('流程图响应状态:', flowChartResponse.status);
                           if (flowChartResponse.ok) {
-                            const { mermaidCode } = await flowChartResponse.json();
-                            if (mermaidCode) {
-                              setMermaidContent(mermaidCode);
+                            const flowChartData = await flowChartResponse.json();
+                            console.log('流程图生成结果:', flowChartData);
+                            if (flowChartData.mermaidCode) {
+                              setMermaidContent(flowChartData.mermaidCode);
                               logApiStatus('Flow Chart', 'success', '流程图生成完成');
+                            } else {
+                              console.error('流程图响应缺少 mermaidCode');
                             }
                           } else {
-                            logApiStatus('Flow Chart', 'error', `HTTP ${flowChartResponse.status}`);
+                            const errorData = await flowChartResponse.text();
+                            console.error('流程图生成失败:', errorData);
+                            logApiStatus('Flow Chart', 'error', `HTTP ${flowChartResponse.status}: ${errorData}`);
                           }
                         } catch (error) {
+                          console.error('流程图生成错误:', error);
                           logApiStatus('Flow Chart', 'error', error.message);
-                          console.error('Flow chart generation error:', error);
                         }
 
-                        // 生成 Markdown 思维导图
-                        logApiStatus('Mind Map', 'start', '开始生成思维导图');
+                        // 生成思维导图
+                        console.log('开始生成思维导图...');
                         try {
+                          console.log('发送思维导图生成请求:', {
+                            content: answer,
+                            type: 'markdown'
+                          });
                           const mindMapResponse = await fetch('/api/generate-mindmap', {
                             method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
+                            headers: { 
+                              'Content-Type': 'application/json',
+                              'Accept': 'application/json'
+                            },
                             body: JSON.stringify({ 
                               content: answer,
                               type: 'markdown'
                             }),
                           });
 
+                          console.log('思维导图响应状态:', mindMapResponse.status);
                           if (mindMapResponse.ok) {
-                            const { markdownContent } = await mindMapResponse.json();
-                            if (markdownContent) {
-                              setMarkdownMindMap(markdownContent);
+                            const mindMapData = await mindMapResponse.json();
+                            console.log('思维导图生成结果:', mindMapData);
+                            if (mindMapData.markdownContent) {
+                              setMarkdownMindMap(mindMapData.markdownContent);
                               logApiStatus('Mind Map', 'success', '思维导图生成完成');
+                            } else {
+                              console.error('思维导图响应缺少 markdownContent');
                             }
                           } else {
-                            logApiStatus('Mind Map', 'error', `HTTP ${mindMapResponse.status}`);
+                            const errorData = await mindMapResponse.text();
+                            console.error('思维导图生成失败:', errorData);
+                            logApiStatus('Mind Map', 'error', `HTTP ${mindMapResponse.status}: ${errorData}`);
                           }
                         } catch (error) {
+                          console.error('思维导图生成错误:', error);
                           logApiStatus('Mind Map', 'error', error.message);
-                          console.error('Mind map generation error:', error);
                         }
                       }
                     }

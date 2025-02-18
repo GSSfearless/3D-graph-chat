@@ -2,11 +2,24 @@ import { callWithFallback } from '../../utils/api-client';
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
+    console.error('Invalid method:', req.method);
     return res.status(405).json({ message: 'Method not allowed' });
   }
 
   try {
     const { content, type } = req.body;
+    
+    if (!content) {
+      console.error('Missing content in request body');
+      return res.status(400).json({ message: 'Content is required' });
+    }
+
+    if (!type || !['flowchart', 'markdown'].includes(type)) {
+      console.error('Invalid type:', type);
+      return res.status(400).json({ message: 'Invalid type. Must be either "flowchart" or "markdown"' });
+    }
+
+    console.log('Generating diagram:', { type, contentLength: content.length });
 
     let prompt;
     if (type === 'flowchart') {
@@ -91,62 +104,84 @@ ${content}`;
       }
     ];
 
-    // 使用故障转移机制调用 API
+    console.log('Calling API with messages:', messages.length);
     const { provider, response } = await callWithFallback(messages, false);
     console.log(`Using ${provider} API for ${type} generation`);
 
     if (type === 'flowchart') {
-      // 提取 Mermaid 代码
       let mermaidCode = '';
       
-      switch (provider) {
-        case 'openai':
-        case 'deepseek':
-          mermaidCode = response.data.choices[0].message.content.trim();
-          break;
-        case 'claude':
-          mermaidCode = response.data.content.trim();
-          break;
-        case 'gemini':
-          mermaidCode = response.data.candidates[0].content.parts[0].text.trim();
-          break;
-      }
-      
-      // 如果返回的内容包含了额外的解释文本，尝试提取出 Mermaid 代码部分
-      if (mermaidCode.includes('flowchart TD')) {
-        const startIndex = mermaidCode.indexOf('flowchart TD');
-        const possibleEndIndex = mermaidCode.indexOf('```', startIndex);
-        mermaidCode = mermaidCode.substring(
-          startIndex,
-          possibleEndIndex > startIndex ? possibleEndIndex : undefined
-        ).trim();
+      try {
+        switch (provider) {
+          case 'openai':
+          case 'deepseek':
+            mermaidCode = response.data.choices[0].message.content.trim();
+            break;
+          case 'claude':
+            mermaidCode = response.data.content.trim();
+            break;
+          case 'gemini':
+            mermaidCode = response.data.candidates[0].content.parts[0].text.trim();
+            break;
+        }
+        
+        console.log('Raw Mermaid code:', mermaidCode);
+
+        if (mermaidCode.includes('flowchart TD')) {
+          const startIndex = mermaidCode.indexOf('flowchart TD');
+          const possibleEndIndex = mermaidCode.indexOf('```', startIndex);
+          mermaidCode = mermaidCode.substring(
+            startIndex,
+            possibleEndIndex > startIndex ? possibleEndIndex : undefined
+          ).trim();
+          
+          console.log('Processed Mermaid code:', mermaidCode);
+        } else {
+          console.error('Invalid Mermaid code format - missing flowchart TD');
+          return res.status(400).json({ message: 'Generated code is not a valid flowchart' });
+        }
+      } catch (error) {
+        console.error('Error processing Mermaid code:', error);
+        return res.status(500).json({ message: 'Error processing Mermaid code', error: error.message });
       }
       
       res.status(200).json({ mermaidCode, provider });
     } else {
-      // 提取 Markdown 内容
       let markdownContent = '';
       
-      switch (provider) {
-        case 'openai':
-        case 'deepseek':
-          markdownContent = response.data.choices[0].message.content.trim();
-          break;
-        case 'claude':
-          markdownContent = response.data.content.trim();
-          break;
-        case 'gemini':
-          markdownContent = response.data.candidates[0].content.parts[0].text.trim();
-          break;
+      try {
+        switch (provider) {
+          case 'openai':
+          case 'deepseek':
+            markdownContent = response.data.choices[0].message.content.trim();
+            break;
+          case 'claude':
+            markdownContent = response.data.content.trim();
+            break;
+          case 'gemini':
+            markdownContent = response.data.candidates[0].content.parts[0].text.trim();
+            break;
+        }
+        
+        console.log('Raw Markdown content:', markdownContent);
+
+        if (!markdownContent.includes('#')) {
+          console.error('Invalid Markdown format - missing headers');
+          return res.status(400).json({ message: 'Generated content is not a valid markdown mind map' });
+        }
+      } catch (error) {
+        console.error('Error processing Markdown content:', error);
+        return res.status(500).json({ message: 'Error processing Markdown content', error: error.message });
       }
       
       res.status(200).json({ markdownContent, provider });
     }
   } catch (error) {
-    console.error('Error calling API:', error);
+    console.error('Error in generate-mindmap:', error);
     res.status(500).json({ 
       message: 'Error generating diagram',
-      error: error.message 
+      error: error.message,
+      stack: error.stack
     });
   }
 } 
