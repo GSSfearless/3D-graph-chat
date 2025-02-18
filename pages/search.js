@@ -183,73 +183,7 @@ export default function Search() {
                       // 更新回答内容
                       answer = completeAnswer;
                       setStreamedAnswer(answer);
-                      
-                      // 并行生成图表
-                      console.log('开始并行生成图表...');
-
-                      const generateChart = async (content, type, retries = 3) => {
-                        for (let i = 0; i < retries; i++) {
-                          try {
-                            console.log(`🔄 开始生成${type === 'flowchart' ? '流程图' : '思维导图'}... (尝试 ${i + 1}/${retries})`);
-                            const response = await fetch('/api/generate-mindmap', {
-                              method: 'POST',
-                              headers: { 'Content-Type': 'application/json' },
-                              body: JSON.stringify({ content, type }),
-                            });
-
-                            if (!response.ok) {
-                              throw new Error(`HTTP error! status: ${response.status}`);
-                            }
-
-                            const result = await response.json();
-                            console.log(`✅ ${type === 'flowchart' ? '流程图' : '思维导图'}生成成功`);
-                            return result;
-                          } catch (error) {
-                            console.error(`❌ ${type === 'flowchart' ? '流程图' : '思维导图'}生成失败 (尝试 ${i + 1}/${retries}):`, error);
-                            if (i === retries - 1) {
-                              throw error;
-                            }
-                            // 等待一段时间后重试
-                            await new Promise(resolve => setTimeout(resolve, 2000 * (i + 1)));
-                          }
-                        }
-                      };
-
-                      Promise.all([
-                        // 生成流程图
-                        generateChart(answer, 'flowchart')
-                          .then(result => {
-                            if (result.mermaidCode) {
-                              setMermaidContent(result.mermaidCode);
-                            }
-                          })
-                          .catch(error => {
-                            console.error('流程图生成最终失败:', error);
-                            setMermaidContent('flowchart TD\nA[生成失败] --> B[请重试]');
-                          }),
-                        
-                        // 生成思维导图
-                        generateChart(answer, 'markdown')
-                          .then(result => {
-                            if (result.mermaidCode) {
-                              setMarkdownMindMap(result.mermaidCode);
-                            }
-                          })
-                          .catch(error => {
-                            console.error('思维导图生成最终失败:', error);
-                            setMarkdownMindMap('mindmap\n  root((生成失败))\n    请重试');
-                          })
-                      ]).then(() => {
-                        console.log('✅ 所有图表生成完成');
-                      }).catch(error => {
-                        console.error('❌ 图表生成过程出错:', error);
-                      });
-                    } else {
-                      console.log('complete 信号中没有内容');
                     }
-                    break;
-                  case 'end':
-                    logApiStatus('Chat API', 'success', `生成完成，共 ${tokenCount} 个token`);
                     break;
                   case 'flowchart':
                     console.log('收到流程图数据');
@@ -266,6 +200,9 @@ export default function Search() {
                       console.log('思维导图代码长度:', mindmapCode.length);
                       setMarkdownMindMap(mindmapCode);
                     }
+                    break;
+                  case 'end':
+                    logApiStatus('Chat API', 'success', `生成完成，共 ${tokenCount} 个token`);
                     break;
                 }
               } catch (e) {
