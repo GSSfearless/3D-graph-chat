@@ -3,15 +3,23 @@ import axios from 'axios';
 // API 配置
 const API_CONFIG = {
   deepseek: {
-    url: 'https://api.siliconflow.cn/v1/chat/completions',
-    key: process.env.SILICONFLOW_API_KEY,
-    models: {
-      fast: 'deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B',  // 快速响应模型
-      deep: 'deepseek-ai/DeepSeek-R1',  // 深度思考模型
-      chat: 'deepseek-ai/deepseek-chat-7b',  // 通用对话模型
-      coder: 'deepseek-ai/deepseek-coder-7b',  // 代码生成模型
-      math: 'deepseek-ai/deepseek-math-7b',  // 数学推理模型
-      moe: 'deepseek-ai/deepseek-moe-16b'  // 大规模混合专家模型
+    // 非联网版本
+    standard: {
+      url: 'https://ark.cn-beijing.volces.com/api/v3',
+      key: process.env.VOLCANO_API_KEY,
+      models: {
+        fast: 'deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B',
+        deep: 'deepseek-ai/DeepSeek-R1'
+      }
+    },
+    // 联网版本
+    web: {
+      url: 'https://ark.cn-beijing.volces.com/api/v3/bots',
+      key: process.env.VOLCANO_API_KEY,
+      models: {
+        fast: process.env.VOLCANO_BOT_ID_FAST,  // 快速联网 bot ID
+        deep: process.env.VOLCANO_BOT_ID_DEEP   // 深度思考联网 bot ID
+      }
     }
   },
   openai: {
@@ -114,33 +122,29 @@ const callOpenAIAPI = async (messages, stream = false) => {
 };
 
 // DeepSeek API 调用
-const callDeepSeekAPI = async (messages, stream = false, useDeepThinking = false) => {
+const callDeepSeekAPI = async (messages, stream = false, useDeepThinking = false, useWebSearch = false) => {
   const config = API_CONFIG.deepseek;
-  if (!config.key) {
+  const mode = useWebSearch ? config.web : config.standard;
+  
+  if (!mode.key) {
     logApiDetails('DeepSeek', 'error', 'API key not configured');
     throw new Error('DeepSeek API key not configured');
   }
 
-  // 根据任务类型选择合适的模型
-  let model;
-  if (useDeepThinking) {
-    model = config.models.deep;
-  } else if (messages.some(m => m.content.includes('代码') || m.content.includes('编程'))) {
-    model = config.models.coder;
-  } else if (messages.some(m => m.content.includes('数学') || m.content.includes('计算'))) {
-    model = config.models.math;
-  } else if (messages.length > 5) {  // 复杂对话使用 MOE 模型
-    model = config.models.moe;
-  } else {
-    model = config.models.fast;  // 默认使用快速模型
+  // 根据模式和思考深度选择模型
+  const model = useDeepThinking ? mode.models.deep : mode.models.fast;
+  
+  if (!model) {
+    logApiDetails('DeepSeek', 'error', `Model ID not configured for ${useWebSearch ? 'web' : 'standard'} mode`);
+    throw new Error('DeepSeek model ID not configured');
   }
 
-  logApiDetails('DeepSeek', 'info', `Using model: ${model}`);
+  logApiDetails('DeepSeek', 'info', `Using ${useWebSearch ? 'web' : 'standard'} mode with model: ${model}`);
 
   try {
     const response = await api({
       method: 'post',
-      url: config.url,
+      url: mode.url,
       data: {
         model: model,
         messages,
@@ -151,7 +155,7 @@ const callDeepSeekAPI = async (messages, stream = false, useDeepThinking = false
         frequency_penalty: 0.5
       },
       headers: {
-        'Authorization': `Bearer ${config.key}`,
+        'Authorization': `Bearer ${mode.key}`,
         'Content-Type': 'application/json',
         'Accept': stream ? 'text/event-stream' : 'application/json'
       },
@@ -159,10 +163,10 @@ const callDeepSeekAPI = async (messages, stream = false, useDeepThinking = false
       retry: 3,
       retryDelay: 1000
     });
-    logApiDetails('DeepSeek', 'success', `API call successful using ${model}`);
+    logApiDetails('DeepSeek', 'success', `API call successful using ${useWebSearch ? 'web' : 'standard'} mode`);
     return response;
   } catch (error) {
-    logApiDetails('DeepSeek', 'error', `API call failed with ${model}: ${error.message}`);
+    logApiDetails('DeepSeek', 'error', `API call failed: ${error.message}`);
     throw error;
   }
 };
@@ -214,11 +218,17 @@ const callGeminiAPI = async (messages, stream = false) => {
 };
 
 // 故障转移调用
-const callWithFallback = async (messages, stream = false, useDeepThinking = false) => {
+const callWithFallback = async (messages, stream = false, useDeepThinking = false, useWebSearch = false) => {
   // 定义多个 DeepSeek 模型尝试顺序
   const deepseekModels = [
-    { name: 'deepseek-primary', fn: (msgs, strm) => callDeepSeekAPI(msgs, strm, useDeepThinking) },
-    { name: 'deepseek-backup', fn: (msgs, strm) => callDeepSeekAPI(msgs, strm, false) }  // 使用快速模型作为备选
+    { 
+      name: 'deepseek-primary', 
+      fn: (msgs, strm) => callDeepSeekAPI(msgs, strm, useDeepThinking, useWebSearch)
+    },
+    { 
+      name: 'deepseek-backup', 
+      fn: (msgs, strm) => callDeepSeekAPI(msgs, strm, false, useWebSearch)
+    }
   ];
 
   // 其他 API 作为最后的备选
