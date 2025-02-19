@@ -27,7 +27,6 @@ export default function Search() {
   const [useWebSearch, setUseWebSearch] = useState(false);
   const [useDeepThinking, setUseDeepThinking] = useState(false);
   const [reasoningProcess, setReasoningProcess] = useState('');
-  const [graphType, setGraphType] = useState('flowchart');
 
   const defaultQuery = "What is the answer to life, the universe, and everything?";
 
@@ -265,40 +264,24 @@ export default function Search() {
             <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
               <div className="flex justify-center space-x-4">
                 <button
-                  onClick={() => setContentType('answer')}
-                  className={`px-6 py-2 rounded-lg transition-colors ${
+                  className={`px-6 py-2 rounded-lg transition-all ${
                     contentType === 'answer'
-                      ? 'bg-blue-500 text-white'
-                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                      ? 'bg-blue-500 text-white shadow-md hover:bg-blue-600'
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                   }`}
+                  onClick={() => setContentType('answer')}
                 >
-                  文本回答
+                  AI回答
                 </button>
                 <button
-                  onClick={() => {
-                    setContentType('flowchart');
-                    setGraphType('flowchart');
-                  }}
-                  className={`px-6 py-2 rounded-lg transition-colors ${
-                    contentType === 'flowchart' && graphType === 'flowchart'
-                      ? 'bg-purple-500 text-white'
-                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                  className={`px-6 py-2 rounded-lg transition-all ${
+                    contentType === 'flowchart'
+                      ? 'bg-blue-500 text-white shadow-md hover:bg-blue-600'
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                   }`}
+                  onClick={() => setContentType('flowchart')}
                 >
                   流程图
-                </button>
-                <button
-                  onClick={() => {
-                    setContentType('flowchart');
-                    setGraphType('mindmap');
-                  }}
-                  className={`px-6 py-2 rounded-lg transition-colors ${
-                    contentType === 'flowchart' && graphType === 'mindmap'
-                      ? 'bg-green-500 text-white'
-                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                  }`}
-                >
-                  思维导图
                 </button>
               </div>
             </div>
@@ -306,40 +289,46 @@ export default function Search() {
 
           {/* 内容显示区域 */}
           <div className="lg:col-span-12">
-            <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 min-h-[600px]">
-              {streamedAnswer ? (
-                contentType === 'answer' ? (
-                  <div className="prose max-w-none">
-                    {useDeepThinking && reasoningProcess && (
-                      <div className="mb-6 p-4 bg-purple-50 rounded-lg">
-                        <div className="flex items-center gap-2 mb-2">
-                          <h3 className="text-lg font-semibold text-purple-700">💭 思考过程</h3>
-                          <span className="text-sm text-purple-500">(DeepSeek R1)</span>
-                        </div>
-                        <div className="prose prose-purple max-w-none">
-                          <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                            {reasoningProcess}
-                          </ReactMarkdown>
-                        </div>
-                      </div>
-                    )}
-                    <div className={useDeepThinking && reasoningProcess ? "mt-6" : ""}>
-                      <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                        {streamedAnswer}
-                      </ReactMarkdown>
-                    </div>
+            <div className="bg-white rounded-xl shadow-sm border border-gray-100">
+              <div className="h-[calc(100vh-24rem)] overflow-auto p-6">
+                {loading && !streamedAnswer ? (
+                  <div className="flex items-center justify-center h-full">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
                   </div>
+                ) : streamedAnswer ? (
+                  contentType === 'answer' ? (
+                    <div className="prose max-w-none">
+                      {useDeepThinking && reasoningProcess && (
+                        <div className="mb-6 p-4 bg-purple-50 rounded-lg border border-purple-200">
+                          <div className="flex items-center space-x-2 mb-2">
+                            <h3 className="text-lg font-semibold text-purple-700">💭 思考过程</h3>
+                            <span className="text-sm text-purple-500">(DeepSeek R1)</span>
+                          </div>
+                          <div className="prose prose-purple max-w-none">
+                            <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                              {reasoningProcess}
+                            </ReactMarkdown>
+                          </div>
+                        </div>
+                      )}
+                      <div className={useDeepThinking && reasoningProcess ? "mt-6" : ""}>
+                        <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                          {streamedAnswer}
+                        </ReactMarkdown>
+                      </div>
+                    </div>
+                  ) : (
+                    <ContentViewer
+                      content={mermaidContent}
+                      type="mermaid"
+                    />
+                  )
                 ) : (
-                  <ContentViewer
-                    content={extractMermaidCode(streamedAnswer, graphType)}
-                    type="mermaid"
-                  />
-                )
-              ) : (
-                <div className="flex items-center justify-center h-full">
-                  <p className="text-gray-400">在下方输入问题开始查询</p>
-                </div>
-              )}
+                  <div className="flex items-center justify-center h-full">
+                    <p className="text-gray-400">在下方输入问题开始查询</p>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </div>
@@ -407,20 +396,4 @@ export default function Search() {
       </main>
     </div>
   );
-}
-
-function extractMermaidCode(text, type) {
-  const mermaidRegex = /```mermaid\n([\s\S]*?)\n```/;
-  const match = text.match(mermaidRegex);
-  if (!match) return '';
-  
-  let code = match[1];
-  if (type === 'mindmap' && !code.startsWith('mindmap')) {
-    code = code.replace(/graph TD|graph LR|graph TB/, 'mindmap');
-  }
-  else if (type === 'flowchart' && !code.startsWith('graph')) {
-    code = code.replace(/mindmap/, 'graph TD');
-  }
-  
-  return code;
 }
