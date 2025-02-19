@@ -31,8 +31,8 @@ function centerLayout(nodes) {
 
 export function createPyramidLayout(nodes) {
   const levels = Math.ceil(Math.sqrt(nodes.length));
-  const width = 1200; // 增加宽度
-  const height = 900; // 增加高度
+  const width = 1200;
+  const height = 900;
   const nodeWidth = 180;
   const nodeHeight = 60;
   const horizontalSpacing = 50;
@@ -61,64 +61,6 @@ export function createPyramidLayout(nodes) {
       }
     };
   });
-
-  return centerLayout(layoutedNodes);
-}
-
-export function createMindMapLayout(nodes) {
-  const centerX = 600;
-  const centerY = 450;
-  const baseRadius = 250;
-  const radiusIncrement = 100;
-
-  const rootNode = nodes[0];
-  const leftNodes = nodes.slice(1, Math.ceil(nodes.length / 2));
-  const rightNodes = nodes.slice(Math.ceil(nodes.length / 2));
-
-  function layoutBranch(branchNodes, startAngle, endAngle, isLeft) {
-    return branchNodes.map((node, index) => {
-      const angle = startAngle + (endAngle - startAngle) * (index + 1) / (branchNodes.length + 1);
-      const radius = baseRadius + radiusIncrement * Math.floor(index / 5);
-      const x = centerX + radius * Math.cos(angle) * (isLeft ? -1 : 1);
-      const y = centerY + radius * Math.sin(angle);
-
-      return {
-        ...node,
-        position: { x, y },
-        style: { 
-          width: NODE_WIDTH, 
-          height: NODE_HEIGHT,
-          background: NODE_COLORS[index % NODE_COLORS.length],
-          borderRadius: '8px',
-          border: '1px solid #ddd',
-          padding: '5px',
-          fontSize: '12px'
-        }
-      };
-    });
-  }
-
-  const leftLayout = layoutBranch(leftNodes, -Math.PI / 3, Math.PI / 3, true);
-  const rightLayout = layoutBranch(rightNodes, -Math.PI / 3, Math.PI / 3, false);
-
-  const layoutedNodes = [
-    {
-      ...rootNode,
-      position: { x: centerX - NODE_WIDTH / 2, y: centerY - NODE_HEIGHT / 2 },
-      style: { 
-        width: NODE_WIDTH, 
-        height: NODE_HEIGHT,
-        background: NODE_COLORS[0],
-        borderRadius: '8px',
-        border: '2px solid #FFD700',
-        padding: '5px',
-        fontSize: '14px',
-        fontWeight: 'bold'
-      }
-    },
-    ...leftLayout,
-    ...rightLayout
-  ];
 
   return centerLayout(layoutedNodes);
 }
