@@ -16,12 +16,17 @@ const ContentViewer = ({ content, type }) => {
       flowchart: {
         useMaxWidth: true,
         htmlLabels: true,
-        curve: 'linear',
-        defaultRenderer: 'dagre-d3'
+        curve: 'basis',
+        defaultRenderer: 'dagre-d3',
+        padding: 20,
+        nodeSpacing: 50,
+        rankSpacing: 50
       },
       mindmap: {
-        padding: 10,
-        useMaxWidth: true
+        padding: 20,
+        useMaxWidth: true,
+        nodeSpacing: 100,
+        rankSpacing: 80
       },
       themeVariables: {
         fontFamily: 'Arial',
@@ -31,7 +36,13 @@ const ContentViewer = ({ content, type }) => {
         primaryBorderColor: '#4299E1',
         lineColor: '#64748B',
         secondaryColor: '#9F7AEA',
-        tertiaryColor: '#48BB78'
+        tertiaryColor: '#48BB78',
+        // 思维导图特定样式
+        mindmapTitleColor: '#2D3748',
+        mindmapLinkColor: '#64748B',
+        mindmapNode: '#4299E1',
+        mindmapNodeText: '#FFFFFF',
+        mindmapSelectedNode: '#9F7AEA'
       }
     });
   }, []);
@@ -65,13 +76,18 @@ const ContentViewer = ({ content, type }) => {
               <div class="p-4 text-red-500 bg-red-50 rounded-lg">
                 <p class="font-bold">图表渲染失败</p>
                 <p class="text-sm mt-2">${error.message}</p>
-                <pre class="text-xs mt-2 p-2 bg-red-100 rounded">${content}</pre>
+                <pre class="text-xs mt-2 p-2 bg-red-100 rounded overflow-auto">${content}</pre>
               </div>
             `;
           }
         } catch (error) {
-          console.error('Error in mermaid setup:', error);
-          mermaidRef.current.innerHTML = '图表初始化失败';
+          console.error('Mermaid initialization error:', error);
+          mermaidRef.current.innerHTML = `
+            <div class="p-4 text-red-500 bg-red-50 rounded-lg">
+              <p class="font-bold">图表初始化失败</p>
+              <p class="text-sm mt-2">${error.message}</p>
+            </div>
+          `;
         } finally {
           setIsLoading(false);
         }
