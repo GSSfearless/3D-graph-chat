@@ -14,7 +14,7 @@ export default async function handler(req, res) {
       .join('\n\n');
 
     const systemPrompt = useDeepThinking 
-      ? `你是一个专业的知识助手，现在处于深度思考模式。请对问题进行深入分析，考虑多个角度，并提供详尽的见解。要求：
+      ? `你现在处于深度思考模式。
  在回答的最后生成两个Mermaid图表，格式如下：
 
 \`\`\`mermaid
@@ -36,7 +36,7 @@ mindmap
       要点4
 \`\`\`
 `
-      : `你是一个专业的知识助手。请基于提供的上下文信息，以清晰、简洁的方式回答问题。要求：
+      : `
 在回答的最后生成两个Mermaid图表，格式如下：
 
 \`\`\`mermaid
