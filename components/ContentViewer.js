@@ -95,6 +95,34 @@ const ContentViewer = ({ content, type }) => {
           try {
             // 尝试渲染
             console.log('调用mermaid.render，内容:', content);
+            await mermaid.initialize({
+              startOnLoad: true,
+              theme: 'default',
+              securityLevel: 'loose',
+              flowchart: {
+                useMaxWidth: true,
+                htmlLabels: true,
+                curve: 'basis',
+                defaultRenderer: 'dagre-d3',
+                padding: 20,
+                nodeSpacing: 50,
+                rankSpacing: 50,
+                diagramPadding: 8,
+                labelBackgroundColor: '#f0f7ff',
+                nodeAlignment: 'center'
+              },
+              mindmap: {
+                padding: 16,
+                useMaxWidth: true,
+                nodeSpacing: 60,
+                rankSpacing: 80,
+                diagramPadding: 10,
+                defaultRenderer: 'dagre-d3',
+                curve: 'bump',
+                levelDistance: 100
+              }
+            });
+            
             const { svg } = await mermaid.render(id, content);
             console.log('Mermaid渲染成功，SVG长度:', svg.length);
             setMermaidSvg(svg);
@@ -126,6 +154,7 @@ const ContentViewer = ({ content, type }) => {
           type,
           hasContent: !!content,
           contentLength: content?.length,
+          contentValue: content,
           hasRef: !!mermaidRef.current
         });
       }

@@ -21,17 +21,51 @@ export default async function handler(req, res) {
 4. 考虑不同的观点和可能性
 5. 提供具体的例子和解释
 6. 在回答的最后，总结关键要点和见解
-7. 同时生成两种图表：
-   - 使用Mermaid流程图(flowchart TD)展示主要概念和关系
-   - 使用Mermaid思维导图(mindmap)展示层次结构`
+7. 在回答的最后生成两个Mermaid图表，格式如下：
+
+\`\`\`mermaid
+flowchart TD
+  A[开始] --> B[概念1]
+  B --> C[概念2]
+  C --> D[结束]
+\`\`\`
+
+\`\`\`mermaid
+mindmap
+  root((核心主题))
+    主题1
+      子主题1
+      子主题2
+    主题2
+      子主题3
+      子主题4
+\`\`\`
+`
       : `你是一个专业的知识助手。请基于提供的上下文信息，以清晰、简洁的方式回答问题。要求：
 1. 使用markdown格式，但不要添加"大标题"、"小标题"等无意义的标题文字
 2. 回答要有清晰的层次结构，适当使用标题（##、###）来组织内容
 3. 适当使用列表和要点
 4. 在回答的最后，总结关键要点
-5. 同时生成两种图表：
-   - 使用Mermaid流程图(flowchart TD)展示主要概念和关系
-   - 使用Mermaid思维导图(mindmap)展示层次结构`;
+5. 在回答的最后生成两个Mermaid图表，格式如下：
+
+\`\`\`mermaid
+flowchart TD
+  A[开始] --> B[概念1]
+  B --> C[概念2]
+  C --> D[结束]
+\`\`\`
+
+\`\`\`mermaid
+mindmap
+  root((核心主题))
+    主题1
+      子主题1
+      子主题2
+    主题2
+      子主题3
+      子主题4
+\`\`\`
+`;
 
     // 设置响应头
     res.setHeader('Content-Type', 'text/event-stream');
@@ -159,17 +193,21 @@ export default async function handler(req, res) {
                 console.log('Extracted content:', content);
                 responseText += content;
                 res.write(`data: {"type":"delta","content":"${encodeURIComponent(content)}"}\n\n`);
-              }
-
-              // 在每个chunk后检查是否有新的图表数据
-              const diagrams = extractMermaidDiagrams(responseText);
-              if (diagrams.flowchart) {
-                console.log('发送流程图数据');
-                res.write(`data: {"type":"flowchart","content":"${encodeURIComponent(diagrams.flowchart)}"}\n\n`);
-              }
-              if (diagrams.mindmap) {
-                console.log('发送思维导图数据');
-                res.write(`data: {"type":"mindmap","content":"${encodeURIComponent(diagrams.mindmap)}"}\n\n`);
+                
+                // 检查累积的响应文本中是否包含完整的图表
+                if (responseText.includes('```mermaid')) {
+                  console.log('检测到Mermaid图表标记');
+                  const diagrams = extractMermaidDiagrams(responseText);
+                  
+                  if (diagrams.flowchart) {
+                    console.log('发送流程图数据，长度:', diagrams.flowchart.length);
+                    res.write(`data: {"type":"flowchart","content":"${encodeURIComponent(diagrams.flowchart)}"}\n\n`);
+                  }
+                  if (diagrams.mindmap) {
+                    console.log('发送思维导图数据，长度:', diagrams.mindmap.length);
+                    res.write(`data: {"type":"mindmap","content":"${encodeURIComponent(diagrams.mindmap)}"}\n\n`);
+                  }
+                }
               }
             } catch (e) {
               console.error('Message parse error:', e, 'Raw data:', data);
@@ -286,26 +324,37 @@ export default async function handler(req, res) {
   }
 }
 
-// 在处理响应内容时，解析并提取Mermaid图表
+// 修改提取Mermaid图表的逻辑
 const extractMermaidDiagrams = (text) => {
   const diagrams = {
     flowchart: '',
     mindmap: ''
   };
   
-  const mermaidRegex = /```mermaid\n([\s\S]*?)\n```/g;
+  // 使用更精确的正则表达式
+  const mermaidRegex = /```mermaid\n([\s\S]*?)```/g;
   let match;
   
   while ((match = mermaidRegex.exec(text)) !== null) {
     const diagramContent = match[1].trim();
-    if (diagramContent.includes('flowchart')) {
+    console.log('找到Mermaid图表:', diagramContent);
+    
+    if (diagramContent.startsWith('flowchart')) {
+      console.log('提取到流程图');
       diagrams.flowchart = diagramContent;
-      console.log('提取到流程图:', diagramContent);
-    } else if (diagramContent.includes('mindmap')) {
+    } else if (diagramContent.startsWith('mindmap')) {
+      console.log('提取到思维导图');
       diagrams.mindmap = diagramContent;
-      console.log('提取到思维导图:', diagramContent);
     }
   }
+  
+  // 打印提取结果
+  console.log('提取的图表数据:', {
+    hasFlowchart: !!diagrams.flowchart,
+    hasMindmap: !!diagrams.mindmap,
+    flowchartLength: diagrams.flowchart.length,
+    mindmapLength: diagrams.mindmap.length
+  });
   
   return diagrams;
 };
