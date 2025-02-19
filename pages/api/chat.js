@@ -20,12 +20,18 @@ export default async function handler(req, res) {
 3. 深入分析问题的各个方面
 4. 考虑不同的观点和可能性
 5. 提供具体的例子和解释
-6. 在回答的最后，总结关键要点和见解`
+6. 在回答的最后，总结关键要点和见解
+7. 如果问题涉及数据分析或流程，可以生成相应的图表：
+   - 使用 mermaid 语法生成流程图、时序图、甘特图等
+   - 使用 JSON 格式生成饼图、柱状图、折线图数据`
       : `你是一个专业的知识助手。请基于提供的上下文信息，以清晰、简洁的方式回答问题。要求：
 1. 使用markdown格式，但不要添加"大标题"、"小标题"等无意义的标题文字
 2. 回答要有清晰的层次结构，适当使用标题（##、###）来组织内容
 3. 适当使用列表和要点
-4. 在回答的最后，总结关键要点`;
+4. 在回答的最后，总结关键要点
+5. 如果问题涉及数据分析或流程，可以生成相应的图表：
+   - 使用 mermaid 语法生成流程图、时序图、甘特图等
+   - 使用 JSON 格式生成饼图、柱状图、折线图数据`;
 
     // 设置响应头
     res.setHeader('Content-Type', 'text/event-stream');
@@ -102,6 +108,29 @@ export default async function handler(req, res) {
                     const choice = parsed.choices[0];
                     if (choice.delta && choice.delta.content) {
                       content = choice.delta.content;
+                      
+                      // 检查是否包含图表数据
+                      if (content.includes('```mermaid')) {
+                        console.log('检测到 Mermaid 图表数据');
+                        const mermaidMatch = content.match(/```mermaid\n([\s\S]*?)```/);
+                        if (mermaidMatch) {
+                          res.write(`data: {"type":"mermaid","content":"${encodeURIComponent(mermaidMatch[1])}"}\n\n`);
+                        }
+                      }
+                      
+                      // 检查是否包含 ECharts 数据
+                      if (content.includes('```chart-data')) {
+                        console.log('检测到图表数据');
+                        const chartMatch = content.match(/```chart-data\n([\s\S]*?)```/);
+                        if (chartMatch) {
+                          try {
+                            const chartData = JSON.parse(chartMatch[1]);
+                            res.write(`data: {"type":"chart","content":${JSON.stringify(chartData)}}\n\n`);
+                          } catch (e) {
+                            console.error('解析图表数据失败:', e);
+                          }
+                        }
+                      }
                     }
                   }
                   break;
@@ -148,64 +177,6 @@ export default async function handler(req, res) {
                 console.log('Extracted content:', content);
                 responseText += content;
                 res.write(`data: {"type":"delta","content":"${encodeURIComponent(content)}"}\n\n`);
-                
-                // 当收到完整回答时，生成流程图和思维导图
-                if (parsed.type === 'complete' && parsed.content) {
-                  // 生成流程图
-                  const generateCharts = async () => {
-                    try {
-                      const flowchartPrompt = `请将以下内容转换为简洁的 Mermaid 流程图格式。要求：
-1. 使用 flowchart TD 格式
-2. 节点ID使用字母数字组合，保持简短
-3. 节点文本简洁，不超过10个字
-4. 主要流程放在中间
-5. 控制总节点数不超过15个
-6. 确保格式正确，避免特殊字符
-
-${decodeURIComponent(parsed.content)}`;
-
-                      const mindmapPrompt = `请将以下内容转换为简洁的 Mermaid 思维导图格式。要求：
-1. 使用 mindmap 格式
-2. 主题简洁，层级清晰
-3. 每个节点文本不超过10个字
-4. 控制总节点数不超过20个
-5. 确保格式正确，避免特殊字符
-
-${decodeURIComponent(parsed.content)}`;
-
-                      const flowchartMessages = [
-                        { role: 'system', content: '你是专业的流程图生成助手，擅长生成简洁清晰的Mermaid流程图。' },
-                        { role: 'user', content: flowchartPrompt }
-                      ];
-
-                      const mindmapMessages = [
-                        { role: 'system', content: '你是专业的思维导图生成助手，擅长生成结构化的Mermaid思维导图。' },
-                        { role: 'user', content: mindmapPrompt }
-                      ];
-
-                      // 并行生成图表
-                      const [flowchartResponse, mindmapResponse] = await Promise.all([
-                        callWithFallback(flowchartMessages, false, false),
-                        callWithFallback(mindmapMessages, false, false)
-                      ]);
-
-                      // 发送流程图
-                      const flowchartContent = flowchartResponse.response.data.choices[0].message.content.trim();
-                      res.write(`data: {"type":"flowchart","content":"${encodeURIComponent(flowchartContent)}"}\n\n`);
-
-                      // 发送思维导图
-                      const mindmapContent = mindmapResponse.response.data.choices[0].message.content.trim();
-                      res.write(`data: {"type":"mindmap","content":"${encodeURIComponent(mindmapContent)}"}\n\n`);
-                    } catch (error) {
-                      console.error('生成图表时出错:', error);
-                    }
-                  };
-
-                  // 执行图表生成
-                  generateCharts().catch(error => {
-                    console.error('图表生成过程出错:', error);
-                  });
-                }
               }
             } catch (e) {
               console.error('Error parsing chunk:', e, 'Raw data:', data);
@@ -245,6 +216,29 @@ ${decodeURIComponent(parsed.content)}`;
                     const choice = parsed.choices[0];
                     if (choice.delta && choice.delta.content) {
                       content = choice.delta.content;
+                      
+                      // 检查是否包含图表数据
+                      if (content.includes('```mermaid')) {
+                        console.log('检测到 Mermaid 图表数据');
+                        const mermaidMatch = content.match(/```mermaid\n([\s\S]*?)```/);
+                        if (mermaidMatch) {
+                          res.write(`data: {"type":"mermaid","content":"${encodeURIComponent(mermaidMatch[1])}"}\n\n`);
+                        }
+                      }
+                      
+                      // 检查是否包含 ECharts 数据
+                      if (content.includes('```chart-data')) {
+                        console.log('检测到图表数据');
+                        const chartMatch = content.match(/```chart-data\n([\s\S]*?)```/);
+                        if (chartMatch) {
+                          try {
+                            const chartData = JSON.parse(chartMatch[1]);
+                            res.write(`data: {"type":"chart","content":${JSON.stringify(chartData)}}\n\n`);
+                          } catch (e) {
+                            console.error('解析图表数据失败:', e);
+                          }
+                        }
+                      }
                     }
                   }
                   break;
@@ -277,64 +271,6 @@ ${decodeURIComponent(parsed.content)}`;
                 console.log('Extracted content from buffer:', content);
                 responseText += content;
                 res.write(`data: {"type":"delta","content":"${encodeURIComponent(content)}"}\n\n`);
-                
-                // 当收到完整回答时，生成流程图和思维导图
-                if (parsed.type === 'complete' && parsed.content) {
-                  // 生成流程图
-                  const generateCharts = async () => {
-                    try {
-                      const flowchartPrompt = `请将以下内容转换为简洁的 Mermaid 流程图格式。要求：
-1. 使用 flowchart TD 格式
-2. 节点ID使用字母数字组合，保持简短
-3. 节点文本简洁，不超过10个字
-4. 主要流程放在中间
-5. 控制总节点数不超过15个
-6. 确保格式正确，避免特殊字符
-
-${decodeURIComponent(parsed.content)}`;
-
-                      const mindmapPrompt = `请将以下内容转换为简洁的 Mermaid 思维导图格式。要求：
-1. 使用 mindmap 格式
-2. 主题简洁，层级清晰
-3. 每个节点文本不超过10个字
-4. 控制总节点数不超过20个
-5. 确保格式正确，避免特殊字符
-
-${decodeURIComponent(parsed.content)}`;
-
-                      const flowchartMessages = [
-                        { role: 'system', content: '你是专业的流程图生成助手，擅长生成简洁清晰的Mermaid流程图。' },
-                        { role: 'user', content: flowchartPrompt }
-                      ];
-
-                      const mindmapMessages = [
-                        { role: 'system', content: '你是专业的思维导图生成助手，擅长生成结构化的Mermaid思维导图。' },
-                        { role: 'user', content: mindmapPrompt }
-                      ];
-
-                      // 并行生成图表
-                      const [flowchartResponse, mindmapResponse] = await Promise.all([
-                        callWithFallback(flowchartMessages, false, false),
-                        callWithFallback(mindmapMessages, false, false)
-                      ]);
-
-                      // 发送流程图
-                      const flowchartContent = flowchartResponse.response.data.choices[0].message.content.trim();
-                      res.write(`data: {"type":"flowchart","content":"${encodeURIComponent(flowchartContent)}"}\n\n`);
-
-                      // 发送思维导图
-                      const mindmapContent = mindmapResponse.response.data.choices[0].message.content.trim();
-                      res.write(`data: {"type":"mindmap","content":"${encodeURIComponent(mindmapContent)}"}\n\n`);
-                    } catch (error) {
-                      console.error('生成图表时出错:', error);
-                    }
-                  };
-
-                  // 执行图表生成
-                  generateCharts().catch(error => {
-                    console.error('图表生成过程出错:', error);
-                  });
-                }
               }
             } catch (e) {
               console.error('Error processing final buffer:', e);
