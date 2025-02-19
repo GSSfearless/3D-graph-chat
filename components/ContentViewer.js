@@ -169,8 +169,34 @@ const ContentViewer = ({ content, type }) => {
     switch (type) {
       case 'markdown':
         return (
-          <div className="prose max-w-none">
-            <ReactMarkdown remarkPlugins={[remarkGfm]}>
+          <div className="prose prose-lg max-w-none prose-headings:text-blue-600 prose-headings:font-semibold prose-p:text-gray-600 prose-li:text-gray-600 prose-strong:text-gray-800 prose-strong:font-semibold">
+            <ReactMarkdown
+              remarkPlugins={[remarkGfm]}
+              components={{
+                // 自定义标题样式
+                h2: ({node, ...props}) => (
+                  <h2 className="text-2xl font-bold text-blue-600 mt-8 mb-4" {...props} />
+                ),
+                h3: ({node, ...props}) => (
+                  <h3 className="text-xl font-semibold text-blue-500 mt-6 mb-3" {...props} />
+                ),
+                // 自定义列表样式
+                ul: ({node, ...props}) => (
+                  <ul className="list-disc list-inside space-y-2 my-4" {...props} />
+                ),
+                li: ({node, ...props}) => (
+                  <li className="text-gray-700" {...props} />
+                ),
+                // 自定义段落样式
+                p: ({node, ...props}) => (
+                  <p className="text-gray-700 leading-relaxed my-4" {...props} />
+                ),
+                // 自定义加粗文本样式
+                strong: ({node, ...props}) => (
+                  <strong className="font-semibold text-gray-800" {...props} />
+                ),
+              }}
+            >
               {content}
             </ReactMarkdown>
           </div>

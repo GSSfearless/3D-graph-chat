@@ -340,20 +340,58 @@ export default function Search() {
                   contentType === 'answer' ? (
                     <div className="prose max-w-none">
                       {useDeepThinking && reasoningProcess && (
-                        <div className="mb-6 p-4 bg-purple-50 rounded-lg border border-purple-200">
-                          <div className="flex items-center space-x-2 mb-2">
+                        <div className="mb-6 p-6 bg-purple-50 rounded-xl border border-purple-200">
+                          <div className="flex items-center space-x-2 mb-4">
                             <h3 className="text-lg font-semibold text-purple-700">💭 思考过程</h3>
-                            <span className="text-sm text-purple-500">(DeepSeek R1)</span>
+                            <span className="text-sm text-purple-500 bg-purple-100 px-2 py-1 rounded-full">(DeepSeek R1)</span>
                           </div>
-                          <div className="prose prose-purple max-w-none">
-                            <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                          <div className="prose prose-purple max-w-none prose-p:text-purple-700 prose-li:text-purple-700 prose-strong:text-purple-800">
+                            <ReactMarkdown
+                              remarkPlugins={[remarkGfm]}
+                              components={{
+                                p: ({node, ...props}) => (
+                                  <p className="text-purple-700 leading-relaxed my-3" {...props} />
+                                ),
+                                ul: ({node, ...props}) => (
+                                  <ul className="list-disc list-inside space-y-2 my-3" {...props} />
+                                ),
+                                li: ({node, ...props}) => (
+                                  <li className="text-purple-700" {...props} />
+                                ),
+                                strong: ({node, ...props}) => (
+                                  <strong className="font-semibold text-purple-800" {...props} />
+                                ),
+                              }}
+                            >
                               {filterMermaidBlocks(reasoningProcess)}
                             </ReactMarkdown>
                           </div>
                         </div>
                       )}
                       <div className={useDeepThinking && reasoningProcess ? "mt-6" : ""}>
-                        <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                        <ReactMarkdown
+                          remarkPlugins={[remarkGfm]}
+                          components={{
+                            h2: ({node, ...props}) => (
+                              <h2 className="text-2xl font-bold text-blue-600 mt-8 mb-4" {...props} />
+                            ),
+                            h3: ({node, ...props}) => (
+                              <h3 className="text-xl font-semibold text-blue-500 mt-6 mb-3" {...props} />
+                            ),
+                            ul: ({node, ...props}) => (
+                              <ul className="list-disc list-inside space-y-2 my-4" {...props} />
+                            ),
+                            li: ({node, ...props}) => (
+                              <li className="text-gray-700" {...props} />
+                            ),
+                            p: ({node, ...props}) => (
+                              <p className="text-gray-700 leading-relaxed my-4" {...props} />
+                            ),
+                            strong: ({node, ...props}) => (
+                              <strong className="font-semibold text-gray-800" {...props} />
+                            ),
+                          }}
+                        >
                           {streamedAnswer}
                         </ReactMarkdown>
                       </div>
