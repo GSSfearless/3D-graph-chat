@@ -24,6 +24,7 @@ export default function Search() {
   const [streamedAnswer, setStreamedAnswer] = useState('');
   const [contentType, setContentType] = useState('answer');
   const [mermaidContent, setMermaidContent] = useState('');
+  const [swotContent, setSwotContent] = useState('');
   const [markdownMindMap, setMarkdownMindMap] = useState('');
   const [useWebSearch, setUseWebSearch] = useState(false);
   const [useDeepThinking, setUseDeepThinking] = useState(false);
@@ -42,6 +43,7 @@ export default function Search() {
     setLoading(true);
     setStreamedAnswer('');
     setMermaidContent('');
+    setSwotContent('');
     setSearchResults([]);
     setReasoningProcess('');
 
@@ -201,6 +203,14 @@ export default function Search() {
                       setMarkdownMindMap(mindmapCode);
                     }
                     break;
+                  case 'swot':
+                    console.log('收到SWOT分析数据');
+                    if (parsed.content) {
+                      const swotCode = decodeURIComponent(parsed.content);
+                      console.log('SWOT分析代码长度:', swotCode.length);
+                      setSwotContent(swotCode);
+                    }
+                    break;
                   case 'end':
                     logApiStatus('Chat API', 'success', `生成完成，共 ${tokenCount} 个token`);
                     break;
@@ -230,6 +240,35 @@ export default function Search() {
       setInitialLoad(false);
     }
   }, [q, initialLoad, handleSearch]);
+
+  // 添加图表类型检测函数
+  const hasChartContent = useCallback((type) => {
+    switch (type) {
+      case 'answer':
+        return !!streamedAnswer;
+      case 'flowchart':
+      case 'mindmap':
+        return !!mermaidContent;
+      case 'swot':
+        return !!swotContent;
+      default:
+        return false;
+    }
+  }, [streamedAnswer, mermaidContent, swotContent]);
+
+  // 处理图表类型切换
+  const handleContentTypeChange = (newType) => {
+    if (hasChartContent(newType)) {
+      setContentType(newType);
+    } else {
+      // 如果没有对应类型的内容，显示提示信息
+      alert(`当前回答中没有${
+        newType === 'flowchart' ? '流程图' :
+        newType === 'mindmap' ? '思维导图' :
+        newType === 'swot' ? 'SWOT分析' : ''
+      }内容`);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
@@ -277,8 +316,9 @@ export default function Search() {
                     contentType === 'answer'
                       ? 'bg-blue-500 text-white shadow-md hover:bg-blue-600'
                       : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                  }`}
-                  onClick={() => setContentType('answer')}
+                  } ${!hasChartContent('answer') && 'opacity-50 cursor-not-allowed'}`}
+                  onClick={() => handleContentTypeChange('answer')}
+                  disabled={!hasChartContent('answer')}
                 >
                   AI回答
                 </button>
@@ -287,8 +327,9 @@ export default function Search() {
                     contentType === 'flowchart'
                       ? 'bg-blue-500 text-white shadow-md hover:bg-blue-600'
                       : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                  }`}
-                  onClick={() => setContentType('flowchart')}
+                  } ${!hasChartContent('flowchart') && 'opacity-50 cursor-not-allowed'}`}
+                  onClick={() => handleContentTypeChange('flowchart')}
+                  disabled={!hasChartContent('flowchart')}
                 >
                   流程图
                 </button>
@@ -297,10 +338,22 @@ export default function Search() {
                     contentType === 'mindmap'
                       ? 'bg-blue-500 text-white shadow-md hover:bg-blue-600'
                       : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                  }`}
-                  onClick={() => setContentType('mindmap')}
+                  } ${!hasChartContent('mindmap') && 'opacity-50 cursor-not-allowed'}`}
+                  onClick={() => handleContentTypeChange('mindmap')}
+                  disabled={!hasChartContent('mindmap')}
                 >
                   思维导图
+                </button>
+                <button
+                  className={`px-6 py-2 rounded-lg transition-all ${
+                    contentType === 'swot'
+                      ? 'bg-blue-500 text-white shadow-md hover:bg-blue-600'
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  } ${!hasChartContent('swot') && 'opacity-50 cursor-not-allowed'}`}
+                  onClick={() => handleContentTypeChange('swot')}
+                  disabled={!hasChartContent('swot')}
+                >
+                  SWOT分析
                 </button>
               </div>
             </div>
@@ -314,44 +367,49 @@ export default function Search() {
                   <div className="flex items-center justify-center h-full">
                     <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
                   </div>
-                ) : streamedAnswer ? (
-                  contentType === 'answer' ? (
-                    <div className="prose max-w-none">
-                      {useDeepThinking && reasoningProcess && (
-                        <div className="mb-6 p-4 bg-purple-50 rounded-lg border border-purple-200">
-                          <div className="flex items-center space-x-2 mb-2">
-                            <h3 className="text-lg font-semibold text-purple-700">💭 思考过程</h3>
-                            <span className="text-sm text-purple-500">(DeepSeek R1)</span>
-                          </div>
-                          <div className="prose prose-purple max-w-none">
-                            <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                              {reasoningProcess}
-                            </ReactMarkdown>
-                          </div>
-                        </div>
-                      )}
-                      <div className={useDeepThinking && reasoningProcess ? "mt-6" : ""}>
-                        <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                          {streamedAnswer}
-                        </ReactMarkdown>
-                      </div>
-                    </div>
-                  ) : contentType === 'flowchart' ? (
-                    <ContentViewer
-                      content={mermaidContent}
-                      type="mermaid"
-                    />
-                  ) : (
-                    <div className="prose max-w-none">
-                      <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                        {markdownMindMap}
-                      </ReactMarkdown>
-                    </div>
-                  )
-                ) : (
+                ) : !hasChartContent(contentType) ? (
                   <div className="flex items-center justify-center h-full">
-                    <p className="text-gray-400">在下方输入问题开始查询</p>
+                    <p className="text-gray-400">
+                      {streamedAnswer ? '当前回答中没有所选类型的图表内容' : '在下方输入问题开始查询'}
+                    </p>
                   </div>
+                ) : (
+                  <>
+                    {contentType === 'answer' && (
+                      <div className="prose max-w-none">
+                        {useDeepThinking && reasoningProcess && (
+                          <div className="mb-6 p-4 bg-purple-50 rounded-lg border border-purple-200">
+                            <div className="flex items-center space-x-2 mb-2">
+                              <h3 className="text-lg font-semibold text-purple-700">💭 思考过程</h3>
+                              <span className="text-sm text-purple-500">(DeepSeek R1)</span>
+                            </div>
+                            <div className="prose prose-purple max-w-none">
+                              <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                                {reasoningProcess}
+                              </ReactMarkdown>
+                            </div>
+                          </div>
+                        )}
+                        <div className={useDeepThinking && reasoningProcess ? "mt-6" : ""}>
+                          <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                            {streamedAnswer}
+                          </ReactMarkdown>
+                        </div>
+                      </div>
+                    )}
+                    {(contentType === 'flowchart' || contentType === 'mindmap') && (
+                      <ContentViewer
+                        content={mermaidContent}
+                        type="mermaid"
+                      />
+                    )}
+                    {contentType === 'swot' && (
+                      <ContentViewer
+                        content={swotContent}
+                        type="swot"
+                      />
+                    )}
+                  </>
                 )}
               </div>
             </div>
