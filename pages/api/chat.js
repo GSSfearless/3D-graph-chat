@@ -169,28 +169,7 @@ export default async function handler(req, res) {
               if (content) {
                 console.log('Extracted content:', content);
                 responseText += content;
-
-                // 检查内容中是否包含特定标记
-                if (content.includes('---flowchart---')) {
-                  const parts = content.split('---flowchart---');
-                  if (parts[1]) {
-                    const flowchartContent = parts[1].split('---mindmap---')[0].trim();
-                    res.write(`data: {"type":"flowchart","content":"${encodeURIComponent(flowchartContent)}"}\n\n`);
-                  }
-                }
-                if (content.includes('---mindmap---')) {
-                  const parts = content.split('---mindmap---');
-                  if (parts[1]) {
-                    const mindmapContent = parts[1].trim();
-                    res.write(`data: {"type":"mindmap","content":"${encodeURIComponent(mindmapContent)}"}\n\n`);
-                  }
-                }
-
-                // 发送普通文本内容
-                const textContent = content.split('---flowchart---')[0].trim();
-                if (textContent) {
-                  res.write(`data: {"type":"delta","content":"${encodeURIComponent(textContent)}"}\n\n`);
-                }
+                res.write(`data: {"type":"delta","content":"${encodeURIComponent(content)}"}\n\n`);
               }
             } catch (e) {
               console.error('Error parsing chunk:', e, 'Raw data:', data);
@@ -261,28 +240,7 @@ export default async function handler(req, res) {
               if (content) {
                 console.log('Extracted content from buffer:', content);
                 responseText += content;
-
-                // 检查内容中是否包含特定标记
-                if (content.includes('---flowchart---')) {
-                  const parts = content.split('---flowchart---');
-                  if (parts[1]) {
-                    const flowchartContent = parts[1].split('---mindmap---')[0].trim();
-                    res.write(`data: {"type":"flowchart","content":"${encodeURIComponent(flowchartContent)}"}\n\n`);
-                  }
-                }
-                if (content.includes('---mindmap---')) {
-                  const parts = content.split('---mindmap---');
-                  if (parts[1]) {
-                    const mindmapContent = parts[1].trim();
-                    res.write(`data: {"type":"mindmap","content":"${encodeURIComponent(mindmapContent)}"}\n\n`);
-                  }
-                }
-
-                // 发送普通文本内容
-                const textContent = content.split('---flowchart---')[0].trim();
-                if (textContent) {
-                  res.write(`data: {"type":"delta","content":"${encodeURIComponent(textContent)}"}\n\n`);
-                }
+                res.write(`data: {"type":"delta","content":"${encodeURIComponent(content)}"}\n\n`);
               }
             } catch (e) {
               console.error('Error processing final buffer:', e);

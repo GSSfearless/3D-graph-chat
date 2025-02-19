@@ -167,9 +167,20 @@ export default function Search() {
                   case 'delta':
                     if (parsed.content) {
                       const decodedContent = decodeURIComponent(parsed.content);
-                      answer += decodedContent;
-                      setStreamedAnswer(answer);
-                      tokenCount++;
+                      
+                      // 解析不同类型的内容
+                      const parts = decodedContent.split('---');
+                      parts.forEach(part => {
+                        if (part.trim().startsWith('flowchart')) {
+                          setMermaidContent(prev => ({ ...prev, flowchart: part.trim() }));
+                        } else if (part.trim().startsWith('mindmap')) {
+                          setMermaidContent(prev => ({ ...prev, mindmap: part.trim() }));
+                        } else if (part.trim()) {
+                          answer += part.trim() + '\n';
+                          setStreamedAnswer(answer);
+                          tokenCount++;
+                        }
+                      });
                     }
                     break;
                   case 'complete':
@@ -178,24 +189,35 @@ export default function Search() {
                       console.log('开始处理完整回答...');
                       const completeAnswer = decodeURIComponent(parsed.content);
                       console.log('回答长度:', completeAnswer.length);
-                      answer = completeAnswer;
+                      
+                      // 解析完整回答中的不同部分
+                      const parts = completeAnswer.split('---');
+                      let textAnswer = '';
+                      
+                      parts.forEach(part => {
+                        const trimmedPart = part.trim();
+                        if (trimmedPart.startsWith('flowchart')) {
+                          setMermaidContent(prev => ({ ...prev, flowchart: trimmedPart }));
+                        } else if (trimmedPart.startsWith('mindmap')) {
+                          setMermaidContent(prev => ({ ...prev, mindmap: trimmedPart }));
+                        } else if (trimmedPart) {
+                          textAnswer += trimmedPart + '\n';
+                        }
+                      });
+                      
+                      // 更新回答内容
+                      answer = textAnswer;
                       setStreamedAnswer(answer);
                     }
                     break;
                   case 'flowchart':
-                    console.log('收到流程图数据');
-                    if (parsed.content) {
-                      const flowchartCode = decodeURIComponent(parsed.content);
-                      console.log('流程图代码长度:', flowchartCode.length);
-                      setMermaidContent(prev => ({ ...prev, flowchart: flowchartCode }));
-                    }
-                    break;
                   case 'mindmap':
-                    console.log('收到思维导图数据');
+                    console.log(`收到${parsed.type === 'flowchart' ? '流程图' : '思维导图'}数据`);
                     if (parsed.content) {
-                      const mindmapCode = decodeURIComponent(parsed.content);
-                      console.log('思维导图代码长度:', mindmapCode.length);
-                      setMermaidContent(prev => ({ ...prev, mindmap: mindmapCode }));
+                      const graphCode = decodeURIComponent(parsed.content);
+                      console.log('图表代码长度:', graphCode.length);
+                      setMermaidContent(prev => ({ ...prev, [parsed.type]: graphCode }));
+                      setContentType(parsed.type);
                     }
                     break;
                   case 'end':
