@@ -23,7 +23,7 @@ export default function Search() {
   const [initialLoad, setInitialLoad] = useState(true);
   const [streamedAnswer, setStreamedAnswer] = useState('');
   const [contentType, setContentType] = useState('answer');
-  const [mermaidContent, setMermaidContent] = useState({ flowchart: '', mindmap: '' });
+  const [mermaidContent, setMermaidContent] = useState('');
   const [useWebSearch, setUseWebSearch] = useState(false);
   const [useDeepThinking, setUseDeepThinking] = useState(false);
   const [reasoningProcess, setReasoningProcess] = useState('');
@@ -40,7 +40,7 @@ export default function Search() {
     
     setLoading(true);
     setStreamedAnswer('');
-    setMermaidContent({ flowchart: '', mindmap: '' });
+    setMermaidContent('');
     setSearchResults([]);
     setReasoningProcess('');
 
@@ -167,20 +167,9 @@ export default function Search() {
                   case 'delta':
                     if (parsed.content) {
                       const decodedContent = decodeURIComponent(parsed.content);
-                      
-                      // 解析不同类型的内容
-                      const parts = decodedContent.split('---');
-                      parts.forEach(part => {
-                        if (part.trim().startsWith('flowchart')) {
-                          setMermaidContent(prev => ({ ...prev, flowchart: part.trim() }));
-                        } else if (part.trim().startsWith('mindmap')) {
-                          setMermaidContent(prev => ({ ...prev, mindmap: part.trim() }));
-                        } else if (part.trim()) {
-                          answer += part.trim() + '\n';
-                          setStreamedAnswer(answer);
-                          tokenCount++;
-                        }
-                      });
+                      answer += decodedContent;
+                      setStreamedAnswer(answer);
+                      tokenCount++;
                     }
                     break;
                   case 'complete':
@@ -190,34 +179,17 @@ export default function Search() {
                       const completeAnswer = decodeURIComponent(parsed.content);
                       console.log('回答长度:', completeAnswer.length);
                       
-                      // 解析完整回答中的不同部分
-                      const parts = completeAnswer.split('---');
-                      let textAnswer = '';
-                      
-                      parts.forEach(part => {
-                        const trimmedPart = part.trim();
-                        if (trimmedPart.startsWith('flowchart')) {
-                          setMermaidContent(prev => ({ ...prev, flowchart: trimmedPart }));
-                        } else if (trimmedPart.startsWith('mindmap')) {
-                          setMermaidContent(prev => ({ ...prev, mindmap: trimmedPart }));
-                        } else if (trimmedPart) {
-                          textAnswer += trimmedPart + '\n';
-                        }
-                      });
-                      
                       // 更新回答内容
-                      answer = textAnswer;
+                      answer = completeAnswer;
                       setStreamedAnswer(answer);
                     }
                     break;
                   case 'flowchart':
-                  case 'mindmap':
-                    console.log(`收到${parsed.type === 'flowchart' ? '流程图' : '思维导图'}数据`);
+                    console.log('收到流程图数据');
                     if (parsed.content) {
-                      const graphCode = decodeURIComponent(parsed.content);
-                      console.log('图表代码长度:', graphCode.length);
-                      setMermaidContent(prev => ({ ...prev, [parsed.type]: graphCode }));
-                      setContentType(parsed.type);
+                      const flowchartCode = decodeURIComponent(parsed.content);
+                      console.log('流程图代码长度:', flowchartCode.length);
+                      setMermaidContent(flowchartCode);
                     }
                     break;
                   case 'end':
@@ -311,16 +283,6 @@ export default function Search() {
                 >
                   流程图
                 </button>
-                <button
-                  className={`px-6 py-2 rounded-lg transition-all ${
-                    contentType === 'mindmap'
-                      ? 'bg-blue-500 text-white shadow-md hover:bg-blue-600'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                  }`}
-                  onClick={() => setContentType('mindmap')}
-                >
-                  思维导图
-                </button>
               </div>
             </div>
           </div>
@@ -357,7 +319,7 @@ export default function Search() {
                     </div>
                   ) : (
                     <ContentViewer
-                      content={contentType === 'flowchart' ? mermaidContent.flowchart : mermaidContent.mindmap}
+                      content={mermaidContent}
                       type="mermaid"
                     />
                   )
