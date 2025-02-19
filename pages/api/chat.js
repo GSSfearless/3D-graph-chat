@@ -281,11 +281,13 @@ const extractMermaidDiagrams = (text) => {
   let match;
   
   while ((match = mermaidRegex.exec(text)) !== null) {
-    const diagramContent = match[1];
-    if (diagramContent.includes('flowchart TD')) {
+    const diagramContent = match[1].trim();
+    if (diagramContent.includes('flowchart')) {
       diagrams.flowchart = diagramContent;
+      console.log('提取到流程图:', diagramContent);
     } else if (diagramContent.includes('mindmap')) {
       diagrams.mindmap = diagramContent;
+      console.log('提取到思维导图:', diagramContent);
     }
   }
   

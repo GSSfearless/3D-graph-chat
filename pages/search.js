@@ -192,7 +192,12 @@ export default function Search() {
                     if (parsed.content) {
                       const flowchartCode = decodeURIComponent(parsed.content);
                       console.log('流程图代码长度:', flowchartCode.length);
-                      setMermaidContent(prev => ({ ...prev, flowchart: flowchartCode }));
+                      if (flowchartCode.trim()) {
+                        console.log('更新流程图内容');
+                        setMermaidContent(prev => ({ ...prev, flowchart: flowchartCode }));
+                      } else {
+                        console.log('流程图内容为空，跳过更新');
+                      }
                     }
                     break;
                   case 'mindmap':
@@ -200,7 +205,12 @@ export default function Search() {
                     if (parsed.content) {
                       const mindmapCode = decodeURIComponent(parsed.content);
                       console.log('思维导图代码长度:', mindmapCode.length);
-                      setMermaidContent(prev => ({ ...prev, mindmap: mindmapCode }));
+                      if (mindmapCode.trim()) {
+                        console.log('更新思维导图内容');
+                        setMermaidContent(prev => ({ ...prev, mindmap: mindmapCode }));
+                      } else {
+                        console.log('思维导图内容为空，跳过更新');
+                      }
                     }
                     break;
                   case 'end':
@@ -342,6 +352,7 @@ export default function Search() {
                     <ContentViewer
                       content={contentType === 'flowchart' ? mermaidContent.flowchart : mermaidContent.mindmap}
                       type="mermaid"
+                      key={`${contentType}-${Date.now()}`}
                     />
                   )
                 ) : (

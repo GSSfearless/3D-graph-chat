@@ -67,12 +67,16 @@ const ContentViewer = ({ content, type }) => {
     const renderMermaid = async () => {
       if (type === 'mermaid' && content && mermaidRef.current) {
         setIsLoading(true);
+        console.log('开始渲染Mermaid图表...');
+        console.log('图表内容:', content);
+        
         try {
           // 清除之前的内容
           mermaidRef.current.innerHTML = '';
           
           // 生成唯一ID
           const id = `mermaid-${Math.random().toString(36).substr(2, 9)}`;
+          console.log('图表ID:', id);
           
           // 创建一个临时容器
           const tempContainer = document.createElement('div');
@@ -83,25 +87,35 @@ const ContentViewer = ({ content, type }) => {
 
           try {
             // 尝试渲染
+            console.log('调用mermaid.render...');
             const { svg } = await mermaid.render(id, content);
+            console.log('Mermaid渲染成功，SVG长度:', svg.length);
             setMermaidSvg(svg);
             console.log('✅ Mermaid 图表渲染成功');
           } catch (error) {
-            console.error('Error rendering mermaid diagram:', error);
+            console.error('Mermaid渲染错误:', error);
+            console.error('问题内容:', content);
             mermaidRef.current.innerHTML = `
               <div class="p-4 text-red-500 bg-red-50 rounded-lg">
                 <p class="font-bold">图表渲染失败</p>
                 <p class="text-sm mt-2">${error.message}</p>
-                <pre class="text-xs mt-2 p-2 bg-red-100 rounded">${content}</pre>
+                <pre class="text-xs mt-2 p-2 bg-red-100 rounded overflow-auto">${content}</pre>
               </div>
             `;
           }
         } catch (error) {
-          console.error('Error in mermaid setup:', error);
-          mermaidRef.current.innerHTML = '图表初始化失败';
+          console.error('Mermaid初始化错误:', error);
+          mermaidRef.current.innerHTML = `
+            <div class="p-4 text-red-500 bg-red-50 rounded-lg">
+              <p class="font-bold">图表初始化失败</p>
+              <p class="text-sm mt-2">${error.message}</p>
+            </div>
+          `;
         } finally {
           setIsLoading(false);
         }
+      } else {
+        console.log('跳过Mermaid渲染:', { type, hasContent: !!content, hasRef: !!mermaidRef.current });
       }
     };
 
@@ -126,6 +140,13 @@ const ContentViewer = ({ content, type }) => {
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
                 <p className="text-gray-500">正在生成图表...</p>
               </div>
+            </div>
+          );
+        }
+        if (!content) {
+          return (
+            <div className="flex items-center justify-center h-64">
+              <p className="text-gray-400">暂无图表数据</p>
             </div>
           );
         }
