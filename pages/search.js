@@ -165,16 +165,17 @@ export default function Search() {
                       });
                     }
                     break;
-                  case 'answer':
-                  case 'content':
                   case 'delta':
                     if (parsed.content) {
                       const decodedContent = decodeURIComponent(parsed.content);
                       answer += decodedContent;
-                      setStreamedAnswer(answer);
+                      // 更新显示内容时过滤Mermaid代码块
+                      setStreamedAnswer(filterMermaidBlocks(answer));
                       tokenCount++;
                     }
                     break;
+                  case 'answer':
+                  case 'content':
                   case 'complete':
                     console.log('收到 complete 信号');
                     if (parsed.content) {
@@ -182,8 +183,8 @@ export default function Search() {
                       const completeAnswer = decodeURIComponent(parsed.content);
                       console.log('回答长度:', completeAnswer.length);
                       
-                      // 更新回答内容
-                      answer = completeAnswer;
+                      // 更新回答内容，过滤掉Mermaid代码块
+                      answer = filterMermaidBlocks(completeAnswer);
                       setStreamedAnswer(answer);
                     }
                     break;
@@ -245,6 +246,12 @@ export default function Search() {
       setInitialLoad(false);
     }
   }, [q, initialLoad, handleSearch]);
+
+  // 添加一个函数来过滤Mermaid代码块
+  const filterMermaidBlocks = (text) => {
+    if (!text) return '';
+    return text.replace(/```mermaid[\s\S]*?```/g, '').trim();
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
@@ -340,7 +347,7 @@ export default function Search() {
                           </div>
                           <div className="prose prose-purple max-w-none">
                             <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                              {reasoningProcess}
+                              {filterMermaidBlocks(reasoningProcess)}
                             </ReactMarkdown>
                           </div>
                         </div>
