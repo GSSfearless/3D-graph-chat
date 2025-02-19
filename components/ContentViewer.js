@@ -21,22 +21,20 @@ const ContentViewer = ({ content, type }) => {
         defaultRenderer: 'dagre-d3',
         padding: 20,
         nodeSpacing: 50,
-        rankSpacing: 80,
+        rankSpacing: 50,
         diagramPadding: 8,
         labelBackgroundColor: '#f0f7ff',
-        nodeAlignment: 'UL',
-        rankDir: 'LR',
-        ranker: 'tight-tree'
+        nodeAlignment: 'center'
       },
       mindmap: {
         padding: 16,
         useMaxWidth: true,
-        nodeSpacing: 40,
-        rankSpacing: 60,
+        nodeSpacing: 60,
+        rankSpacing: 80,
         diagramPadding: 10,
         defaultRenderer: 'dagre-d3',
-        curve: 'linear',
-        levelDistance: 80
+        curve: 'bump',
+        levelDistance: 100
       },
       themeVariables: {
         fontFamily: 'system-ui, -apple-system, sans-serif',
@@ -47,18 +45,21 @@ const ContentViewer = ({ content, type }) => {
         lineColor: '#64748b',
         secondaryColor: '#7c3aed',
         tertiaryColor: '#059669',
+        // 流程图特定样式
         nodeBorder: '#e2e8f0',
         nodeTextColor: '#1e293b',
         mainBkg: '#ffffff',
         nodeBkg: '#f8fafc',
+        // 连接线样式
         edgeLabelBackground: '#ffffff',
         clusterBkg: '#f1f5f9',
         clusterBorder: '#e2e8f0',
-        mindmapNode: '#ffffff',
-        mindmapNodeText: '#1e293b',
-        mindmapLine: '#64748b',
-        mindmapOutline: '#e2e8f0',
-        mindmapBorder: '#e2e8f0'
+        // 思维导图特定样式
+        mindmapNode: '#f0f9ff',
+        mindmapNodeText: '#0f172a',
+        mindmapLine: '#93c5fd',
+        mindmapOutline: '#3b82f6',
+        mindmapBorder: '#bfdbfe'
       }
     });
   }, []);
@@ -107,22 +108,20 @@ const ContentViewer = ({ content, type }) => {
                 defaultRenderer: 'dagre-d3',
                 padding: 20,
                 nodeSpacing: 50,
-                rankSpacing: 80,
+                rankSpacing: 50,
                 diagramPadding: 8,
                 labelBackgroundColor: '#f0f7ff',
-                nodeAlignment: 'UL',
-                rankDir: 'LR',
-                ranker: 'tight-tree'
+                nodeAlignment: 'center'
               },
               mindmap: {
                 padding: 16,
                 useMaxWidth: true,
-                nodeSpacing: 40,
-                rankSpacing: 60,
+                nodeSpacing: 60,
+                rankSpacing: 80,
                 diagramPadding: 10,
                 defaultRenderer: 'dagre-d3',
-                curve: 'linear',
-                levelDistance: 80
+                curve: 'bump',
+                levelDistance: 100
               }
             });
             
@@ -201,8 +200,7 @@ const ContentViewer = ({ content, type }) => {
           <div className="w-full h-full flex items-center justify-center p-4">
             <div
               ref={mermaidRef}
-              className="mermaid-diagram w-full h-full max-w-5xl mx-auto bg-white rounded-lg shadow-sm border border-gray-100 p-6 overflow-auto"
-              style={{ minHeight: '400px' }}
+              className="mermaid-diagram w-full max-w-4xl mx-auto bg-white rounded-lg shadow-sm border border-gray-100 p-6"
               dangerouslySetInnerHTML={mermaidSvg ? { __html: mermaidSvg } : undefined}
             />
           </div>

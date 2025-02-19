@@ -21,30 +21,24 @@ export default async function handler(req, res) {
 4. 考虑不同的观点和可能性
 5. 提供具体的例子和解释
 6. 在回答的最后，总结关键要点和见解
-7. 在回答的最后生成两个Mermaid图表，要求：
-   - 使用graph LR生成流程图，展示概念之间的关系
-   - 使用mindmap生成思维导图，展示层次结构
-   - 图表要简洁清晰，避免过多装饰
-   - 使用中文描述节点内容
-   示例格式如下：
+7. 在回答的最后生成两个Mermaid图表，格式如下：
 
 \`\`\`mermaid
-graph LR
-    A[概念A] --> B[概念B]
-    B --> C[概念C]
-    B --> D[概念D]
-    C --> E[概念E]
+graph TD
+    A[开始] --> B[概念1]
+    B --> C[概念2]
+    C --> D[结束]
 \`\`\`
 
 \`\`\`mermaid
 mindmap
-  root((核心概念))
-    关键点1
-      要点1
-      要点2
-    关键点2
-      要点3
-      要点4
+  root((核心主题))
+    思考1
+        要点1
+        要点2
+    思考2
+        要点3
+        要点4
 \`\`\`
 `
       : `你是一个专业的知识助手。请基于提供的上下文信息，以清晰、简洁的方式回答问题。要求：
@@ -52,30 +46,24 @@ mindmap
 2. 回答要有清晰的层次结构，适当使用标题（##、###）来组织内容
 3. 适当使用列表和要点
 4. 在回答的最后，总结关键要点
-5. 在回答的最后生成两个Mermaid图表，要求：
-   - 使用graph LR生成流程图，展示概念之间的关系
-   - 使用mindmap生成思维导图，展示层次结构
-   - 图表要简洁清晰，避免过多装饰
-   - 使用中文描述节点内容
-   示例格式如下：
+5. 在回答的最后生成两个Mermaid图表，格式如下：
 
 \`\`\`mermaid
-graph LR
-    A[概念A] --> B[概念B]
-    B --> C[概念C]
-    B --> D[概念D]
-    C --> E[概念E]
+graph TD
+    A[开始] --> B[概念1]
+    B --> C[概念2]
+    C --> D[结束]
 \`\`\`
 
 \`\`\`mermaid
 mindmap
-  root((核心概念))
-    关键点1
-      要点1
-      要点2
-    关键点2
-      要点3
-      要点4
+  root((核心主题))
+    思考1
+        要点1
+        要点2
+    思考2
+        要点3
+        要点4
 \`\`\`
 `;
 
@@ -351,7 +339,7 @@ const extractMermaidDiagrams = (text) => {
     const diagramContent = match[1].trim();
     console.log('找到Mermaid图表:', diagramContent);
     
-    if (diagramContent.startsWith('graph LR')) {
+    if (diagramContent.startsWith('graph TD')) {
       console.log('提取到流程图');
       diagrams.flowchart = diagramContent;
     } else if (diagramContent.startsWith('mindmap')) {
