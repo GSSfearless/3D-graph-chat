@@ -84,10 +84,16 @@ export default async function handler(req, res) {
           if (line.startsWith('data: ')) {
             const data = line.slice(6);
             if (data === '[DONE]') {
-              console.log('Received [DONE] signal');
-              if (provider === 'volcengine') {
-                console.log('🎯 DeepSeek R1 会话完成');
-                console.log(`总计处理 ${chunkCount} 个数据块`);
+              console.log('收到 [DONE] 信号');
+              // 在结束前确保发送完整的图表数据
+              const diagrams = extractMermaidDiagrams(responseText);
+              if (diagrams.flowchart) {
+                console.log('发送最终流程图数据');
+                res.write(`data: {"type":"flowchart","content":"${encodeURIComponent(diagrams.flowchart)}"}\n\n`);
+              }
+              if (diagrams.mindmap) {
+                console.log('发送最终思维导图数据');
+                res.write(`data: {"type":"mindmap","content":"${encodeURIComponent(diagrams.mindmap)}"}\n\n`);
               }
               res.write('data: [DONE]\n\n');
               continue;
@@ -95,7 +101,6 @@ export default async function handler(req, res) {
 
             try {
               const parsed = JSON.parse(data);
-              console.log('Parsed data:', parsed);
               if (!parsed) continue;
 
               let content = '';
@@ -155,9 +160,20 @@ export default async function handler(req, res) {
                 responseText += content;
                 res.write(`data: {"type":"delta","content":"${encodeURIComponent(content)}"}\n\n`);
               }
+
+              // 在每个chunk后检查是否有新的图表数据
+              const diagrams = extractMermaidDiagrams(responseText);
+              if (diagrams.flowchart) {
+                console.log('发送流程图数据');
+                res.write(`data: {"type":"flowchart","content":"${encodeURIComponent(diagrams.flowchart)}"}\n\n`);
+              }
+              if (diagrams.mindmap) {
+                console.log('发送思维导图数据');
+                res.write(`data: {"type":"mindmap","content":"${encodeURIComponent(diagrams.mindmap)}"}\n\n`);
+              }
             } catch (e) {
-              console.error('Error parsing chunk:', e, 'Raw data:', data);
-              console.error('Provider:', provider);
+              console.error('Message parse error:', e, 'Raw data:', data);
+              continue;
             }
           }
         }

@@ -191,12 +191,14 @@ export default function Search() {
                     console.log('收到流程图数据');
                     if (parsed.content) {
                       const flowchartCode = decodeURIComponent(parsed.content);
-                      console.log('流程图代码长度:', flowchartCode.length);
+                      console.log('流程图代码:', flowchartCode);
                       if (flowchartCode.trim()) {
                         console.log('更新流程图内容');
-                        setMermaidContent(prev => ({ ...prev, flowchart: flowchartCode }));
-                      } else {
-                        console.log('流程图内容为空，跳过更新');
+                        setMermaidContent(prev => {
+                          const newContent = { ...prev, flowchart: flowchartCode };
+                          console.log('新的图表内容:', newContent);
+                          return newContent;
+                        });
                       }
                     }
                     break;
@@ -204,12 +206,14 @@ export default function Search() {
                     console.log('收到思维导图数据');
                     if (parsed.content) {
                       const mindmapCode = decodeURIComponent(parsed.content);
-                      console.log('思维导图代码长度:', mindmapCode.length);
+                      console.log('思维导图代码:', mindmapCode);
                       if (mindmapCode.trim()) {
                         console.log('更新思维导图内容');
-                        setMermaidContent(prev => ({ ...prev, mindmap: mindmapCode }));
-                      } else {
-                        console.log('思维导图内容为空，跳过更新');
+                        setMermaidContent(prev => {
+                          const newContent = { ...prev, mindmap: mindmapCode };
+                          console.log('新的图表内容:', newContent);
+                          return newContent;
+                        });
                       }
                     }
                     break;
@@ -218,8 +222,7 @@ export default function Search() {
                     break;
                 }
               } catch (e) {
-                logApiStatus('Chat API', 'error', '解析响应数据失败');
-                console.error('Message parse error:', e, 'Raw data:', data);
+                console.error('解析响应数据失败:', e);
                 continue;
               }
             }
@@ -352,7 +355,7 @@ export default function Search() {
                     <ContentViewer
                       content={contentType === 'flowchart' ? mermaidContent.flowchart : mermaidContent.mindmap}
                       type="mermaid"
-                      key={`${contentType}-${Date.now()}`}
+                      key={`${contentType}-${mermaidContent.flowchart.length}-${mermaidContent.mindmap.length}`}
                     />
                   )
                 ) : (

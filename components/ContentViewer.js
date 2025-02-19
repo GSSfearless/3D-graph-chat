@@ -65,11 +65,18 @@ const ContentViewer = ({ content, type }) => {
 
   useEffect(() => {
     const renderMermaid = async () => {
-      if (type === 'mermaid' && content && mermaidRef.current) {
+      if (type === 'mermaid' && mermaidRef.current) {
         setIsLoading(true);
         console.log('开始渲染Mermaid图表...');
+        console.log('图表类型:', type);
         console.log('图表内容:', content);
         
+        if (!content) {
+          console.log('没有图表内容，显示空状态');
+          setIsLoading(false);
+          return;
+        }
+
         try {
           // 清除之前的内容
           mermaidRef.current.innerHTML = '';
@@ -87,7 +94,7 @@ const ContentViewer = ({ content, type }) => {
 
           try {
             // 尝试渲染
-            console.log('调用mermaid.render...');
+            console.log('调用mermaid.render，内容:', content);
             const { svg } = await mermaid.render(id, content);
             console.log('Mermaid渲染成功，SVG长度:', svg.length);
             setMermaidSvg(svg);
@@ -115,7 +122,12 @@ const ContentViewer = ({ content, type }) => {
           setIsLoading(false);
         }
       } else {
-        console.log('跳过Mermaid渲染:', { type, hasContent: !!content, hasRef: !!mermaidRef.current });
+        console.log('跳过Mermaid渲染:', {
+          type,
+          hasContent: !!content,
+          contentLength: content?.length,
+          hasRef: !!mermaidRef.current
+        });
       }
     };
 
@@ -146,7 +158,10 @@ const ContentViewer = ({ content, type }) => {
         if (!content) {
           return (
             <div className="flex items-center justify-center h-64">
-              <p className="text-gray-400">暂无图表数据</p>
+              <div className="text-center">
+                <p className="text-gray-400 mb-2">暂无图表数据</p>
+                <p className="text-sm text-gray-400">请确保AI回答中包含了图表信息</p>
+              </div>
             </div>
           );
         }
