@@ -2,12 +2,6 @@ import React, { useEffect, useState, useRef } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import mermaid from 'mermaid';
-import dynamic from 'next/dynamic';
-
-const SWOTAnalysis = dynamic(() => import('./SWOTAnalysis'), {
-  ssr: false,
-  loading: () => <p>加载 SWOT 分析图表...</p>
-});
 
 const ContentViewer = ({ content, type }) => {
   const mermaidRef = useRef(null);
@@ -22,21 +16,11 @@ const ContentViewer = ({ content, type }) => {
       flowchart: {
         useMaxWidth: true,
         htmlLabels: true,
-        curve: 'basis',
+        curve: 'linear',
         defaultRenderer: 'dagre-d3'
       },
       mindmap: {
-        padding: 20,
-        useMaxWidth: true
-      },
-      timeline: {
-        useMaxWidth: true,
-        padding: 20
-      },
-      gantt: {
-        useMaxWidth: true
-      },
-      pie: {
+        padding: 10,
         useMaxWidth: true
       },
       themeVariables: {
@@ -47,12 +31,7 @@ const ContentViewer = ({ content, type }) => {
         primaryBorderColor: '#4299E1',
         lineColor: '#64748B',
         secondaryColor: '#9F7AEA',
-        tertiaryColor: '#48BB78',
-        nodeBorder: '#2563EB',
-        mainBkg: '#EFF6FF',
-        nodeBkg: '#FFFFFF',
-        clusterBkg: '#F3F4F6',
-        titleColor: '#1E40AF'
+        tertiaryColor: '#48BB78'
       }
     });
   }, []);
@@ -118,7 +97,7 @@ const ContentViewer = ({ content, type }) => {
             <div className="flex items-center justify-center h-64">
               <div className="text-center">
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
-                <p className="text-gray-500">正在生成图表...</p>
+                <p className="text-gray-500">正在生成思维导图...</p>
               </div>
             </div>
           );
@@ -132,13 +111,6 @@ const ContentViewer = ({ content, type }) => {
             />
           </div>
         );
-      case 'swot':
-        try {
-          const swotData = JSON.parse(content);
-          return <SWOTAnalysis data={swotData} />;
-        } catch (error) {
-          return <div className="text-red-500">SWOT 数据格式错误</div>;
-        }
       default:
         return <div>不支持的内容类型</div>;
     }
