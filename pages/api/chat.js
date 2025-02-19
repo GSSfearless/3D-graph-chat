@@ -25,13 +25,14 @@ export default async function handler(req, res) {
 - 提供具体的例子和解释
 - 在回答的最后，总结关键要点和见解
 
-2. 然后输出 "---flowchart---" 标记，并在下面生成流程图，使用 Mermaid.js 语法（flowchart TD 开头）
-3. 最后输出 "---mindmap---" 标记，并在下面生成思维导图，使用 Mermaid.js 语法（mindmap 开头）
+2. 然后输出 "---flowchart---" 标记，并在下一行生成流程图代码（以 flowchart TD 开头，不要包含 \`\`\`mermaid 标记）
+3. 最后输出 "---mindmap---" 标记，并在下一行生成思维导图代码（以 mindmap 开头，不要包含 \`\`\`mermaid 标记）
 
 注意：
 - 流程图应该展示概念之间的因果关系、步骤流程或层级关系
 - 思维导图应该展示概念的分类、并列关系或要点总结
-- 确保图表内容完整且易于理解`
+- 确保图表内容完整且易于理解
+- 不要在图表代码中使用 markdown 代码块标记`
       : `你是一个专业的知识助手。请基于提供的上下文信息，以清晰、简洁的方式回答问题。
 你需要同时提供文字回答和可视化图表。按照以下格式输出：
 
@@ -41,13 +42,14 @@ export default async function handler(req, res) {
 - 适当使用列表和要点
 - 在回答的最后，总结关键要点
 
-2. 然后输出 "---flowchart---" 标记，并在下面生成流程图，使用 Mermaid.js 语法（flowchart TD 开头）
-3. 最后输出 "---mindmap---" 标记，并在下面生成思维导图，使用 Mermaid.js 语法（mindmap 开头）
+2. 然后输出 "---flowchart---" 标记，并在下一行生成流程图代码（以 flowchart TD 开头，不要包含 \`\`\`mermaid 标记）
+3. 最后输出 "---mindmap---" 标记，并在下一行生成思维导图代码（以 mindmap 开头，不要包含 \`\`\`mermaid 标记）
 
 注意：
 - 流程图应该展示概念之间的因果关系、步骤流程或层级关系
 - 思维导图应该展示概念的分类、并列关系或要点总结
-- 确保图表内容完整且易于理解`;
+- 确保图表内容完整且易于理解
+- 不要在图表代码中使用 markdown 代码块标记`;
 
     // 设置响应头
     res.setHeader('Content-Type', 'text/event-stream');

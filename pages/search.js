@@ -171,12 +171,26 @@ export default function Search() {
                       // 解析不同类型的内容
                       const parts = decodedContent.split('---');
                       parts.forEach(part => {
-                        if (part.trim().startsWith('flowchart')) {
-                          setMermaidContent(prev => ({ ...prev, flowchart: part.trim() }));
-                        } else if (part.trim().startsWith('mindmap')) {
-                          setMermaidContent(prev => ({ ...prev, mindmap: part.trim() }));
-                        } else if (part.trim()) {
-                          answer += part.trim() + '\n';
+                        const trimmedPart = part.trim();
+                        if (trimmedPart.startsWith('flowchart')) {
+                          // 提取流程图代码
+                          setMermaidContent(prev => ({ 
+                            ...prev, 
+                            flowchart: trimmedPart 
+                          }));
+                        } else if (trimmedPart.startsWith('mindmap')) {
+                          // 提取思维导图代码
+                          setMermaidContent(prev => ({ 
+                            ...prev, 
+                            mindmap: trimmedPart 
+                          }));
+                        } else if (trimmedPart && !trimmedPart.startsWith('```mermaid')) {
+                          // 只添加非图表的文本内容到回答中
+                          // 确保每个段落之间有正确的换行
+                          const formattedContent = trimmedPart.endsWith('\n\n') 
+                            ? trimmedPart 
+                            : trimmedPart + '\n\n';
+                          answer += formattedContent;
                           setStreamedAnswer(answer);
                           tokenCount++;
                         }
@@ -197,10 +211,16 @@ export default function Search() {
                       parts.forEach(part => {
                         const trimmedPart = part.trim();
                         if (trimmedPart.startsWith('flowchart')) {
-                          setMermaidContent(prev => ({ ...prev, flowchart: trimmedPart }));
+                          setMermaidContent(prev => ({ 
+                            ...prev, 
+                            flowchart: trimmedPart 
+                          }));
                         } else if (trimmedPart.startsWith('mindmap')) {
-                          setMermaidContent(prev => ({ ...prev, mindmap: trimmedPart }));
-                        } else if (trimmedPart) {
+                          setMermaidContent(prev => ({ 
+                            ...prev, 
+                            mindmap: trimmedPart 
+                          }));
+                        } else if (trimmedPart && !trimmedPart.startsWith('```mermaid')) {
                           textAnswer += trimmedPart + '\n';
                         }
                       });
@@ -333,31 +353,51 @@ export default function Search() {
                   <div className="flex items-center justify-center h-full">
                     <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
                   </div>
-                ) : streamedAnswer ? (
+                ) : streamedAnswer || (contentType !== 'answer' && mermaidContent[contentType]) ? (
                   contentType === 'answer' ? (
-                    <div className="prose max-w-none">
+                    <div className="prose prose-slate max-w-none prose-headings:font-semibold prose-h1:text-xl prose-h2:text-lg prose-h3:text-base prose-h4:text-sm">
                       {useDeepThinking && reasoningProcess && (
                         <div className="mb-6 p-4 bg-purple-50 rounded-lg border border-purple-200">
                           <div className="flex items-center space-x-2 mb-2">
-                            <h3 className="text-lg font-semibold text-purple-700">💭 思考过程</h3>
+                            <h3 className="text-lg font-semibold text-purple-700 m-0">💭 思考过程</h3>
                             <span className="text-sm text-purple-500">(DeepSeek R1)</span>
                           </div>
-                          <div className="prose prose-purple max-w-none">
+                          <div className="prose prose-purple max-w-none prose-p:my-2 prose-ul:my-2 prose-li:my-1">
                             <ReactMarkdown remarkPlugins={[remarkGfm]}>
                               {reasoningProcess}
                             </ReactMarkdown>
                           </div>
                         </div>
                       )}
-                      <div className={useDeepThinking && reasoningProcess ? "mt-6" : ""}>
-                        <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                      <div className={`${useDeepThinking && reasoningProcess ? "mt-6" : ""} prose-p:my-2 prose-ul:my-2 prose-li:my-1 prose-pre:my-2`}>
+                        <ReactMarkdown 
+                          remarkPlugins={[remarkGfm]}
+                          components={{
+                            // 自定义标题组件，确保正确的间距
+                            h1: ({node, ...props}) => <h1 className="mt-4 mb-2" {...props} />,
+                            h2: ({node, ...props}) => <h2 className="mt-4 mb-2" {...props} />,
+                            h3: ({node, ...props}) => <h3 className="mt-3 mb-2" {...props} />,
+                            // 自定义段落组件，确保正确的间距
+                            p: ({node, ...props}) => <p className="my-2" {...props} />,
+                            // 自定义列表组件，确保正确的间距
+                            ul: ({node, ...props}) => <ul className="my-2 list-disc list-inside" {...props} />,
+                            ol: ({node, ...props}) => <ol className="my-2 list-decimal list-inside" {...props} />,
+                            li: ({node, ...props}) => <li className="my-1" {...props} />,
+                            // 自定义代码块组件，确保正确的间距和样式
+                            pre: ({node, ...props}) => <pre className="my-2 p-4 bg-gray-50 rounded-lg overflow-auto" {...props} />,
+                            code: ({node, inline, ...props}) => 
+                              inline 
+                                ? <code className="px-1 py-0.5 bg-gray-100 rounded text-sm" {...props} />
+                                : <code className="block p-4 bg-gray-50 rounded-lg overflow-auto" {...props} />
+                          }}
+                        >
                           {streamedAnswer}
                         </ReactMarkdown>
                       </div>
                     </div>
                   ) : (
                     <ContentViewer
-                      content={contentType === 'flowchart' ? mermaidContent.flowchart : mermaidContent.mindmap}
+                      content={mermaidContent[contentType]}
                       type="mermaid"
                     />
                   )
