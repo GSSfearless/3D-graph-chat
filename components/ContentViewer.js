@@ -13,6 +13,7 @@ const ContentViewer = ({ content, type }) => {
       startOnLoad: true,
       theme: 'default',
       securityLevel: 'loose',
+      logLevel: 'debug',
       flowchart: {
         useMaxWidth: true,
         htmlLabels: true,
@@ -99,6 +100,7 @@ const ContentViewer = ({ content, type }) => {
               startOnLoad: true,
               theme: 'default',
               securityLevel: 'loose',
+              logLevel: 'debug',
               flowchart: {
                 useMaxWidth: true,
                 htmlLabels: true,

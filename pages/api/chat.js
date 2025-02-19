@@ -24,21 +24,21 @@ export default async function handler(req, res) {
 7. 在回答的最后生成两个Mermaid图表，格式如下：
 
 \`\`\`mermaid
-flowchart TD
-  A[开始] --> B[概念1]
-  B --> C[概念2]
-  C --> D[结束]
+graph TD
+    A[开始] --> B[概念1]
+    B --> C[概念2]
+    C --> D[结束]
 \`\`\`
 
 \`\`\`mermaid
 mindmap
   root((核心主题))
-    主题1
-      子主题1
-      子主题2
-    主题2
-      子主题3
-      子主题4
+    思考1
+        要点1
+        要点2
+    思考2
+        要点3
+        要点4
 \`\`\`
 `
       : `你是一个专业的知识助手。请基于提供的上下文信息，以清晰、简洁的方式回答问题。要求：
@@ -49,21 +49,21 @@ mindmap
 5. 在回答的最后生成两个Mermaid图表，格式如下：
 
 \`\`\`mermaid
-flowchart TD
-  A[开始] --> B[概念1]
-  B --> C[概念2]
-  C --> D[结束]
+graph TD
+    A[开始] --> B[概念1]
+    B --> C[概念2]
+    C --> D[结束]
 \`\`\`
 
 \`\`\`mermaid
 mindmap
   root((核心主题))
-    主题1
-      子主题1
-      子主题2
-    主题2
-      子主题3
-      子主题4
+    思考1
+        要点1
+        要点2
+    思考2
+        要点3
+        要点4
 \`\`\`
 `;
 
@@ -339,7 +339,7 @@ const extractMermaidDiagrams = (text) => {
     const diagramContent = match[1].trim();
     console.log('找到Mermaid图表:', diagramContent);
     
-    if (diagramContent.startsWith('flowchart')) {
+    if (diagramContent.startsWith('graph TD')) {
       console.log('提取到流程图');
       diagrams.flowchart = diagramContent;
     } else if (diagramContent.startsWith('mindmap')) {
