@@ -14,27 +14,30 @@ const ContentViewer = ({ content, type }) => {
       theme: 'default',
       securityLevel: 'loose',
       logLevel: 'debug',
+      maxTextSize: 5000,
       flowchart: {
         useMaxWidth: true,
         htmlLabels: true,
-        curve: 'basis',
-        defaultRenderer: 'dagre-d3',
-        padding: 20,
-        nodeSpacing: 50,
+        curve: 'monotoneX',
+        defaultRenderer: 'elk',
+        padding: 10,
+        nodeSpacing: 30,
         rankSpacing: 50,
-        diagramPadding: 8,
-        labelBackgroundColor: '#f0f7ff',
-        nodeAlignment: 'center'
+        diagramPadding: 10,
+        labelBackgroundColor: 'transparent',
+        nodeAlignment: 'UL',
+        ranker: 'network-simplex',
+        layoutDirection: 'LR'
       },
       mindmap: {
-        padding: 16,
+        padding: 10,
         useMaxWidth: true,
-        nodeSpacing: 60,
-        rankSpacing: 80,
+        nodeSpacing: 40,
+        rankSpacing: 60,
         diagramPadding: 10,
-        defaultRenderer: 'dagre-d3',
-        curve: 'bump',
-        levelDistance: 100
+        defaultRenderer: 'elk',
+        curve: 'monotoneX',
+        levelDistance: 80
       },
       themeVariables: {
         fontFamily: 'system-ui, -apple-system, sans-serif',
@@ -42,7 +45,7 @@ const ContentViewer = ({ content, type }) => {
         primaryColor: '#3b82f6',
         primaryTextColor: '#1e293b',
         primaryBorderColor: '#3b82f6',
-        lineColor: '#64748b',
+        lineColor: '#94a3b8',
         secondaryColor: '#7c3aed',
         tertiaryColor: '#059669',
         // 流程图特定样式
@@ -200,7 +203,8 @@ const ContentViewer = ({ content, type }) => {
           <div className="w-full h-full flex items-center justify-center p-4">
             <div
               ref={mermaidRef}
-              className="mermaid-diagram w-full max-w-4xl mx-auto bg-white rounded-lg shadow-sm border border-gray-100 p-6"
+              className="mermaid-diagram w-full h-full max-w-5xl mx-auto bg-white rounded-lg shadow-sm border border-gray-100 p-6 overflow-auto"
+              style={{ minHeight: '400px', maxHeight: '600px' }}
               dangerouslySetInnerHTML={mermaidSvg ? { __html: mermaidSvg } : undefined}
             />
           </div>

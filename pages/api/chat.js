@@ -15,8 +15,12 @@ export default async function handler(req, res) {
 
     const systemPrompt = useDeepThinking 
       ? `你是一个专业的知识助手，现在处于深度思考模式。请对问题进行深入分析，考虑多个角度，并提供详尽的见解。要求：
-1. 使用markdown格式，但不要添加"大标题"、"小标题"等无意义的标题文字
-2. 回答要有清晰的层次结构，适当使用标题（##、###）来组织内容
+1. 使用markdown格式
+2. 使用以下格式组织内容：
+   - 使用 # 作为主标题
+   - 使用 ## 作为二级标题
+   - 使用 ### 作为三级标题
+   请勿直接写"##"、"###"这样的文字
 3. 深入分析问题的各个方面
 4. 考虑不同的观点和可能性
 5. 提供具体的例子和解释
@@ -24,46 +28,52 @@ export default async function handler(req, res) {
 7. 在回答的最后生成两个Mermaid图表，格式如下：
 
 \`\`\`mermaid
-graph TD
-    A[开始] --> B[概念1]
-    B --> C[概念2]
-    C --> D[结束]
+graph LR
+    A[概念1] --> B[概念2]
+    B --> C[概念3]
+    A --> D[概念4]
+    D --> C
 \`\`\`
 
 \`\`\`mermaid
 mindmap
-  root((核心主题))
+  root((主题))
     思考1
-        要点1
-        要点2
+      要点1
+      要点2
     思考2
-        要点3
-        要点4
+      要点3
+      要点4
 \`\`\`
 `
       : `你是一个专业的知识助手。请基于提供的上下文信息，以清晰、简洁的方式回答问题。要求：
-1. 使用markdown格式，但不要添加"大标题"、"小标题"等无意义的标题文字
-2. 回答要有清晰的层次结构，适当使用标题（##、###）来组织内容
+1. 使用markdown格式
+2. 使用以下格式组织内容：
+   - 使用 # 作为主标题
+   - 使用 ## 作为二级标题
+   - 使用 ### 作为三级标题
+   请勿直接写"##"、"###"这样的文字
 3. 适当使用列表和要点
 4. 在回答的最后，总结关键要点
 5. 在回答的最后生成两个Mermaid图表，格式如下：
 
 \`\`\`mermaid
-graph TD
-    A[开始] --> B[概念1]
-    B --> C[概念2]
-    C --> D[结束]
+graph LR
+    A[概念1] --> B[概念2]
+    B --> C[概念3]
+    A --> D[概念4]
+    D --> C
 \`\`\`
 
 \`\`\`mermaid
 mindmap
-  root((核心主题))
+  root((主题))
     思考1
-        要点1
-        要点2
+      要点1
+      要点2
     思考2
-        要点3
-        要点4
+      要点3
+      要点4
 \`\`\`
 `;
 
@@ -339,7 +349,7 @@ const extractMermaidDiagrams = (text) => {
     const diagramContent = match[1].trim();
     console.log('找到Mermaid图表:', diagramContent);
     
-    if (diagramContent.startsWith('graph TD')) {
+    if (diagramContent.startsWith('graph LR')) {
       console.log('提取到流程图');
       diagrams.flowchart = diagramContent;
     } else if (diagramContent.startsWith('mindmap')) {
