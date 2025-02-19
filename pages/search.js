@@ -350,26 +350,10 @@ export default function Search() {
                             <ReactMarkdown 
                               remarkPlugins={[remarkGfm]}
                               components={{
-                                h1: ({node, children, ...props}) => {
-                                  // 移除开头的 # 符号
-                                  const cleanText = children[0].replace(/^#+\s*/, '');
-                                  return <h1 className="text-2xl font-bold mt-6 mb-4" {...props}>{cleanText}</h1>;
-                                },
-                                h2: ({node, children, ...props}) => {
-                                  // 移除开头的 # 符号
-                                  const cleanText = children[0].replace(/^#+\s*/, '');
-                                  return <h2 className="text-xl font-bold mt-5 mb-3" {...props}>{cleanText}</h2>;
-                                },
-                                h3: ({node, children, ...props}) => {
-                                  // 移除开头的 # 符号
-                                  const cleanText = children[0].replace(/^#+\s*/, '');
-                                  return <h3 className="text-lg font-bold mt-4 mb-2" {...props}>{cleanText}</h3>;
-                                },
-                                h4: ({node, children, ...props}) => {
-                                  // 移除开头的 # 符号
-                                  const cleanText = children[0].replace(/^#+\s*/, '');
-                                  return <h4 className="text-base font-bold mt-3 mb-2" {...props}>{cleanText}</h4>;
-                                },
+                                h1: ({node, ...props}) => <h1 className="text-2xl font-bold mt-6 mb-4" {...props} />,
+                                h2: ({node, ...props}) => <h2 className="text-xl font-bold mt-5 mb-3" {...props} />,
+                                h3: ({node, ...props}) => <h3 className="text-lg font-bold mt-4 mb-2" {...props} />,
+                                h4: ({node, ...props}) => <h4 className="text-base font-bold mt-3 mb-2" {...props} />,
                                 p: ({node, ...props}) => <p className="my-2 leading-7" {...props} />,
                                 ul: ({node, ...props}) => <ul className="list-disc pl-6 my-2" {...props} />,
                                 ol: ({node, ...props}) => <ol className="list-decimal pl-6 my-2" {...props} />,
@@ -389,26 +373,10 @@ export default function Search() {
                         <ReactMarkdown 
                           remarkPlugins={[remarkGfm]}
                           components={{
-                            h1: ({node, children, ...props}) => {
-                              // 移除开头的 # 符号
-                              const cleanText = children[0].replace(/^#+\s*/, '');
-                              return <h1 className="text-2xl font-bold mt-6 mb-4" {...props}>{cleanText}</h1>;
-                            },
-                            h2: ({node, children, ...props}) => {
-                              // 移除开头的 # 符号
-                              const cleanText = children[0].replace(/^#+\s*/, '');
-                              return <h2 className="text-xl font-bold mt-5 mb-3" {...props}>{cleanText}</h2>;
-                            },
-                            h3: ({node, children, ...props}) => {
-                              // 移除开头的 # 符号
-                              const cleanText = children[0].replace(/^#+\s*/, '');
-                              return <h3 className="text-lg font-bold mt-4 mb-2" {...props}>{cleanText}</h3>;
-                            },
-                            h4: ({node, children, ...props}) => {
-                              // 移除开头的 # 符号
-                              const cleanText = children[0].replace(/^#+\s*/, '');
-                              return <h4 className="text-base font-bold mt-3 mb-2" {...props}>{cleanText}</h4>;
-                            },
+                            h1: ({node, ...props}) => <h1 className="text-2xl font-bold mt-6 mb-4" {...props} />,
+                            h2: ({node, ...props}) => <h2 className="text-xl font-bold mt-5 mb-3" {...props} />,
+                            h3: ({node, ...props}) => <h3 className="text-lg font-bold mt-4 mb-2" {...props} />,
+                            h4: ({node, ...props}) => <h4 className="text-base font-bold mt-3 mb-2" {...props} />,
                             p: ({node, ...props}) => <p className="my-2 leading-7" {...props} />,
                             ul: ({node, ...props}) => <ul className="list-disc pl-6 my-2" {...props} />,
                             ol: ({node, ...props}) => <ol className="list-decimal pl-6 my-2" {...props} />,
