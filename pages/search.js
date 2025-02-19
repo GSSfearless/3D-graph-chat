@@ -13,11 +13,6 @@ const ContentViewer = dynamic(() => import('../components/ContentViewer'), {
   loading: () => <p>Loading content viewer...</p>
 });
 
-const ChartViewer = dynamic(() => import('../components/ChartViewer'), {
-  ssr: false,
-  loading: () => <p>Loading chart viewer...</p>
-});
-
 export default function Search() {
   const router = useRouter();
   const { q } = router.query;
@@ -33,8 +28,6 @@ export default function Search() {
   const [useWebSearch, setUseWebSearch] = useState(false);
   const [useDeepThinking, setUseDeepThinking] = useState(false);
   const [reasoningProcess, setReasoningProcess] = useState('');
-  const [chartData, setChartData] = useState(null);
-  const [chartType, setChartType] = useState('');
 
   const defaultQuery = "What is the answer to life, the universe, and everything?";
 
@@ -278,7 +271,7 @@ export default function Search() {
           {/* 视图切换按钮区域 */}
           <div className="lg:col-span-12">
             <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
-              <div className="flex flex-wrap justify-center gap-4">
+              <div className="flex justify-center space-x-4">
                 <button
                   className={`px-6 py-2 rounded-lg transition-all ${
                     contentType === 'answer'
@@ -309,46 +302,6 @@ export default function Search() {
                 >
                   思维导图
                 </button>
-                <button
-                  className={`px-6 py-2 rounded-lg transition-all ${
-                    contentType === 'gantt'
-                      ? 'bg-blue-500 text-white shadow-md hover:bg-blue-600'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                  }`}
-                  onClick={() => setContentType('gantt')}
-                >
-                  甘特图
-                </button>
-                <button
-                  className={`px-6 py-2 rounded-lg transition-all ${
-                    contentType === 'pie'
-                      ? 'bg-blue-500 text-white shadow-md hover:bg-blue-600'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                  }`}
-                  onClick={() => setContentType('pie')}
-                >
-                  饼图
-                </button>
-                <button
-                  className={`px-6 py-2 rounded-lg transition-all ${
-                    contentType === 'bar'
-                      ? 'bg-blue-500 text-white shadow-md hover:bg-blue-600'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                  }`}
-                  onClick={() => setContentType('bar')}
-                >
-                  柱状图
-                </button>
-                <button
-                  className={`px-6 py-2 rounded-lg transition-all ${
-                    contentType === 'line'
-                      ? 'bg-blue-500 text-white shadow-md hover:bg-blue-600'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                  }`}
-                  onClick={() => setContentType('line')}
-                >
-                  折线图
-                </button>
               </div>
             </div>
           </div>
@@ -361,43 +314,44 @@ export default function Search() {
                   <div className="flex items-center justify-center h-full">
                     <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
                   </div>
-                ) : (
-                  <>
-                    {contentType === 'answer' && streamedAnswer && (
-                      <div className="prose max-w-none">
-                        {useDeepThinking && reasoningProcess && (
-                          <div className="mb-6 p-4 bg-purple-50 rounded-lg border border-purple-200">
-                            <div className="flex items-center space-x-2 mb-2">
-                              <h3 className="text-lg font-semibold text-purple-700">💭 思考过程</h3>
-                              <span className="text-sm text-purple-500">(DeepSeek R1)</span>
-                            </div>
-                            <div className="prose prose-purple max-w-none">
-                              <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                                {reasoningProcess}
-                              </ReactMarkdown>
-                            </div>
+                ) : streamedAnswer ? (
+                  contentType === 'answer' ? (
+                    <div className="prose max-w-none">
+                      {useDeepThinking && reasoningProcess && (
+                        <div className="mb-6 p-4 bg-purple-50 rounded-lg border border-purple-200">
+                          <div className="flex items-center space-x-2 mb-2">
+                            <h3 className="text-lg font-semibold text-purple-700">💭 思考过程</h3>
+                            <span className="text-sm text-purple-500">(DeepSeek R1)</span>
                           </div>
-                        )}
-                        <div className={useDeepThinking && reasoningProcess ? "mt-6" : ""}>
-                          <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                            {streamedAnswer}
-                          </ReactMarkdown>
+                          <div className="prose prose-purple max-w-none">
+                            <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                              {reasoningProcess}
+                            </ReactMarkdown>
+                          </div>
                         </div>
+                      )}
+                      <div className={useDeepThinking && reasoningProcess ? "mt-6" : ""}>
+                        <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                          {streamedAnswer}
+                        </ReactMarkdown>
                       </div>
-                    )}
-                    {['flowchart', 'mindmap', 'gantt'].includes(contentType) && mermaidContent && (
-                      <ContentViewer
-                        content={mermaidContent}
-                        type="mermaid"
-                      />
-                    )}
-                    {['pie', 'bar', 'line'].includes(contentType) && chartData && (
-                      <ChartViewer
-                        data={chartData}
-                        type={contentType}
-                      />
-                    )}
-                  </>
+                    </div>
+                  ) : contentType === 'flowchart' ? (
+                    <ContentViewer
+                      content={mermaidContent}
+                      type="mermaid"
+                    />
+                  ) : (
+                    <div className="prose max-w-none">
+                      <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                        {markdownMindMap}
+                      </ReactMarkdown>
+                    </div>
+                  )
+                ) : (
+                  <div className="flex items-center justify-center h-full">
+                    <p className="text-gray-400">在下方输入问题开始查询</p>
+                  </div>
                 )}
               </div>
             </div>
