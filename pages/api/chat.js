@@ -20,12 +20,18 @@ export default async function handler(req, res) {
 3. 深入分析问题的各个方面
 4. 考虑不同的观点和可能性
 5. 提供具体的例子和解释
-6. 在回答的最后，总结关键要点和见解`
+6. 在回答的最后，总结关键要点和见解
+7. 同时生成两种图表：
+   - 使用Mermaid流程图(flowchart TD)展示主要概念和关系
+   - 使用Mermaid思维导图(mindmap)展示层次结构`
       : `你是一个专业的知识助手。请基于提供的上下文信息，以清晰、简洁的方式回答问题。要求：
 1. 使用markdown格式，但不要添加"大标题"、"小标题"等无意义的标题文字
 2. 回答要有清晰的层次结构，适当使用标题（##、###）来组织内容
 3. 适当使用列表和要点
-4. 在回答的最后，总结关键要点`;
+4. 在回答的最后，总结关键要点
+5. 同时生成两种图表：
+   - 使用Mermaid流程图(flowchart TD)展示主要概念和关系
+   - 使用Mermaid思维导图(mindmap)展示层次结构`;
 
     // 设置响应头
     res.setHeader('Content-Type', 'text/event-stream');
@@ -263,3 +269,25 @@ export default async function handler(req, res) {
     });
   }
 }
+
+// 在处理响应内容时，解析并提取Mermaid图表
+const extractMermaidDiagrams = (text) => {
+  const diagrams = {
+    flowchart: '',
+    mindmap: ''
+  };
+  
+  const mermaidRegex = /```mermaid\n([\s\S]*?)\n```/g;
+  let match;
+  
+  while ((match = mermaidRegex.exec(text)) !== null) {
+    const diagramContent = match[1];
+    if (diagramContent.includes('flowchart TD')) {
+      diagrams.flowchart = diagramContent;
+    } else if (diagramContent.includes('mindmap')) {
+      diagrams.mindmap = diagramContent;
+    }
+  }
+  
+  return diagrams;
+};

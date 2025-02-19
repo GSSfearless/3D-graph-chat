@@ -23,7 +23,10 @@ export default function Search() {
   const [initialLoad, setInitialLoad] = useState(true);
   const [streamedAnswer, setStreamedAnswer] = useState('');
   const [contentType, setContentType] = useState('answer');
-  const [mermaidContent, setMermaidContent] = useState('');
+  const [mermaidContent, setMermaidContent] = useState({
+    flowchart: '',
+    mindmap: ''
+  });
   const [useWebSearch, setUseWebSearch] = useState(false);
   const [useDeepThinking, setUseDeepThinking] = useState(false);
   const [reasoningProcess, setReasoningProcess] = useState('');
@@ -40,7 +43,7 @@ export default function Search() {
     
     setLoading(true);
     setStreamedAnswer('');
-    setMermaidContent('');
+    setMermaidContent({ flowchart: '', mindmap: '' });
     setSearchResults([]);
     setReasoningProcess('');
 
@@ -189,7 +192,15 @@ export default function Search() {
                     if (parsed.content) {
                       const flowchartCode = decodeURIComponent(parsed.content);
                       console.log('流程图代码长度:', flowchartCode.length);
-                      setMermaidContent(flowchartCode);
+                      setMermaidContent(prev => ({ ...prev, flowchart: flowchartCode }));
+                    }
+                    break;
+                  case 'mindmap':
+                    console.log('收到思维导图数据');
+                    if (parsed.content) {
+                      const mindmapCode = decodeURIComponent(parsed.content);
+                      console.log('思维导图代码长度:', mindmapCode.length);
+                      setMermaidContent(prev => ({ ...prev, mindmap: mindmapCode }));
                     }
                     break;
                   case 'end':
@@ -283,6 +294,16 @@ export default function Search() {
                 >
                   流程图
                 </button>
+                <button
+                  className={`px-6 py-2 rounded-lg transition-all ${
+                    contentType === 'mindmap'
+                      ? 'bg-blue-500 text-white shadow-md hover:bg-blue-600'
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }`}
+                  onClick={() => setContentType('mindmap')}
+                >
+                  思维导图
+                </button>
               </div>
             </div>
           </div>
@@ -319,7 +340,7 @@ export default function Search() {
                     </div>
                   ) : (
                     <ContentViewer
-                      content={mermaidContent}
+                      content={contentType === 'flowchart' ? mermaidContent.flowchart : mermaidContent.mindmap}
                       type="mermaid"
                     />
                   )

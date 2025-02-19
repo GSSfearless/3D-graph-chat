@@ -16,22 +16,49 @@ const ContentViewer = ({ content, type }) => {
       flowchart: {
         useMaxWidth: true,
         htmlLabels: true,
-        curve: 'linear',
-        defaultRenderer: 'dagre-d3'
+        curve: 'basis',
+        defaultRenderer: 'dagre-d3',
+        padding: 20,
+        nodeSpacing: 50,
+        rankSpacing: 50,
+        diagramPadding: 8,
+        labelBackgroundColor: '#f0f7ff',
+        nodeAlignment: 'center'
       },
       mindmap: {
-        padding: 10,
-        useMaxWidth: true
+        padding: 16,
+        useMaxWidth: true,
+        nodeSpacing: 60,
+        rankSpacing: 80,
+        diagramPadding: 10,
+        defaultRenderer: 'dagre-d3',
+        curve: 'bump',
+        levelDistance: 100
       },
       themeVariables: {
-        fontFamily: 'Arial',
-        fontSize: '16px',
-        primaryColor: '#4299E1',
-        primaryTextColor: '#2D3748',
-        primaryBorderColor: '#4299E1',
-        lineColor: '#64748B',
-        secondaryColor: '#9F7AEA',
-        tertiaryColor: '#48BB78'
+        fontFamily: 'system-ui, -apple-system, sans-serif',
+        fontSize: '14px',
+        primaryColor: '#3b82f6',
+        primaryTextColor: '#1e293b',
+        primaryBorderColor: '#3b82f6',
+        lineColor: '#64748b',
+        secondaryColor: '#7c3aed',
+        tertiaryColor: '#059669',
+        // 流程图特定样式
+        nodeBorder: '#e2e8f0',
+        nodeTextColor: '#1e293b',
+        mainBkg: '#ffffff',
+        nodeBkg: '#f8fafc',
+        // 连接线样式
+        edgeLabelBackground: '#ffffff',
+        clusterBkg: '#f1f5f9',
+        clusterBorder: '#e2e8f0',
+        // 思维导图特定样式
+        mindmapNode: '#f0f9ff',
+        mindmapNodeText: '#0f172a',
+        mindmapLine: '#93c5fd',
+        mindmapOutline: '#3b82f6',
+        mindmapBorder: '#bfdbfe'
       }
     });
   }, []);
@@ -97,16 +124,16 @@ const ContentViewer = ({ content, type }) => {
             <div className="flex items-center justify-center h-64">
               <div className="text-center">
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
-                <p className="text-gray-500">正在生成思维导图...</p>
+                <p className="text-gray-500">正在生成图表...</p>
               </div>
             </div>
           );
         }
         return (
-          <div className="w-full h-full flex items-center justify-center">
+          <div className="w-full h-full flex items-center justify-center p-4">
             <div
               ref={mermaidRef}
-              className="mermaid-diagram w-full"
+              className="mermaid-diagram w-full max-w-4xl mx-auto bg-white rounded-lg shadow-sm border border-gray-100 p-6"
               dangerouslySetInnerHTML={mermaidSvg ? { __html: mermaidSvg } : undefined}
             />
           </div>
