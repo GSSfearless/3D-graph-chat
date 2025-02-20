@@ -223,6 +223,45 @@ export default function Search() {
                   <p className="text-gray-400">在下方输入问题开始查询</p>
                 </div>
               )}
+              
+              {/* 搜索框 - 放在3D区域内 */}
+              <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 w-full max-w-2xl px-4">
+                <div className="bg-white/80 backdrop-blur-sm rounded-xl shadow-lg border border-gray-100 p-3">
+                  <div className="flex items-center space-x-4">
+                    <div className="flex items-center space-x-2">
+                      <span className="text-sm text-gray-600">深度思考</span>
+                      <button
+                        onClick={() => setUseDeepThinking(!useDeepThinking)}
+                        className={`relative inline-flex h-5 w-10 items-center rounded-full transition-colors focus:outline-none ${
+                          useDeepThinking ? 'bg-purple-500' : 'bg-gray-300'
+                        }`}
+                      >
+                        <span
+                          className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                            useDeepThinking ? 'translate-x-5' : 'translate-x-1'
+                          }`}
+                        />
+                      </button>
+                    </div>
+                    <input
+                      ref={searchInputRef}
+                      type="text"
+                      value={query}
+                      onChange={handleInputChange}
+                      onKeyPress={(e) => e.key === 'Enter' && handleSubmit(e)}
+                      placeholder={defaultQuery}
+                      className="flex-1 p-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all bg-white/50 text-sm"
+                    />
+                    <button
+                      onClick={handleSubmit}
+                      className="bg-gradient-to-r from-blue-500 to-blue-600 text-white p-2 rounded-lg hover:from-blue-600 hover:to-blue-700 transition-all shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+                      disabled={loading}
+                    >
+                      <FontAwesomeIcon icon={faArrowRight} className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
 
@@ -248,45 +287,6 @@ export default function Search() {
                   </ReactMarkdown>
                 </div>
               )}
-            </div>
-          </div>
-        </div>
-
-        {/* 底部搜索区域 - 简化并减小高度 */}
-        <div className="fixed bottom-4 left-1/2 transform -translate-x-1/2 w-full max-w-2xl px-4">
-          <div className="bg-white/80 backdrop-blur-sm rounded-xl shadow-lg border border-gray-100 p-3">
-            <div className="flex items-center space-x-4">
-              <div className="flex items-center space-x-2">
-                <span className="text-sm text-gray-600">深度思考</span>
-                <button
-                  onClick={() => setUseDeepThinking(!useDeepThinking)}
-                  className={`relative inline-flex h-5 w-10 items-center rounded-full transition-colors focus:outline-none ${
-                    useDeepThinking ? 'bg-purple-500' : 'bg-gray-300'
-                  }`}
-                >
-                  <span
-                    className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                      useDeepThinking ? 'translate-x-5' : 'translate-x-1'
-                    }`}
-                  />
-                </button>
-              </div>
-              <input
-                ref={searchInputRef}
-                type="text"
-                value={query}
-                onChange={handleInputChange}
-                onKeyPress={(e) => e.key === 'Enter' && handleSubmit(e)}
-                placeholder={defaultQuery}
-                className="flex-1 p-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all bg-white/50 text-sm"
-              />
-              <button
-                onClick={handleSubmit}
-                className="bg-gradient-to-r from-blue-500 to-blue-600 text-white p-2 rounded-lg hover:from-blue-600 hover:to-blue-700 transition-all shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
-                disabled={loading}
-              >
-                <FontAwesomeIcon icon={faArrowRight} className="w-4 h-4" />
-              </button>
             </div>
           </div>
         </div>
