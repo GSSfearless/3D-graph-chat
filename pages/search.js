@@ -22,25 +22,17 @@ const ContentViewer = dynamic(() => import('../components/ContentViewer'), {
 
 // 更新按钮布局
 const contentTypes = [
-  { id: 'answer', name: 'AI回答', color: 'blue' },
-  // 保留原有的基础视图
-  { id: 'mindmap', name: '思维导图', color: 'green' },
-  { id: 'conceptmap', name: '概念图', color: 'purple' },
-  { id: 'comparison', name: '对比图', color: 'indigo' },
-  { id: 'timeline', name: '时间轴', color: 'pink' },
-  { id: 'orgchart', name: '层级图', color: 'yellow' },
-  { id: 'bracket', name: '分类图', color: 'red' },
-  // 分隔线
-  { id: 'divider', type: 'divider' },
-  // 新增高级图表类型
-  { id: 'enhanced', name: '高级图表', type: 'dropdown', color: 'blue', options: [
-    { id: 'tagSphere', name: '3D标签云' },
-    { id: 'fluid', name: '流体动画' },
-    { id: 'radar', name: '高级雷达图' },
-    { id: 'geoBubble', name: '地理气泡图' },
-    { id: 'network', name: '动态网络图' },
-    { id: 'waveform', name: '声波图' }
-  ]}
+  { id: 'answer', name: 'AI回答', icon: '🤖' },
+  { id: 'mindmap', name: '思维导图', icon: '🌳' },
+  { id: 'conceptmap', name: '概念图', icon: '🎯' },
+  { id: 'orgchart', name: '层级图', icon: '📊' },
+  { id: 'bracket', name: '分类图', icon: '🔄' },
+  { id: 'tagSphere', name: '3D标签云', icon: '🌐' },
+  { id: 'fluid', name: '流体动画', icon: '💫' },
+  { id: 'radar', name: '雷达图', icon: '📡' },
+  { id: 'geoBubble', name: '地理图', icon: '🌍' },
+  { id: 'network', name: '网络图', icon: '🕸️' },
+  { id: 'waveform', name: '声波图', icon: '〰️' }
 ];
 
 export default function Search() {
@@ -58,9 +50,7 @@ export default function Search() {
     mindmap: '',
     fishbone: '',
     orgchart: '',
-    timeline: '',
     conceptmap: '',
-    comparison: '',
     bracket: ''
   });
   const [useWebSearch, setUseWebSearch] = useState(false);
@@ -84,7 +74,7 @@ export default function Search() {
     
     setLoading(true);
     setStreamedAnswer('');
-    setMermaidContent({ flowchart: '', mindmap: '', fishbone: '', orgchart: '', timeline: '', conceptmap: '', comparison: '', bracket: '' });
+    setMermaidContent({ flowchart: '', mindmap: '', fishbone: '', orgchart: '', conceptmap: '', bracket: '' });
     setSearchResults(null);
     setReasoningProcess('');
 
@@ -313,57 +303,42 @@ export default function Search() {
             </div>
             {/* 导航按钮组 */}
             <div className="flex items-center space-x-2 overflow-x-auto hide-scrollbar py-2">
-              {contentTypes.map(type => {
-                if (type.type === 'divider') {
-                  return <div key="divider" className="h-6 w-px bg-gray-200 mx-2" />;
-                }
-                
-                if (type.type === 'dropdown') {
-                  return (
-                    <div key={type.id} className="relative">
-                      <button
-                        onClick={() => setDropdownOpen(!dropdownOpen)}
-                        className={`px-4 py-2 rounded-lg transition-all whitespace-nowrap flex items-center space-x-1
-                          ${contentType.startsWith(type.id) ? 'bg-blue-500 text-white' : 'bg-gray-100 text-gray-700'}`}
-                      >
-                        <span>{type.name}</span>
-                        <svg className={`w-4 h-4 transition-transform ${dropdownOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                        </svg>
-                      </button>
-                      {dropdownOpen && (
-                        <div className="absolute top-full left-0 mt-1 w-48 bg-white rounded-lg shadow-lg border border-gray-100 py-1 z-50">
-                          {type.options.map(option => (
-                            <button
-                              key={option.id}
-                              onClick={() => handleTypeChange(option.id, type.id)}
-                              className={`w-full px-4 py-2 text-left hover:bg-gray-50 ${
-                                contentType === option.id ? 'text-blue-500 bg-blue-50' : 'text-gray-700'
-                              }`}
-                            >
-                              {option.name}
-                            </button>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  );
-                }
-
-                return (
-                  <button
-                    key={type.id}
-                    onClick={() => handleTypeChange(type.id)}
-                    className={`px-4 py-2 rounded-lg transition-all whitespace-nowrap ${
-                      contentType === type.id
-                        ? `bg-${type.color}-500 text-white shadow-md hover:bg-${type.color}-600`
-                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                    }`}
-                  >
-                    {type.name}
-                  </button>
-                );
-              })}
+              <button
+                onClick={() => {
+                  const currentIndex = contentTypes.findIndex(type => type.id === contentType);
+                  const newIndex = currentIndex > 0 ? currentIndex - 1 : contentTypes.length - 1;
+                  setContentType(contentTypes[newIndex].id);
+                }}
+                className="p-2 rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 transition-all"
+              >
+                ◀
+              </button>
+              
+              {contentTypes.map(type => (
+                <button
+                  key={type.id}
+                  onClick={() => handleTypeChange(type.id)}
+                  className={`px-4 py-2 rounded-lg transition-all flex flex-col items-center ${
+                    contentType === type.id
+                      ? 'bg-blue-500 text-white shadow-md hover:bg-blue-600'
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }`}
+                >
+                  <span className="text-xl">{type.icon}</span>
+                  <span className="text-xs mt-1">{type.name}</span>
+                </button>
+              ))}
+              
+              <button
+                onClick={() => {
+                  const currentIndex = contentTypes.findIndex(type => type.id === contentType);
+                  const newIndex = currentIndex < contentTypes.length - 1 ? currentIndex + 1 : 0;
+                  setContentType(contentTypes[newIndex].id);
+                }}
+                className="p-2 rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 transition-all"
+              >
+                ▶
+              </button>
             </div>
             <div className="flex items-center space-x-4">
               <div className="flex items-center space-x-2 text-sm text-gray-500">
