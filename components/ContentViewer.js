@@ -20,24 +20,24 @@ const ContentViewer = ({ content, type }) => {
         htmlLabels: true,
         curve: 'monotoneX',
         defaultRenderer: 'elk',
-        padding: 10,
-        nodeSpacing: 30,
-        rankSpacing: 50,
-        diagramPadding: 10,
+        padding: 20,
+        nodeSpacing: 50,
+        rankSpacing: 80,
+        diagramPadding: 20,
         labelBackgroundColor: 'transparent',
-        nodeAlignment: 'UL',
+        nodeAlignment: 'center',
         ranker: 'network-simplex',
         layoutDirection: 'LR'
       },
       mindmap: {
-        padding: 10,
+        padding: 20,
         useMaxWidth: true,
-        nodeSpacing: 40,
-        rankSpacing: 60,
-        diagramPadding: 10,
+        nodeSpacing: 100,
+        rankSpacing: 120,
+        diagramPadding: 20,
         defaultRenderer: 'elk',
-        curve: 'monotoneX',
-        levelDistance: 80
+        curve: 'basis',
+        levelDistance: 150
       },
       themeVariables: {
         fontFamily: 'system-ui, -apple-system, sans-serif',
@@ -200,11 +200,10 @@ const ContentViewer = ({ content, type }) => {
           );
         }
         return (
-          <div className="w-full h-full flex items-center justify-center p-4">
+          <div className="w-full h-full flex items-center justify-center">
             <div
               ref={mermaidRef}
-              className="mermaid-diagram w-full h-full max-w-5xl mx-auto bg-white rounded-lg shadow-sm border border-gray-100 p-6 overflow-auto"
-              style={{ minHeight: '400px', maxHeight: '600px' }}
+              className="mermaid-diagram w-full h-[calc(100vh-24rem)] mx-auto bg-white"
               dangerouslySetInnerHTML={mermaidSvg ? { __html: mermaidSvg } : undefined}
             />
           </div>
@@ -215,7 +214,7 @@ const ContentViewer = ({ content, type }) => {
   };
 
   return (
-    <div className="w-full h-full overflow-auto p-4 bg-white rounded-lg shadow">
+    <div className="w-full h-full">
       {renderContent()}
     </div>
   );
