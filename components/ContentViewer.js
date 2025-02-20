@@ -41,25 +41,25 @@ const ContentViewer = ({ content, type }) => {
       themeVariables: {
         fontFamily: 'system-ui, -apple-system, sans-serif',
         fontSize: '16px',
-        primaryColor: '#3b82f6',
-        primaryTextColor: '#1e293b',
-        primaryBorderColor: '#3b82f6',
+        primaryColor: '#64748b',
+        primaryTextColor: '#334155',
+        primaryBorderColor: '#64748b',
         lineColor: '#94a3b8',
-        secondaryColor: '#7c3aed',
-        tertiaryColor: '#059669',
+        secondaryColor: '#64748b',
+        tertiaryColor: '#64748b',
         // 流程图特定样式
         nodeBorder: '#e2e8f0',
-        nodeTextColor: '#1e293b',
+        nodeTextColor: '#334155',
         mainBkg: '#ffffff',
         nodeBkg: '#f8fafc',
         // 连接线样式
         edgeLabelBackground: '#ffffff',
         clusterBkg: '#f1f5f9',
         clusterBorder: '#e2e8f0',
-        // 思维导图特定样式
+        // 思维导图特定样式 - 采用极简灰色系
         mindmapNode: 'transparent',
         mindmapNodeText: '#334155',  // 深灰色文字
-        mindmapLine: '#475569',  // 深灰色线条
+        mindmapLine: '#94a3b8',  // 统一使用一种柔和的灰色
         mindmapOutline: 'none',
         mindmapBorder: 'none'
       }
