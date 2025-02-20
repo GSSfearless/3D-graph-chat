@@ -20,6 +20,17 @@ const ContentViewer = dynamic(() => import('../components/ContentViewer'), {
   loading: () => <p>Loading content viewer...</p>
 });
 
+// 更新按钮布局
+const contentTypes = [
+  { id: 'answer', name: 'AI回答', color: 'blue' },
+  { id: 'tagSphere', name: '3D标签云', color: 'purple' },
+  { id: 'fluid', name: '流体动画', color: 'indigo' },
+  { id: 'radar', name: '高级雷达图', color: 'pink' },
+  { id: 'geoBubble', name: '地理气泡图', color: 'green' },
+  { id: 'network', name: '动态网络图', color: 'yellow' },
+  { id: 'waveform', name: '声波图', color: 'red' }
+];
+
 export default function Search() {
   const router = useRouter();
   const { q } = router.query;
@@ -279,6 +290,22 @@ export default function Search() {
                 </a>
               </div>
             </div>
+            {/* 导航按钮组 */}
+            <div className="flex items-center space-x-2 overflow-x-auto hide-scrollbar py-2">
+              {contentTypes.map(type => (
+                <button
+                  key={type.id}
+                  onClick={() => setContentType(type.id)}
+                  className={`px-4 py-2 rounded-lg transition-all whitespace-nowrap ${
+                    contentType === type.id
+                      ? `bg-${type.color}-500 text-white shadow-md hover:bg-${type.color}-600`
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }`}
+                >
+                  {type.name}
+                </button>
+              ))}
+            </div>
             <div className="flex items-center space-x-4">
               <div className="flex items-center space-x-2 text-sm text-gray-500">
                 <span className="hidden md:inline">Powered by</span>
@@ -303,84 +330,6 @@ export default function Search() {
       {/* 主要内容区域 */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-          {/* 视图切换按钮区域 */}
-          <div className="lg:col-span-12">
-            <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
-              <div className="flex flex-wrap justify-center gap-2">
-                <button
-                  className={`px-4 py-2 rounded-lg transition-all ${
-                    contentType === 'answer'
-                      ? 'bg-blue-500 text-white shadow-md hover:bg-blue-600'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                  }`}
-                  onClick={() => setContentType('answer')}
-                >
-                  AI回答
-                </button>
-                <button
-                  className={`px-4 py-2 rounded-lg transition-all ${
-                    contentType === 'mindmap'
-                      ? 'bg-blue-500 text-white shadow-md hover:bg-blue-600'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                  }`}
-                  onClick={() => setContentType('mindmap')}
-                >
-                  思维导图
-                </button>
-                <button
-                  className={`px-4 py-2 rounded-lg transition-all ${
-                    contentType === 'conceptmap'
-                      ? 'bg-purple-500 text-white shadow-md hover:bg-purple-600'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                  }`}
-                  onClick={() => setContentType('conceptmap')}
-                >
-                  概念图
-                </button>
-                <button
-                  className={`px-4 py-2 rounded-lg transition-all ${
-                    contentType === 'comparison'
-                      ? 'bg-indigo-500 text-white shadow-md hover:bg-indigo-600'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                  }`}
-                  onClick={() => setContentType('comparison')}
-                >
-                  对比图
-                </button>
-                <button
-                  className={`px-4 py-2 rounded-lg transition-all ${
-                    contentType === 'timeline'
-                      ? 'bg-pink-500 text-white shadow-md hover:bg-pink-600'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                  }`}
-                  onClick={() => setContentType('timeline')}
-                >
-                  时间轴
-                </button>
-                <button
-                  className={`px-4 py-2 rounded-lg transition-all ${
-                    contentType === 'orgchart'
-                      ? 'bg-green-500 text-white shadow-md hover:bg-green-600'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                  }`}
-                  onClick={() => setContentType('orgchart')}
-                >
-                  层级图
-                </button>
-                <button
-                  className={`px-4 py-2 rounded-lg transition-all ${
-                    contentType === 'bracket'
-                      ? 'bg-yellow-500 text-white shadow-md hover:bg-yellow-600'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                  }`}
-                  onClick={() => setContentType('bracket')}
-                >
-                  分类图
-                </button>
-              </div>
-            </div>
-          </div>
-
           {/* 内容显示区域 */}
           <div className="lg:col-span-12">
             <div className="bg-white rounded-xl shadow-sm border border-gray-100">
@@ -412,10 +361,10 @@ export default function Search() {
                       </div>
                     </div>
                   ) : (
-                    <ContentViewer
-                      content={mermaidContent[contentType]}
-                      type="mermaid"
-                      key={`${contentType}-${Object.values(mermaidContent).join('-')}`}
+                    <EnhancedChart
+                      chartData={searchResults}
+                      initialType={contentType}
+                      onChartUpdate={(data) => console.log('图表更新:', data)}
                     />
                   )
                 ) : (
@@ -489,15 +438,15 @@ export default function Search() {
         </div>
       </main>
 
-      <div className="visualization-container">
-        {searchResults && (
-          <EnhancedChart
-            chartData={searchResults}
-            initialType={selectedChartType}
-            onChartUpdate={(data) => console.log('图表更新:', data)}
-          />
-        )}
-      </div>
+      <style jsx>{`
+        .hide-scrollbar {
+          -ms-overflow-style: none;
+          scrollbar-width: none;
+        }
+        .hide-scrollbar::-webkit-scrollbar {
+          display: none;
+        }
+      `}</style>
     </div>
   );
 }
