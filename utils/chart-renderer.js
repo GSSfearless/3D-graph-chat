@@ -4,9 +4,20 @@ import { hierarchy, tree } from 'd3-hierarchy';
 import { linkHorizontal } from 'd3-shape';
 
 export class ChartRenderer {
-  constructor(container) {
+  constructor(container, options = {}) {
     this.container = container;
-    this.svg = select(container)
+    this.options = {
+      clusterThreshold: 50, // 触发聚类的节点数阈值
+      maxNodesPerCluster: 10, // 每个聚类最大节点数
+      ...options
+    };
+    
+    this.initializeRenderer();
+  }
+
+  // 初始化渲染器
+  initializeRenderer() {
+    this.svg = select(this.container)
       .append('svg')
       .attr('width', '100%')
       .attr('height', '100%')
@@ -559,6 +570,296 @@ export class ChartRenderer {
     const svgData = this.svg.node().outerHTML;
     const blob = new Blob([svgData], { type: 'image/svg+xml' });
     return URL.createObjectURL(blob);
+  }
+
+  // 优化节点布局
+  optimizeLayout(nodes, edges) {
+    // 使用力导向图算法优化布局
+    const simulation = d3.forceSimulation(nodes)
+      .force('link', d3.forceLink(edges).id(d => d.id).distance(100))
+      .force('charge', d3.forceManyBody().strength(-300))
+      .force('center', d3.forceCenter(this.width / 2, this.height / 2))
+      .force('collision', d3.forceCollide().radius(50));
+
+    // 运行模拟
+    for (let i = 0; i < 300; ++i) simulation.tick();
+
+    return {
+      nodes: nodes.map(node => ({
+        ...node,
+        x: node.x,
+        y: node.y
+      })),
+      edges
+    };
+  }
+
+  // 节点聚类
+  clusterNodes(nodes, edges) {
+    if (nodes.length <= this.options.clusterThreshold) {
+      return { nodes, edges };
+    }
+
+    // 使用社区检测算法进行聚类
+    const communities = this.detectCommunities(nodes, edges);
+    const clusters = this.createClusters(communities);
+    
+    return {
+      nodes: clusters,
+      edges: this.updateEdges(edges, communities)
+    };
+  }
+
+  // 社区检测
+  detectCommunities(nodes, edges) {
+    const graph = this.createGraphStructure(nodes, edges);
+    const communities = new Map();
+    
+    // 使用Louvain算法进行社区检测
+    let modularity = 0;
+    let iteration = 0;
+    
+    while (iteration < 10) {
+      const newCommunities = this.louvainIteration(graph, communities);
+      const newModularity = this.calculateModularity(graph, newCommunities);
+      
+      if (newModularity <= modularity) break;
+      
+      communities.clear();
+      newCommunities.forEach((v, k) => communities.set(k, v));
+      modularity = newModularity;
+      iteration++;
+    }
+    
+    return communities;
+  }
+
+  // 创建聚类
+  createClusters(communities) {
+    const clusters = new Map();
+    
+    communities.forEach((communityId, nodeId) => {
+      if (!clusters.has(communityId)) {
+        clusters.set(communityId, {
+          id: `cluster-${communityId}`,
+          nodes: [],
+          size: 0
+        });
+      }
+      
+      const cluster = clusters.get(communityId);
+      cluster.nodes.push(nodeId);
+      cluster.size++;
+    });
+    
+    return Array.from(clusters.values())
+      .map(cluster => ({
+        id: cluster.id,
+        label: `聚类 ${cluster.nodes.length}个节点`,
+        type: 'cluster',
+        nodes: cluster.nodes,
+        size: Math.sqrt(cluster.size) * 20
+      }));
+  }
+
+  // 更新边的连接关系
+  updateEdges(edges, communities) {
+    return edges.map(edge => {
+      const sourceCommunity = communities.get(edge.source);
+      const targetCommunity = communities.get(edge.target);
+      
+      if (sourceCommunity === targetCommunity) {
+        return null; // 删除群组内部的边
+      }
+      
+      return {
+        ...edge,
+        source: `cluster-${sourceCommunity}`,
+        target: `cluster-${targetCommunity}`
+      };
+    }).filter(Boolean);
+  }
+
+  // 渲染图表
+  render(data) {
+    const { nodes: originalNodes, edges } = data;
+    
+    // 如果节点数量超过阈值，进行聚类
+    const processedData = this.clusterNodes(originalNodes, edges);
+    
+    // 优化布局
+    const optimizedData = this.optimizeLayout(
+      processedData.nodes,
+      processedData.edges
+    );
+    
+    // 清除现有内容
+    this.container.selectAll('*').remove();
+    
+    // 创建边
+    const links = this.container.selectAll('.link')
+      .data(optimizedData.edges)
+      .enter()
+      .append('line')
+      .attr('class', 'link')
+      .attr('x1', d => d.source.x)
+      .attr('y1', d => d.source.y)
+      .attr('x2', d => d.target.x)
+      .attr('y2', d => d.target.y);
+    
+    // 创建节点
+    const nodeElements = this.container.selectAll('.node')
+      .data(optimizedData.nodes)
+      .enter()
+      .append('g')
+      .attr('class', 'node')
+      .attr('transform', d => `translate(${d.x},${d.y})`);
+    
+    // 根据节点类型设置不同的样式
+    nodeElements.each(function(d) {
+      const node = d3.select(this);
+      
+      if (d.type === 'cluster') {
+        // 绘制聚类节点
+        node.append('circle')
+          .attr('r', d.size)
+          .attr('class', 'cluster-node');
+          
+        node.append('text')
+          .attr('dy', '.3em')
+          .style('text-anchor', 'middle')
+          .text(d.label);
+      } else {
+        // 绘制普通节点
+        node.append('circle')
+          .attr('r', 5)
+          .attr('class', 'normal-node');
+          
+        node.append('text')
+          .attr('dx', 12)
+          .attr('dy', '.3em')
+          .text(d.label);
+      }
+    });
+    
+    // 添加交互事件
+    nodeElements
+      .call(d3.drag()
+        .on('start', this.dragStarted.bind(this))
+        .on('drag', this.dragged.bind(this))
+        .on('end', this.dragEnded.bind(this)))
+      .on('click', this.handleNodeClick.bind(this))
+      .on('mouseover', this.handleNodeMouseOver.bind(this))
+      .on('mouseout', this.handleNodeMouseOut.bind(this));
+  }
+
+  // 处理节点拖拽
+  dragStarted(event) {
+    if (!event.active) this.simulation.alphaTarget(0.3).restart();
+    event.subject.fx = event.subject.x;
+    event.subject.fy = event.subject.y;
+  }
+
+  dragged(event) {
+    event.subject.fx = event.x;
+    event.subject.fy = event.y;
+  }
+
+  dragEnded(event) {
+    if (!event.active) this.simulation.alphaTarget(0);
+    event.subject.fx = null;
+    event.subject.fy = null;
+  }
+
+  // 处理节点点击
+  handleNodeClick(event, d) {
+    if (d.type === 'cluster') {
+      // 展开聚类
+      this.expandCluster(d);
+    } else {
+      // 处理普通节点点击
+      if (this.options.onNodeClick) {
+        this.options.onNodeClick(d);
+      }
+    }
+  }
+
+  // 展开聚类
+  expandCluster(cluster) {
+    const expandedNodes = cluster.nodes.map(nodeId => {
+      const originalNode = this.originalData.nodes.find(n => n.id === nodeId);
+      return {
+        ...originalNode,
+        x: cluster.x + (Math.random() - 0.5) * 100,
+        y: cluster.y + (Math.random() - 0.5) * 100
+      };
+    });
+    
+    const edges = this.originalData.edges.filter(edge => 
+      cluster.nodes.includes(edge.source) && cluster.nodes.includes(edge.target)
+    );
+    
+    // 更新视图
+    this.render({
+      nodes: [...this.currentData.nodes.filter(n => n.id !== cluster.id), ...expandedNodes],
+      edges: [...this.currentData.edges, ...edges]
+    });
+  }
+
+  // 处理节点悬停
+  handleNodeMouseOver(event, d) {
+    const node = d3.select(event.currentTarget);
+    
+    // 高亮节点
+    node.select('circle')
+      .transition()
+      .duration(200)
+      .attr('r', d.type === 'cluster' ? d.size * 1.2 : 7);
+      
+    // 显示提示框
+    this.showTooltip(d, event.pageX, event.pageY);
+  }
+
+  handleNodeMouseOut(event, d) {
+    const node = d3.select(event.currentTarget);
+    
+    // 恢复节点大小
+    node.select('circle')
+      .transition()
+      .duration(200)
+      .attr('r', d.type === 'cluster' ? d.size : 5);
+      
+    // 隐藏提示框
+    this.hideTooltip();
+  }
+
+  // 显示提示框
+  showTooltip(data, x, y) {
+    const tooltip = d3.select('body')
+      .append('div')
+      .attr('class', 'graph-tooltip')
+      .style('left', `${x + 10}px`)
+      .style('top', `${y - 10}px`);
+    
+    if (data.type === 'cluster') {
+      tooltip.html(`
+        <div class="tooltip-title">${data.label}</div>
+        <div class="tooltip-content">
+          包含 ${data.nodes.length} 个节点
+        </div>
+      `);
+    } else {
+      tooltip.html(`
+        <div class="tooltip-title">${data.label}</div>
+        <div class="tooltip-content">
+          ${data.description || ''}
+        </div>
+      `);
+    }
+  }
+
+  hideTooltip() {
+    d3.select('.graph-tooltip').remove();
   }
 }
 

@@ -3,7 +3,7 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 import { CSS2DRenderer, CSS2DObject } from 'three/examples/jsm/renderers/CSS2DRenderer';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faExpand, faCompress, faSearch, faRefresh, faSave, faDownload } from '@fortawesome/free-solid-svg-icons';
+import { faExpand, faCompress, faSearch, faRefresh, faSave, faDownload, faUndo, faRedo } from '@fortawesome/free-solid-svg-icons';
 import { faDiscord, faGithub } from '@fortawesome/free-brands-svg-icons';
 
 const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
@@ -11,6 +11,10 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
   const sceneRef = useRef(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [selectedNode, setSelectedNode] = useState(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [history, setHistory] = useState([]);
+  const [historyIndex, setHistoryIndex] = useState(-1);
+  const [highlightedNodes, setHighlightedNodes] = useState(new Set());
   
   // 主题配置
   const theme = {
@@ -267,6 +271,81 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
     onNodeClick && onNodeClick(node.userData);
   };
 
+  const handleSearch = (term) => {
+    setSearchTerm(term);
+    const newHighlighted = new Set();
+    
+    if (term) {
+      sceneRef.current.scene.traverse((object) => {
+        if (object.userData && object.userData.label) {
+          const label = object.userData.label.toLowerCase();
+          if (label.includes(term.toLowerCase())) {
+            newHighlighted.add(object.id);
+            // 高亮相关节点
+            object.material.color.set(theme.node.highlightColor);
+            object.material.opacity = 1;
+          } else {
+            // 降低其他节点的显示度
+            object.material.color.set(theme.node.color);
+            object.material.opacity = 0.3;
+          }
+        }
+      });
+    } else {
+      // 重置所有节点的样式
+      sceneRef.current.scene.traverse((object) => {
+        if (object.material) {
+          object.material.color.set(theme.node.color);
+          object.material.opacity = theme.node.opacity;
+        }
+      });
+    }
+    
+    setHighlightedNodes(newHighlighted);
+  };
+
+  const addToHistory = (action) => {
+    const newHistory = history.slice(0, historyIndex + 1);
+    newHistory.push(action);
+    setHistory(newHistory);
+    setHistoryIndex(newHistory.length - 1);
+  };
+
+  const undo = () => {
+    if (historyIndex > 0) {
+      const prevAction = history[historyIndex - 1];
+      // 执行撤销操作
+      applyHistoryAction(prevAction);
+      setHistoryIndex(historyIndex - 1);
+    }
+  };
+
+  const redo = () => {
+    if (historyIndex < history.length - 1) {
+      const nextAction = history[historyIndex + 1];
+      // 执行重做操作
+      applyHistoryAction(nextAction);
+      setHistoryIndex(historyIndex + 1);
+    }
+  };
+
+  const applyHistoryAction = (action) => {
+    switch (action.type) {
+      case 'move':
+        // 恢复节点位置
+        const node = sceneRef.current.scene.getObjectById(action.nodeId);
+        if (node) {
+          node.position.copy(action.position);
+        }
+        break;
+      case 'select':
+        // 恢复节点选择状态
+        setSelectedNode(action.node);
+        break;
+      // 添加其他操作类型的处理
+    }
+  };
+
   useEffect(() => {
     initScene();
   }, []);
@@ -337,6 +416,16 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
     <div className="knowledge-graph-container" style={{ width: '100%', height: '100%', ...style }}>
       <div className="toolbar">
         <div className="toolbar-group">
+          <div className="search-box">
+            <input
+              type="text"
+              placeholder="搜索节点..."
+              value={searchTerm}
+              onChange={(e) => handleSearch(e.target.value)}
+              className="search-input"
+            />
+            <FontAwesomeIcon icon={faSearch} className="search-icon" />
+          </div>
           <button onClick={() => sceneRef.current.controls.zoomIn()} className="toolbar-button" title="放大">
             <FontAwesomeIcon icon={faSearch} className="mr-1" />+
           </button>
@@ -345,6 +434,12 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
           </button>
           <button onClick={() => sceneRef.current.controls.reset()} className="toolbar-button" title="重置视角">
             <FontAwesomeIcon icon={faRefresh} />
+          </button>
+          <button onClick={undo} disabled={historyIndex <= 0} className="toolbar-button" title="撤销">
+            <FontAwesomeIcon icon={faUndo} />
+          </button>
+          <button onClick={redo} disabled={historyIndex >= history.length - 1} className="toolbar-button" title="重做">
+            <FontAwesomeIcon icon={faRedo} />
           </button>
         </div>
         <div className="toolbar-group">
@@ -383,6 +478,19 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
         <div className="node-details-panel">
           <h3 className="text-lg font-semibold mb-2">{selectedNode.userData.label}</h3>
           <p className="text-sm text-gray-600">{selectedNode.userData.description || '暂无描述'}</p>
+          <div className="mt-4">
+            <h4 className="font-medium mb-2">相关节点</h4>
+            <ul className="space-y-2">
+              {selectedNode.userData.related?.map((related, index) => (
+                <li key={index} className="text-sm">
+                  <span className="text-blue-500 cursor-pointer hover:underline"
+                    onClick={() => handleNodeClick(related)}>
+                    {related.label}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </div>
         </div>
       )}
       
@@ -454,6 +562,33 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
 
         .github-button:hover {
           background: rgba(36, 41, 46, 0.1);
+        }
+        
+        .search-box {
+          position: relative;
+          width: 200px;
+        }
+        
+        .search-input {
+          width: 100%;
+          padding: 8px 32px 8px 12px;
+          border-radius: 6px;
+          border: 1px solid #e2e8f0;
+          outline: none;
+          transition: all 0.2s;
+        }
+        
+        .search-input:focus {
+          border-color: #3b82f6;
+          box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+        
+        .search-icon {
+          position: absolute;
+          right: 12px;
+          top: 50%;
+          transform: translateY(-50%);
+          color: #64748b;
         }
         
         .node-details-panel {
