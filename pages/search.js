@@ -279,9 +279,9 @@ export default function Search() {
           {/* 视图切换按钮区域 */}
           <div className="lg:col-span-12">
             <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
-              <div className="flex justify-center space-x-4">
+              <div className="flex flex-wrap justify-center gap-2">
                 <button
-                  className={`px-6 py-2 rounded-lg transition-all ${
+                  className={`px-4 py-2 rounded-lg transition-all ${
                     contentType === 'answer'
                       ? 'bg-blue-500 text-white shadow-md hover:bg-blue-600'
                       : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
@@ -291,7 +291,7 @@ export default function Search() {
                   AI回答
                 </button>
                 <button
-                  className={`px-6 py-2 rounded-lg transition-all ${
+                  className={`px-4 py-2 rounded-lg transition-all ${
                     contentType === 'flowchart'
                       ? 'bg-blue-500 text-white shadow-md hover:bg-blue-600'
                       : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
@@ -301,7 +301,7 @@ export default function Search() {
                   流程图
                 </button>
                 <button
-                  className={`px-6 py-2 rounded-lg transition-all ${
+                  className={`px-4 py-2 rounded-lg transition-all ${
                     contentType === 'mindmap'
                       ? 'bg-blue-500 text-white shadow-md hover:bg-blue-600'
                       : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
@@ -309,6 +309,56 @@ export default function Search() {
                   onClick={() => setContentType('mindmap')}
                 >
                   思维导图
+                </button>
+                <button
+                  className={`px-4 py-2 rounded-lg transition-all ${
+                    contentType === 'fishbone'
+                      ? 'bg-blue-500 text-white shadow-md hover:bg-blue-600'
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }`}
+                  onClick={() => setContentType('fishbone')}
+                >
+                  鱼骨图
+                </button>
+                <button
+                  className={`px-4 py-2 rounded-lg transition-all ${
+                    contentType === 'orgchart'
+                      ? 'bg-blue-500 text-white shadow-md hover:bg-blue-600'
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }`}
+                  onClick={() => setContentType('orgchart')}
+                >
+                  组织结构图
+                </button>
+                <button
+                  className={`px-4 py-2 rounded-lg transition-all ${
+                    contentType === 'timeline'
+                      ? 'bg-blue-500 text-white shadow-md hover:bg-blue-600'
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }`}
+                  onClick={() => setContentType('timeline')}
+                >
+                  时间轴
+                </button>
+                <button
+                  className={`px-4 py-2 rounded-lg transition-all ${
+                    contentType === 'treechart'
+                      ? 'bg-blue-500 text-white shadow-md hover:bg-blue-600'
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }`}
+                  onClick={() => setContentType('treechart')}
+                >
+                  树形图
+                </button>
+                <button
+                  className={`px-4 py-2 rounded-lg transition-all ${
+                    contentType === 'bracket'
+                      ? 'bg-blue-500 text-white shadow-md hover:bg-blue-600'
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }`}
+                  onClick={() => setContentType('bracket')}
+                >
+                  括号图
                 </button>
               </div>
             </div>
@@ -346,9 +396,9 @@ export default function Search() {
                     </div>
                   ) : (
                     <ContentViewer
-                      content={contentType === 'flowchart' ? mermaidContent.flowchart : mermaidContent.mindmap}
+                      content={mermaidContent[contentType]}
                       type="mermaid"
-                      key={`${contentType}-${mermaidContent.flowchart.length}-${mermaidContent.mindmap.length}`}
+                      key={`${contentType}-${Object.values(mermaidContent).join('-')}`}
                     />
                   )
                 ) : (
