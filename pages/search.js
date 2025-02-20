@@ -23,12 +23,24 @@ const ContentViewer = dynamic(() => import('../components/ContentViewer'), {
 // 更新按钮布局
 const contentTypes = [
   { id: 'answer', name: 'AI回答', color: 'blue' },
-  { id: 'tagSphere', name: '3D标签云', color: 'purple' },
-  { id: 'fluid', name: '流体动画', color: 'indigo' },
-  { id: 'radar', name: '高级雷达图', color: 'pink' },
-  { id: 'geoBubble', name: '地理气泡图', color: 'green' },
-  { id: 'network', name: '动态网络图', color: 'yellow' },
-  { id: 'waveform', name: '声波图', color: 'red' }
+  // 保留原有的基础视图
+  { id: 'mindmap', name: '思维导图', color: 'green' },
+  { id: 'conceptmap', name: '概念图', color: 'purple' },
+  { id: 'comparison', name: '对比图', color: 'indigo' },
+  { id: 'timeline', name: '时间轴', color: 'pink' },
+  { id: 'orgchart', name: '层级图', color: 'yellow' },
+  { id: 'bracket', name: '分类图', color: 'red' },
+  // 分隔线
+  { id: 'divider', type: 'divider' },
+  // 新增高级图表类型
+  { id: 'enhanced', name: '高级图表', type: 'dropdown', color: 'blue', options: [
+    { id: 'tagSphere', name: '3D标签云' },
+    { id: 'fluid', name: '流体动画' },
+    { id: 'radar', name: '高级雷达图' },
+    { id: 'geoBubble', name: '地理气泡图' },
+    { id: 'network', name: '动态网络图' },
+    { id: 'waveform', name: '声波图' }
+  ]}
 ];
 
 export default function Search() {
@@ -56,6 +68,9 @@ export default function Search() {
   const [reasoningProcess, setReasoningProcess] = useState('');
   const [selectedChartType, setSelectedChartType] = useState('tagSphere');
   const searchInputRef = useRef(null);
+
+  // 添加处理下拉菜单的状态
+  const [dropdownOpen, setDropdownOpen] = useState(false);
 
   const defaultQuery = "What is the answer to life, the universe, and everything?";
 
@@ -273,8 +288,14 @@ export default function Search() {
     }
   };
 
-  const handleChartTypeChange = (type) => {
-    setSelectedChartType(type);
+  // 处理图表类型切换
+  const handleTypeChange = (typeId, parentId = null) => {
+    if (parentId === 'enhanced') {
+      setContentType(typeId);
+      setDropdownOpen(false);
+    } else {
+      setContentType(typeId);
+    }
   };
 
   return (
@@ -292,19 +313,57 @@ export default function Search() {
             </div>
             {/* 导航按钮组 */}
             <div className="flex items-center space-x-2 overflow-x-auto hide-scrollbar py-2">
-              {contentTypes.map(type => (
-                <button
-                  key={type.id}
-                  onClick={() => setContentType(type.id)}
-                  className={`px-4 py-2 rounded-lg transition-all whitespace-nowrap ${
-                    contentType === type.id
-                      ? `bg-${type.color}-500 text-white shadow-md hover:bg-${type.color}-600`
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                  }`}
-                >
-                  {type.name}
-                </button>
-              ))}
+              {contentTypes.map(type => {
+                if (type.type === 'divider') {
+                  return <div key="divider" className="h-6 w-px bg-gray-200 mx-2" />;
+                }
+                
+                if (type.type === 'dropdown') {
+                  return (
+                    <div key={type.id} className="relative">
+                      <button
+                        onClick={() => setDropdownOpen(!dropdownOpen)}
+                        className={`px-4 py-2 rounded-lg transition-all whitespace-nowrap flex items-center space-x-1
+                          ${contentType.startsWith(type.id) ? 'bg-blue-500 text-white' : 'bg-gray-100 text-gray-700'}`}
+                      >
+                        <span>{type.name}</span>
+                        <svg className={`w-4 h-4 transition-transform ${dropdownOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                        </svg>
+                      </button>
+                      {dropdownOpen && (
+                        <div className="absolute top-full left-0 mt-1 w-48 bg-white rounded-lg shadow-lg border border-gray-100 py-1 z-50">
+                          {type.options.map(option => (
+                            <button
+                              key={option.id}
+                              onClick={() => handleTypeChange(option.id, type.id)}
+                              className={`w-full px-4 py-2 text-left hover:bg-gray-50 ${
+                                contentType === option.id ? 'text-blue-500 bg-blue-50' : 'text-gray-700'
+                              }`}
+                            >
+                              {option.name}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  );
+                }
+
+                return (
+                  <button
+                    key={type.id}
+                    onClick={() => handleTypeChange(type.id)}
+                    className={`px-4 py-2 rounded-lg transition-all whitespace-nowrap ${
+                      contentType === type.id
+                        ? `bg-${type.color}-500 text-white shadow-md hover:bg-${type.color}-600`
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    }`}
+                  >
+                    {type.name}
+                  </button>
+                );
+              })}
             </div>
             <div className="flex items-center space-x-4">
               <div className="flex items-center space-x-2 text-sm text-gray-500">
@@ -360,11 +419,17 @@ export default function Search() {
                         </ReactMarkdown>
                       </div>
                     </div>
-                  ) : (
+                  ) : contentType.startsWith('enhanced') ? (
                     <EnhancedChart
                       chartData={searchResults}
                       initialType={contentType}
                       onChartUpdate={(data) => console.log('图表更新:', data)}
+                    />
+                  ) : (
+                    <ContentViewer
+                      content={mermaidContent[contentType]}
+                      type="mermaid"
+                      key={`${contentType}-${Object.values(mermaidContent).join('-')}`}
                     />
                   )
                 ) : (
