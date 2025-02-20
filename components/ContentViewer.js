@@ -20,28 +20,27 @@ const ContentViewer = ({ content, type }) => {
         htmlLabels: true,
         curve: 'monotoneX',
         defaultRenderer: 'elk',
-        padding: 20,
-        nodeSpacing: 50,
-        rankSpacing: 80,
-        diagramPadding: 20,
+        padding: 30,
+        nodeSpacing: 80,
+        rankSpacing: 100,
+        diagramPadding: 30,
         labelBackgroundColor: 'transparent',
         nodeAlignment: 'center',
         ranker: 'network-simplex',
-        layoutDirection: 'LR'
       },
       mindmap: {
-        padding: 20,
+        padding: 30,
         useMaxWidth: true,
-        nodeSpacing: 100,
-        rankSpacing: 120,
-        diagramPadding: 20,
+        nodeSpacing: 120,
+        rankSpacing: 150,
+        diagramPadding: 30,
         defaultRenderer: 'elk',
         curve: 'basis',
-        levelDistance: 150
+        levelDistance: 180
       },
       themeVariables: {
         fontFamily: 'system-ui, -apple-system, sans-serif',
-        fontSize: '14px',
+        fontSize: '16px',
         primaryColor: '#3b82f6',
         primaryTextColor: '#1e293b',
         primaryBorderColor: '#3b82f6',
@@ -57,12 +56,12 @@ const ContentViewer = ({ content, type }) => {
         edgeLabelBackground: '#ffffff',
         clusterBkg: '#f1f5f9',
         clusterBorder: '#e2e8f0',
-        // 思维导图特定样式
-        mindmapNode: '#f0f9ff',
-        mindmapNodeText: '#0f172a',
-        mindmapLine: '#93c5fd',
-        mindmapOutline: '#3b82f6',
-        mindmapBorder: '#bfdbfe'
+        // 思维导图特定样式 - 采用简洁的蓝色系
+        mindmapNode: 'transparent',
+        mindmapNodeText: '#334155',  // 深灰蓝色文字
+        mindmapLine: ['#3b82f6', '#60a5fa', '#93c5fd', '#bfdbfe', '#dbeafe'],  // 蓝色渐变
+        mindmapOutline: 'none',
+        mindmapBorder: 'none'
       }
     });
   }, []);
@@ -198,12 +197,16 @@ const ContentViewer = ({ content, type }) => {
               </div>
             </div>
           );
-        }
         return (
-          <div className="w-full h-full flex items-center justify-center">
+          <div className="w-full h-full flex items-center justify-center p-4">
             <div
               ref={mermaidRef}
-              className="mermaid-diagram w-full h-[calc(100vh-24rem)] mx-auto bg-white"
+              className="mermaid-diagram w-full mx-auto bg-white overflow-auto"
+              style={{ 
+                height: 'calc(100vh - 16rem)',
+                minWidth: '800px',
+                minHeight: '600px'
+              }}
               dangerouslySetInnerHTML={mermaidSvg ? { __html: mermaidSvg } : undefined}
             />
           </div>
