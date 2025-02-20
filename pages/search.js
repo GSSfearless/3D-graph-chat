@@ -22,17 +22,17 @@ const ContentViewer = dynamic(() => import('../components/ContentViewer'), {
 
 // 更新按钮布局
 const contentTypes = [
-  { id: 'answer', name: 'AI回答', icon: '🤖' },
-  { id: 'mindmap', name: '思维导图', icon: '🌳' },
-  { id: 'conceptmap', name: '概念图', icon: '🎯' },
-  { id: 'orgchart', name: '层级图', icon: '📊' },
-  { id: 'bracket', name: '分类图', icon: '🔄' },
-  { id: 'tagSphere', name: '3D标签云', icon: '🌐' },
-  { id: 'fluid', name: '流体动画', icon: '💫' },
-  { id: 'radar', name: '雷达图', icon: '📡' },
-  { id: 'geoBubble', name: '地理图', icon: '🌍' },
-  { id: 'network', name: '网络图', icon: '🕸️' },
-  { id: 'waveform', name: '声波图', icon: '〰️' }
+  { id: 'answer', icon: '🤖', tooltip: 'AI回答' },
+  { id: 'mindmap', icon: '🌳', tooltip: '思维导图' },
+  { id: 'conceptmap', icon: '🎯', tooltip: '概念图' },
+  { id: 'orgchart', icon: '📊', tooltip: '层级图' },
+  { id: 'bracket', icon: '🔄', tooltip: '分类图' },
+  { id: 'tagSphere', icon: '🌐', tooltip: '3D标签云' },
+  { id: 'fluid', icon: '💫', tooltip: '流体动画' },
+  { id: 'radar', icon: '📡', tooltip: '雷达图' },
+  { id: 'geoBubble', icon: '🌍', tooltip: '地理图' },
+  { id: 'network', icon: '🕸️', tooltip: '网络图' },
+  { id: 'waveform', icon: '〰️', tooltip: '声波图' }
 ];
 
 export default function Search() {
@@ -289,67 +289,28 @@ export default function Search() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
+    <div className="min-h-screen bg-gradient-to-br from-[#2D3047] to-[#93B7BE]">
       {/* 顶部导航栏 */}
-      <nav className="bg-white/80 backdrop-blur-sm sticky top-0 z-50 border-b border-gray-100">
+      <nav className="bg-[#1B1B2F]/80 backdrop-blur-sm sticky top-0 z-50 border-b border-[#E84855]/10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-16">
             <div className="flex items-center">
               <div className="flex-shrink-0 flex items-center">
                 <a href="/" className="flex items-center space-x-2">
-                  <span className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 text-transparent bg-clip-text">Think Graph</span>
+                  <span className="text-2xl font-bold bg-gradient-to-r from-[#E84855] to-[#F9DC5C] text-transparent bg-clip-text">Think Graph</span>
                 </a>
               </div>
             </div>
-            {/* 导航按钮组 */}
-            <div className="flex items-center space-x-2 overflow-x-auto hide-scrollbar py-2">
-              <button
-                onClick={() => {
-                  const currentIndex = contentTypes.findIndex(type => type.id === contentType);
-                  const newIndex = currentIndex > 0 ? currentIndex - 1 : contentTypes.length - 1;
-                  setContentType(contentTypes[newIndex].id);
-                }}
-                className="p-2 rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 transition-all"
-              >
-                ◀
-              </button>
-              
-              {contentTypes.map(type => (
-                <button
-                  key={type.id}
-                  onClick={() => handleTypeChange(type.id)}
-                  className={`px-4 py-2 rounded-lg transition-all flex flex-col items-center ${
-                    contentType === type.id
-                      ? 'bg-blue-500 text-white shadow-md hover:bg-blue-600'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                  }`}
-                >
-                  <span className="text-xl">{type.icon}</span>
-                  <span className="text-xs mt-1">{type.name}</span>
-                </button>
-              ))}
-              
-              <button
-                onClick={() => {
-                  const currentIndex = contentTypes.findIndex(type => type.id === contentType);
-                  const newIndex = currentIndex < contentTypes.length - 1 ? currentIndex + 1 : 0;
-                  setContentType(contentTypes[newIndex].id);
-                }}
-                className="p-2 rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 transition-all"
-              >
-                ▶
-              </button>
-            </div>
             <div className="flex items-center space-x-4">
-              <div className="flex items-center space-x-2 text-sm text-gray-500">
+              <div className="flex items-center space-x-2 text-sm text-[#93B7BE]">
                 <span className="hidden md:inline">Powered by</span>
-                <span className="font-medium bg-gradient-to-r from-purple-600 to-pink-600 text-transparent bg-clip-text">Deepseek</span>
+                <span className="font-medium bg-gradient-to-r from-[#F9DC5C] to-[#E84855] text-transparent bg-clip-text">Deepseek</span>
               </div>
               <a
                 href="https://discord.gg/yourdiscord"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-gray-400 hover:text-gray-500 transition-colors"
+                className="text-[#93B7BE] hover:text-[#F9DC5C] transition-colors"
               >
                 <span className="sr-only">Discord</span>
                 <svg className="h-6 w-6" fill="currentColor" viewBox="0 0 24 24">
@@ -366,7 +327,49 @@ export default function Search() {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
           {/* 内容显示区域 */}
           <div className="lg:col-span-12">
-            <div className="bg-white rounded-xl shadow-sm border border-gray-100">
+            <div className="bg-[#1B1B2F]/90 backdrop-blur-sm rounded-xl shadow-lg border border-[#E84855]/10">
+              {/* 图表切换工具栏 */}
+              <div className="flex items-center justify-center p-4 border-b border-[#E84855]/10">
+                <div className="flex items-center space-x-2 bg-[#2D3047] rounded-lg p-2">
+                  <button
+                    onClick={() => {
+                      const currentIndex = contentTypes.findIndex(type => type.id === contentType);
+                      const newIndex = currentIndex > 0 ? currentIndex - 1 : contentTypes.length - 1;
+                      setContentType(contentTypes[newIndex].id);
+                    }}
+                    className="p-2 rounded-lg bg-[#93B7BE]/10 text-[#93B7BE] hover:bg-[#93B7BE]/20 transition-all"
+                  >
+                    ◀
+                  </button>
+                  
+                  {contentTypes.map(type => (
+                    <button
+                      key={type.id}
+                      onClick={() => handleTypeChange(type.id)}
+                      className={`p-3 rounded-lg transition-all ${
+                        contentType === type.id
+                          ? 'bg-[#E84855] text-white shadow-lg scale-110'
+                          : 'bg-[#93B7BE]/10 text-[#93B7BE] hover:bg-[#93B7BE]/20'
+                      }`}
+                      title={type.tooltip}
+                    >
+                      <span className="text-xl">{type.icon}</span>
+                    </button>
+                  ))}
+                  
+                  <button
+                    onClick={() => {
+                      const currentIndex = contentTypes.findIndex(type => type.id === contentType);
+                      const newIndex = currentIndex < contentTypes.length - 1 ? currentIndex + 1 : 0;
+                      setContentType(contentTypes[newIndex].id);
+                    }}
+                    className="p-2 rounded-lg bg-[#93B7BE]/10 text-[#93B7BE] hover:bg-[#93B7BE]/20 transition-all"
+                  >
+                    ▶
+                  </button>
+                </div>
+              </div>
+
               <div className="h-[calc(100vh-24rem)] overflow-auto p-6">
                 {loading && !streamedAnswer ? (
                   <div className="flex items-center justify-center h-full">
@@ -419,16 +422,16 @@ export default function Search() {
 
         {/* 底部搜索区域 */}
         <div className="fixed bottom-8 left-1/2 transform -translate-x-1/2 w-full max-w-2xl px-4">
-          <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-gray-100 p-4">
+          <div className="bg-[#1B1B2F]/90 backdrop-blur-sm rounded-2xl shadow-lg border border-[#E84855]/10 p-4">
             <div className="flex flex-col space-y-2">
               <div className="flex items-center justify-between px-2">
                 <div className="flex items-center space-x-4">
                   <div className="flex items-center space-x-2">
-                    <span className="text-sm text-gray-600">联网搜索</span>
+                    <span className="text-sm text-[#93B7BE]">联网搜索</span>
                     <button
                       onClick={() => setUseWebSearch(!useWebSearch)}
                       className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${
-                        useWebSearch ? 'bg-blue-500' : 'bg-gray-300'
+                        useWebSearch ? 'bg-[#E84855]' : 'bg-[#93B7BE]/30'
                       }`}
                     >
                       <span
@@ -439,11 +442,11 @@ export default function Search() {
                     </button>
                   </div>
                   <div className="flex items-center space-x-2">
-                    <span className="text-sm text-gray-600">深度思考</span>
+                    <span className="text-sm text-[#93B7BE]">深度思考</span>
                     <button
                       onClick={() => setUseDeepThinking(!useDeepThinking)}
                       className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${
-                        useDeepThinking ? 'bg-purple-500' : 'bg-gray-300'
+                        useDeepThinking ? 'bg-[#F9DC5C]' : 'bg-[#93B7BE]/30'
                       }`}
                     >
                       <span
@@ -463,11 +466,11 @@ export default function Search() {
                   onChange={handleInputChange}
                   onKeyPress={(e) => e.key === 'Enter' && handleSubmit(e)}
                   placeholder={defaultQuery}
-                  className="flex-1 p-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all bg-white/50"
+                  className="flex-1 p-3 border border-[#E84855]/20 rounded-xl focus:ring-2 focus:ring-[#E84855] focus:border-[#E84855] transition-all bg-[#2D3047]/50 text-white placeholder-[#93B7BE]"
                 />
                 <button
                   onClick={handleSubmit}
-                  className="bg-gradient-to-r from-blue-500 to-blue-600 text-white p-3 rounded-xl hover:from-blue-600 hover:to-blue-700 transition-all shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="bg-gradient-to-r from-[#E84855] to-[#F9DC5C] text-white p-3 rounded-xl hover:from-[#F9DC5C] hover:to-[#E84855] transition-all shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
                   disabled={loading}
                 >
                   <FontAwesomeIcon icon={faArrowRight} className="w-5 h-5" />
