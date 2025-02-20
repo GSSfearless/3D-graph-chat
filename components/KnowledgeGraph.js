@@ -26,14 +26,12 @@ const KnowledgeGraph = ({ data, onNodeClick, onEdgeClick, style = {} }) => {
       hover: {
         backgroundColor: '#818CF8',
         borderColor: '#4F46E5',
-        borderWidth: 3,
-        boxShadow: '0 0 10px rgba(99, 102, 241, 0.5)'
+        borderWidth: 3
       },
       selected: {
         backgroundColor: '#F43F5E',
         borderColor: '#BE123C',
-        borderWidth: 3,
-        boxShadow: '0 0 15px rgba(244, 63, 94, 0.6)'
+        borderWidth: 3
       }
     },
     edge: {
@@ -94,18 +92,16 @@ const KnowledgeGraph = ({ data, onNodeClick, onEdgeClick, style = {} }) => {
           }
         },
         {
-          selector: 'node:selected',
+          selector: ':selected',
           style: {
             'background-color': theme.node.selected.backgroundColor,
             'border-color': theme.node.selected.borderColor,
             'border-width': theme.node.selected.borderWidth,
-            'shadow-blur': '10px',
-            'shadow-color': theme.node.selected.backgroundColor,
-            'shadow-opacity': 0.6
+            'box-shadow': '0 0 10px rgba(244, 63, 94, 0.6)'
           }
         },
         {
-          selector: 'node:hover',
+          selector: '.hover',
           style: {
             'background-color': theme.node.hover.backgroundColor,
             'border-color': theme.node.hover.borderColor,
@@ -113,7 +109,7 @@ const KnowledgeGraph = ({ data, onNodeClick, onEdgeClick, style = {} }) => {
           }
         },
         {
-          selector: 'edge:hover',
+          selector: '.hover-edge',
           style: {
             'line-color': theme.edge.hover.lineColor,
             'width': theme.edge.hover.width,
@@ -129,9 +125,22 @@ const KnowledgeGraph = ({ data, onNodeClick, onEdgeClick, style = {} }) => {
         maxSimulationTime: 4000,
         nodeSpacing: 30,
         edgeLength: 200,
-        randomize: false
+        randomize: false,
+        infinite: true
       },
-      wheelSensitivity: 0.2
+      minZoom: 0.2,
+      maxZoom: 3,
+      zoomingEnabled: true,
+      userZoomingEnabled: true,
+      panningEnabled: true,
+      userPanningEnabled: true,
+      boxSelectionEnabled: false,
+      selectionType: 'single',
+      touchTapThreshold: 8,
+      desktopTapThreshold: 4,
+      autolock: false,
+      autoungrabify: false,
+      autounselectify: false
     });
 
     // 添加事件监听
@@ -139,6 +148,22 @@ const KnowledgeGraph = ({ data, onNodeClick, onEdgeClick, style = {} }) => {
       const node = evt.target;
       setSelectedNode(node.data());
       onNodeClick && onNodeClick(node.data());
+    });
+
+    cyRef.current.on('mouseover', 'node', (evt) => {
+      evt.target.addClass('hover');
+    });
+
+    cyRef.current.on('mouseout', 'node', (evt) => {
+      evt.target.removeClass('hover');
+    });
+
+    cyRef.current.on('mouseover', 'edge', (evt) => {
+      evt.target.addClass('hover-edge');
+    });
+
+    cyRef.current.on('mouseout', 'edge', (evt) => {
+      evt.target.removeClass('hover-edge');
     });
 
     cyRef.current.on('tap', 'edge', (evt) => {
@@ -157,7 +182,12 @@ const KnowledgeGraph = ({ data, onNodeClick, onEdgeClick, style = {} }) => {
               <p class="text-sm">${data.description || '暂无描述'}</p>
             </div>
           `;
-        }
+        },
+        placement: 'top',
+        trigger: 'manual',
+        hideOnClick: false,
+        multiple: true,
+        sticky: true
       });
     });
 
@@ -174,8 +204,27 @@ const KnowledgeGraph = ({ data, onNodeClick, onEdgeClick, style = {} }) => {
 
     cyRef.current.elements().remove();
     cyRef.current.add(data);
-    cyRef.current.layout({ name: 'cola' }).run();
-    cyRef.current.fit(50);
+    
+    // 使用 cola 布局
+    const layout = cyRef.current.layout({
+      name: 'cola',
+      animate: true,
+      refresh: 1,
+      maxSimulationTime: 4000,
+      nodeSpacing: 30,
+      edgeLength: 200,
+      randomize: false,
+      infinite: true,
+      flow: { axis: 'y', minSeparation: 50 }
+    });
+    
+    layout.run();
+
+    // 自动适应视图
+    setTimeout(() => {
+      cyRef.current.fit(50);
+      cyRef.current.center();
+    }, 500);
   }, [data]);
 
   // 工具提示辅助函数
@@ -184,7 +233,6 @@ const KnowledgeGraph = ({ data, onNodeClick, onEdgeClick, style = {} }) => {
     const dummyDomEle = document.createElement('div');
     const tip = tippy(dummyDomEle, {
       getReferenceClientRect: ref.getBoundingClientRect,
-      trigger: 'manual',
       ...options
     });
 
@@ -199,8 +247,8 @@ const KnowledgeGraph = ({ data, onNodeClick, onEdgeClick, style = {} }) => {
       <div ref={containerRef} style={{ width: '100%', height: '100%' }} />
       {selectedNode && (
         <div className="node-details-panel">
-          <h3>{selectedNode.label}</h3>
-          <p>{selectedNode.description}</p>
+          <h3 className="text-lg font-semibold mb-2">{selectedNode.label}</h3>
+          <p className="text-sm text-gray-600">{selectedNode.description || '暂无描述'}</p>
         </div>
       )}
       <style jsx>{`
@@ -209,7 +257,7 @@ const KnowledgeGraph = ({ data, onNodeClick, onEdgeClick, style = {} }) => {
           background: var(--neutral-50);
           border-radius: 12px;
           overflow: hidden;
-          box-shadow: var(--shadow-lg);
+          box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         }
         
         .node-details-panel {
@@ -220,7 +268,7 @@ const KnowledgeGraph = ({ data, onNodeClick, onEdgeClick, style = {} }) => {
           backdrop-filter: blur(10px);
           padding: 16px;
           border-radius: 8px;
-          box-shadow: var(--shadow-md);
+          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
           max-width: 300px;
           z-index: 1000;
         }
