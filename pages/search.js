@@ -1,6 +1,7 @@
 import { faArrowRight } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import dynamic from 'next/dynamic';
+import Head from 'next/head';
 import { useRouter } from 'next/router';
 import { useState, useCallback, useEffect, useRef } from 'react';
 import 'tailwindcss/tailwind.css';
@@ -171,6 +172,17 @@ export default function Search() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
+      <Head>
+        <title>Think Graph - 知识图谱可视化搜索引擎</title>
+        <meta name="description" content="基于知识图谱的智能搜索引擎，帮助您更直观地探索和理解知识连接。" />
+        <meta name="keywords" content="知识图谱,搜索引擎,可视化,AI搜索,深度思考" />
+        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+        <meta property="og:title" content="Think Graph - 知识图谱可视化搜索引擎" />
+        <meta property="og:description" content="基于知识图谱的智能搜索引擎，帮助您更直观地探索和理解知识连接。" />
+        <meta property="og:type" content="website" />
+        <meta property="og:url" content="https://www.think-graph.com" />
+        <link rel="icon" href="/favicon.ico" />
+      </Head>
       {/* 顶部导航栏 - 减小高度 */}
       <nav className="bg-white/80 backdrop-blur-sm sticky top-0 z-50 border-b border-gray-100 h-12">
         <div className="max-w-7xl mx-auto px-4">
