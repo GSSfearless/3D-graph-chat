@@ -199,17 +199,24 @@ const ContentViewer = ({ content, type }) => {
           );
         }
         return (
-          <div className="w-full h-full flex items-center justify-center p-4">
-            <div
-              ref={mermaidRef}
-              className="mermaid-diagram w-full mx-auto bg-white overflow-auto"
-              style={{ 
-                height: 'calc(100vh - 16rem)',
-                minWidth: '800px',
-                minHeight: '600px'
-              }}
-              dangerouslySetInnerHTML={mermaidSvg ? { __html: mermaidSvg } : undefined}
-            />
+          <div className="w-full h-full relative">
+            <div className="absolute inset-0 flex items-center justify-center overflow-auto p-4">
+              <div className="flex items-center justify-center min-w-full min-h-full">
+                <div
+                  ref={mermaidRef}
+                  className="mermaid-diagram bg-white"
+                  style={{ 
+                    width: 'fit-content',
+                    minWidth: '80%',
+                    maxWidth: '95%',
+                    height: 'fit-content',
+                    minHeight: '80%',
+                    maxHeight: '95%'
+                  }}
+                  dangerouslySetInnerHTML={mermaidSvg ? { __html: mermaidSvg } : undefined}
+                />
+              </div>
+            </div>
           </div>
         );
       default:
