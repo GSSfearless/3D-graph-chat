@@ -200,11 +200,11 @@ const ContentViewer = ({ content, type }) => {
           );
         }
         return (
-          <div className="w-full h-full flex items-center justify-center">
+          <div className="w-full h-full flex items-center justify-center p-4">
             <div
               ref={mermaidRef}
-              className="mermaid-diagram w-full h-full mx-auto bg-white"
-              style={{ minHeight: '600px' }}
+              className="mermaid-diagram w-full h-full max-w-5xl mx-auto bg-white rounded-lg shadow-sm border border-gray-100 p-6 overflow-auto"
+              style={{ minHeight: '400px', maxHeight: '600px' }}
               dangerouslySetInnerHTML={mermaidSvg ? { __html: mermaidSvg } : undefined}
             />
           </div>
@@ -215,7 +215,7 @@ const ContentViewer = ({ content, type }) => {
   };
 
   return (
-    <div className="w-full h-full overflow-auto">
+    <div className="w-full h-full overflow-auto p-4 bg-white rounded-lg shadow">
       {renderContent()}
     </div>
   );
