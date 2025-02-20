@@ -70,22 +70,30 @@ export class DiagramGenerator {
       .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')  // 将[文本](链接)转换为文本
       .replace(/\*\*([^*]+)\*\*/g, '$1')  // 移除加粗符号
       .replace(/__([^_]+)__/g, '$1')  // 移除下划线强调
-      .replace(/^\d+\.\s+/, '')  // 移除数字编号
-      .replace(/^[-•]\s+/, '');  // 移除列表符号
+      .replace(/^[-•]\s+/, '')  // 移除列表符号
+      .replace(/^(\d+)\.\s*(.+)$/, '$1. $2');  // 保留数字编号，但确保格式统一
   }
 
   // 智能截断文本的辅助方法
   static truncateText(text, maxLength = 40) {
     if (text.length <= maxLength) return text;
     
+    // 检查是否包含数字编号
+    const hasNumbering = /^\d+\.\s/.test(text);
+    const actualText = hasNumbering ? text.replace(/^\d+\.\s/, '') : text;
+    const prefix = hasNumbering ? text.match(/^\d+\.\s/)[0] : '';
+    
+    // 计算实际可用长度（考虑编号的长度）
+    const availableLength = maxLength - prefix.length;
+    
     // 尝试在标点符号处截断
-    const punctuationMatch = text.slice(0, maxLength + 10).match(/[，。；：！？,;:!?]/);
+    const punctuationMatch = actualText.slice(0, availableLength + 10).match(/[，。；：！？,;:!?]/);
     if (punctuationMatch) {
-      return text.slice(0, punctuationMatch.index + 1);
+      return prefix + actualText.slice(0, punctuationMatch.index + 1);
     }
     
     // 如果没有标点符号，在词语边界截断
-    return text.slice(0, maxLength) + '...';
+    return prefix + actualText.slice(0, availableLength) + '...';
   }
 
   static generateFlowchart(headings, keyPoints) {
@@ -94,6 +102,7 @@ export class DiagramGenerator {
     // 使用标题创建主要节点
     const nodes = headings.map((h, i) => {
       const id = `N${i}`;
+      // 对于标题节点，保持数字编号的格式
       const label = this.truncateText(h.text);
       return { id, label, level: h.level };
     });
@@ -140,17 +149,25 @@ export class DiagramGenerator {
 
     // 添加关键点作为叶子节点
     const relevantPoints = keyPoints
-      .filter(point => !nodes.some(n => n.label.includes(point)))
+      .filter(point => !nodes.some(n => {
+        // 移除数字编号后再比较
+        const normalizedPoint = point.replace(/^\d+\.\s*/, '');
+        const normalizedLabel = n.label.replace(/^\d+\.\s*/, '');
+        return normalizedLabel.includes(normalizedPoint) || 
+               normalizedPoint.includes(normalizedLabel);
+      }))
       .slice(0, 5);
 
     relevantPoints.forEach((point, i) => {
       const label = this.truncateText(point);
       const id = `K${i}`;
-      // 将关键点连接到最相关的标题节点
-      const parentNode = nodes.find(n => 
-        point.toLowerCase().includes(n.label.toLowerCase()) ||
-        n.label.toLowerCase().includes(point.toLowerCase())
-      ) || nodes[nodes.length - 1];
+      // 将关键点连接到最相关的标题节点，考虑数字编号
+      const parentNode = nodes.find(n => {
+        const normalizedPoint = point.replace(/^\d+\.\s*/, '');
+        const normalizedLabel = n.label.replace(/^\d+\.\s*/, '');
+        return normalizedPoint.toLowerCase().includes(normalizedLabel.toLowerCase()) ||
+               normalizedLabel.toLowerCase().includes(normalizedPoint.toLowerCase());
+      }) || nodes[nodes.length - 1];
       
       flowchart += `    ${parentNode.id} --> ${id}["${label}"]\n`;
     });

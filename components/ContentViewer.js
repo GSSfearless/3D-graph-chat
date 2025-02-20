@@ -30,14 +30,14 @@ const ContentViewer = ({ content, type }) => {
         layoutDirection: 'LR'
       },
       mindmap: {
-        padding: 10,
+        padding: 16,
         useMaxWidth: true,
-        nodeSpacing: 40,
-        rankSpacing: 60,
-        diagramPadding: 10,
+        nodeSpacing: 80,
+        rankSpacing: 100,
+        diagramPadding: 20,
         defaultRenderer: 'elk',
-        curve: 'monotoneX',
-        levelDistance: 80
+        curve: 'basis',
+        levelDistance: 120
       },
       themeVariables: {
         fontFamily: 'system-ui, -apple-system, sans-serif',
@@ -58,11 +58,11 @@ const ContentViewer = ({ content, type }) => {
         clusterBkg: '#f1f5f9',
         clusterBorder: '#e2e8f0',
         // 思维导图特定样式
-        mindmapNode: '#f0f9ff',
+        mindmapNode: 'transparent',
         mindmapNodeText: '#0f172a',
-        mindmapLine: '#93c5fd',
-        mindmapOutline: '#3b82f6',
-        mindmapBorder: '#bfdbfe'
+        mindmapLine: ['#3b82f6', '#7c3aed', '#059669', '#ea580c', '#0284c7'],
+        mindmapOutline: 'none',
+        mindmapBorder: 'none'
       }
     });
   }, []);
