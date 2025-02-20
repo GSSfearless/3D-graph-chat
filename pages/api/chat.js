@@ -15,48 +15,9 @@ export default async function handler(req, res) {
 
     const systemPrompt = useDeepThinking 
       ? `你现在处于深度思考模式。
- 在回答的最后生成两个Mermaid图表，格式如下：
-
-\`\`\`mermaid
-graph LR
-    A[概念1] --> B[概念2]
-    B --> C[概念3]
-    A --> D[概念4]
-    D --> C
-\`\`\`
-
-\`\`\`mermaid
-mindmap
-  root((主题))
-    思考1
-      要点1
-      要点2
-    思考2
-      要点3
-      要点4
-\`\`\`
 `
-      : `
-在回答的最后生成两个Mermaid图表，格式如下：
+      : `你是一个知识助手。
 
-\`\`\`mermaid
-graph LR
-    A[概念1] --> B[概念2]
-    B --> C[概念3]
-    A --> D[概念4]
-    D --> C
-\`\`\`
-
-\`\`\`mermaid
-mindmap
-  root((主题))
-    思考1
-      要点1
-      要点2
-    思考2
-      要点3
-      要点4
-\`\`\`
 `;
 
     // 设置响应头

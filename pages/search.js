@@ -7,6 +7,7 @@ import 'tailwindcss/tailwind.css';
 import '../styles/globals.css';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import { DiagramGenerator } from '../utils/diagram-generator';
 
 const ContentViewer = dynamic(() => import('../components/ContentViewer'), {
   ssr: false,
@@ -169,13 +170,11 @@ export default function Search() {
                     if (parsed.content) {
                       const decodedContent = decodeURIComponent(parsed.content);
                       answer += decodedContent;
-                      // 更新显示内容时过滤Mermaid代码块
-                      setStreamedAnswer(filterMermaidBlocks(answer));
+                      // 处理增量内容
+                      setStreamedAnswer(processAnswer(answer));
                       tokenCount++;
                     }
                     break;
-                  case 'answer':
-                  case 'content':
                   case 'complete':
                     console.log('收到 complete 信号');
                     if (parsed.content) {
@@ -183,39 +182,9 @@ export default function Search() {
                       const completeAnswer = decodeURIComponent(parsed.content);
                       console.log('回答长度:', completeAnswer.length);
                       
-                      // 更新回答内容，过滤掉Mermaid代码块
-                      answer = filterMermaidBlocks(completeAnswer);
-                      setStreamedAnswer(answer);
-                    }
-                    break;
-                  case 'flowchart':
-                    console.log('收到流程图数据');
-                    if (parsed.content) {
-                      const flowchartCode = decodeURIComponent(parsed.content);
-                      console.log('流程图代码:', flowchartCode);
-                      if (flowchartCode.trim()) {
-                        console.log('更新流程图内容');
-                        setMermaidContent(prev => {
-                          const newContent = { ...prev, flowchart: flowchartCode };
-                          console.log('新的图表内容:', newContent);
-                          return newContent;
-                        });
-                      }
-                    }
-                    break;
-                  case 'mindmap':
-                    console.log('收到思维导图数据');
-                    if (parsed.content) {
-                      const mindmapCode = decodeURIComponent(parsed.content);
-                      console.log('思维导图代码:', mindmapCode);
-                      if (mindmapCode.trim()) {
-                        console.log('更新思维导图内容');
-                        setMermaidContent(prev => {
-                          const newContent = { ...prev, mindmap: mindmapCode };
-                          console.log('新的图表内容:', newContent);
-                          return newContent;
-                        });
-                      }
+                      // 处理完整回答
+                      answer = completeAnswer;
+                      setStreamedAnswer(processAnswer(answer));
                     }
                     break;
                   case 'end':
@@ -251,6 +220,21 @@ export default function Search() {
   const filterMermaidBlocks = (text) => {
     if (!text) return '';
     return text.replace(/```mermaid[\s\S]*?```/g, '').trim();
+  };
+
+  // 在处理回答内容时自动生成图表
+  const processAnswer = (answer) => {
+    // 生成图表
+    const { flowchart, mindmap } = DiagramGenerator.parseMarkdown(answer);
+    
+    // 更新状态
+    setMermaidContent({
+      flowchart,
+      mindmap
+    });
+    
+    // 返回过滤后的文本
+    return filterMermaidBlocks(answer);
   };
 
   return (
