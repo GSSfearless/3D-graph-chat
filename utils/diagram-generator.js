@@ -464,6 +464,7 @@ export class DiagramGenerator {
 
     let comparison = 'graph LR\n';
     comparison += '    subgraph 对比关系\n';
+    comparison += '    direction LR\n';  // 确保子图中的方向是从左到右
 
     // 创建比较节点
     comparisons.slice(0, 4).forEach((comp, i) => {
@@ -471,14 +472,22 @@ export class DiagramGenerator {
       const parts = comp.split(/[，。；]/);
       
       if (parts.length > 1) {
-        const left = this.truncateText(parts[0]);
-        const right = this.truncateText(parts[1]);
-        comparison += `    L${id}[${left}] <--> R${id}[${right}]\n`;
-        // 添加比较说明
-        comparison += `    Note${id}[/"${this.truncateText(comp)}"/]\n`;
-        comparison += `    L${id} --- Note${id} --- R${id}\n`;
+        // 确保文本不为空且被正确转义
+        const left = this.truncateText(parts[0]).replace(/[[\]]/g, '');
+        const right = this.truncateText(parts[1]).replace(/[[\]]/g, '');
+        const note = this.truncateText(comp).replace(/[[\]]/g, '');
+
+        // 使用不同的节点形状和样式
+        comparison += `    A${id}["${left}"] -->|对比| B${id}["${right}"]\n`;
+        // 添加说明节点，使用圆角矩形
+        comparison += `    Note${id}["${note}"]\n`;
+        // 使用虚线连接说明节点
+        comparison += `    A${id} -.-> Note${id}\n`;
+        comparison += `    B${id} -.-> Note${id}\n`;
       } else {
-        comparison += `    ${id}[${this.truncateText(comp)}]\n`;
+        // 如果只有一个部分，创建单个节点
+        const text = this.truncateText(comp).replace(/[[\]]/g, '');
+        comparison += `    ${id}["${text}"]\n`;
       }
     });
 
