@@ -41,25 +41,25 @@ const ContentViewer = ({ content, type }) => {
       themeVariables: {
         fontFamily: 'system-ui, -apple-system, sans-serif',
         fontSize: '16px',
-        primaryColor: '#3b82f6',
-        primaryTextColor: '#1e293b',
-        primaryBorderColor: '#3b82f6',
+        primaryColor: '#64748b',
+        primaryTextColor: '#334155',
+        primaryBorderColor: '#64748b',
         lineColor: '#94a3b8',
-        secondaryColor: '#7c3aed',
-        tertiaryColor: '#059669',
+        secondaryColor: '#64748b',
+        tertiaryColor: '#64748b',
         // 流程图特定样式
         nodeBorder: '#e2e8f0',
-        nodeTextColor: '#1e293b',
+        nodeTextColor: '#334155',
         mainBkg: '#ffffff',
         nodeBkg: '#f8fafc',
         // 连接线样式
         edgeLabelBackground: '#ffffff',
         clusterBkg: '#f1f5f9',
         clusterBorder: '#e2e8f0',
-        // 思维导图特定样式 - 采用简洁的蓝色系
+        // 思维导图特定样式 - 采用极简灰色系
         mindmapNode: 'transparent',
-        mindmapNodeText: '#334155',  // 深灰蓝色文字
-        mindmapLine: ['#3b82f6', '#60a5fa', '#93c5fd', '#bfdbfe', '#dbeafe'],  // 蓝色渐变
+        mindmapNodeText: '#334155',  // 深灰色文字
+        mindmapLine: '#94a3b8',  // 统一使用一种柔和的灰色
         mindmapOutline: 'none',
         mindmapBorder: 'none'
       }
@@ -98,35 +98,6 @@ const ContentViewer = ({ content, type }) => {
           try {
             // 尝试渲染
             console.log('调用mermaid.render，内容:', content);
-            await mermaid.initialize({
-              startOnLoad: true,
-              theme: 'default',
-              securityLevel: 'loose',
-              logLevel: 'debug',
-              flowchart: {
-                useMaxWidth: true,
-                htmlLabels: true,
-                curve: 'basis',
-                defaultRenderer: 'dagre-d3',
-                padding: 20,
-                nodeSpacing: 50,
-                rankSpacing: 50,
-                diagramPadding: 8,
-                labelBackgroundColor: '#f0f7ff',
-                nodeAlignment: 'center'
-              },
-              mindmap: {
-                padding: 16,
-                useMaxWidth: true,
-                nodeSpacing: 60,
-                rankSpacing: 80,
-                diagramPadding: 10,
-                defaultRenderer: 'dagre-d3',
-                curve: 'bump',
-                levelDistance: 100
-              }
-            });
-            
             const { svg } = await mermaid.render(id, content);
             console.log('Mermaid渲染成功，SVG长度:', svg.length);
             setMermaidSvg(svg);
