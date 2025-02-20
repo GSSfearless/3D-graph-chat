@@ -289,28 +289,28 @@ export default function Search() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#1B1B2F] to-[#93B7BE]">
+    <div className="min-h-screen bg-white">
       {/* 顶部导航栏 */}
-      <nav className="bg-[#1B1B2F]/80 backdrop-blur-sm sticky top-0 z-50 border-b border-[#E84855]/10">
+      <nav className="bg-white/80 backdrop-blur-sm sticky top-0 z-50 border-b border-[#023E8A]/10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-16">
             <div className="flex items-center">
               <div className="flex-shrink-0 flex items-center">
                 <a href="/" className="flex items-center space-x-2">
-                  <span className="text-2xl font-bold bg-gradient-to-r from-[#E84855] to-[#F9DC5C] text-transparent bg-clip-text">Think Graph</span>
+                  <span className="text-2xl font-bold bg-gradient-to-r from-[#023E8A] to-[#0096C7] text-transparent bg-clip-text">Think Graph</span>
                 </a>
               </div>
             </div>
             <div className="flex items-center space-x-4">
-              <div className="flex items-center space-x-2 text-sm text-[#93B7BE]">
+              <div className="flex items-center space-x-2 text-sm text-[#023E8A]">
                 <span className="hidden md:inline">Powered by</span>
-                <span className="font-medium bg-gradient-to-r from-[#F9DC5C] to-[#E84855] text-transparent bg-clip-text">Deepseek</span>
+                <span className="font-medium bg-gradient-to-r from-[#023E8A] to-[#0096C7] text-transparent bg-clip-text">Deepseek</span>
               </div>
               <a
                 href="https://discord.gg/yourdiscord"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-[#93B7BE] hover:text-[#F9DC5C] transition-colors"
+                className="text-[#023E8A] hover:text-[#0096C7] transition-colors"
               >
                 <span className="sr-only">Discord</span>
                 <svg className="h-6 w-6" fill="currentColor" viewBox="0 0 24 24">
@@ -327,17 +327,17 @@ export default function Search() {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
           {/* 内容显示区域 */}
           <div className="lg:col-span-12">
-            <div className="bg-[#1B1B2F]/90 backdrop-blur-sm rounded-xl shadow-lg border border-[#E84855]/10">
+            <div className="bg-white shadow-lg border border-[#023E8A]/10 rounded-xl">
               {/* 图表切换工具栏 */}
-              <div className="flex items-center justify-center p-4 border-b border-[#E84855]/10">
-                <div className="flex items-center space-x-2 bg-[#2D3047] rounded-lg p-2">
+              <div className="flex items-center justify-center p-4 border-b border-[#023E8A]/10">
+                <div className="flex items-center space-x-2 bg-[#F8F9FA] rounded-lg p-2">
                   <button
                     onClick={() => {
                       const currentIndex = contentTypes.findIndex(type => type.id === contentType);
                       const newIndex = currentIndex > 0 ? currentIndex - 1 : contentTypes.length - 1;
                       setContentType(contentTypes[newIndex].id);
                     }}
-                    className="p-2 rounded-lg bg-[#93B7BE]/10 text-[#93B7BE] hover:bg-[#93B7BE]/20 transition-all"
+                    className="p-2 rounded-lg bg-[#023E8A]/10 text-[#023E8A] hover:bg-[#023E8A]/20 transition-all"
                   >
                     ◀
                   </button>
@@ -348,8 +348,8 @@ export default function Search() {
                       onClick={() => handleTypeChange(type.id)}
                       className={`p-3 rounded-lg transition-all ${
                         contentType === type.id
-                          ? 'bg-[#E84855] text-white shadow-lg scale-110'
-                          : 'bg-[#93B7BE]/10 text-[#93B7BE] hover:bg-[#93B7BE]/20'
+                          ? 'bg-[#023E8A] text-white shadow-lg scale-110'
+                          : 'bg-[#023E8A]/10 text-[#023E8A] hover:bg-[#023E8A]/20'
                       }`}
                       title={type.tooltip}
                     >
@@ -363,7 +363,7 @@ export default function Search() {
                       const newIndex = currentIndex < contentTypes.length - 1 ? currentIndex + 1 : 0;
                       setContentType(contentTypes[newIndex].id);
                     }}
-                    className="p-2 rounded-lg bg-[#93B7BE]/10 text-[#93B7BE] hover:bg-[#93B7BE]/20 transition-all"
+                    className="p-2 rounded-lg bg-[#023E8A]/10 text-[#023E8A] hover:bg-[#023E8A]/20 transition-all"
                   >
                     ▶
                   </button>
@@ -377,14 +377,14 @@ export default function Search() {
                   </div>
                 ) : streamedAnswer ? (
                   contentType === 'answer' ? (
-                    <div className="prose max-w-none text-[#F8F9FA]">
+                    <div className="prose max-w-none text-[#023E8A]">
                       {useDeepThinking && reasoningProcess && (
-                        <div className="mb-6 p-4 bg-[#2D3047]/50 rounded-lg border border-[#E84855]/20">
+                        <div className="mb-6 p-4 bg-[#F8F9FA] rounded-lg border border-[#023E8A]/20">
                           <div className="flex items-center space-x-2 mb-2">
-                            <h3 className="text-lg font-semibold text-[#F9DC5C]">💭 思考过程</h3>
-                            <span className="text-sm text-[#93B7BE]">(DeepSeek R1)</span>
+                            <h3 className="text-lg font-semibold text-[#023E8A]">💭 思考过程</h3>
+                            <span className="text-sm text-[#0096C7]">(DeepSeek R1)</span>
                           </div>
-                          <div className="prose prose-invert max-w-none">
+                          <div className="prose max-w-none">
                             <ReactMarkdown remarkPlugins={[remarkGfm]}>
                               {filterMermaidBlocks(reasoningProcess)}
                             </ReactMarkdown>
@@ -412,7 +412,7 @@ export default function Search() {
                   )
                 ) : (
                   <div className="flex items-center justify-center h-full">
-                    <p className="text-[#93B7BE]">在下方输入问题开始查询</p>
+                    <p className="text-[#023E8A]">在下方输入问题开始查询</p>
                   </div>
                 )}
               </div>
@@ -422,16 +422,16 @@ export default function Search() {
 
         {/* 底部搜索区域 */}
         <div className="fixed bottom-8 left-1/2 transform -translate-x-1/2 w-full max-w-2xl px-4">
-          <div className="bg-[#1B1B2F]/90 backdrop-blur-sm rounded-2xl shadow-lg border border-[#E84855]/10 p-4">
+          <div className="bg-white/90 backdrop-blur-sm rounded-2xl shadow-lg border border-[#023E8A]/10 p-4">
             <div className="flex flex-col space-y-2">
               <div className="flex items-center justify-between px-2">
                 <div className="flex items-center space-x-4">
                   <div className="flex items-center space-x-2">
-                    <span className="text-sm text-[#93B7BE]">联网搜索</span>
+                    <span className="text-sm text-[#023E8A]">联网搜索</span>
                     <button
                       onClick={() => setUseWebSearch(!useWebSearch)}
                       className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${
-                        useWebSearch ? 'bg-[#E84855]' : 'bg-[#93B7BE]/30'
+                        useWebSearch ? 'bg-[#023E8A]' : 'bg-[#023E8A]/30'
                       }`}
                     >
                       <span
@@ -442,11 +442,11 @@ export default function Search() {
                     </button>
                   </div>
                   <div className="flex items-center space-x-2">
-                    <span className="text-sm text-[#93B7BE]">深度思考</span>
+                    <span className="text-sm text-[#023E8A]">深度思考</span>
                     <button
                       onClick={() => setUseDeepThinking(!useDeepThinking)}
                       className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${
-                        useDeepThinking ? 'bg-[#F9DC5C]' : 'bg-[#93B7BE]/30'
+                        useDeepThinking ? 'bg-[#023E8A]' : 'bg-[#023E8A]/30'
                       }`}
                     >
                       <span
@@ -466,11 +466,11 @@ export default function Search() {
                   onChange={handleInputChange}
                   onKeyPress={(e) => e.key === 'Enter' && handleSubmit(e)}
                   placeholder={defaultQuery}
-                  className="flex-1 p-3 border border-[#E84855]/20 rounded-xl focus:ring-2 focus:ring-[#E84855] focus:border-[#E84855] transition-all bg-[#2D3047]/50 text-white placeholder-[#93B7BE]"
+                  className="flex-1 p-3 border border-[#023E8A]/20 rounded-xl focus:ring-2 focus:ring-[#023E8A] focus:border-[#023E8A] transition-all bg-white text-[#023E8A] placeholder-[#0096C7]"
                 />
                 <button
                   onClick={handleSubmit}
-                  className="bg-gradient-to-r from-[#E84855] to-[#F9DC5C] text-white p-3 rounded-xl hover:from-[#F9DC5C] hover:to-[#E84855] transition-all shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="bg-gradient-to-r from-[#023E8A] to-[#0096C7] text-white p-3 rounded-xl hover:from-[#0096C7] hover:to-[#023E8A] transition-all shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
                   disabled={loading}
                 >
                   <FontAwesomeIcon icon={faArrowRight} className="w-5 h-5" />
