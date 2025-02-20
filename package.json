@@ -4,9 +4,10 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "npx update-browserslist-db@latest && next build",
+    "build": "npx update-browserslist-db@latest && tsc --noEmit && next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "postinstall": "npx typescript@latest --init"
   },
   "dependencies": {
     "@fortawesome/fontawesome-svg-core": "^6.6.0",
