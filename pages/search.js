@@ -8,6 +8,8 @@ import '../styles/globals.css';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { DiagramGenerator } from '../utils/diagram-generator';
+import EnhancedChart from '../components/EnhancedChart';
+import { processSearchResponse } from '../utils/data-processor';
 
 const ContentViewer = dynamic(() => import('../components/ContentViewer'), {
   ssr: false,
@@ -19,7 +21,7 @@ export default function Search() {
   const { q } = router.query;
 
   const [query, setQuery] = useState('');
-  const [searchResults, setSearchResults] = useState([]);
+  const [searchResults, setSearchResults] = useState(null);
   const [loading, setLoading] = useState(false);
   const [initialLoad, setInitialLoad] = useState(true);
   const [streamedAnswer, setStreamedAnswer] = useState('');
@@ -37,6 +39,8 @@ export default function Search() {
   const [useWebSearch, setUseWebSearch] = useState(false);
   const [useDeepThinking, setUseDeepThinking] = useState(false);
   const [reasoningProcess, setReasoningProcess] = useState('');
+  const [selectedChartType, setSelectedChartType] = useState('tagSphere');
+  const searchInputRef = useRef(null);
 
   const defaultQuery = "What is the answer to life, the universe, and everything?";
 
@@ -51,7 +55,7 @@ export default function Search() {
     setLoading(true);
     setStreamedAnswer('');
     setMermaidContent({ flowchart: '', mindmap: '', fishbone: '', orgchart: '', timeline: '', conceptmap: '', comparison: '', bracket: '' });
-    setSearchResults([]);
+    setSearchResults(null);
     setReasoningProcess('');
 
     const logApiStatus = (api, status, details = '') => {
@@ -238,6 +242,24 @@ export default function Search() {
     
     // 返回过滤后的文本
     return filterMermaidBlocks(answer);
+  };
+
+  const handleInputChange = (e) => {
+    setQuery(e.target.value);
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (query.trim()) {
+      router.push({
+        pathname: '/search',
+        query: { q: query }
+      });
+    }
+  };
+
+  const handleChartTypeChange = (type) => {
+    setSelectedChartType(type);
   };
 
   return (
@@ -442,17 +464,16 @@ export default function Search() {
               </div>
               <div className="flex items-center space-x-2">
                 <input
+                  ref={searchInputRef}
                   type="text"
-                  id="search-input"
-                  name="search-input"
                   value={query}
-                  onChange={(e) => setQuery(e.target.value)}
-                  onKeyPress={(e) => e.key === 'Enter' && handleSearch(query)}
+                  onChange={handleInputChange}
+                  onKeyPress={(e) => e.key === 'Enter' && handleSubmit(e)}
                   placeholder={defaultQuery}
                   className="flex-1 p-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all bg-white/50"
                 />
                 <button
-                  onClick={() => handleSearch(query)}
+                  onClick={handleSubmit}
                   className="bg-gradient-to-r from-blue-500 to-blue-600 text-white p-3 rounded-xl hover:from-blue-600 hover:to-blue-700 transition-all shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
                   disabled={loading}
                 >
@@ -463,6 +484,16 @@ export default function Search() {
           </div>
         </div>
       </main>
+
+      <div className="visualization-container">
+        {searchResults && (
+          <EnhancedChart
+            chartData={searchResults}
+            initialType={selectedChartType}
+            onChartUpdate={(data) => console.log('图表更新:', data)}
+          />
+        )}
+      </div>
     </div>
   );
 }
