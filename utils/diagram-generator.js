@@ -7,7 +7,8 @@ export class DiagramGenerator {
       fishbone: '',
       orgchart: '',
       timeline: '',
-      treechart: '',
+      conceptmap: '',
+      comparison: '',
       bracket: ''
     };
 
@@ -89,13 +90,43 @@ export class DiagramGenerator {
       .filter(s => s.includes('结果') || s.includes('影响') || s.includes('所以'))
       .map(s => this.cleanText(s));
 
+    // 提取概念关系
+    const concepts = sentences
+      .filter(s => {
+        const cleanSentence = s.trim().toLowerCase();
+        return (
+          cleanSentence.includes('是') ||
+          cleanSentence.includes('指') ||
+          cleanSentence.includes('表示') ||
+          cleanSentence.includes('定义') ||
+          cleanSentence.includes('概念')
+        );
+      })
+      .map(s => this.cleanText(s));
+
+    // 提取比较关系
+    const comparisons = sentences
+      .filter(s => {
+        const cleanSentence = s.trim().toLowerCase();
+        return (
+          cleanSentence.includes('相比') ||
+          cleanSentence.includes('不同') ||
+          cleanSentence.includes('区别') ||
+          cleanSentence.includes('对比') ||
+          cleanSentence.includes('而') ||
+          cleanSentence.includes('但是')
+        );
+      })
+      .map(s => this.cleanText(s));
+
     return {
       flowchart: this.generateFlowchart(headings, keyPoints),
       mindmap: this.generateMindmap(headings, listItems),
       fishbone: this.generateFishbone(causes, effects),
       orgchart: this.generateOrgChart(headings),
       timeline: this.generateTimeline(timePoints),
-      treechart: this.generateTreeChart(headings),
+      conceptmap: this.generateConceptMap(concepts),
+      comparison: this.generateComparison(comparisons),
       bracket: this.generateBracket(headings, listItems)
     };
   }
@@ -393,5 +424,65 @@ export class DiagramGenerator {
     }
 
     return organized;
+  }
+
+  // 生成概念图
+  static generateConceptMap(concepts) {
+    if (concepts.length === 0) return '';
+
+    let conceptmap = 'graph TB\n';
+    conceptmap += '    MainConcept((核心概念))\n';
+
+    // 创建概念节点
+    concepts.slice(0, 6).forEach((concept, i) => {
+      const id = `C${i}`;
+      // 使用不同的形状和样式来表示概念
+      if (concept.includes('定义')) {
+        conceptmap += `    ${id}[/"${this.truncateText(concept)}"/]\n`;
+      } else if (concept.includes('特点')) {
+        conceptmap += `    ${id}{{${this.truncateText(concept)}}}\n`;
+      } else {
+        conceptmap += `    ${id}([${this.truncateText(concept)}])\n`;
+      }
+      
+      // 添加连接线，使用不同的线型和标签
+      if (concept.includes('是')) {
+        conceptmap += `    MainConcept ==>|是| ${id}\n`;
+      } else if (concept.includes('包含')) {
+        conceptmap += `    MainConcept -.->|包含| ${id}\n`;
+      } else {
+        conceptmap += `    MainConcept -->|关联| ${id}\n`;
+      }
+    });
+
+    return conceptmap;
+  }
+
+  // 生成比较图
+  static generateComparison(comparisons) {
+    if (comparisons.length === 0) return '';
+
+    let comparison = 'graph LR\n';
+    comparison += '    subgraph 对比关系\n';
+
+    // 创建比较节点
+    comparisons.slice(0, 4).forEach((comp, i) => {
+      const id = `Comp${i}`;
+      const parts = comp.split(/[，。；]/);
+      
+      if (parts.length > 1) {
+        const left = this.truncateText(parts[0]);
+        const right = this.truncateText(parts[1]);
+        comparison += `    L${id}[${left}] <--> R${id}[${right}]\n`;
+        // 添加比较说明
+        comparison += `    Note${id}[/"${this.truncateText(comp)}"/]\n`;
+        comparison += `    L${id} --- Note${id} --- R${id}\n`;
+      } else {
+        comparison += `    ${id}[${this.truncateText(comp)}]\n`;
+      }
+    });
+
+    comparison += '    end\n';
+    return comparison;
   }
 } 

@@ -30,7 +30,8 @@ export default function Search() {
     fishbone: '',
     orgchart: '',
     timeline: '',
-    treechart: '',
+    conceptmap: '',
+    comparison: '',
     bracket: ''
   });
   const [useWebSearch, setUseWebSearch] = useState(false);
@@ -49,7 +50,7 @@ export default function Search() {
     
     setLoading(true);
     setStreamedAnswer('');
-    setMermaidContent({ flowchart: '', mindmap: '', fishbone: '', orgchart: '', timeline: '', treechart: '', bracket: '' });
+    setMermaidContent({ flowchart: '', mindmap: '', fishbone: '', orgchart: '', timeline: '', conceptmap: '', comparison: '', bracket: '' });
     setSearchResults([]);
     setReasoningProcess('');
 
@@ -292,16 +293,6 @@ export default function Search() {
                 </button>
                 <button
                   className={`px-4 py-2 rounded-lg transition-all ${
-                    contentType === 'flowchart'
-                      ? 'bg-blue-500 text-white shadow-md hover:bg-blue-600'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                  }`}
-                  onClick={() => setContentType('flowchart')}
-                >
-                  流程图
-                </button>
-                <button
-                  className={`px-4 py-2 rounded-lg transition-all ${
                     contentType === 'mindmap'
                       ? 'bg-blue-500 text-white shadow-md hover:bg-blue-600'
                       : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
@@ -312,28 +303,28 @@ export default function Search() {
                 </button>
                 <button
                   className={`px-4 py-2 rounded-lg transition-all ${
-                    contentType === 'fishbone'
-                      ? 'bg-blue-500 text-white shadow-md hover:bg-blue-600'
+                    contentType === 'conceptmap'
+                      ? 'bg-purple-500 text-white shadow-md hover:bg-purple-600'
                       : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                   }`}
-                  onClick={() => setContentType('fishbone')}
+                  onClick={() => setContentType('conceptmap')}
                 >
-                  鱼骨图
+                  概念图
                 </button>
                 <button
                   className={`px-4 py-2 rounded-lg transition-all ${
-                    contentType === 'orgchart'
-                      ? 'bg-blue-500 text-white shadow-md hover:bg-blue-600'
+                    contentType === 'comparison'
+                      ? 'bg-indigo-500 text-white shadow-md hover:bg-indigo-600'
                       : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                   }`}
-                  onClick={() => setContentType('orgchart')}
+                  onClick={() => setContentType('comparison')}
                 >
-                  组织结构图
+                  对比图
                 </button>
                 <button
                   className={`px-4 py-2 rounded-lg transition-all ${
                     contentType === 'timeline'
-                      ? 'bg-blue-500 text-white shadow-md hover:bg-blue-600'
+                      ? 'bg-pink-500 text-white shadow-md hover:bg-pink-600'
                       : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                   }`}
                   onClick={() => setContentType('timeline')}
@@ -342,23 +333,23 @@ export default function Search() {
                 </button>
                 <button
                   className={`px-4 py-2 rounded-lg transition-all ${
-                    contentType === 'treechart'
-                      ? 'bg-blue-500 text-white shadow-md hover:bg-blue-600'
+                    contentType === 'orgchart'
+                      ? 'bg-green-500 text-white shadow-md hover:bg-green-600'
                       : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                   }`}
-                  onClick={() => setContentType('treechart')}
+                  onClick={() => setContentType('orgchart')}
                 >
-                  树形图
+                  层级图
                 </button>
                 <button
                   className={`px-4 py-2 rounded-lg transition-all ${
                     contentType === 'bracket'
-                      ? 'bg-blue-500 text-white shadow-md hover:bg-blue-600'
+                      ? 'bg-yellow-500 text-white shadow-md hover:bg-yellow-600'
                       : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                   }`}
                   onClick={() => setContentType('bracket')}
                 >
-                  括号图
+                  分类图
                 </button>
               </div>
             </div>

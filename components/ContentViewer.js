@@ -56,41 +56,43 @@ const ContentViewer = ({ content, type }) => {
         lineColor: '#94a3b8',
         secondaryColor: '#7c3aed',
         tertiaryColor: '#059669',
-        // 流程图特定样式
-        nodeBorder: '#e2e8f0',
-        nodeTextColor: '#1e293b',
-        mainBkg: '#ffffff',
-        nodeBkg: '#f8fafc',
-        // 连接线样式
-        edgeLabelBackground: '#ffffff',
-        clusterBkg: '#f1f5f9',
-        clusterBorder: '#e2e8f0',
-        // 思维导图特定样式
+        
+        // 思维导图样式
         mindmapNode: 'transparent',
         mindmapNodeText: '#334155',
         mindmapLine: ['#3b82f6', '#60a5fa', '#93c5fd', '#bfdbfe', '#dbeafe'],
         mindmapOutline: 'none',
         mindmapBorder: 'none',
-        // 鱼骨图特定样式
-        fishboneNode: '#f0f9ff',
-        fishboneNodeText: '#0369a1',
-        fishboneLine: '#0ea5e9',
-        // 组织结构图特定样式
-        orgchartNode: '#f0fdf4',
-        orgchartNodeText: '#166534',
+        
+        // 概念图样式
+        conceptNode: '#f3e8ff',
+        conceptNodeText: '#6b21a8',
+        conceptLine: '#9333ea',
+        conceptBorder: '#d8b4fe',
+        
+        // 对比图样式
+        comparisonNode: '#e0e7ff',
+        comparisonNodeText: '#3730a3',
+        comparisonLine: '#6366f1',
+        comparisonBorder: '#a5b4fc',
+        
+        // 时间轴样式
+        timelineNode: '#fce7f3',
+        timelineNodeText: '#831843',
+        timelineLine: '#db2777',
+        timelineBorder: '#f9a8d4',
+        
+        // 层级图样式
+        orgchartNode: '#dcfce7',
+        orgchartNodeText: '#14532d',
         orgchartLine: '#22c55e',
-        // 时间轴特定样式
-        timelineNode: '#fdf4ff',
-        timelineNodeText: '#86198f',
-        timelineLine: '#d946ef',
-        // 树形图特定样式
-        treechartNode: '#fff7ed',
-        treechartNodeText: '#9a3412',
-        treechartLine: '#f97316',
-        // 括号图特定样式
-        bracketNode: '#f5f3ff',
-        bracketNodeText: '#5b21b6',
-        bracketLine: '#8b5cf6'
+        orgchartBorder: '#86efac',
+        
+        // 分类图样式
+        bracketNode: '#fef9c3',
+        bracketNodeText: '#713f12',
+        bracketLine: '#ca8a04',
+        bracketBorder: '#fde047'
       }
     });
   }, []);
