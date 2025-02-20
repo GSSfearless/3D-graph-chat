@@ -15,17 +15,9 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
   // 主题配置
   const theme = {
     node: {
-      colors: {
-        main: '#4F46E5', // 主要步骤
-        sub: '#818CF8',  // 次要步骤
-        tip: '#C084FC',  // 提示信息
-        detail: '#60A5FA' // 具体细节
-      },
-      sizes: {
-        large: 15,    // 主要节点
-        medium: 12,   // 次要节点
-        small: 8      // 详细节点
-      },
+      color: '#6366F1',
+      highlightColor: '#F43F5E',
+      size: 10,
       segments: 32,
       opacity: 0.9,
       glowColor: '#818CF8'
@@ -37,16 +29,8 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
       width: 2
     },
     label: {
-      colors: {
-        main: '#1E293B',
-        sub: '#475569',
-        tip: '#6B21A8'
-      },
-      sizes: {
-        large: '14px',
-        medium: '12px',
-        small: '10px'
-      },
+      color: '#1E293B',
+      size: '12px',
       font: 'Inter, sans-serif'
     }
   };
@@ -144,27 +128,16 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
   const createNode3D = (nodeData, index, total) => {
     const group = new THREE.Group();
 
-    // 根据节点类型设置大小和颜色
-    const nodeType = nodeData.type || 'detail';
-    const nodeSize = nodeType === 'main' ? theme.node.sizes.large :
-                    nodeType === 'sub' ? theme.node.sizes.medium :
-                    theme.node.sizes.small;
-    const nodeColor = theme.node.colors[nodeType] || theme.node.colors.detail;
-    const labelColor = theme.label.colors[nodeType] || theme.label.colors.sub;
-    const labelSize = nodeType === 'main' ? theme.label.sizes.large :
-                     nodeType === 'sub' ? theme.label.sizes.medium :
-                     theme.label.sizes.small;
-
     // 创建球体几何体
     const geometry = new THREE.SphereGeometry(
-      nodeSize,
+      theme.node.size,
       theme.node.segments,
       theme.node.segments
     );
 
     // 创建发光材质
     const material = new THREE.MeshPhongMaterial({
-      color: nodeColor,
+      color: theme.node.color,
       specular: 0x666666,
       shininess: 50,
       transparent: true,
@@ -208,7 +181,7 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
     });
 
     const glowSphere = new THREE.Mesh(
-      new THREE.SphereGeometry(nodeSize * 1.2, theme.node.segments, theme.node.segments),
+      new THREE.SphereGeometry(theme.node.size * 1.2, theme.node.segments, theme.node.segments),
       glowMaterial
     );
     group.add(glowSphere);
@@ -217,32 +190,22 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
     const labelDiv = document.createElement('div');
     labelDiv.className = 'node-label';
     labelDiv.textContent = nodeData.label;
-    labelDiv.style.color = labelColor;
-    labelDiv.style.fontSize = labelSize;
+    labelDiv.style.color = theme.label.color;
+    labelDiv.style.fontSize = theme.label.size;
     labelDiv.style.fontFamily = theme.label.font;
     
     const label = new CSS2DObject(labelDiv);
-    label.position.set(0, nodeSize + 5, 0);
+    label.position.set(0, theme.node.size + 5, 0);
     group.add(label);
 
     // 计算节点位置
     const phi = Math.acos(-1 + (2 * index) / total);
     const theta = Math.sqrt(total * Math.PI) * phi;
-    const radius = nodeData.type === 'main' ? 150 :
-                  nodeData.type === 'sub' ? 250 :
-                  nodeData.type === 'tip' ? 350 : 300;
+    const radius = 200;
 
-    // 添加一些随机偏移，使布局更自然
-    const offset = 30;
-    const randomOffset = new THREE.Vector3(
-      (Math.random() - 0.5) * offset,
-      (Math.random() - 0.5) * offset,
-      (Math.random() - 0.5) * offset
-    );
-
-    group.position.x = radius * Math.cos(theta) * Math.sin(phi) + randomOffset.x;
-    group.position.y = radius * Math.sin(theta) * Math.sin(phi) + randomOffset.y;
-    group.position.z = radius * Math.cos(phi) + randomOffset.z;
+    group.position.x = radius * Math.cos(theta) * Math.sin(phi);
+    group.position.y = radius * Math.sin(theta) * Math.sin(phi);
+    group.position.z = radius * Math.cos(phi);
 
     // 添加用户数据
     group.userData = nodeData;
@@ -296,10 +259,10 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
 
   const handleNodeClick = (node) => {
     if (selectedNode) {
-      selectedNode.material.color.setHex(parseInt(theme.node.colors.detail.replace('#', '0x')));
+      selectedNode.material.color.setHex(parseInt(theme.node.color.replace('#', '0x')));
     }
     
-    node.material.color.setHex(parseInt(theme.node.colors.main.replace('#', '0x')));
+    node.material.color.setHex(parseInt(theme.node.highlightColor.replace('#', '0x')));
     setSelectedNode(node);
     onNodeClick && onNodeClick(node.userData);
   };

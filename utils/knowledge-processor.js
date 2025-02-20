@@ -71,25 +71,6 @@ export class KnowledgeProcessor {
     const edges = [];
     const nodeMap = new Map();
 
-    // 判断节点类型的辅助函数
-    const getNodeType = (text) => {
-      // 主要步骤关键词
-      const mainKeywords = ['准备', '要求', '面试', '提升', '关注'];
-      // 次要步骤关键词
-      const subKeywords = ['简历', '岗位', '技能', '经验', '实习'];
-      // 提示信息关键词
-      const tipKeywords = ['注意', '建议', '技巧', '重点', '避免'];
-
-      if (mainKeywords.some(keyword => text.includes(keyword))) {
-        return 'main';
-      } else if (subKeywords.some(keyword => text.includes(keyword))) {
-        return 'sub';
-      } else if (tipKeywords.some(keyword => text.includes(keyword))) {
-        return 'tip';
-      }
-      return 'detail';
-    };
-
     // 添加概念节点
     concepts.forEach(concept => {
       const nodeId = this.generateId(concept);
@@ -97,7 +78,7 @@ export class KnowledgeProcessor {
         data: {
           id: nodeId,
           label: concept,
-          type: getNodeType(concept),
+          type: this.nodeTypes.CONCEPT,
           category: 0
         }
       });
@@ -111,7 +92,7 @@ export class KnowledgeProcessor {
         data: {
           id: nodeId,
           label: entity,
-          type: getNodeType(entity),
+          type: this.nodeTypes.ENTITY,
           category: 1
         }
       });
