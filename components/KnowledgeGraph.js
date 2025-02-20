@@ -4,6 +4,9 @@ import cola from 'cytoscape-cola';
 import popper from 'cytoscape-popper';
 import tippy from 'tippy.js';
 import 'tippy.js/dist/tippy.css';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faDiscord, faGithub } from '@fortawesome/free-brands-svg-icons';
+import { faExpand, faCompress, faSearch, faRefresh, faSave, faDownload } from '@fortawesome/free-solid-svg-icons';
 
 // 注册布局插件
 cytoscape.use(cola);
@@ -13,6 +16,8 @@ const KnowledgeGraph = ({ data, onNodeClick, onEdgeClick, style = {} }) => {
   const containerRef = useRef(null);
   const cyRef = useRef(null);
   const [selectedNode, setSelectedNode] = useState(null);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [zoom, setZoom] = useState(1);
   
   // 主题配置
   const theme = {
@@ -45,6 +50,51 @@ const KnowledgeGraph = ({ data, onNodeClick, onEdgeClick, style = {} }) => {
         width: 3,
         opacity: 0.8
       }
+    }
+  };
+
+  const handleFullscreen = () => {
+    if (!document.fullscreenElement) {
+      containerRef.current.requestFullscreen();
+      setIsFullscreen(true);
+    } else {
+      document.exitFullscreen();
+      setIsFullscreen(false);
+    }
+  };
+
+  const handleZoomIn = () => {
+    if (cyRef.current) {
+      cyRef.current.zoom(cyRef.current.zoom() * 1.2);
+      setZoom(cyRef.current.zoom());
+    }
+  };
+
+  const handleZoomOut = () => {
+    if (cyRef.current) {
+      cyRef.current.zoom(cyRef.current.zoom() * 0.8);
+      setZoom(cyRef.current.zoom());
+    }
+  };
+
+  const handleFit = () => {
+    if (cyRef.current) {
+      cyRef.current.fit(50);
+      cyRef.current.center();
+    }
+  };
+
+  const handleExport = () => {
+    if (cyRef.current) {
+      const png = cyRef.current.png({
+        full: true,
+        scale: 2,
+        quality: 1
+      });
+      const link = document.createElement('a');
+      link.href = png;
+      link.download = 'knowledge-graph.png';
+      link.click();
     }
   };
 
@@ -244,13 +294,45 @@ const KnowledgeGraph = ({ data, onNodeClick, onEdgeClick, style = {} }) => {
 
   return (
     <div className="knowledge-graph-container" style={{ width: '100%', height: '100%', ...style }}>
+      <div className="toolbar">
+        <div className="toolbar-group">
+          <button onClick={handleZoomIn} className="toolbar-button" title="放大">
+            <FontAwesomeIcon icon={faSearch} className="mr-1" />+
+          </button>
+          <button onClick={handleZoomOut} className="toolbar-button" title="缩小">
+            <FontAwesomeIcon icon={faSearch} className="mr-1" />-
+          </button>
+          <button onClick={handleFit} className="toolbar-button" title="适应屏幕">
+            <FontAwesomeIcon icon={faRefresh} />
+          </button>
+        </div>
+        <div className="toolbar-group">
+          <button onClick={handleFullscreen} className="toolbar-button" title="全屏">
+            <FontAwesomeIcon icon={isFullscreen ? faCompress : faExpand} />
+          </button>
+          <button onClick={handleExport} className="toolbar-button" title="导出图片">
+            <FontAwesomeIcon icon={faDownload} />
+          </button>
+          <a href="https://discord.gg/your-discord" target="_blank" rel="noopener noreferrer" 
+             className="toolbar-button discord-button" title="加入Discord">
+            <FontAwesomeIcon icon={faDiscord} />
+          </a>
+          <a href="https://github.com/your-repo" target="_blank" rel="noopener noreferrer" 
+             className="toolbar-button github-button" title="GitHub">
+            <FontAwesomeIcon icon={faGithub} />
+          </a>
+        </div>
+      </div>
+      
       <div ref={containerRef} style={{ width: '100%', height: '100%' }} />
+      
       {selectedNode && (
         <div className="node-details-panel">
           <h3 className="text-lg font-semibold mb-2">{selectedNode.label}</h3>
           <p className="text-sm text-gray-600">{selectedNode.description || '暂无描述'}</p>
         </div>
       )}
+      
       <style jsx>{`
         .knowledge-graph-container {
           position: relative;
@@ -258,6 +340,68 @@ const KnowledgeGraph = ({ data, onNodeClick, onEdgeClick, style = {} }) => {
           border-radius: 12px;
           overflow: hidden;
           box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        
+        .toolbar {
+          position: absolute;
+          top: 16px;
+          left: 50%;
+          transform: translateX(-50%);
+          display: flex;
+          gap: 16px;
+          padding: 8px;
+          background: rgba(255, 255, 255, 0.9);
+          backdrop-filter: blur(10px);
+          border-radius: 12px;
+          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+          z-index: 1000;
+        }
+
+        .toolbar-group {
+          display: flex;
+          gap: 8px;
+          padding: 0 8px;
+          border-right: 1px solid rgba(0, 0, 0, 0.1);
+        }
+
+        .toolbar-group:last-child {
+          border-right: none;
+        }
+
+        .toolbar-button {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          width: 36px;
+          height: 36px;
+          border: none;
+          border-radius: 8px;
+          background: transparent;
+          color: var(--neutral-600);
+          cursor: pointer;
+          transition: all 0.2s ease;
+        }
+
+        .toolbar-button:hover {
+          background: rgba(0, 0, 0, 0.05);
+          color: var(--neutral-900);
+        }
+
+        .discord-button {
+          color: #5865F2;
+        }
+
+        .discord-button:hover {
+          background: rgba(88, 101, 242, 0.1);
+          color: #4752C4;
+        }
+
+        .github-button {
+          color: #24292e;
+        }
+
+        .github-button:hover {
+          background: rgba(36, 41, 46, 0.1);
         }
         
         .node-details-panel {
@@ -271,6 +415,15 @@ const KnowledgeGraph = ({ data, onNodeClick, onEdgeClick, style = {} }) => {
           box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
           max-width: 300px;
           z-index: 1000;
+          transition: all 0.3s ease;
+        }
+
+        :global(.cytoscape-container) {
+          position: absolute !important;
+          top: 0;
+          left: 0;
+          width: 100% !important;
+          height: 100% !important;
         }
       `}</style>
     </div>
