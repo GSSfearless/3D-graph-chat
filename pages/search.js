@@ -289,7 +289,7 @@ export default function Search() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#2D3047] to-[#93B7BE]">
+    <div className="min-h-screen bg-gradient-to-br from-[#1B1B2F] to-[#93B7BE]">
       {/* 顶部导航栏 */}
       <nav className="bg-[#1B1B2F]/80 backdrop-blur-sm sticky top-0 z-50 border-b border-[#E84855]/10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -377,21 +377,21 @@ export default function Search() {
                   </div>
                 ) : streamedAnswer ? (
                   contentType === 'answer' ? (
-                    <div className="prose max-w-none">
+                    <div className="prose max-w-none text-[#F8F9FA]">
                       {useDeepThinking && reasoningProcess && (
-                        <div className="mb-6 p-4 bg-purple-50 rounded-lg border border-purple-200">
+                        <div className="mb-6 p-4 bg-[#2D3047]/50 rounded-lg border border-[#E84855]/20">
                           <div className="flex items-center space-x-2 mb-2">
-                            <h3 className="text-lg font-semibold text-purple-700">💭 思考过程</h3>
-                            <span className="text-sm text-purple-500">(DeepSeek R1)</span>
+                            <h3 className="text-lg font-semibold text-[#F9DC5C]">💭 思考过程</h3>
+                            <span className="text-sm text-[#93B7BE]">(DeepSeek R1)</span>
                           </div>
-                          <div className="prose prose-purple max-w-none">
+                          <div className="prose prose-invert max-w-none">
                             <ReactMarkdown remarkPlugins={[remarkGfm]}>
                               {filterMermaidBlocks(reasoningProcess)}
                             </ReactMarkdown>
                           </div>
                         </div>
                       )}
-                      <div className={useDeepThinking && reasoningProcess ? "mt-6" : ""}>
+                      <div className={useDeepThinking && reasoningProcess ? "mt-6 prose-invert" : "prose-invert"}>
                         <ReactMarkdown remarkPlugins={[remarkGfm]}>
                           {streamedAnswer}
                         </ReactMarkdown>
@@ -412,7 +412,7 @@ export default function Search() {
                   )
                 ) : (
                   <div className="flex items-center justify-center h-full">
-                    <p className="text-gray-400">在下方输入问题开始查询</p>
+                    <p className="text-[#93B7BE]">在下方输入问题开始查询</p>
                   </div>
                 )}
               </div>
