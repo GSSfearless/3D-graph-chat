@@ -161,100 +161,86 @@ export class DiagramGenerator {
   static generateMindmap(headings, listItems) {
     let mindmap = 'mindmap\n';
     
-    // 使用第一个标题作为中心主题
-    const rootText = headings.length > 0 ? this.truncateText(headings[0].text) : '中心主题';
+    // 使用第一个标题作为根节点，如果没有标题则使用默认值
+    const rootText = headings.length > 0 ? this.truncateText(headings[0].text) : '主题';
     mindmap += `  root((${rootText}))\n`;
 
-    // 将其他标题组织成主要分支
-    const mainBranches = this.organizeMainBranches(headings.slice(1), listItems);
-    
-    // 生成主要分支
-    mainBranches.forEach((branch, index) => {
-      const indent = '    ';
-      const { title, items } = branch;
+    // 处理其他标题
+    let lastLevel = 1;
+    let lastIndent = '    ';
+    let currentBranch = [];
+
+    headings.slice(1).forEach((heading) => {
+      const levelDiff = heading.level - lastLevel;
       
-      // 添加主分支
-      mindmap += `${indent}${title}\n`;
-      
-      // 添加子项
-      if (items && items.length > 0) {
-        items.forEach(item => {
-          mindmap += `${indent}${indent}${this.truncateText(item)}\n`;
-        });
+      if (levelDiff > 0) {
+        currentBranch.push(lastLevel);
+        lastIndent += '    ';
+      } else if (levelDiff < 0) {
+        currentBranch = currentBranch.slice(0, levelDiff);
+        lastIndent = '    '.repeat(heading.level);
       }
+      
+      lastLevel = heading.level;
+      const text = this.truncateText(heading.text);
+      mindmap += `${lastIndent}${text}\n`;
+    });
+
+    // 智能分配列表项到最相关的标题下
+    const organizedItems = this.organizeListItems(headings, listItems);
+    
+    organizedItems.forEach((group) => {
+      const { items, level } = group;
+      const indent = '    '.repeat(level + 1);
+      items.forEach(item => {
+        mindmap += `${indent}${this.truncateText(item)}\n`;
+      });
     });
 
     return mindmap;
   }
 
-  static organizeMainBranches(headings, listItems) {
-    // 如果没有标题，将列表项直接作为主分支
-    if (headings.length === 0) {
-      const groups = this.groupListItems(listItems);
-      return groups.map((items, i) => ({
-        title: `主题${i + 1}`,
-        items
-      }));
+  static organizeListItems(headings, listItems) {
+    if (headings.length <= 1) {
+      // 如果没有或只有一个标题，所有列表项放在根节点下
+      return [{
+        items: listItems.slice(0, 8),
+        level: 1
+      }];
     }
 
-    // 将标题和相关的列表项组织成分支
-    const branches = [];
+    // 尝试将列表项分配到最相关的标题下
+    const organized = [];
     const usedItems = new Set();
 
-    // 处理每个标题
-    headings.forEach(heading => {
-      const branch = {
-        title: this.truncateText(heading.text),
-        items: []
-      };
-
-      // 查找与该标题相关的列表项
+    headings.slice(1).forEach(heading => {
       const relevantItems = listItems
         .filter(item => !usedItems.has(item) &&
           (item.toLowerCase().includes(heading.text.toLowerCase()) ||
            heading.text.toLowerCase().includes(item.toLowerCase())))
         .slice(0, 3);
 
-      branch.items.push(...relevantItems);
-      relevantItems.forEach(item => usedItems.add(item));
-      branches.push(branch);
+      if (relevantItems.length > 0) {
+        organized.push({
+          items: relevantItems,
+          level: heading.level
+        });
+        relevantItems.forEach(item => usedItems.add(item));
+      }
     });
 
-    // 处理未分配的列表项
-    const remainingItems = listItems.filter(item => !usedItems.has(item));
+    // 未分配的列表项放在最后一个标题下
+    const remainingItems = listItems
+      .filter(item => !usedItems.has(item))
+      .slice(0, 5);
+
     if (remainingItems.length > 0) {
-      const groups = this.groupListItems(remainingItems);
-      groups.forEach((items, i) => {
-        if (branches.length < 4) { // 限制主分支数量
-          branches.push({
-            title: `相关主题${i + 1}`,
-            items
-          });
-        }
+      organized.push({
+        items: remainingItems,
+        level: headings[headings.length - 1].level
       });
     }
 
-    // 确保分支数量平衡（最多4个主分支）
-    return branches.slice(0, 4);
-  }
-
-  static groupListItems(items) {
-    // 将列表项分组，每组2-3个项目
-    const groups = [];
-    let currentGroup = [];
-    
-    items.forEach(item => {
-      currentGroup.push(item);
-      if (currentGroup.length === 3) {
-        groups.push(currentGroup);
-        currentGroup = [];
-      }
-    });
-    
-    if (currentGroup.length > 0) {
-      groups.push(currentGroup);
-    }
-    
-    return groups;
+    return organized;
   }
 } 
