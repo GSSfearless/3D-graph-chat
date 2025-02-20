@@ -1,7 +1,15 @@
-// 从Markdown内容生成流程图和思维导图
+// 从Markdown内容生成各种图表
 export class DiagramGenerator {
   static parseMarkdown(markdown) {
-    if (!markdown) return { flowchart: '', mindmap: '' };
+    if (!markdown) return {
+      flowchart: '',
+      mindmap: '',
+      fishbone: '',
+      orgchart: '',
+      timeline: '',
+      treechart: '',
+      bracket: ''
+    };
 
     // 提取标题结构
     const headings = [];
@@ -9,16 +17,15 @@ export class DiagramGenerator {
     let match;
     while ((match = headingRegex.exec(markdown)) !== null) {
       const level = match[1].length;
-      // 移除标题中的Markdown符号
       const text = match[2].trim()
-        .replace(/[#*`]/g, '')  // 移除#、*、`等符号
-        .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')  // 将[文本](链接)转换为文本
-        .replace(/\*\*([^*]+)\*\*/g, '$1')  // 移除加粗符号
-        .replace(/__([^_]+)__/g, '$1');  // 移除下划线强调
+        .replace(/[#*`]/g, '')
+        .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
+        .replace(/\*\*([^*]+)\*\*/g, '$1')
+        .replace(/__([^_]+)__/g, '$1');
       headings.push({ level, text });
     }
 
-    // 提取关键句子（以句号、问号、感叹号结尾的句子）
+    // 提取关键句子
     const sentences = markdown.match(/[^。！？.!?]+[。！？.!?]/g) || [];
     const keyPoints = sentences
       .filter(s => {
@@ -38,7 +45,11 @@ export class DiagramGenerator {
           cleanSentence.includes('比如') ||
           cleanSentence.includes('特点') ||
           cleanSentence.includes('优点') ||
-          cleanSentence.includes('本质')
+          cleanSentence.includes('本质') ||
+          cleanSentence.includes('原因') ||
+          cleanSentence.includes('结果') ||
+          cleanSentence.includes('影响') ||
+          cleanSentence.includes('导致')
         );
       })
       .map(s => this.cleanText(s));
@@ -51,41 +62,181 @@ export class DiagramGenerator {
       listItems.push(text);
     }
 
-    // 生成流程图
-    const flowchart = this.generateFlowchart(headings, keyPoints);
+    // 提取时间相关信息
+    const timePoints = sentences
+      .filter(s => {
+        const cleanSentence = s.trim().toLowerCase();
+        return (
+          /\d{4}年/.test(cleanSentence) ||
+          /\d{4}-\d{2}/.test(cleanSentence) ||
+          cleanSentence.includes('最初') ||
+          cleanSentence.includes('然后') ||
+          cleanSentence.includes('接着') ||
+          cleanSentence.includes('最后') ||
+          cleanSentence.includes('之后') ||
+          cleanSentence.includes('未来') ||
+          cleanSentence.includes('计划')
+        );
+      })
+      .map(s => this.cleanText(s));
 
-    // 生成思维导图
-    const mindmap = this.generateMindmap(headings, listItems);
+    // 提取原因和结果
+    const causes = sentences
+      .filter(s => s.includes('原因') || s.includes('导致') || s.includes('因为'))
+      .map(s => this.cleanText(s));
+
+    const effects = sentences
+      .filter(s => s.includes('结果') || s.includes('影响') || s.includes('所以'))
+      .map(s => this.cleanText(s));
 
     return {
-      flowchart,
-      mindmap
+      flowchart: this.generateFlowchart(headings, keyPoints),
+      mindmap: this.generateMindmap(headings, listItems),
+      fishbone: this.generateFishbone(causes, effects),
+      orgchart: this.generateOrgChart(headings),
+      timeline: this.generateTimeline(timePoints),
+      treechart: this.generateTreeChart(headings),
+      bracket: this.generateBracket(headings, listItems)
     };
   }
 
-  // 清理文本的辅助方法
-  static cleanText(text) {
-    return text.trim()
-      .replace(/[#*`]/g, '')  // 移除#、*、`等符号
-      .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')  // 将[文本](链接)转换为文本
-      .replace(/\*\*([^*]+)\*\*/g, '$1')  // 移除加粗符号
-      .replace(/__([^_]+)__/g, '$1')  // 移除下划线强调
-      .replace(/^\d+\.\s+/, '')  // 移除数字编号
-      .replace(/^[-•]\s+/, '');  // 移除列表符号
+  // 生成鱼骨图
+  static generateFishbone(causes, effects) {
+    if (causes.length === 0 && effects.length === 0) return '';
+
+    let fishbone = 'graph LR\n';
+    fishbone += '    Problem((核心问题))\n';
+
+    // 添加原因分支
+    causes.slice(0, 6).forEach((cause, i) => {
+      const id = `C${i}`;
+      fishbone += `    ${id}[${this.truncateText(cause)}] -->|导致| Problem\n`;
+    });
+
+    // 添加结果分支
+    effects.slice(0, 6).forEach((effect, i) => {
+      const id = `E${i}`;
+      fishbone += `    Problem -->|影响| ${id}[${this.truncateText(effect)}]\n`;
+    });
+
+    return fishbone;
   }
 
-  // 智能截断文本的辅助方法
-  static truncateText(text, maxLength = 40) {
-    if (text.length <= maxLength) return text;
-    
-    // 尝试在标点符号处截断
-    const punctuationMatch = text.slice(0, maxLength + 10).match(/[，。；：！？,;:!?]/);
-    if (punctuationMatch) {
-      return text.slice(0, punctuationMatch.index + 1);
+  // 生成组织结构图
+  static generateOrgChart(headings) {
+    if (headings.length === 0) return '';
+
+    let orgchart = 'graph TB\n';
+    const root = headings[0];
+    orgchart += `    Root((${this.truncateText(root.text)}))\n`;
+
+    let lastParent = 'Root';
+    let lastLevel = 1;
+
+    headings.slice(1).forEach((heading, i) => {
+      const id = `N${i}`;
+      if (heading.level > lastLevel) {
+        orgchart += `    ${lastParent} --> ${id}[${this.truncateText(heading.text)}]\n`;
+      } else {
+        orgchart += `    Root --> ${id}[${this.truncateText(heading.text)}]\n`;
+      }
+      lastParent = id;
+      lastLevel = heading.level;
+    });
+
+    return orgchart;
+  }
+
+  // 生成时间轴
+  static generateTimeline(timePoints) {
+    if (timePoints.length === 0) return '';
+
+    let timeline = 'graph LR\n';
+    timeline += '    Start((开始))\n';
+
+    timePoints.slice(0, 8).forEach((point, i) => {
+      const id = `T${i}`;
+      if (i === 0) {
+        timeline += `    Start --> ${id}[${this.truncateText(point)}]\n`;
+      } else {
+        timeline += `    T${i-1} --> ${id}[${this.truncateText(point)}]\n`;
+      }
+    });
+
+    if (timePoints.length > 0) {
+      timeline += `    T${timePoints.length-1} --> End((结束))\n`;
     }
-    
-    // 如果没有标点符号，在词语边界截断
-    return text.slice(0, maxLength) + '...';
+
+    return timeline;
+  }
+
+  // 生成树形图
+  static generateTreeChart(headings) {
+    if (headings.length === 0) return '';
+
+    let tree = 'graph TB\n';
+    const root = headings[0];
+    tree += `    Root((${this.truncateText(root.text)}))\n`;
+
+    const levels = {};
+    headings.slice(1).forEach((heading, i) => {
+      const id = `N${i}`;
+      if (!levels[heading.level]) {
+        levels[heading.level] = [];
+      }
+      levels[heading.level].push({ id, text: heading.text });
+
+      const parentLevel = heading.level - 1;
+      const possibleParents = levels[parentLevel] || [];
+      const parent = possibleParents[possibleParents.length - 1];
+
+      if (parent) {
+        tree += `    ${parent.id} --> ${id}[${this.truncateText(heading.text)}]\n`;
+      } else {
+        tree += `    Root --> ${id}[${this.truncateText(heading.text)}]\n`;
+      }
+    });
+
+    return tree;
+  }
+
+  // 生成括号图
+  static generateBracket(headings, listItems) {
+    if (headings.length === 0 && listItems.length === 0) return '';
+
+    let bracket = 'graph LR\n';
+    bracket += '    Root((主题))\n';
+
+    const items = [...headings, ...listItems].slice(0, 8);
+    const halfLength = Math.ceil(items.length / 2);
+
+    // 左侧分支
+    items.slice(0, halfLength).forEach((item, i) => {
+      const id = `L${i}`;
+      bracket += `    Root --> ${id}[${this.truncateText(item.text || item)}]\n`;
+    });
+
+    // 右侧分支
+    items.slice(halfLength).forEach((item, i) => {
+      const id = `R${i}`;
+      bracket += `    Root --> ${id}[${this.truncateText(item.text || item)}]\n`;
+    });
+
+    return bracket;
+  }
+
+  // 辅助方法
+  static cleanText(text) {
+    return text.trim()
+      .replace(/[#*`]/g, '')
+      .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
+      .replace(/\*\*([^*]+)\*\*/g, '$1')
+      .replace(/__([^_]+)__/g, '$1')
+      .replace(/^\d+\.\s*/, '');
+  }
+
+  static truncateText(text) {
+    return text.length > 20 ? text.slice(0, 18) + '...' : text;
   }
 
   static generateFlowchart(headings, keyPoints) {

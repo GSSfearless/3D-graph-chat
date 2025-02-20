@@ -26,7 +26,12 @@ export default function Search() {
   const [contentType, setContentType] = useState('answer');
   const [mermaidContent, setMermaidContent] = useState({
     flowchart: '',
-    mindmap: ''
+    mindmap: '',
+    fishbone: '',
+    orgchart: '',
+    timeline: '',
+    treechart: '',
+    bracket: ''
   });
   const [useWebSearch, setUseWebSearch] = useState(false);
   const [useDeepThinking, setUseDeepThinking] = useState(false);
@@ -44,7 +49,7 @@ export default function Search() {
     
     setLoading(true);
     setStreamedAnswer('');
-    setMermaidContent({ flowchart: '', mindmap: '' });
+    setMermaidContent({ flowchart: '', mindmap: '', fishbone: '', orgchart: '', timeline: '', treechart: '', bracket: '' });
     setSearchResults([]);
     setReasoningProcess('');
 
@@ -225,13 +230,10 @@ export default function Search() {
   // 在处理回答内容时自动生成图表
   const processAnswer = (answer) => {
     // 生成图表
-    const { flowchart, mindmap } = DiagramGenerator.parseMarkdown(answer);
+    const diagrams = DiagramGenerator.parseMarkdown(answer);
     
     // 更新状态
-    setMermaidContent({
-      flowchart,
-      mindmap
-    });
+    setMermaidContent(diagrams);
     
     // 返回过滤后的文本
     return filterMermaidBlocks(answer);

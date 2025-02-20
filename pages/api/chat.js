@@ -160,6 +160,26 @@ export default async function handler(req, res) {
                     console.log('发送思维导图数据，长度:', diagrams.mindmap.length);
                     res.write(`data: {"type":"mindmap","content":"${encodeURIComponent(diagrams.mindmap)}"}\n\n`);
                   }
+                  if (diagrams.fishbone) {
+                    console.log('发送鱼骨图数据，长度:', diagrams.fishbone.length);
+                    res.write(`data: {"type":"fishbone","content":"${encodeURIComponent(diagrams.fishbone)}"}\n\n`);
+                  }
+                  if (diagrams.orgchart) {
+                    console.log('发送组织结构图数据，长度:', diagrams.orgchart.length);
+                    res.write(`data: {"type":"orgchart","content":"${encodeURIComponent(diagrams.orgchart)}"}\n\n`);
+                  }
+                  if (diagrams.timeline) {
+                    console.log('发送时间轴数据，长度:', diagrams.timeline.length);
+                    res.write(`data: {"type":"timeline","content":"${encodeURIComponent(diagrams.timeline)}"}\n\n`);
+                  }
+                  if (diagrams.treechart) {
+                    console.log('发送树形图数据，长度:', diagrams.treechart.length);
+                    res.write(`data: {"type":"treechart","content":"${encodeURIComponent(diagrams.treechart)}"}\n\n`);
+                  }
+                  if (diagrams.bracket) {
+                    console.log('发送括号图数据，长度:', diagrams.bracket.length);
+                    res.write(`data: {"type":"bracket","content":"${encodeURIComponent(diagrams.bracket)}"}\n\n`);
+                  }
                 }
               }
             } catch (e) {
@@ -281,7 +301,12 @@ export default async function handler(req, res) {
 const extractMermaidDiagrams = (text) => {
   const diagrams = {
     flowchart: '',
-    mindmap: ''
+    mindmap: '',
+    fishbone: '',
+    orgchart: '',
+    timeline: '',
+    treechart: '',
+    bracket: ''
   };
   
   // 使用更精确的正则表达式
@@ -292,12 +317,27 @@ const extractMermaidDiagrams = (text) => {
     const diagramContent = match[1].trim();
     console.log('找到Mermaid图表:', diagramContent);
     
-    if (diagramContent.startsWith('graph LR')) {
+    if (diagramContent.startsWith('graph LR') || diagramContent.startsWith('graph TD')) {
       console.log('提取到流程图');
       diagrams.flowchart = diagramContent;
     } else if (diagramContent.startsWith('mindmap')) {
       console.log('提取到思维导图');
       diagrams.mindmap = diagramContent;
+    } else if (diagramContent.startsWith('fishbone')) {
+      console.log('提取到鱼骨图');
+      diagrams.fishbone = diagramContent;
+    } else if (diagramContent.startsWith('orgchart')) {
+      console.log('提取到组织结构图');
+      diagrams.orgchart = diagramContent;
+    } else if (diagramContent.startsWith('timeline')) {
+      console.log('提取到时间轴');
+      diagrams.timeline = diagramContent;
+    } else if (diagramContent.startsWith('tree')) {
+      console.log('提取到树形图');
+      diagrams.treechart = diagramContent;
+    } else if (diagramContent.startsWith('bracket')) {
+      console.log('提取到括号图');
+      diagrams.bracket = diagramContent;
     }
   }
   
@@ -305,8 +345,18 @@ const extractMermaidDiagrams = (text) => {
   console.log('提取的图表数据:', {
     hasFlowchart: !!diagrams.flowchart,
     hasMindmap: !!diagrams.mindmap,
+    hasFishbone: !!diagrams.fishbone,
+    hasOrgchart: !!diagrams.orgchart,
+    hasTimeline: !!diagrams.timeline,
+    hasTreechart: !!diagrams.treechart,
+    hasBracket: !!diagrams.bracket,
     flowchartLength: diagrams.flowchart.length,
-    mindmapLength: diagrams.mindmap.length
+    mindmapLength: diagrams.mindmap.length,
+    fishboneLength: diagrams.fishbone.length,
+    orgchartLength: diagrams.orgchart.length,
+    timelineLength: diagrams.timeline.length,
+    treechartLength: diagrams.treechart.length,
+    bracketLength: diagrams.bracket.length
   });
   
   return diagrams;

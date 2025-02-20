@@ -38,6 +38,15 @@ const ContentViewer = ({ content, type }) => {
         curve: 'basis',
         levelDistance: 180
       },
+      timeline: {
+        useMaxWidth: true,
+        padding: 30,
+        nodeSpacing: 100,
+        rankSpacing: 100,
+        diagramPadding: 30,
+        defaultRenderer: 'elk',
+        curve: 'basis'
+      },
       themeVariables: {
         fontFamily: 'system-ui, -apple-system, sans-serif',
         fontSize: '16px',
@@ -56,12 +65,32 @@ const ContentViewer = ({ content, type }) => {
         edgeLabelBackground: '#ffffff',
         clusterBkg: '#f1f5f9',
         clusterBorder: '#e2e8f0',
-        // 思维导图特定样式 - 采用简洁的蓝色系
+        // 思维导图特定样式
         mindmapNode: 'transparent',
-        mindmapNodeText: '#334155',  // 深灰蓝色文字
-        mindmapLine: ['#3b82f6', '#60a5fa', '#93c5fd', '#bfdbfe', '#dbeafe'],  // 蓝色渐变
+        mindmapNodeText: '#334155',
+        mindmapLine: ['#3b82f6', '#60a5fa', '#93c5fd', '#bfdbfe', '#dbeafe'],
         mindmapOutline: 'none',
-        mindmapBorder: 'none'
+        mindmapBorder: 'none',
+        // 鱼骨图特定样式
+        fishboneNode: '#f0f9ff',
+        fishboneNodeText: '#0369a1',
+        fishboneLine: '#0ea5e9',
+        // 组织结构图特定样式
+        orgchartNode: '#f0fdf4',
+        orgchartNodeText: '#166534',
+        orgchartLine: '#22c55e',
+        // 时间轴特定样式
+        timelineNode: '#fdf4ff',
+        timelineNodeText: '#86198f',
+        timelineLine: '#d946ef',
+        // 树形图特定样式
+        treechartNode: '#fff7ed',
+        treechartNodeText: '#9a3412',
+        treechartLine: '#f97316',
+        // 括号图特定样式
+        bracketNode: '#f5f3ff',
+        bracketNodeText: '#5b21b6',
+        bracketLine: '#8b5cf6'
       }
     });
   }, []);
