@@ -5,20 +5,18 @@ export default async function handler(req, res) {
     return res.status(405).json({ message: 'Method not allowed' });
   }
 
-  const { query, context, useDeepThinking } = req.body;
+  console.log('=== API请求开始 ===');
+  console.log('请求方法:', req.method);
+  console.log('请求体:', req.body);
+
+  const { query, useDeepThinking } = req.body;
+
+  if (!query) {
+    console.error('缺少查询参数');
+    return res.status(400).json({ message: '请提供查询内容' });
+  }
 
   try {
-    // 构建上下文提示词
-    const contextText = context
-      .map(item => `${item.title}\n${item.content}`)
-      .join('\n\n');
-
-    const systemPrompt = useDeepThinking 
-      ? `你现在处于深度思考模式。
-`
-      : `你是一个知识助手。
-`;
-
     // 设置响应头
     res.setHeader('Content-Type', 'text/event-stream');
     res.setHeader('Cache-Control', 'no-cache');
@@ -27,17 +25,23 @@ export default async function handler(req, res) {
     const messages = [
       {
         role: 'system',
-        content: systemPrompt
+        content: useDeepThinking 
+          ? '你现在处于深度思考模式。请仔细分析问题，并提供详细的推理过程。'
+          : '你是一个知识助手。请简洁明了地回答问题。'
       },
       {
         role: 'user',
-        content: `上下文信息：\n${contextText}\n\n问题：${query}`
+        content: query
       }
     ];
 
+    console.log('准备调用API...');
+    console.log('消息内容:', messages);
+    console.log('深度思考模式:', useDeepThinking ? '开启' : '关闭');
+
     // 使用故障转移机制调用 API
     const { provider, response } = await callWithFallback(messages, true, useDeepThinking);
-    console.log(`Using ${provider} API for response${useDeepThinking ? ' (Deep Thinking Mode)' : ''}`);
+    console.log(`使用 ${provider} API 响应${useDeepThinking ? ' (深度思考模式)' : ''}`);
 
     let isFirstChunk = true;
     let buffer = '';
@@ -45,20 +49,20 @@ export default async function handler(req, res) {
     let chunkCount = 0;
 
     const startTime = Date.now();
+
     // 处理流式响应
     response.data.on('data', (chunk) => {
       try {
         chunkCount++;
-        console.log(`Processing chunk #${chunkCount}`);
+        console.log(`处理数据块 #${chunkCount}`);
         
         if (isFirstChunk) {
-          console.log('First chunk received');
+          console.log('收到第一个数据块');
           res.write('data: {"type":"start","provider":"' + provider + '"}\n\n');
           isFirstChunk = false;
         }
 
         const chunkText = chunk.toString();
-        console.log('Raw chunk:', chunkText);
         buffer += chunkText;
 
         // 处理完整的数据行
@@ -71,16 +75,6 @@ export default async function handler(req, res) {
             const data = line.slice(6);
             if (data === '[DONE]') {
               console.log('收到 [DONE] 信号');
-              // 在结束前确保发送完整的图表数据
-              const diagrams = extractMermaidDiagrams(responseText);
-              if (diagrams.flowchart) {
-                console.log('发送最终流程图数据');
-                res.write(`data: {"type":"flowchart","content":"${encodeURIComponent(diagrams.flowchart)}"}\n\n`);
-              }
-              if (diagrams.mindmap) {
-                console.log('发送最终思维导图数据');
-                res.write(`data: {"type":"mindmap","content":"${encodeURIComponent(diagrams.mindmap)}"}\n\n`);
-              }
               res.write('data: [DONE]\n\n');
               continue;
             }
@@ -93,7 +87,6 @@ export default async function handler(req, res) {
               
               // 处理不同API的响应格式
               switch (provider) {
-                case 'openai':
                 case 'deepseek':
                   if (parsed.choices && parsed.choices[0]) {
                     const choice = parsed.choices[0];
@@ -103,167 +96,49 @@ export default async function handler(req, res) {
                   }
                   break;
                 case 'volcengine':
-                  console.log('处理 DeepSeek R1 响应:', parsed);
                   if (parsed.output && parsed.output.text) {
                     content = parsed.output.text;
-                    console.log('📝 DeepSeek R1 输出:', content);
                   } else if (parsed.choices && parsed.choices[0]) {
                     const choice = parsed.choices[0];
                     if (choice.delta && choice.delta.content) {
                       content = choice.delta.content;
-                      console.log('📝 DeepSeek R1 流式输出:', content);
                     }
                     // 处理思考过程
                     if (choice.reasoning_step) {
-                      console.log('💭 DeepSeek R1 思考步骤:', choice.reasoning_step);
                       res.write(`data: {"type":"reasoning","content":"${encodeURIComponent(choice.reasoning_step)}"}\n\n`);
                     }
                     if (choice.reasoning_output) {
-                      console.log('💭 DeepSeek R1 思考输出:', choice.reasoning_output);
                       res.write(`data: {"type":"reasoning","content":"${encodeURIComponent(choice.reasoning_output)}"}\n\n`);
-                    }
-                  }
-                  break;
-                case 'claude':
-                  if (parsed.type === 'content_block_delta') {
-                    content = parsed.delta.text;
-                  } else if (parsed.type === 'content_block_start' || parsed.type === 'content_block_stop') {
-                    console.log(`Claude content block ${parsed.type}`);
-                  }
-                  break;
-                case 'gemini':
-                  if (parsed.candidates && parsed.candidates[0]) {
-                    const candidate = parsed.candidates[0];
-                    if (candidate.content && candidate.content.parts) {
-                      content = candidate.content.parts[0].text;
                     }
                   }
                   break;
               }
 
               if (content) {
-                console.log('Extracted content:', content);
+                console.log('提取的内容:', content);
                 responseText += content;
                 res.write(`data: {"type":"delta","content":"${encodeURIComponent(content)}"}\n\n`);
-                
-                // 检查累积的响应文本中是否包含完整的图表
-                if (responseText.includes('```mermaid')) {
-                  console.log('检测到Mermaid图表标记');
-                  const diagrams = extractMermaidDiagrams(responseText);
-                  
-                  if (diagrams.flowchart) {
-                    console.log('发送流程图数据，长度:', diagrams.flowchart.length);
-                    res.write(`data: {"type":"flowchart","content":"${encodeURIComponent(diagrams.flowchart)}"}\n\n`);
-                  }
-                  if (diagrams.mindmap) {
-                    console.log('发送思维导图数据，长度:', diagrams.mindmap.length);
-                    res.write(`data: {"type":"mindmap","content":"${encodeURIComponent(diagrams.mindmap)}"}\n\n`);
-                  }
-                  if (diagrams.fishbone) {
-                    console.log('发送鱼骨图数据，长度:', diagrams.fishbone.length);
-                    res.write(`data: {"type":"fishbone","content":"${encodeURIComponent(diagrams.fishbone)}"}\n\n`);
-                  }
-                  if (diagrams.orgchart) {
-                    console.log('发送组织结构图数据，长度:', diagrams.orgchart.length);
-                    res.write(`data: {"type":"orgchart","content":"${encodeURIComponent(diagrams.orgchart)}"}\n\n`);
-                  }
-                  if (diagrams.timeline) {
-                    console.log('发送时间轴数据，长度:', diagrams.timeline.length);
-                    res.write(`data: {"type":"timeline","content":"${encodeURIComponent(diagrams.timeline)}"}\n\n`);
-                  }
-                  if (diagrams.treechart) {
-                    console.log('发送树形图数据，长度:', diagrams.treechart.length);
-                    res.write(`data: {"type":"treechart","content":"${encodeURIComponent(diagrams.treechart)}"}\n\n`);
-                  }
-                  if (diagrams.bracket) {
-                    console.log('发送括号图数据，长度:', diagrams.bracket.length);
-                    res.write(`data: {"type":"bracket","content":"${encodeURIComponent(diagrams.bracket)}"}\n\n`);
-                  }
-                }
               }
             } catch (e) {
-              console.error('Message parse error:', e, 'Raw data:', data);
+              console.error('解析消息错误:', e, '原始数据:', data);
               continue;
             }
           }
         }
       } catch (error) {
-        console.error('Error processing chunk:', error);
+        console.error('处理数据块错误:', error);
       }
     });
 
     response.data.on('end', () => {
-      console.log('Stream ended');
-      console.log('Final buffer:', buffer);
-      console.log('Total chunks processed:', chunkCount);
-      console.log('Final response length:', responseText.length);
-
-      // 处理缓冲区中剩余的数据
-      if (buffer.length > 0) {
-        console.log('Processing remaining buffer');
-        const lines = buffer.split('\n');
-        for (const line of lines) {
-          if (line.startsWith('data: ')) {
-            const data = line.slice(6);
-            if (data === '[DONE]') continue;
-
-            try {
-              const parsed = JSON.parse(data);
-              let content = '';
-              
-              // 处理不同API的响应格式
-              switch (provider) {
-                case 'openai':
-                case 'deepseek':
-                  if (parsed.choices && parsed.choices[0]) {
-                    const choice = parsed.choices[0];
-                    if (choice.delta && choice.delta.content) {
-                      content = choice.delta.content;
-                    }
-                  }
-                  break;
-                case 'volcengine':
-                  if (parsed.output && parsed.output.text) {
-                    content = parsed.output.text;
-                  } else if (parsed.choices && parsed.choices[0]) {
-                    const choice = parsed.choices[0];
-                    if (choice.delta && choice.delta.content) {
-                      content = choice.delta.content;
-                    }
-                  }
-                  break;
-                case 'claude':
-                  if (parsed.type === 'content_block_delta') {
-                    content = parsed.delta.text;
-                  }
-                  break;
-                case 'gemini':
-                  if (parsed.candidates && parsed.candidates[0]) {
-                    const candidate = parsed.candidates[0];
-                    if (candidate.content && candidate.content.parts) {
-                      content = candidate.content.parts[0].text;
-                    }
-                  }
-                  break;
-              }
-
-              if (content) {
-                console.log('Extracted content from buffer:', content);
-                responseText += content;
-                res.write(`data: {"type":"delta","content":"${encodeURIComponent(content)}"}\n\n`);
-              }
-            } catch (e) {
-              console.error('Error processing final buffer:', e);
-              console.error('Provider:', provider);
-            }
-          }
-        }
-      }
+      console.log('流结束');
+      console.log('最终缓冲区:', buffer);
+      console.log('处理的数据块总数:', chunkCount);
+      console.log('最终响应长度:', responseText.length);
 
       // 发送完整的响应文本
       if (responseText) {
         console.log('准备发送完整回答信号...');
-        console.log('完整回答长度:', responseText.length);
         try {
           const completeSignal = `data: {"type":"complete","content":"${encodeURIComponent(responseText)}"}\n\n`;
           res.write(completeSignal);
@@ -282,16 +157,23 @@ export default async function handler(req, res) {
     });
 
     response.data.on('error', (error) => {
-      console.error('Stream error:', error);
+      console.error('流错误:', error);
       res.write(`data: {"type":"error","message":"${error.message}"}\n\n`);
       res.end();
     });
 
   } catch (error) {
-    console.error('Error calling API:', error);
-    res.status(500).json({ 
-      message: 'Error processing chat request',
-      error: error.message 
+    console.error('调用API错误:', error);
+    console.error('错误详情:', {
+      message: error.message,
+      stack: error.stack,
+      response: error.response?.data
+    });
+    
+    return res.status(500).json({ 
+      message: '处理聊天请求时出错',
+      error: error.message,
+      details: error.response?.data
     });
   }
 }
