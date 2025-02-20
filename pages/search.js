@@ -35,6 +35,12 @@ const contentTypes = [
   { id: 'waveform', name: '声波图', icon: '〰️' }
 ];
 
+// 添加图表类型分类
+const chartCategories = {
+  mermaid: ['mindmap', 'conceptmap', 'orgchart', 'bracket'],
+  enhanced: ['tagSphere', 'fluid', 'radar', 'geoBubble', 'network', 'waveform']
+};
+
 export default function Search() {
   const router = useRouter();
   const { q } = router.query;
@@ -397,19 +403,19 @@ export default function Search() {
                         </ReactMarkdown>
                       </div>
                     </div>
-                  ) : contentType.startsWith('enhanced') ? (
-                    <EnhancedChart
-                      chartData={searchResults}
-                      initialType={contentType}
-                      onChartUpdate={(data) => console.log('图表更新:', data)}
-                    />
-                  ) : (
+                  ) : chartCategories.mermaid.includes(contentType) ? (
                     <ContentViewer
                       content={mermaidContent[contentType]}
                       type="mermaid"
                       key={`${contentType}-${Object.values(mermaidContent).join('-')}`}
                     />
-                  )
+                  ) : chartCategories.enhanced.includes(contentType) ? (
+                    <EnhancedChart
+                      chartData={searchResults ? processSearchResponse(streamedAnswer) : null}
+                      initialType={contentType}
+                      onChartUpdate={(data) => console.log('图表更新:', data)}
+                    />
+                  ) : null
                 ) : (
                   <div className="flex items-center justify-center h-full">
                     <p className="text-gray-400">在下方输入问题开始查询</p>
