@@ -1,7 +1,15 @@
 // 从Markdown内容生成流程图和思维导图
 export class DiagramGenerator {
   static parseMarkdown(markdown) {
-    if (!markdown) return { flowchart: '', mindmap: '' };
+    if (!markdown) return {
+      flowchart: '',
+      mindmap: '',
+      timeline: '',
+      gantt: '',
+      classDiagram: '',
+      stateDiagram: '',
+      sequenceDiagram: ''
+    };
 
     // 提取标题结构
     const headings = [];
@@ -17,6 +25,21 @@ export class DiagramGenerator {
         .replace(/__([^_]+)__/g, '$1');  // 移除下划线强调
       headings.push({ level, text });
     }
+
+    // 提取时间相关的信息（用于时间线图）
+    const timeEntries = this.extractTimeEntries(markdown);
+    
+    // 提取任务相关的信息（用于甘特图）
+    const tasks = this.extractTasks(markdown);
+    
+    // 提取类定义相关的信息（用于类图）
+    const classes = this.extractClasses(markdown);
+    
+    // 提取状态相关的信息（用于状态图）
+    const states = this.extractStates(markdown);
+    
+    // 提取交互相关的信息（用于序列图）
+    const sequences = this.extractSequences(markdown);
 
     // 提取关键句子（以句号、问号、感叹号结尾的句子）
     const sentences = markdown.match(/[^。！？.!?]+[。！？.!?]/g) || [];
@@ -59,7 +82,12 @@ export class DiagramGenerator {
 
     return {
       flowchart,
-      mindmap
+      mindmap,
+      timeline: this.generateTimeline(timeEntries),
+      gantt: this.generateGantt(tasks),
+      classDiagram: this.generateClassDiagram(classes),
+      stateDiagram: this.generateStateDiagram(states),
+      sequenceDiagram: this.generateSequenceDiagram(sequences)
     };
   }
 
@@ -242,5 +270,167 @@ export class DiagramGenerator {
     }
 
     return organized;
+  }
+
+  // 新增的辅助方法
+  static extractTimeEntries(markdown) {
+    const timeRegex = /(\d{4}[-年/.]\d{1,2}[-月/.]\d{1,2}日?|\d{4}[-年/.]\d{1,2}月?|\d{4}年?)[：:]\s*(.+?)(?=\n|$)/g;
+    const entries = [];
+    let match;
+    while ((match = timeRegex.exec(markdown)) !== null) {
+      entries.push({
+        date: match[1],
+        event: this.cleanText(match[2])
+      });
+    }
+    return entries;
+  }
+
+  static extractTasks(markdown) {
+    const taskRegex = /- \[([ x])\]\s*(.+?)(?:\s*\((\d{4}-\d{2}-\d{2})\s*(?:到|至|~|to)\s*(\d{4}-\d{2}-\d{2})\))?/g;
+    const tasks = [];
+    let match;
+    while ((match = taskRegex.exec(markdown)) !== null) {
+      tasks.push({
+        done: match[1] === 'x',
+        title: this.cleanText(match[2]),
+        start: match[3] || '',
+        end: match[4] || ''
+      });
+    }
+    return tasks;
+  }
+
+  static extractClasses(markdown) {
+    const classRegex = /class\s+(\w+)(?:\s+extends\s+(\w+))?\s*{([^}]+)}/g;
+    const classes = [];
+    let match;
+    while ((match = classRegex.exec(markdown)) !== null) {
+      classes.push({
+        name: match[1],
+        extends: match[2] || '',
+        members: match[3].trim().split('\n').map(line => line.trim())
+      });
+    }
+    return classes;
+  }
+
+  static extractStates(markdown) {
+    const stateRegex = /状态[:：]\s*(\w+)\s*(?:->|→)\s*(\w+)(?:\s*\((.+?)\))?/g;
+    const states = [];
+    let match;
+    while ((match = stateRegex.exec(markdown)) !== null) {
+      states.push({
+        from: match[1],
+        to: match[2],
+        condition: match[3] || ''
+      });
+    }
+    return states;
+  }
+
+  static extractSequences(markdown) {
+    const sequenceRegex = /(\w+)\s*(?:->|→)\s*(\w+)\s*[:：]\s*(.+?)(?=\n|$)/g;
+    const sequences = [];
+    let match;
+    while ((match = sequenceRegex.exec(markdown)) !== null) {
+      sequences.push({
+        from: match[1],
+        to: match[2],
+        message: this.cleanText(match[3])
+      });
+    }
+    return sequences;
+  }
+
+  static generateTimeline(entries) {
+    if (entries.length === 0) return '';
+    
+    let timeline = 'timeline\n';
+    entries.sort((a, b) => new Date(a.date) - new Date(b.date));
+    
+    entries.forEach(entry => {
+      timeline += `    ${entry.date} : ${this.truncateText(entry.event)}\n`;
+    });
+    
+    return timeline;
+  }
+
+  static generateGantt(tasks) {
+    if (tasks.length === 0) return '';
+    
+    let gantt = 'gantt\n';
+    gantt += '    title 项目进度\n';
+    gantt += '    dateFormat YYYY-MM-DD\n';
+    gantt += '    section 任务\n';
+    
+    tasks.forEach((task, index) => {
+      const status = task.done ? 'done' : 'active';
+      if (task.start && task.end) {
+        gantt += `    ${this.truncateText(task.title)} :${status}, ${task.start}, ${task.end}\n`;
+      } else {
+        gantt += `    ${this.truncateText(task.title)} :${status}, ${index}d\n`;
+      }
+    });
+    
+    return gantt;
+  }
+
+  static generateClassDiagram(classes) {
+    if (classes.length === 0) return '';
+    
+    let diagram = 'classDiagram\n';
+    
+    classes.forEach(cls => {
+      if (cls.extends) {
+        diagram += `    ${cls.name} --|> ${cls.extends}\n`;
+      }
+      
+      diagram += `    class ${cls.name} {\n`;
+      cls.members.forEach(member => {
+        diagram += `        ${member}\n`;
+      });
+      diagram += '    }\n';
+    });
+    
+    return diagram;
+  }
+
+  static generateStateDiagram(states) {
+    if (states.length === 0) return '';
+    
+    let diagram = 'stateDiagram-v2\n';
+    
+    states.forEach(state => {
+      if (state.condition) {
+        diagram += `    ${state.from} --> ${state.to} : ${this.truncateText(state.condition)}\n`;
+      } else {
+        diagram += `    ${state.from} --> ${state.to}\n`;
+      }
+    });
+    
+    return diagram;
+  }
+
+  static generateSequenceDiagram(sequences) {
+    if (sequences.length === 0) return '';
+    
+    let diagram = 'sequenceDiagram\n';
+    const participants = new Set();
+    
+    sequences.forEach(seq => {
+      participants.add(seq.from);
+      participants.add(seq.to);
+    });
+    
+    participants.forEach(p => {
+      diagram += `    participant ${p}\n`;
+    });
+    
+    sequences.forEach(seq => {
+      diagram += `    ${seq.from}->>+${seq.to}: ${this.truncateText(seq.message)}\n`;
+    });
+    
+    return diagram;
   }
 } 

@@ -38,6 +38,51 @@ const ContentViewer = ({ content, type }) => {
         curve: 'basis',
         levelDistance: 180
       },
+      timeline: {
+        useMaxWidth: true,
+        padding: 30,
+        diagramPadding: 30,
+        labelBackgroundColor: 'transparent',
+        fontSize: 14
+      },
+      gantt: {
+        useMaxWidth: true,
+        padding: 30,
+        diagramPadding: 30,
+        fontSize: 14,
+        numberSectionStyles: 4,
+        axisFormat: '%Y-%m-%d',
+        topAxis: true
+      },
+      class: {
+        useMaxWidth: true,
+        padding: 30,
+        diagramPadding: 30,
+        defaultRenderer: 'elk'
+      },
+      state: {
+        useMaxWidth: true,
+        padding: 30,
+        diagramPadding: 30,
+        defaultRenderer: 'elk',
+        curve: 'basis'
+      },
+      sequence: {
+        useMaxWidth: true,
+        padding: 30,
+        diagramPadding: 30,
+        defaultRenderer: 'elk',
+        mirrorActors: false,
+        bottomMarginAdj: 10,
+        messageMargin: 40,
+        boxMargin: 10,
+        boxTextMargin: 5,
+        noteMargin: 10,
+        messageAlign: 'center',
+        actorFontSize: 14,
+        messageFontSize: 14,
+        noteFontSize: 14
+      },
       themeVariables: {
         fontFamily: 'system-ui, -apple-system, sans-serif',
         fontSize: '16px',
@@ -56,12 +101,37 @@ const ContentViewer = ({ content, type }) => {
         edgeLabelBackground: '#ffffff',
         clusterBkg: '#f1f5f9',
         clusterBorder: '#e2e8f0',
-        // 思维导图特定样式 - 采用简洁的蓝色系
+        // 思维导图特定样式
         mindmapNode: 'transparent',
-        mindmapNodeText: '#334155',  // 深灰蓝色文字
-        mindmapLine: ['#3b82f6', '#60a5fa', '#93c5fd', '#bfdbfe', '#dbeafe'],  // 蓝色渐变
+        mindmapNodeText: '#334155',
+        mindmapLine: ['#3b82f6', '#60a5fa', '#93c5fd', '#bfdbfe', '#dbeafe'],
         mindmapOutline: 'none',
-        mindmapBorder: 'none'
+        mindmapBorder: 'none',
+        // 时间线特定样式
+        timelineColor: '#3b82f6',
+        timelineTextColor: '#1e293b',
+        timelineBorder: '#e2e8f0',
+        // 甘特图特定样式
+        ganttBarFill: '#3b82f6',
+        ganttBarStroke: '#2563eb',
+        ganttTextColor: '#1e293b',
+        ganttGridColor: '#e2e8f0',
+        // 类图特定样式
+        classText: '#1e293b',
+        classBorder: '#e2e8f0',
+        classBackground: '#f8fafc',
+        // 状态图特定样式
+        stateText: '#1e293b',
+        stateBorder: '#e2e8f0',
+        stateBackground: '#f8fafc',
+        // 序列图特定样式
+        sequenceText: '#1e293b',
+        sequenceBorder: '#e2e8f0',
+        sequenceBackground: '#f8fafc',
+        sequenceActorBorder: '#e2e8f0',
+        sequenceActorBackground: '#f8fafc',
+        sequenceNoteBorder: '#e2e8f0',
+        sequenceNoteBackground: '#f1f5f9'
       }
     });
   }, []);

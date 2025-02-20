@@ -26,7 +26,12 @@ export default function Search() {
   const [contentType, setContentType] = useState('answer');
   const [mermaidContent, setMermaidContent] = useState({
     flowchart: '',
-    mindmap: ''
+    mindmap: '',
+    timeline: '',
+    gantt: '',
+    classDiagram: '',
+    stateDiagram: '',
+    sequenceDiagram: ''
   });
   const [useWebSearch, setUseWebSearch] = useState(false);
   const [useDeepThinking, setUseDeepThinking] = useState(false);
@@ -44,7 +49,7 @@ export default function Search() {
     
     setLoading(true);
     setStreamedAnswer('');
-    setMermaidContent({ flowchart: '', mindmap: '' });
+    setMermaidContent({ flowchart: '', mindmap: '', timeline: '', gantt: '', classDiagram: '', stateDiagram: '', sequenceDiagram: '' });
     setSearchResults([]);
     setReasoningProcess('');
 
@@ -189,6 +194,19 @@ export default function Search() {
                     break;
                   case 'end':
                     logApiStatus('Chat API', 'success', `生成完成，共 ${tokenCount} 个token`);
+                    break;
+                  case 'timeline':
+                  case 'gantt':
+                  case 'classDiagram':
+                  case 'stateDiagram':
+                  case 'sequenceDiagram':
+                    setMermaidContent(prev => ({
+                      ...prev,
+                      [parsed.type]: decodeURIComponent(parsed.content)
+                    }));
+                    if (contentType === 'answer') {
+                      setContentType(parsed.type);
+                    }
                     break;
                 }
               } catch (e) {
@@ -343,11 +361,86 @@ export default function Search() {
                       </div>
                     </div>
                   ) : (
-                    <ContentViewer
-                      content={contentType === 'flowchart' ? mermaidContent.flowchart : mermaidContent.mindmap}
-                      type="mermaid"
-                      key={`${contentType}-${mermaidContent.flowchart.length}-${mermaidContent.mindmap.length}`}
-                    />
+                    <div className="mb-4 flex space-x-2 overflow-x-auto pb-2">
+                      <button
+                        className={`px-3 py-1 rounded-full text-sm ${
+                          contentType === 'answer' ? 'bg-blue-500 text-white' : 'bg-gray-100 text-gray-600'
+                        }`}
+                        onClick={() => setContentType('answer')}
+                      >
+                        文本回答
+                      </button>
+                      {mermaidContent.flowchart && (
+                        <button
+                          className={`px-3 py-1 rounded-full text-sm ${
+                            contentType === 'flowchart' ? 'bg-blue-500 text-white' : 'bg-gray-100 text-gray-600'
+                          }`}
+                          onClick={() => setContentType('flowchart')}
+                        >
+                          流程图
+                        </button>
+                      )}
+                      {mermaidContent.mindmap && (
+                        <button
+                          className={`px-3 py-1 rounded-full text-sm ${
+                            contentType === 'mindmap' ? 'bg-blue-500 text-white' : 'bg-gray-100 text-gray-600'
+                          }`}
+                          onClick={() => setContentType('mindmap')}
+                        >
+                          思维导图
+                        </button>
+                      )}
+                      {mermaidContent.timeline && (
+                        <button
+                          className={`px-3 py-1 rounded-full text-sm ${
+                            contentType === 'timeline' ? 'bg-blue-500 text-white' : 'bg-gray-100 text-gray-600'
+                          }`}
+                          onClick={() => setContentType('timeline')}
+                        >
+                          时间线
+                        </button>
+                      )}
+                      {mermaidContent.gantt && (
+                        <button
+                          className={`px-3 py-1 rounded-full text-sm ${
+                            contentType === 'gantt' ? 'bg-blue-500 text-white' : 'bg-gray-100 text-gray-600'
+                          }`}
+                          onClick={() => setContentType('gantt')}
+                        >
+                          甘特图
+                        </button>
+                      )}
+                      {mermaidContent.classDiagram && (
+                        <button
+                          className={`px-3 py-1 rounded-full text-sm ${
+                            contentType === 'classDiagram' ? 'bg-blue-500 text-white' : 'bg-gray-100 text-gray-600'
+                          }`}
+                          onClick={() => setContentType('classDiagram')}
+                        >
+                          类图
+                        </button>
+                      )}
+                      {mermaidContent.stateDiagram && (
+                        <button
+                          className={`px-3 py-1 rounded-full text-sm ${
+                            contentType === 'stateDiagram' ? 'bg-blue-500 text-white' : 'bg-gray-100 text-gray-600'
+                          }`}
+                          onClick={() => setContentType('stateDiagram')}
+                        >
+                          状态图
+                        </button>
+                      )}
+                      {mermaidContent.sequenceDiagram && (
+                        <button
+                          className={`px-3 py-1 rounded-full text-sm ${
+                            contentType === 'sequenceDiagram' ? 'bg-blue-500 text-white' : 'bg-gray-100 text-gray-600'
+                          }`}
+                          onClick={() => setContentType('sequenceDiagram')}
+                        >
+                          序列图
+                        </button>
+                      )}
+                    </div>
                   )
                 ) : (
                   <div className="flex items-center justify-center h-full">
