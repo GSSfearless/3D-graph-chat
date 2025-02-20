@@ -23,14 +23,6 @@ export class AdvancedChartRenderer {
 
   // 3D球形标签云
   render3DTagSphere(data) {
-    const tags = data.tags.map(tag => ({
-      name: tag.text,
-      value: tag.size || 1,
-      textStyle: {
-        color: tag.color || '#333'
-      }
-    }));
-
     const option = {
       backgroundColor: 'transparent',
       series: [{
@@ -49,11 +41,14 @@ export class AdvancedChartRenderer {
         itemStyle: {
           opacity: 0.8
         },
-        nodes: tags.map((tag, idx) => ({
-          name: tag.name,
-          value: tag.value,
-          symbolSize: Math.sqrt(tag.value) * 10,
-          category: idx % 5
+        nodes: data.tags.map((tag, idx) => ({
+          name: tag.text,
+          value: tag.size || 1,
+          symbolSize: Math.sqrt(tag.size || 1) * 10,
+          category: idx % 5,
+          itemStyle: {
+            color: tag.color || '#4a90e2'
+          }
         })),
         categories: Array.from({ length: 5 }, (_, i) => ({ name: `类别${i + 1}` }))
       }]
@@ -64,38 +59,41 @@ export class AdvancedChartRenderer {
 
   // 动态流体图
   renderFluidChart(data) {
-    const particles = [];
-    const particleCount = 1000;
-    
-    // 创建粒子系统
-    const geometry = new THREE.BufferGeometry();
-    const material = new THREE.PointsMaterial({
-      size: 0.1,
-      vertexColors: true,
-      blending: THREE.AdditiveBlending,
-      transparent: true
-    });
-
-    // 生成粒子
-    for (let i = 0; i < particleCount; i++) {
-      const x = Math.random() * 100 - 50;
-      const y = Math.random() * 100 - 50;
-      const z = Math.random() * 100 - 50;
-      particles.push(x, y, z);
-    }
-
-    geometry.setAttribute('position', new THREE.Float32BufferAttribute(particles, 3));
-    const points = new THREE.Points(geometry, material);
-    this.scene.add(points);
-
-    // 动画循环
-    const animate = () => {
-      requestAnimationFrame(animate);
-      points.rotation.x += 0.001;
-      points.rotation.y += 0.002;
-      this.renderer.render(this.scene, this.camera);
+    const option = {
+      backgroundColor: 'transparent',
+      visualMap: {
+        show: false,
+        min: 0,
+        max: 100,
+        inRange: {
+          color: ['#4a90e2', '#61dafb']
+        }
+      },
+      series: [{
+        type: 'graphGL',
+        layout: 'force',
+        force: {
+          repulsion: 100,
+          edgeLength: 5
+        },
+        roam: true,
+        itemStyle: {
+          opacity: 0.8
+        },
+        nodes: data.points.map(point => ({
+          x: point.x,
+          y: point.y,
+          value: point.value,
+          symbolSize: point.size || 10
+        })),
+        links: data.links || [],
+        emphasis: {
+          scale: true
+        }
+      }]
     };
-    animate();
+
+    this.echartsInstance.setOption(option);
   }
 
   // 高级雷达图
@@ -103,7 +101,10 @@ export class AdvancedChartRenderer {
     const option = {
       backgroundColor: 'transparent',
       radar: {
-        indicator: data.indicators,
+        indicator: data.indicators.map(item => ({
+          name: item.name,
+          max: item.max || 100
+        })),
         shape: 'circle',
         splitNumber: 5,
         axisName: {
@@ -122,22 +123,22 @@ export class AdvancedChartRenderer {
           }
         }
       },
-      series: [{
+      series: data.series.map(series => ({
+        name: series.name,
         type: 'radar',
+        data: [{
+          value: series.values,
+          name: series.name,
+          areaStyle: {
+            opacity: 0.1
+          }
+        }],
+        symbol: 'none',
         lineStyle: {
           width: 2,
           opacity: 0.5
-        },
-        data: data.series.map(series => ({
-          name: series.name,
-          value: series.values,
-          areaStyle: {
-            opacity: 0.1
-          },
-          symbol: 'none'
-        })),
-        animationDuration: 2000
-      }]
+        }
+      }))
     };
 
     this.echartsInstance.setOption(option);
@@ -173,7 +174,7 @@ export class AdvancedChartRenderer {
           name: point.name,
           value: [...point.coordinates, point.value],
           itemStyle: {
-            color: point.color || '#f4e925'
+            color: point.color || '#4a90e2'
           }
         })),
         symbolSize: val => Math.sqrt(val[2]) * 5,
@@ -206,12 +207,19 @@ export class AdvancedChartRenderer {
           name: node.name,
           value: node.value,
           symbolSize: node.size || 20,
-          category: node.category
+          category: node.category,
+          itemStyle: {
+            color: node.color || '#4a90e2'
+          }
         })),
         edges: data.edges.map(edge => ({
           source: edge.source,
           target: edge.target,
-          value: edge.value
+          value: edge.value,
+          lineStyle: {
+            color: edge.color || 'rgba(255,255,255,0.2)',
+            width: edge.width || 1
+          }
         })),
         categories: data.categories,
         layout: 'force',
@@ -225,10 +233,6 @@ export class AdvancedChartRenderer {
         },
         itemStyle: {
           opacity: 0.8
-        },
-        lineStyle: {
-          color: 'rgba(255,255,255,0.2)',
-          width: 1
         },
         emphasis: {
           itemStyle: {
@@ -257,7 +261,8 @@ export class AdvancedChartRenderer {
       xAxis: {
         type: 'category',
         boundaryGap: false,
-        show: false
+        show: false,
+        data: data.timestamps || Array.from({ length: data.values.length }, (_, i) => i)
       },
       yAxis: {
         type: 'value',
@@ -268,6 +273,8 @@ export class AdvancedChartRenderer {
         smooth: true,
         symbol: 'none',
         sampling: 'average',
+        animation: true,
+        data: data.values,
         itemStyle: {
           color: 'rgb(255, 70, 131)'
         },
@@ -279,8 +286,7 @@ export class AdvancedChartRenderer {
             offset: 1,
             color: 'rgb(255, 70, 131)'
           }])
-        },
-        data: data.values
+        }
       }]
     };
 
@@ -289,15 +295,20 @@ export class AdvancedChartRenderer {
 
   // 清理资源
   dispose() {
-    this.echartsInstance.dispose();
+    if (this.echartsInstance) {
+      this.echartsInstance.dispose();
+    }
     if (this.renderer) {
       this.renderer.dispose();
+      this.container.removeChild(this.renderer.domElement);
     }
   }
 
   // 调整大小
   resize() {
-    this.echartsInstance.resize();
+    if (this.echartsInstance) {
+      this.echartsInstance.resize();
+    }
     if (this.renderer) {
       this.renderer.setSize(this.container.clientWidth, this.container.clientHeight);
       this.camera.aspect = this.container.clientWidth / this.container.clientHeight;
