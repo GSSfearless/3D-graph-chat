@@ -171,17 +171,20 @@ export default function Search() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
-      {/* 顶部导航栏 - 减小高度 */}
-      <nav className="bg-white/80 backdrop-blur-sm sticky top-0 z-50 border-b border-gray-100 h-12">
-        <div className="max-w-7xl mx-auto px-4">
-          <div className="flex justify-between h-12">
+      {/* 顶部导航栏 */}
+      <nav className="bg-white/80 backdrop-blur-sm sticky top-0 z-50 border-b border-gray-100">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between h-16">
             <div className="flex items-center">
-              <a href="/" className="flex items-center space-x-2">
-                <span className="text-xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 text-transparent bg-clip-text">Think Graph</span>
-              </a>
+              <div className="flex-shrink-0 flex items-center">
+                <a href="/" className="flex items-center space-x-2">
+                  <span className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 text-transparent bg-clip-text">Think Graph</span>
+                </a>
+              </div>
             </div>
             <div className="flex items-center space-x-4">
               <div className="flex items-center space-x-2 text-sm text-gray-500">
+                <span className="hidden md:inline">Powered by</span>
                 <span className="font-medium bg-gradient-to-r from-purple-600 to-pink-600 text-transparent bg-clip-text">Deepseek</span>
               </div>
             </div>
@@ -189,12 +192,12 @@ export default function Search() {
         </div>
       </nav>
 
-      {/* 主要内容区域 - 扩大高度 */}
-      <main className="w-full px-4 py-2">
-        <div className="grid grid-cols-12 gap-4 h-[calc(100vh-4rem)]">
-          {/* 3D知识图谱显示区域 - 扩大比例 */}
-          <div className="col-span-9 relative">
-            <div className="bg-white rounded-xl shadow-sm border border-gray-100 h-full">
+      {/* 主要内容区域 */}
+      <main className="max-w-[95vw] mx-auto px-2 sm:px-3 lg:px-4 py-4">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
+          {/* 知识图谱显示区域 */}
+          <div className="lg:col-span-9">
+            <div className="bg-white rounded-xl shadow-sm border border-gray-100 h-[calc(100vh-12rem)]">
               {loading ? (
                 <div className="flex items-center justify-center h-full">
                   <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
@@ -204,7 +207,6 @@ export default function Search() {
                   data={graphData}
                   onNodeClick={handleNodeClick}
                   style={{ height: '100%' }}
-                  defaultMode="3d"
                 />
               ) : (
                 <div className="flex items-center justify-center h-full">
@@ -214,15 +216,15 @@ export default function Search() {
             </div>
           </div>
 
-          {/* 文本显示区域 - 减小比例但增加高度 */}
-          <div className="col-span-3">
-            <div className="bg-white rounded-xl shadow-sm border border-gray-100 h-full overflow-auto p-4">
+          {/* 文本显示区域 */}
+          <div className="lg:col-span-3">
+            <div className="bg-white rounded-xl shadow-sm border border-gray-100 h-[calc(100vh-12rem)] overflow-auto p-4">
               {useDeepThinking && reasoningProcess && (
-                <div className="mb-4 p-3 bg-purple-50 rounded-lg border border-purple-200">
+                <div className="mb-6 p-4 bg-purple-50 rounded-lg border border-purple-200">
                   <div className="flex items-center space-x-2 mb-2">
-                    <h3 className="text-sm font-semibold text-purple-700">💭 思考过程</h3>
+                    <h3 className="text-lg font-semibold text-purple-700">💭 思考过程</h3>
                   </div>
-                  <div className="prose prose-sm prose-purple max-w-none">
+                  <div className="prose prose-purple max-w-none">
                     <ReactMarkdown remarkPlugins={[remarkGfm]}>
                       {reasoningProcess}
                     </ReactMarkdown>
@@ -230,8 +232,8 @@ export default function Search() {
                 </div>
               )}
               {streamedAnswer && (
-                <div className={useDeepThinking && reasoningProcess ? "mt-4" : ""}>
-                  <ReactMarkdown remarkPlugins={[remarkGfm]} className="prose prose-sm max-w-none">
+                <div className={useDeepThinking && reasoningProcess ? "mt-6" : ""}>
+                  <ReactMarkdown remarkPlugins={[remarkGfm]}>
                     {streamedAnswer}
                   </ReactMarkdown>
                 </div>
@@ -240,41 +242,62 @@ export default function Search() {
           </div>
         </div>
 
-        {/* 底部搜索区域 - 简化并减小高度 */}
-        <div className="fixed bottom-4 left-1/2 transform -translate-x-1/2 w-full max-w-2xl px-4">
-          <div className="bg-white/80 backdrop-blur-sm rounded-xl shadow-lg border border-gray-100 p-3">
-            <div className="flex items-center space-x-4">
+        {/* 底部搜索区域 */}
+        <div className="fixed bottom-4 left-1/2 transform -translate-x-1/2 w-full max-w-3xl px-4">
+          <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-gray-100 p-4">
+            <div className="flex flex-col space-y-2">
+              <div className="flex items-center justify-between px-2">
+                <div className="flex items-center space-x-4">
+                  <div className="flex items-center space-x-2">
+                    <span className="text-sm text-gray-600">联网搜索</span>
+                    <button
+                      onClick={() => setUseWebSearch(!useWebSearch)}
+                      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${
+                        useWebSearch ? 'bg-blue-500' : 'bg-gray-300'
+                      }`}
+                    >
+                      <span
+                        className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                          useWebSearch ? 'translate-x-6' : 'translate-x-1'
+                        }`}
+                      />
+                    </button>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <span className="text-sm text-gray-600">深度思考</span>
+                    <button
+                      onClick={() => setUseDeepThinking(!useDeepThinking)}
+                      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${
+                        useDeepThinking ? 'bg-purple-500' : 'bg-gray-300'
+                      }`}
+                    >
+                      <span
+                        className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                          useDeepThinking ? 'translate-x-6' : 'translate-x-1'
+                        }`}
+                      />
+                    </button>
+                  </div>
+                </div>
+              </div>
               <div className="flex items-center space-x-2">
-                <span className="text-sm text-gray-600">深度思考</span>
+                <input
+                  ref={searchInputRef}
+                  type="text"
+                  value={query}
+                  onChange={handleInputChange}
+                  onKeyPress={(e) => e.key === 'Enter' && handleSubmit(e)}
+                  placeholder={defaultQuery}
+                  className="flex-1 p-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all bg-white/50"
+                />
                 <button
-                  onClick={() => setUseDeepThinking(!useDeepThinking)}
-                  className={`relative inline-flex h-5 w-10 items-center rounded-full transition-colors focus:outline-none ${
-                    useDeepThinking ? 'bg-purple-500' : 'bg-gray-300'
-                  }`}
+                  onClick={handleSubmit}
+                  className="bg-gradient-to-r from-blue-500 to-blue-600 text-white p-3 rounded-xl hover:from-blue-600 hover:to-blue-700 transition-all shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+                  disabled={loading}
                 >
-                  <span
-                    className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                      useDeepThinking ? 'translate-x-5' : 'translate-x-1'
-                    }`}
-                  />
+                  <FontAwesomeIcon icon={faArrowRight} className="w-5 h-5" />
                 </button>
               </div>
-              <input
-                ref={searchInputRef}
-                type="text"
-                value={query}
-                onChange={handleInputChange}
-                onKeyPress={(e) => e.key === 'Enter' && handleSubmit(e)}
-                placeholder={defaultQuery}
-                className="flex-1 p-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all bg-white/50 text-sm"
-              />
-              <button
-                onClick={handleSubmit}
-                className="bg-gradient-to-r from-blue-500 to-blue-600 text-white p-2 rounded-lg hover:from-blue-600 hover:to-blue-700 transition-all shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
-                disabled={loading}
-              >
-                <FontAwesomeIcon icon={faArrowRight} className="w-4 h-4" />
-              </button>
             </div>
           </div>
         </div>
