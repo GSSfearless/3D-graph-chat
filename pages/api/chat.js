@@ -153,32 +153,12 @@ export default async function handler(req, res) {
                   const diagrams = extractMermaidDiagrams(responseText);
                   
                   if (diagrams.flowchart) {
-                    console.log('发送流程图数据');
+                    console.log('发送流程图数据，长度:', diagrams.flowchart.length);
                     res.write(`data: {"type":"flowchart","content":"${encodeURIComponent(diagrams.flowchart)}"}\n\n`);
                   }
                   if (diagrams.mindmap) {
-                    console.log('发送思维导图数据');
+                    console.log('发送思维导图数据，长度:', diagrams.mindmap.length);
                     res.write(`data: {"type":"mindmap","content":"${encodeURIComponent(diagrams.mindmap)}"}\n\n`);
-                  }
-                  if (diagrams.timeline) {
-                    console.log('发送时间线图数据');
-                    res.write(`data: {"type":"timeline","content":"${encodeURIComponent(diagrams.timeline)}"}\n\n`);
-                  }
-                  if (diagrams.gantt) {
-                    console.log('发送甘特图数据');
-                    res.write(`data: {"type":"gantt","content":"${encodeURIComponent(diagrams.gantt)}"}\n\n`);
-                  }
-                  if (diagrams.classDiagram) {
-                    console.log('发送类图数据');
-                    res.write(`data: {"type":"classDiagram","content":"${encodeURIComponent(diagrams.classDiagram)}"}\n\n`);
-                  }
-                  if (diagrams.stateDiagram) {
-                    console.log('发送状态图数据');
-                    res.write(`data: {"type":"stateDiagram","content":"${encodeURIComponent(diagrams.stateDiagram)}"}\n\n`);
-                  }
-                  if (diagrams.sequenceDiagram) {
-                    console.log('发送序列图数据');
-                    res.write(`data: {"type":"sequenceDiagram","content":"${encodeURIComponent(diagrams.sequenceDiagram)}"}\n\n`);
                   }
                 }
               }
@@ -301,12 +281,7 @@ export default async function handler(req, res) {
 const extractMermaidDiagrams = (text) => {
   const diagrams = {
     flowchart: '',
-    mindmap: '',
-    timeline: '',
-    gantt: '',
-    classDiagram: '',
-    stateDiagram: '',
-    sequenceDiagram: ''
+    mindmap: ''
   };
   
   // 使用更精确的正则表达式
@@ -317,28 +292,12 @@ const extractMermaidDiagrams = (text) => {
     const diagramContent = match[1].trim();
     console.log('找到Mermaid图表:', diagramContent);
     
-    // 根据图表类型分类
-    if (diagramContent.startsWith('graph')) {
+    if (diagramContent.startsWith('graph LR')) {
       console.log('提取到流程图');
       diagrams.flowchart = diagramContent;
     } else if (diagramContent.startsWith('mindmap')) {
       console.log('提取到思维导图');
       diagrams.mindmap = diagramContent;
-    } else if (diagramContent.startsWith('timeline')) {
-      console.log('提取到时间线图');
-      diagrams.timeline = diagramContent;
-    } else if (diagramContent.startsWith('gantt')) {
-      console.log('提取到甘特图');
-      diagrams.gantt = diagramContent;
-    } else if (diagramContent.startsWith('classDiagram')) {
-      console.log('提取到类图');
-      diagrams.classDiagram = diagramContent;
-    } else if (diagramContent.startsWith('stateDiagram')) {
-      console.log('提取到状态图');
-      diagrams.stateDiagram = diagramContent;
-    } else if (diagramContent.startsWith('sequenceDiagram')) {
-      console.log('提取到序列图');
-      diagrams.sequenceDiagram = diagramContent;
     }
   }
   
@@ -346,11 +305,8 @@ const extractMermaidDiagrams = (text) => {
   console.log('提取的图表数据:', {
     hasFlowchart: !!diagrams.flowchart,
     hasMindmap: !!diagrams.mindmap,
-    hasTimeline: !!diagrams.timeline,
-    hasGantt: !!diagrams.gantt,
-    hasClassDiagram: !!diagrams.classDiagram,
-    hasStateDiagram: !!diagrams.stateDiagram,
-    hasSequenceDiagram: !!diagrams.sequenceDiagram
+    flowchartLength: diagrams.flowchart.length,
+    mindmapLength: diagrams.mindmap.length
   });
   
   return diagrams;
