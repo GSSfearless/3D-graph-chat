@@ -7,66 +7,28 @@ import 'tailwindcss/tailwind.css';
 import '../styles/globals.css';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import { DiagramGenerator } from '../utils/diagram-generator';
-import { processSearchResponse } from '../utils/data-processor';
+import { KnowledgeProcessor } from '../utils/knowledge-processor';
 
-const EnhancedChart = dynamic(() => import('../components/EnhancedChart'), {
+const KnowledgeGraph = dynamic(() => import('../components/KnowledgeGraph'), {
   ssr: false,
-  loading: () => <div className="loading-placeholder">Loading chart...</div>
+  loading: () => <div className="loading-placeholder">Loading knowledge graph...</div>
 });
-
-const ContentViewer = dynamic(() => import('../components/ContentViewer'), {
-  ssr: false,
-  loading: () => <p>Loading content viewer...</p>
-});
-
-// 更新按钮布局
-const contentTypes = [
-  { id: 'answer', name: 'AI回答', icon: '🤖' },
-  { id: 'mindmap', name: '思维导图', icon: '🌳' },
-  { id: 'conceptmap', name: '概念图', icon: '🎯' },
-  { id: 'orgchart', name: '层级图', icon: '📊' },
-  { id: 'bracket', name: '分类图', icon: '🔄' },
-  { id: 'tagSphere', name: '3D标签云', icon: '🌐' },
-  { id: 'fluid', name: '流体动画', icon: '💫' },
-  { id: 'radar', name: '雷达图', icon: '📡' },
-  { id: 'geoBubble', name: '地理图', icon: '🌍' },
-  { id: 'network', name: '网络图', icon: '🕸️' },
-  { id: 'waveform', name: '声波图', icon: '〰️' }
-];
-
-// 添加图表类型分类
-const chartCategories = {
-  mermaid: ['mindmap', 'conceptmap', 'orgchart', 'bracket'],
-  enhanced: ['tagSphere', 'fluid', 'radar', 'geoBubble', 'network', 'waveform']
-};
 
 export default function Search() {
   const router = useRouter();
   const { q } = router.query;
 
   const [query, setQuery] = useState('');
-  const [searchResults, setSearchResults] = useState(null);
   const [loading, setLoading] = useState(false);
   const [initialLoad, setInitialLoad] = useState(true);
   const [streamedAnswer, setStreamedAnswer] = useState('');
-  const [contentType, setContentType] = useState('answer');
-  const [mermaidContent, setMermaidContent] = useState({
-    flowchart: '',
-    mindmap: '',
-    fishbone: '',
-    orgchart: '',
-    conceptmap: '',
-    bracket: ''
-  });
+  const [graphData, setGraphData] = useState(null);
+  const [selectedNode, setSelectedNode] = useState(null);
   const [useWebSearch, setUseWebSearch] = useState(false);
   const [useDeepThinking, setUseDeepThinking] = useState(false);
   const [reasoningProcess, setReasoningProcess] = useState('');
-  const [selectedChartType, setSelectedChartType] = useState('tagSphere');
   const searchInputRef = useRef(null);
-
-  // 添加处理下拉菜单的状态
-  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const knowledgeProcessor = useRef(new KnowledgeProcessor());
 
   const defaultQuery = "What is the answer to life, the universe, and everything?";
 
@@ -80,107 +42,49 @@ export default function Search() {
     
     setLoading(true);
     setStreamedAnswer('');
-    setMermaidContent({ flowchart: '', mindmap: '', fishbone: '', orgchart: '', conceptmap: '', bracket: '' });
-    setSearchResults(null);
+    setGraphData(null);
+    setSelectedNode(null);
     setReasoningProcess('');
-
-    const logApiStatus = (api, status, details = '') => {
-      const style = status === 'success' 
-        ? 'color: #22c55e; font-weight: bold;'
-        : status === 'error'
-        ? 'color: #ef4444; font-weight: bold;'
-        : 'color: #3b82f6; font-weight: bold;';
-      
-      console.log(
-        `%c[${api}] ${status.toUpperCase()}${details ? ': ' + details : ''}`,
-        style
-      );
-    };
 
     try {
       // 只在启用联网搜索时执行 RAG 搜索
       if (useWebSearch) {
-        console.group('🔍 执行联网搜索');
-        logApiStatus('RAG Search', 'start', '开始搜索相关内容');
+        console.log('执行联网搜索...');
         const searchResponse = await fetch(`/api/rag-search?query=${encodeURIComponent(searchQuery)}`);
         if (!searchResponse.ok) {
-          logApiStatus('RAG Search', 'error', `HTTP ${searchResponse.status}`);
           throw new Error('搜索请求失败');
         }
-
-        // 读取搜索响应流
-        const searchReader = searchResponse.body.getReader();
-        const searchDecoder = new TextDecoder();
-        let searchResults = [];
-        let searchResultCount = 0;
-
-        try {
-          while (true) {
-            const { value, done } = await searchReader.read();
-            if (done) break;
-
-            const chunk = searchDecoder.decode(value);
-            const lines = chunk.split('\n');
-
-            for (const line of lines) {
-              if (line.startsWith('data: ')) {
-                const data = line.slice(6);
-                if (data === '[DONE]') continue;
-
-                try {
-                  const parsed = JSON.parse(data);
-                  if (parsed.result) {
-                    searchResults.push(parsed.result);
-                    searchResultCount++;
-                  }
-                } catch (e) {
-                  logApiStatus('RAG Search', 'error', '解析搜索结果失败');
-                  console.error('Search result parse error:', e);
-                }
-              }
-            }
-          }
-          logApiStatus('RAG Search', 'success', `找到 ${searchResultCount} 条相关内容`);
-        } finally {
-          searchReader.releaseLock();
-        }
-
-        setSearchResults(searchResults);
+        const searchResults = await searchResponse.json();
+        console.log('搜索结果:', searchResults);
       }
 
       // 发送聊天请求
-      console.group('🤖 生成AI回答');
-      console.log('准备发送聊天请求...');
+      console.log('生成AI回答...');
       const chatResponse = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
-          context: useWebSearch ? searchResults : [],
           query: searchQuery,
           useDeepThinking
-        }),
+        })
       });
 
       if (!chatResponse.ok) {
-        console.error('❌ 聊天请求失败:', chatResponse.status);
         throw new Error(`HTTP error! status: ${chatResponse.status}`);
       }
 
-      console.log('✅ 聊天请求成功，开始接收响应...');
+      // 处理流式响应
       const reader = chatResponse.body.getReader();
       const decoder = new TextDecoder();
       let answer = '';
-      let buffer = '';
-      let tokenCount = 0;
 
       try {
         while (true) {
           const { value, done } = await reader.read();
           if (done) break;
 
-          buffer += decoder.decode(value, { stream: true });
-          const lines = buffer.split('\n');
-          buffer = lines.pop() || '';
+          const chunk = decoder.decode(value);
+          const lines = chunk.split('\n');
 
           for (const line of lines) {
             if (line.startsWith('data: ')) {
@@ -195,36 +99,29 @@ export default function Search() {
                   case 'reasoning':
                     if (parsed.content) {
                       const decodedContent = decodeURIComponent(parsed.content);
-                      console.log('📝 收到推理过程:', decodedContent);
-                      setReasoningProcess(prev => {
-                        const newContent = prev.endsWith('\n') ? decodedContent : '\n' + decodedContent;
-                        return prev + newContent;
-                      });
+                      setReasoningProcess(prev => prev + '\n' + decodedContent);
                     }
                     break;
                   case 'delta':
                     if (parsed.content) {
                       const decodedContent = decodeURIComponent(parsed.content);
                       answer += decodedContent;
-                      // 处理增量内容
-                      setStreamedAnswer(processAnswer(answer));
-                      tokenCount++;
+                      setStreamedAnswer(answer);
+                      
+                      // 实时更新知识图谱
+                      const graphData = knowledgeProcessor.current.processSearchResponse(answer);
+                      setGraphData(graphData);
                     }
                     break;
                   case 'complete':
-                    console.log('收到 complete 信号');
                     if (parsed.content) {
-                      console.log('开始处理完整回答...');
                       const completeAnswer = decodeURIComponent(parsed.content);
-                      console.log('回答长度:', completeAnswer.length);
+                      setStreamedAnswer(completeAnswer);
                       
-                      // 处理完整回答
-                      answer = completeAnswer;
-                      setStreamedAnswer(processAnswer(answer));
+                      // 处理完整回答，生成最终知识图谱
+                      const finalGraphData = knowledgeProcessor.current.processSearchResponse(completeAnswer);
+                      setGraphData(finalGraphData);
                     }
-                    break;
-                  case 'end':
-                    logApiStatus('Chat API', 'success', `生成完成，共 ${tokenCount} 个token`);
                     break;
                 }
               } catch (e) {
@@ -247,28 +144,11 @@ export default function Search() {
 
   useEffect(() => {
     if (q && initialLoad) {
+      setQuery(q);
       handleSearch(q);
       setInitialLoad(false);
     }
   }, [q, initialLoad, handleSearch]);
-
-  // 添加一个函数来过滤Mermaid代码块
-  const filterMermaidBlocks = (text) => {
-    if (!text) return '';
-    return text.replace(/```mermaid[\s\S]*?```/g, '').trim();
-  };
-
-  // 在处理回答内容时自动生成图表
-  const processAnswer = (answer) => {
-    // 生成图表
-    const diagrams = DiagramGenerator.parseMarkdown(answer);
-    
-    // 更新状态
-    setMermaidContent(diagrams);
-    
-    // 返回过滤后的文本
-    return filterMermaidBlocks(answer);
-  };
 
   const handleInputChange = (e) => {
     setQuery(e.target.value);
@@ -281,17 +161,12 @@ export default function Search() {
         pathname: '/search',
         query: { q: query }
       });
+      handleSearch(query);
     }
   };
 
-  // 处理图表类型切换
-  const handleTypeChange = (typeId, parentId = null) => {
-    if (parentId === 'enhanced') {
-      setContentType(typeId);
-      setDropdownOpen(false);
-    } else {
-      setContentType(typeId);
-    }
+  const handleNodeClick = (node) => {
+    setSelectedNode(node);
   };
 
   return (
@@ -312,17 +187,6 @@ export default function Search() {
                 <span className="hidden md:inline">Powered by</span>
                 <span className="font-medium bg-gradient-to-r from-purple-600 to-pink-600 text-transparent bg-clip-text">Deepseek</span>
               </div>
-              <a
-                href="https://discord.gg/yourdiscord"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-gray-400 hover:text-gray-500 transition-colors"
-              >
-                <span className="sr-only">Discord</span>
-                <svg className="h-6 w-6" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515a.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0a12.64 12.64 0 0 0-.617-1.25a.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057a19.9 19.9 0 0 0 5.993 3.03a.078.078 0 0 0 .084-.028a14.09 14.09 0 0 0 1.226-1.994a.076.076 0 0 0-.041-.106a13.107 13.107 0 0 1-1.872-.892a.077.077 0 0 1-.008-.128a10.2 10.2 0 0 0 .372-.292a.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127a12.299 12.299 0 0 1-1.873.892a.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028a19.839 19.839 0 0 0 6.002-3.03a.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419c0-1.333.956-2.419 2.157-2.419c1.21 0 2.176 1.096 2.157 2.42c0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419c0-1.333.955-2.419 2.157-2.419c1.21 0 2.176 1.096 2.157 2.42c0 1.333-.946 2.418-2.157 2.418z"/>
-                </svg>
-              </a>
             </div>
           </div>
         </div>
@@ -331,97 +195,49 @@ export default function Search() {
       {/* 主要内容区域 */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-          {/* 内容显示区域 */}
-          <div className="lg:col-span-12">
-            <div className="bg-white rounded-xl shadow-sm border border-gray-100">
-              {/* 图表切换按钮 */}
-              <div className="flex items-center justify-center space-x-2 p-4 border-b border-gray-100">
-                <button
-                  onClick={() => {
-                    const currentIndex = contentTypes.findIndex(type => type.id === contentType);
-                    const newIndex = currentIndex > 0 ? currentIndex - 1 : contentTypes.length - 1;
-                    setContentType(contentTypes[newIndex].id);
-                  }}
-                  className="p-2 rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 transition-all"
-                  title="上一个视图"
-                >
-                  ◀
-                </button>
-                
-                {contentTypes.map(type => (
-                  <button
-                    key={type.id}
-                    onClick={() => handleTypeChange(type.id)}
-                    className={`p-3 rounded-lg transition-all ${
-                      contentType === type.id
-                        ? 'bg-blue-500 text-white shadow-md hover:bg-blue-600'
-                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                    }`}
-                    title={type.name}
-                  >
-                    <span className="text-xl">{type.icon}</span>
-                  </button>
-                ))}
-                
-                <button
-                  onClick={() => {
-                    const currentIndex = contentTypes.findIndex(type => type.id === contentType);
-                    const newIndex = currentIndex < contentTypes.length - 1 ? currentIndex + 1 : 0;
-                    setContentType(contentTypes[newIndex].id);
-                  }}
-                  className="p-2 rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 transition-all"
-                  title="下一个视图"
-                >
-                  ▶
-                </button>
-              </div>
-              
-              <div className="h-[calc(100vh-24rem)] overflow-auto p-6">
-                {loading && !streamedAnswer ? (
-                  <div className="flex items-center justify-center h-full">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+          {/* 知识图谱显示区域 */}
+          <div className="lg:col-span-8">
+            <div className="bg-white rounded-xl shadow-sm border border-gray-100 h-[calc(100vh-24rem)]">
+              {loading ? (
+                <div className="flex items-center justify-center h-full">
+                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+                </div>
+              ) : graphData ? (
+                <KnowledgeGraph
+                  data={graphData}
+                  onNodeClick={handleNodeClick}
+                  style={{ height: '100%' }}
+                />
+              ) : (
+                <div className="flex items-center justify-center h-full">
+                  <p className="text-gray-400">在下方输入问题开始查询</p>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* 文本显示区域 */}
+          <div className="lg:col-span-4">
+            <div className="bg-white rounded-xl shadow-sm border border-gray-100 h-[calc(100vh-24rem)] overflow-auto p-6">
+              {useDeepThinking && reasoningProcess && (
+                <div className="mb-6 p-4 bg-purple-50 rounded-lg border border-purple-200">
+                  <div className="flex items-center space-x-2 mb-2">
+                    <h3 className="text-lg font-semibold text-purple-700">💭 思考过程</h3>
                   </div>
-                ) : streamedAnswer ? (
-                  contentType === 'answer' ? (
-                    <div className="prose max-w-none">
-                      {useDeepThinking && reasoningProcess && (
-                        <div className="mb-6 p-4 bg-purple-50 rounded-lg border border-purple-200">
-                          <div className="flex items-center space-x-2 mb-2">
-                            <h3 className="text-lg font-semibold text-purple-700">💭 思考过程</h3>
-                            <span className="text-sm text-purple-500">(DeepSeek R1)</span>
-                          </div>
-                          <div className="prose prose-purple max-w-none">
-                            <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                              {filterMermaidBlocks(reasoningProcess)}
-                            </ReactMarkdown>
-                          </div>
-                        </div>
-                      )}
-                      <div className={useDeepThinking && reasoningProcess ? "mt-6" : ""}>
-                        <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                          {streamedAnswer}
-                        </ReactMarkdown>
-                      </div>
-                    </div>
-                  ) : chartCategories.mermaid.includes(contentType) ? (
-                    <ContentViewer
-                      content={mermaidContent[contentType]}
-                      type="mermaid"
-                      key={`${contentType}-${Object.values(mermaidContent).join('-')}`}
-                    />
-                  ) : chartCategories.enhanced.includes(contentType) ? (
-                    <EnhancedChart
-                      chartData={searchResults ? processSearchResponse(streamedAnswer) : null}
-                      initialType={contentType}
-                      onChartUpdate={(data) => console.log('图表更新:', data)}
-                    />
-                  ) : null
-                ) : (
-                  <div className="flex items-center justify-center h-full">
-                    <p className="text-gray-400">在下方输入问题开始查询</p>
+                  <div className="prose prose-purple max-w-none">
+                    <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                      {reasoningProcess}
+                    </ReactMarkdown>
                   </div>
-                )}
-              </div>
+                </div>
+              )}
+              {streamedAnswer && (
+                <div className={useDeepThinking && reasoningProcess ? "mt-6" : ""}>
+                  <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                    {streamedAnswer}
+                  </ReactMarkdown>
+                </div>
+              )}
             </div>
           </div>
         </div>
