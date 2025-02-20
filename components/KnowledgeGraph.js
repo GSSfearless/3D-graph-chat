@@ -30,34 +30,21 @@ const KnowledgeGraph = ({ data, onNodeClick, onEdgeClick, style = {} }) => {
   const theme = {
     node: {
       normal: {
-        backgroundColor: '#6366F1',
-        borderColor: '#4338CA',
-        borderWidth: 2,
-        labelColor: '#F8FAFC'
-      },
-      hover: {
-        backgroundColor: '#818CF8',
-        borderColor: '#4F46E5',
-        borderWidth: 3
+        color: new THREE.Color(0x6366F1),
+        emissive: new THREE.Color(0x4338CA),
+        specular: new THREE.Color(0xFFFFFF)
       },
       selected: {
-        backgroundColor: '#F43F5E',
-        borderColor: '#BE123C',
-        borderWidth: 3
+        color: new THREE.Color(0xF43F5E),
+        emissive: new THREE.Color(0xBE123C),
+        specular: new THREE.Color(0xFFFFFF)
       }
     },
     edge: {
-      normal: {
-        lineColor: '#94A3B8',
-        width: 2,
-        opacity: 0.6
-      },
-      hover: {
-        lineColor: '#64748B',
-        width: 3,
-        opacity: 0.8
-      }
-    }
+      color: new THREE.Color(0x94A3B8),
+      opacity: 0.6
+    },
+    background: new THREE.Color(0x0F172A)
   };
 
   const handleFullscreen = () => {
@@ -108,21 +95,29 @@ const KnowledgeGraph = ({ data, onNodeClick, onEdgeClick, style = {} }) => {
   // 初始化Three.js场景
   const initThreeScene = () => {
     const container = containerRef.current;
-    const width = container.clientWidth;
-    const height = container.clientHeight;
+    const width = window.innerWidth;
+    const height = window.innerHeight;
 
     // 创建场景
     const scene = new THREE.Scene();
-    scene.background = new THREE.Color(0xf8fafc);
+    scene.background = theme.background;
+    scene.fog = new THREE.FogExp2(theme.background, 0.001);
 
     // 创建相机
     const camera = new THREE.PerspectiveCamera(75, width / height, 0.1, 1000);
     camera.position.z = 500;
 
     // 创建渲染器
-    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    const renderer = new THREE.WebGLRenderer({ 
+      antialias: true,
+      alpha: true,
+      logarithmicDepthBuffer: true
+    });
     renderer.setSize(width, height);
     renderer.setPixelRatio(window.devicePixelRatio);
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1;
+    renderer.shadowMap.enabled = true;
 
     // 创建标签渲染器
     const labelRenderer = new CSS2DRenderer();
@@ -135,7 +130,27 @@ const KnowledgeGraph = ({ data, onNodeClick, onEdgeClick, style = {} }) => {
     const controls = new OrbitControls(camera, renderer.domElement);
     controls.enableDamping = true;
     controls.dampingFactor = 0.05;
+    controls.rotateSpeed = 0.5;
+    controls.zoomSpeed = 0.8;
+    controls.minDistance = 100;
+    controls.maxDistance = 800;
 
+    // 添加环境光和点光源
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+    scene.add(ambientLight);
+
+    const pointLight = new THREE.PointLight(0xffffff, 1);
+    pointLight.position.set(100, 100, 100);
+    scene.add(pointLight);
+
+    // 添加全局光晕
+    const bloomPass = new THREE.UnrealBloomPass(
+      new THREE.Vector2(width, height),
+      1.5,  // 强度
+      0.4,  // 半径
+      0.85  // 阈值
+    );
+    
     // 清除原有内容并添加新的渲染器
     container.innerHTML = '';
     container.appendChild(renderer.domElement);
@@ -147,35 +162,95 @@ const KnowledgeGraph = ({ data, onNodeClick, onEdgeClick, style = {} }) => {
       camera,
       controls,
       width,
-      height
+      height,
+      pointLight
     };
     rendererRef.current = renderer;
     labelRendererRef.current = labelRenderer;
+
+    // 添加窗口大小调整监听
+    window.addEventListener('resize', handleResize);
 
     // 动画循环
     const animate = () => {
       requestAnimationFrame(animate);
       controls.update();
+      
+      // 旋转点光源
+      pointLight.position.x = Math.sin(Date.now() * 0.001) * 100;
+      pointLight.position.z = Math.cos(Date.now() * 0.001) * 100;
+      
       renderer.render(scene, camera);
       labelRenderer.render(scene, camera);
     };
     animate();
   };
 
-  // 转换为3D节点
+  // 处理窗口大小调整
+  const handleResize = () => {
+    if (!threeRef.current) return;
+
+    const width = window.innerWidth;
+    const height = window.innerHeight;
+    const { camera } = threeRef.current;
+
+    camera.aspect = width / height;
+    camera.updateProjectionMatrix();
+
+    rendererRef.current.setSize(width, height);
+    labelRendererRef.current.setSize(width, height);
+  };
+
+  // 创建3D节点
   const createNode3D = (nodeData, index, total) => {
     const group = new THREE.Group();
 
-    // 创建球体
+    // 创建发光球体
     const geometry = new THREE.SphereGeometry(10, 32, 32);
     const material = new THREE.MeshPhongMaterial({
-      color: theme.node.normal.backgroundColor,
-      specular: 0x666666,
+      color: theme.node.normal.color,
+      emissive: theme.node.normal.emissive,
+      specular: theme.node.normal.specular,
       shininess: 50,
       transparent: true,
       opacity: 0.9
     });
     const sphere = new THREE.Mesh(geometry, material);
+    
+    // 添加发光效果
+    const glowGeometry = new THREE.SphereGeometry(12, 32, 32);
+    const glowMaterial = new THREE.ShaderMaterial({
+      uniforms: {
+        c: { type: "f", value: 0.5 },
+        p: { type: "f", value: 3.0 },
+        glowColor: { type: "c", value: new THREE.Color(0x6366F1) },
+        viewVector: { type: "v3", value: threeRef.current.camera.position }
+      },
+      vertexShader: `
+        uniform vec3 viewVector;
+        varying float intensity;
+        void main() {
+          vec3 vNormal = normalize(normalMatrix * normal);
+          vec3 vNormel = normalize(normalMatrix * viewVector);
+          intensity = pow(0.5 - dot(vNormal, vNormel), 2.0);
+          gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+        }
+      `,
+      fragmentShader: `
+        uniform vec3 glowColor;
+        varying float intensity;
+        void main() {
+          vec3 glow = glowColor * intensity;
+          gl_FragColor = vec4(glow, 1.0);
+        }
+      `,
+      side: THREE.BackSide,
+      blending: THREE.AdditiveBlending,
+      transparent: true
+    });
+    const glowMesh = new THREE.Mesh(glowGeometry, glowMaterial);
+    group.add(glowMesh);
+    
     group.add(sphere);
 
     // 创建标签
@@ -195,6 +270,10 @@ const KnowledgeGraph = ({ data, onNodeClick, onEdgeClick, style = {} }) => {
     group.position.y = radius * Math.sin(theta) * Math.sin(phi);
     group.position.z = radius * Math.cos(phi);
 
+    // 添加交互事件
+    group.userData = nodeData;
+    group.userData.isNode = true;
+
     return group;
   };
 
@@ -204,14 +283,17 @@ const KnowledgeGraph = ({ data, onNodeClick, onEdgeClick, style = {} }) => {
     points.push(new THREE.Vector3(source.position.x, source.position.y, source.position.z));
     points.push(new THREE.Vector3(target.position.x, target.position.y, target.position.z));
 
-    const geometry = new THREE.BufferGeometry().setFromPoints(points);
-    const material = new THREE.LineBasicMaterial({
-      color: theme.edge.normal.lineColor,
+    const curve = new THREE.CatmullRomCurve3(points);
+    const geometry = new THREE.TubeGeometry(curve, 20, 0.5, 8, false);
+    const material = new THREE.MeshPhongMaterial({
+      color: theme.edge.color,
       transparent: true,
-      opacity: theme.edge.normal.opacity
+      opacity: theme.edge.opacity,
+      emissive: theme.edge.color,
+      emissiveIntensity: 0.2
     });
 
-    return new THREE.Line(geometry, material);
+    return new THREE.Mesh(geometry, material);
   };
 
   // 渲染3D图
@@ -220,14 +302,6 @@ const KnowledgeGraph = ({ data, onNodeClick, onEdgeClick, style = {} }) => {
 
     initThreeScene();
     const { scene } = threeRef.current;
-
-    // 添加光源
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
-    scene.add(ambientLight);
-
-    const pointLight = new THREE.PointLight(0xffffff, 1);
-    pointLight.position.set(100, 100, 100);
-    scene.add(pointLight);
 
     // 创建节点
     const nodes3D = new Map();
@@ -246,6 +320,65 @@ const KnowledgeGraph = ({ data, onNodeClick, onEdgeClick, style = {} }) => {
         scene.add(edge3D);
       }
     });
+
+    // 添加射线检测器用于交互
+    const raycaster = new THREE.Raycaster();
+    const mouse = new THREE.Vector2();
+
+    const onMouseMove = (event) => {
+      mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+      mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+
+      raycaster.setFromCamera(mouse, threeRef.current.camera);
+      const intersects = raycaster.intersectObjects(scene.children, true);
+
+      let hoveredNode = null;
+      for (let i = 0; i < intersects.length; i++) {
+        const object = intersects[i].object;
+        if (object.parent && object.parent.userData && object.parent.userData.isNode) {
+          hoveredNode = object.parent;
+          break;
+        }
+      }
+
+      scene.traverse((object) => {
+        if (object.userData && object.userData.isNode) {
+          const material = object.children[0].material;
+          if (object === hoveredNode) {
+            material.emissiveIntensity = 1;
+            material.color = theme.node.selected.color;
+          } else {
+            material.emissiveIntensity = 0.5;
+            material.color = theme.node.normal.color;
+          }
+        }
+      });
+    };
+
+    const onClick = (event) => {
+      mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+      mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+
+      raycaster.setFromCamera(mouse, threeRef.current.camera);
+      const intersects = raycaster.intersectObjects(scene.children, true);
+
+      for (let i = 0; i < intersects.length; i++) {
+        const object = intersects[i].object;
+        if (object.parent && object.parent.userData && object.parent.userData.isNode) {
+          setSelectedNode(object.parent.userData);
+          onNodeClick && onNodeClick(object.parent.userData);
+          break;
+        }
+      }
+    };
+
+    window.addEventListener('mousemove', onMouseMove);
+    window.addEventListener('click', onClick);
+
+    return () => {
+      window.removeEventListener('mousemove', onMouseMove);
+      window.removeEventListener('click', onClick);
+    };
   };
 
   const toggleView = () => {
@@ -455,28 +588,57 @@ const KnowledgeGraph = ({ data, onNodeClick, onEdgeClick, style = {} }) => {
     return tip;
   };
 
+  // 初始化
+  useEffect(() => {
+    render3D();
+    return () => {
+      if (rendererRef.current) {
+        rendererRef.current.dispose();
+      }
+      window.removeEventListener('resize', handleResize);
+    };
+  }, [data]);
+
   return (
-    <div className="knowledge-graph-container" style={{ width: '100%', height: '100%', ...style }}>
+    <div className="knowledge-graph-container" style={{ width: '100vw', height: '100vh', position: 'fixed', top: 0, left: 0, ...style }}>
       <div className="toolbar">
         <div className="toolbar-group">
-          <button onClick={handleZoomIn} className="toolbar-button" title="放大">
+          <button onClick={() => setZoom(zoom * 1.2)} className="toolbar-button" title="放大">
             <FontAwesomeIcon icon={faSearch} className="mr-1" />+
           </button>
-          <button onClick={handleZoomOut} className="toolbar-button" title="缩小">
+          <button onClick={() => setZoom(zoom * 0.8)} className="toolbar-button" title="缩小">
             <FontAwesomeIcon icon={faSearch} className="mr-1" />-
           </button>
-          <button onClick={handleFit} className="toolbar-button" title="适应屏幕">
+          <button onClick={() => {
+            if (threeRef.current) {
+              threeRef.current.camera.position.set(0, 0, 500);
+              threeRef.current.controls.reset();
+            }
+          }} className="toolbar-button" title="重置视图">
             <FontAwesomeIcon icon={faRefresh} />
           </button>
         </div>
         <div className="toolbar-group">
-          <button onClick={toggleView} className="toolbar-button" title={is3D ? "2D视图" : "3D视图"}>
-            <FontAwesomeIcon icon={is3D ? faProjectDiagram : faCube} />
-          </button>
-          <button onClick={handleFullscreen} className="toolbar-button" title="全屏">
+          <button onClick={() => {
+            if (!document.fullscreenElement) {
+              containerRef.current.requestFullscreen();
+              setIsFullscreen(true);
+            } else {
+              document.exitFullscreen();
+              setIsFullscreen(false);
+            }
+          }} className="toolbar-button" title="全屏">
             <FontAwesomeIcon icon={isFullscreen ? faCompress : faExpand} />
           </button>
-          <button onClick={handleExport} className="toolbar-button" title="导出图片">
+          <button onClick={() => {
+            if (rendererRef.current) {
+              const imgData = rendererRef.current.domElement.toDataURL('image/png');
+              const link = document.createElement('a');
+              link.href = imgData;
+              link.download = 'knowledge-graph-3d.png';
+              link.click();
+            }
+          }} className="toolbar-button" title="导出图片">
             <FontAwesomeIcon icon={faDownload} />
           </button>
         </div>
@@ -503,25 +665,22 @@ const KnowledgeGraph = ({ data, onNodeClick, onEdgeClick, style = {} }) => {
       
       <style jsx>{`
         .knowledge-graph-container {
-          position: relative;
-          background: var(--neutral-50);
-          border-radius: 12px;
+          background: var(--neutral-900);
           overflow: hidden;
-          box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         }
         
         .toolbar {
-          position: absolute;
+          position: fixed;
           top: 16px;
           left: 50%;
           transform: translateX(-50%);
           display: flex;
           gap: 16px;
           padding: 8px;
-          background: rgba(255, 255, 255, 0.9);
+          background: rgba(255, 255, 255, 0.1);
           backdrop-filter: blur(10px);
           border-radius: 12px;
-          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
           z-index: 1000;
         }
 
@@ -529,7 +688,7 @@ const KnowledgeGraph = ({ data, onNodeClick, onEdgeClick, style = {} }) => {
           display: flex;
           gap: 8px;
           padding: 0 8px;
-          border-right: 1px solid rgba(0, 0, 0, 0.1);
+          border-right: 1px solid rgba(255, 255, 255, 0.2);
         }
 
         .toolbar-group:last-child {
@@ -544,15 +703,16 @@ const KnowledgeGraph = ({ data, onNodeClick, onEdgeClick, style = {} }) => {
           height: 36px;
           border: none;
           border-radius: 8px;
-          background: transparent;
-          color: var(--neutral-600);
+          background: rgba(255, 255, 255, 0.1);
+          color: rgba(255, 255, 255, 0.8);
           cursor: pointer;
           transition: all 0.2s ease;
         }
 
         .toolbar-button:hover {
-          background: rgba(0, 0, 0, 0.05);
-          color: var(--neutral-900);
+          background: rgba(255, 255, 255, 0.2);
+          color: white;
+          transform: translateY(-1px);
         }
 
         .discord-button {
@@ -560,48 +720,40 @@ const KnowledgeGraph = ({ data, onNodeClick, onEdgeClick, style = {} }) => {
         }
 
         .discord-button:hover {
-          background: rgba(88, 101, 242, 0.1);
-          color: #4752C4;
+          background: rgba(88, 101, 242, 0.2);
         }
 
         .github-button {
-          color: #24292e;
+          color: #fff;
         }
 
         .github-button:hover {
-          background: rgba(36, 41, 46, 0.1);
+          background: rgba(255, 255, 255, 0.2);
         }
         
         .node-details-panel {
-          position: absolute;
+          position: fixed;
           bottom: 20px;
           right: 20px;
-          background: rgba(255, 255, 255, 0.9);
+          background: rgba(255, 255, 255, 0.1);
           backdrop-filter: blur(10px);
           padding: 16px;
           border-radius: 8px;
-          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+          color: white;
           max-width: 300px;
           z-index: 1000;
           transition: all 0.3s ease;
         }
 
         :global(.node-label) {
-          color: #1a1a1a;
+          color: white;
           font-size: 12px;
           padding: 2px 4px;
-          background: rgba(255, 255, 255, 0.8);
+          background: rgba(0, 0, 0, 0.6);
           border-radius: 4px;
           pointer-events: none;
           white-space: nowrap;
-        }
-
-        :global(.cytoscape-container) {
-          position: absolute !important;
-          top: 0;
-          left: 0;
-          width: 100% !important;
-          height: 100% !important;
         }
       `}</style>
     </div>
