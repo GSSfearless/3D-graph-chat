@@ -3,7 +3,7 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 import { CSS2DRenderer, CSS2DObject } from 'three/examples/jsm/renderers/CSS2DRenderer';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faExpand, faCompress, faMagnifyingGlassPlus, faMagnifyingGlassMinus, faRotateRight, faSave, faDownload } from '@fortawesome/free-solid-svg-icons';
+import { faExpand, faCompress, faSearch, faRefresh, faSave, faDownload } from '@fortawesome/free-solid-svg-icons';
 import { faDiscord, faGithub } from '@fortawesome/free-brands-svg-icons';
 
 const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
@@ -338,13 +338,13 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
       <div className="toolbar">
         <div className="toolbar-group">
           <button onClick={() => sceneRef.current.controls.zoomIn()} className="toolbar-button" title="放大">
-            <FontAwesomeIcon icon={faMagnifyingGlassPlus} />
+            <FontAwesomeIcon icon={faSearch} className="mr-1" />+
           </button>
           <button onClick={() => sceneRef.current.controls.zoomOut()} className="toolbar-button" title="缩小">
-            <FontAwesomeIcon icon={faMagnifyingGlassMinus} />
+            <FontAwesomeIcon icon={faSearch} className="mr-1" />-
           </button>
           <button onClick={() => sceneRef.current.controls.reset()} className="toolbar-button" title="重置视角">
-            <FontAwesomeIcon icon={faRotateRight} />
+            <FontAwesomeIcon icon={faRefresh} />
           </button>
         </div>
         <div className="toolbar-group">
@@ -399,19 +399,19 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
           top: 16px;
           right: 16px;
           display: flex;
-          gap: 16px;
-          padding: 8px;
-          background: rgba(255, 255, 255, 0.95);
+          gap: 12px;
+          padding: 6px;
+          background: rgba(255, 255, 255, 0.9);
           backdrop-filter: blur(10px);
-          border-radius: 10px;
+          border-radius: 8px;
           box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
           z-index: 1000;
         }
 
         .toolbar-group {
           display: flex;
-          gap: 8px;
-          padding: 0 8px;
+          gap: 4px;
+          padding: 0 6px;
           border-right: 1px solid rgba(0, 0, 0, 0.1);
         }
 
@@ -423,21 +423,20 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
           display: flex;
           align-items: center;
           justify-content: center;
-          width: 32px;
-          height: 32px;
+          width: 28px;
+          height: 28px;
           border: none;
-          border-radius: 8px;
+          border-radius: 6px;
           background: transparent;
           color: var(--neutral-600);
           cursor: pointer;
           transition: all 0.2s ease;
-          font-size: 16px;
+          font-size: 14px;
         }
 
         .toolbar-button:hover {
-          background: rgba(0, 0, 0, 0.08);
+          background: rgba(0, 0, 0, 0.05);
           color: var(--neutral-900);
-          transform: translateY(-1px);
         }
 
         .discord-button {
