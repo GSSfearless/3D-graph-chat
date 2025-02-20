@@ -1,11 +1,13 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { AdvancedChartRenderer } from '../utils/advanced-charts';
+import ChartSelector from './ChartSelector';
 import '../styles/chart.css';
 
-const EnhancedChart = ({ chartData, type, onNodeClick, onChartUpdate }) => {
+const EnhancedChart = ({ chartData, initialType = 'tagSphere', onNodeClick, onChartUpdate }) => {
   const containerRef = useRef(null);
   const rendererRef = useRef(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [chartType, setChartType] = useState(initialType);
 
   useEffect(() => {
     if (containerRef.current && !rendererRef.current) {
@@ -32,7 +34,7 @@ const EnhancedChart = ({ chartData, type, onNodeClick, onChartUpdate }) => {
     if (rendererRef.current && chartData) {
       renderChart();
     }
-  }, [chartData, type]);
+  }, [chartData, chartType]);
 
   const renderChart = async () => {
     try {
@@ -40,7 +42,7 @@ const EnhancedChart = ({ chartData, type, onNodeClick, onChartUpdate }) => {
       const renderer = rendererRef.current;
       
       // 根据类型渲染不同图表
-      switch (type) {
+      switch (chartType) {
         case 'tagSphere':
           renderer.render3DTagSphere(chartData);
           break;
@@ -60,7 +62,7 @@ const EnhancedChart = ({ chartData, type, onNodeClick, onChartUpdate }) => {
           renderer.renderWaveform(chartData);
           break;
         default:
-          console.warn(`未知的图表类型: ${type}`);
+          console.warn(`未知的图表类型: ${chartType}`);
       }
       
       // 触发更新回调
@@ -70,6 +72,10 @@ const EnhancedChart = ({ chartData, type, onNodeClick, onChartUpdate }) => {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleChartTypeChange = (type) => {
+    setChartType(type);
   };
 
   const handleFullscreen = () => {
@@ -84,6 +90,7 @@ const EnhancedChart = ({ chartData, type, onNodeClick, onChartUpdate }) => {
 
   return (
     <div className="enhanced-chart-wrapper">
+      <ChartSelector onSelect={handleChartTypeChange} currentType={chartType} />
       <div className="chart-toolbar">
         <button onClick={handleFullscreen} disabled={isLoading}>
           全屏显示
