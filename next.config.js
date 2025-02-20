@@ -15,6 +15,17 @@ const nextConfig = {
       'echarts-wordcloud': 'echarts-wordcloud/dist/echarts-wordcloud.min.js',
     };
 
+    // 在服务器端排除特定模块
+    if (isServer) {
+      config.externals = [...(config.externals || []), 
+        'echarts',
+        'echarts-gl',
+        'echarts-wordcloud',
+        'zrender',
+        'three'
+      ];
+    }
+
     return config;
   },
   transpilePackages: ['echarts', 'echarts-gl', 'echarts-wordcloud', 'zrender'],

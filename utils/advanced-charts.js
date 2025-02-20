@@ -5,6 +5,35 @@ import 'echarts-gl';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 
+// 定义主题色板
+const theme = {
+  primary: {
+    default: '#6366F1',
+    light: '#818CF8',
+    dark: '#4338CA'
+  },
+  accent: {
+    default: '#F43F5E',
+    light: '#FB7185',
+    dark: '#BE123C'
+  },
+  neutral: {
+    bg: '#0F172A',
+    text: '#F8FAFC',
+    border: '#1E293B'
+  },
+  gradients: {
+    primary: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+      { offset: 0, color: '#818CF8' },
+      { offset: 1, color: '#4338CA' }
+    ]),
+    accent: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+      { offset: 0, color: '#FB7185' },
+      { offset: 1, color: '#BE123C' }
+    ])
+  }
+};
+
 export class AdvancedChartRenderer {
   constructor(container) {
     this.container = container;
@@ -16,9 +45,17 @@ export class AdvancedChartRenderer {
   setupThreeJS() {
     this.scene = new THREE.Scene();
     this.camera = new THREE.PerspectiveCamera(75, this.container.clientWidth / this.container.clientHeight, 0.1, 1000);
-    this.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    this.renderer = new THREE.WebGLRenderer({ 
+      antialias: true, 
+      alpha: true,
+      logarithmicDepthBuffer: true 
+    });
     this.renderer.setSize(this.container.clientWidth, this.container.clientHeight);
+    this.renderer.setClearColor(0x000000, 0);
+    this.renderer.setPixelRatio(window.devicePixelRatio);
     this.controls = new OrbitControls(this.camera, this.renderer.domElement);
+    this.controls.enableDamping = true;
+    this.controls.dampingFactor = 0.05;
   }
 
   // 3D球形标签云
@@ -39,7 +76,9 @@ export class AdvancedChartRenderer {
           scaling: 1.2
         },
         itemStyle: {
-          opacity: 0.8
+          opacity: 0.8,
+          borderWidth: 1,
+          borderColor: theme.primary.light
         },
         nodes: data.tags.map((tag, idx) => ({
           name: tag.text,
@@ -47,10 +86,22 @@ export class AdvancedChartRenderer {
           symbolSize: Math.sqrt(tag.size || 1) * 10,
           category: idx % 5,
           itemStyle: {
-            color: tag.color || '#4a90e2'
+            color: tag.color || theme.gradients.primary
           }
         })),
-        categories: Array.from({ length: 5 }, (_, i) => ({ name: `类别${i + 1}` }))
+        categories: Array.from({ length: 5 }, (_, i) => ({ 
+          name: `类别${i + 1}`,
+          itemStyle: {
+            color: theme.gradients.primary
+          }
+        })),
+        emphasis: {
+          itemStyle: {
+            opacity: 1,
+            shadowBlur: 20,
+            shadowColor: theme.accent.light
+          }
+        }
       }]
     };
 
@@ -66,7 +117,7 @@ export class AdvancedChartRenderer {
         min: 0,
         max: 100,
         inRange: {
-          color: ['#4a90e2', '#61dafb']
+          color: [theme.primary.light, theme.accent.light]
         }
       },
       series: [{
@@ -78,17 +129,27 @@ export class AdvancedChartRenderer {
         },
         roam: true,
         itemStyle: {
-          opacity: 0.8
+          opacity: 0.8,
+          borderWidth: 1,
+          borderColor: theme.primary.light
         },
         nodes: data.points.map(point => ({
           x: point.x,
           y: point.y,
           value: point.value,
-          symbolSize: point.size || 10
+          symbolSize: point.size || 10,
+          itemStyle: {
+            color: theme.gradients.primary
+          }
         })),
         links: data.links || [],
         emphasis: {
-          scale: true
+          scale: true,
+          itemStyle: {
+            opacity: 1,
+            shadowBlur: 20,
+            shadowColor: theme.accent.light
+          }
         }
       }]
     };
@@ -108,18 +169,31 @@ export class AdvancedChartRenderer {
         shape: 'circle',
         splitNumber: 5,
         axisName: {
-          color: '#333',
-          fontSize: 12
+          color: theme.neutral.text,
+          fontSize: 12,
+          fontWeight: 500
         },
         splitLine: {
           lineStyle: {
-            color: ['#ddd', '#ccc', '#bbb', '#aaa', '#999']
+            color: [
+              theme.neutral.border,
+              theme.primary.dark,
+              theme.primary.default,
+              theme.primary.light,
+              theme.accent.light
+            ].reverse()
           }
         },
         splitArea: {
           show: true,
           areaStyle: {
-            color: ['rgba(250,250,250,0.3)', 'rgba(200,200,200,0.3)']
+            color: [
+              'rgba(99, 102, 241, 0.02)',
+              'rgba(99, 102, 241, 0.05)',
+              'rgba(99, 102, 241, 0.08)',
+              'rgba(99, 102, 241, 0.11)',
+              'rgba(99, 102, 241, 0.14)'
+            ].reverse()
           }
         }
       },
@@ -130,13 +204,15 @@ export class AdvancedChartRenderer {
           value: series.values,
           name: series.name,
           areaStyle: {
-            opacity: 0.1
+            opacity: 0.2,
+            color: theme.gradients.primary
           }
         }],
         symbol: 'none',
         lineStyle: {
           width: 2,
-          opacity: 0.5
+          color: theme.primary.light,
+          opacity: 0.8
         }
       }))
     };
@@ -155,15 +231,16 @@ export class AdvancedChartRenderer {
           show: false
         },
         itemStyle: {
-          areaColor: '#323c48',
-          borderColor: '#111'
+          areaColor: theme.neutral.border,
+          borderColor: theme.primary.dark
         },
         emphasis: {
           label: {
-            show: true
+            show: true,
+            color: theme.neutral.text
           },
           itemStyle: {
-            areaColor: '#2a333d'
+            areaColor: theme.primary.dark
           }
         }
       },
@@ -174,21 +251,29 @@ export class AdvancedChartRenderer {
           name: point.name,
           value: [...point.coordinates, point.value],
           itemStyle: {
-            color: point.color || '#4a90e2'
+            color: point.color || theme.accent.light
           }
         })),
         symbolSize: val => Math.sqrt(val[2]) * 5,
         showEffectOn: 'render',
         rippleEffect: {
+          period: 4,
+          scale: 4,
           brushType: 'stroke'
         },
         hoverAnimation: true,
         label: {
-          show: false
+          show: false,
+          position: 'right',
+          formatter: '{b}'
         },
         emphasis: {
           label: {
-            show: true
+            show: true,
+            color: theme.neutral.text
+          },
+          itemStyle: {
+            color: theme.accent.default
           }
         }
       }]
@@ -209,7 +294,9 @@ export class AdvancedChartRenderer {
           symbolSize: node.size || 20,
           category: node.category,
           itemStyle: {
-            color: node.color || '#4a90e2'
+            color: node.color || theme.gradients.primary,
+            borderWidth: 1,
+            borderColor: theme.primary.light
           }
         })),
         edges: data.edges.map(edge => ({
@@ -217,8 +304,9 @@ export class AdvancedChartRenderer {
           target: edge.target,
           value: edge.value,
           lineStyle: {
-            color: edge.color || 'rgba(255,255,255,0.2)',
-            width: edge.width || 1
+            color: edge.color || theme.primary.light,
+            width: edge.width || 1,
+            opacity: 0.5
           }
         })),
         categories: data.categories,
@@ -236,10 +324,13 @@ export class AdvancedChartRenderer {
         },
         emphasis: {
           itemStyle: {
-            opacity: 1
+            opacity: 1,
+            shadowBlur: 20,
+            shadowColor: theme.accent.light
           },
           lineStyle: {
-            opacity: 1
+            opacity: 1,
+            width: 2
           }
         }
       }]
@@ -276,16 +367,11 @@ export class AdvancedChartRenderer {
         animation: true,
         data: data.values,
         itemStyle: {
-          color: 'rgb(255, 70, 131)'
+          color: theme.accent.default
         },
         areaStyle: {
-          color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [{
-            offset: 0,
-            color: 'rgb(255, 158, 68)'
-          }, {
-            offset: 1,
-            color: 'rgb(255, 70, 131)'
-          }])
+          color: theme.gradients.accent,
+          opacity: 0.8
         }
       }]
     };

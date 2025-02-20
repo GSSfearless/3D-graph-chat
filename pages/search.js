@@ -8,8 +8,12 @@ import '../styles/globals.css';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { DiagramGenerator } from '../utils/diagram-generator';
-import EnhancedChart from '../components/EnhancedChart';
 import { processSearchResponse } from '../utils/data-processor';
+
+const EnhancedChart = dynamic(() => import('../components/EnhancedChart'), {
+  ssr: false,
+  loading: () => <div className="loading-placeholder">Loading chart...</div>
+});
 
 const ContentViewer = dynamic(() => import('../components/ContentViewer'), {
   ssr: false,

@@ -3,10 +3,11 @@
   width: 100%;
   height: 100%;
   min-height: 500px;
-  border: 1px solid #eee;
-  border-radius: 8px;
+  border: 1px solid var(--neutral-200);
+  border-radius: 16px;
   overflow: hidden;
-  background: linear-gradient(135deg, #1a1a1a 0%, #0a0a0a 100%);
+  background: var(--gradient-dark);
+  box-shadow: var(--shadow-lg);
 }
 
 .chart-container {
@@ -17,35 +18,43 @@
 
 .chart-toolbar {
   position: absolute;
-  top: 10px;
-  right: 10px;
+  top: 16px;
+  right: 16px;
   display: flex;
   gap: 8px;
   padding: 8px;
   background: rgba(255, 255, 255, 0.1);
   backdrop-filter: blur(10px);
-  border-radius: 8px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
   z-index: 100;
+  animation: float 3s ease-in-out infinite;
 }
 
 .chart-toolbar button {
   padding: 8px 16px;
   border: none;
-  border-radius: 4px;
-  background: rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  background: var(--gradient-primary);
   color: white;
   cursor: pointer;
   font-size: 14px;
+  font-weight: 500;
   transition: all 0.3s ease;
+  box-shadow: var(--shadow-sm);
 }
 
 .chart-toolbar button:hover {
-  background: rgba(255, 255, 255, 0.3);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
+  background: var(--gradient-accent);
 }
 
 .chart-toolbar button:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
 }
 
 /* 加载动画 */
@@ -55,7 +64,8 @@
   left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(0, 0, 0, 0.7);
+  background: rgba(15, 23, 42, 0.8);
+  backdrop-filter: blur(8px);
   display: flex;
   justify-content: center;
   align-items: center;
@@ -63,21 +73,17 @@
 }
 
 .loading-spinner {
-  width: 50px;
-  height: 50px;
-  border: 3px solid transparent;
-  border-top-color: #61dafb;
+  width: 60px;
+  height: 60px;
+  border: 4px solid var(--primary-300);
+  border-top-color: var(--accent-500);
   border-radius: 50%;
   animation: spin 1s linear infinite;
 }
 
 @keyframes spin {
-  0% {
-    transform: rotate(0deg);
-  }
-  100% {
-    transform: rotate(360deg);
-  }
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 }
 
 /* 3D标签云 */
@@ -88,13 +94,14 @@
 }
 
 .tag-sphere text {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;
   cursor: pointer;
   transition: all 0.3s ease;
 }
 
 .tag-sphere text:hover {
-  fill: #61dafb !important;
+  fill: var(--accent-400) !important;
+  filter: drop-shadow(0 0 8px var(--accent-300));
   font-size: 1.2em;
 }
 
@@ -103,7 +110,7 @@
   width: 100%;
   height: 100%;
   position: relative;
-  background: #000;
+  background: var(--neutral-900);
 }
 
 /* 雷达图 */
@@ -114,8 +121,9 @@
 }
 
 .radar-chart .axis-label {
-  fill: rgba(255, 255, 255, 0.7);
+  fill: var(--neutral-300);
   font-size: 12px;
+  font-weight: 500;
 }
 
 /* 地理气泡图 */
@@ -127,10 +135,12 @@
 
 .geo-bubble .bubble {
   transition: all 0.3s ease;
+  filter: drop-shadow(0 0 4px var(--primary-400));
 }
 
 .geo-bubble .bubble:hover {
   transform: scale(1.2);
+  filter: drop-shadow(0 0 8px var(--accent-400));
 }
 
 /* 网络图 */
@@ -142,19 +152,21 @@
 
 .network-graph .node {
   transition: all 0.3s ease;
+  filter: drop-shadow(0 0 4px var(--primary-400));
 }
 
 .network-graph .node:hover {
   transform: scale(1.2);
+  filter: drop-shadow(0 0 8px var(--accent-400));
 }
 
 .network-graph .link {
-  stroke: rgba(255, 255, 255, 0.2);
+  stroke: var(--primary-300);
   transition: all 0.3s ease;
 }
 
 .network-graph .link:hover {
-  stroke: rgba(255, 255, 255, 0.5);
+  stroke: var(--accent-400);
   stroke-width: 2;
 }
 
@@ -168,4 +180,30 @@
 .waveform path {
   stroke: none;
   fill: url(#waveGradient);
+}
+
+/* 渐变定义 */
+#waveGradient {
+  --gradient-start: var(--accent-400);
+  --gradient-end: var(--primary-500);
+}
+
+/* 响应式调整 */
+@media (max-width: 768px) {
+  .chart-toolbar {
+    top: 8px;
+    right: 8px;
+    padding: 4px;
+  }
+
+  .chart-toolbar button {
+    padding: 6px 12px;
+    font-size: 12px;
+  }
+
+  .loading-spinner {
+    width: 40px;
+    height: 40px;
+    border-width: 3px;
+  }
 } 
