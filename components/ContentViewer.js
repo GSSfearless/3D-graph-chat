@@ -197,6 +197,7 @@ const ContentViewer = ({ content, type }) => {
               </div>
             </div>
           );
+        }
         return (
           <div className="w-full h-full flex items-center justify-center p-4">
             <div
