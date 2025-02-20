@@ -1,18 +1,24 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { ChartRenderer, defaultTheme } from '../utils/chart-renderer';
-import { ChartEnhancer } from '../utils/chart-enhancer';
+import { ChartProcessor } from '../utils/chart-processor';
+import '../styles/chart.css';
 
 const EnhancedChart = ({ chartData, type, onNodeClick, onChartUpdate }) => {
   const containerRef = useRef(null);
   const rendererRef = useRef(null);
-  const enhancerRef = useRef(null);
+  const processorRef = useRef(null);
   const [currentTheme, setCurrentTheme] = useState(defaultTheme);
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     if (containerRef.current && !rendererRef.current) {
       rendererRef.current = new ChartRenderer(containerRef.current);
-      enhancerRef.current = new ChartEnhancer(containerRef.current);
-      enhancerRef.current.init();
+      processorRef.current = new ChartProcessor();
+      
+      // 设置事件处理
+      rendererRef.current.onNodeSelect = (node) => {
+        onNodeClick && onNodeClick(node);
+      };
     }
   }, []);
 
@@ -22,38 +28,65 @@ const EnhancedChart = ({ chartData, type, onNodeClick, onChartUpdate }) => {
     }
   }, [chartData, type, currentTheme]);
 
-  const renderChart = () => {
-    const renderer = rendererRef.current;
-    
-    // 清除现有内容
-    containerRef.current.innerHTML = '';
-    
-    // 根据类型渲染不同图表
-    switch (type) {
-      case 'mindmap':
-        renderer.renderMindMap(chartData);
-        break;
-      case 'flowchart':
-        renderer.renderFlowChart(chartData);
-        break;
-      case 'timeline':
-        renderer.renderTimeline(chartData);
-        break;
-      case 'comparison':
-        renderer.renderComparison(chartData);
-        break;
-      case 'hierarchy':
-        renderer.renderHierarchy(chartData);
-        break;
-      default:
-        console.warn(`未知的图表类型: ${type}`);
-    }
+  const renderChart = async () => {
+    try {
+      setIsLoading(true);
+      const renderer = rendererRef.current;
+      const processor = processorRef.current;
+      
+      // 显示加载动画
+      renderer.showLoading();
+      
+      // 清除现有内容
+      containerRef.current.innerHTML = '';
+      
+      // 处理数据
+      const processedData = await processor.process({
+        type,
+        data: chartData,
+        style: { theme: currentTheme }
+      });
+      
+      // 根据类型渲染不同图表
+      switch (processedData.type) {
+        case 'mindmap':
+          renderer.renderMindMap(processedData.data);
+          break;
+        case 'flowchart':
+          renderer.renderFlowChart(processedData.data);
+          break;
+        case 'timeline':
+          renderer.renderTimeline(processedData.data);
+          break;
+        case 'comparison':
+          renderer.renderComparison(processedData.data);
+          break;
+        case 'hierarchy':
+          renderer.renderHierarchy(processedData.data);
+          break;
+        case 'error':
+          console.error(processedData.data.message);
+          // 显示错误状态
+          break;
+        default:
+          console.warn(`未知的图表类型: ${processedData.type}`);
+      }
 
-    // 应用主题
-    renderer.applyTheme(currentTheme);
-    
-    // 优化布局
-    enhancerRef.current.optimizeLayout();
+      // 应用主题
+      renderer.applyTheme(currentTheme);
+      
+      // 自动适应屏幕
+      renderer.zoomToFit();
+      
+      // 触发更新回调
+      onChartUpdate && onChartUpdate(processedData);
+    } catch (error) {
+      console.error('渲染图表失败:', error);
+    } finally {
+      // 隐藏加载动画
+      rendererRef.current.hideLoading();
+      setIsLoading(false);
+    }
   };
 
   const handleThemeChange = (themeName) => {
@@ -74,15 +107,27 @@ const EnhancedChart = ({ chartData, type, onNodeClick, onChartUpdate }) => {
         highlightColor: '#e67e22'
       }
     };
+    
+    // 更新主题
     setCurrentTheme(themes[themeName]);
+    
+    // 更新数据主题属性
+    document.documentElement.setAttribute('data-theme', themeName);
   };
 
   const handleExport = async () => {
-    const imageUrl = rendererRef.current.exportToImage();
-    const link = document.createElement('a');
-    link.download = `chart-${type}-${Date.now()}.svg`;
-    link.href = imageUrl;
-    link.click();
+    try {
+      setIsLoading(true);
+      const imageUrl = await rendererRef.current.exportToImage();
+      const link = document.createElement('a');
+      link.download = `chart-${type}-${Date.now()}.svg`;
+      link.href = imageUrl;
+      link.click();
+    } catch (error) {
+      console.error('导出图表失败:', error);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleFullscreen = () => {
@@ -96,63 +141,30 @@ const EnhancedChart = ({ chartData, type, onNodeClick, onChartUpdate }) => {
   };
 
   return (
-    <div className="enhanced-chart-wrapper">
+    <div className="enhanced-chart-wrapper" data-theme={currentTheme}>
       <div className="chart-toolbar">
-        <select onChange={(e) => handleThemeChange(e.target.value)}>
+        <select 
+          onChange={(e) => handleThemeChange(e.target.value)}
+          disabled={isLoading}
+        >
           <option value="light">浅色主题</option>
           <option value="dark">深色主题</option>
           <option value="nature">自然主题</option>
         </select>
-        <button onClick={handleExport}>导出SVG</button>
-        <button onClick={handleFullscreen}>全屏显示</button>
-        <button onClick={() => rendererRef.current.zoomToFit()}>适应屏幕</button>
+        <button onClick={handleExport} disabled={isLoading}>
+          导出SVG
+        </button>
+        <button onClick={handleFullscreen} disabled={isLoading}>
+          全屏显示
+        </button>
+        <button 
+          onClick={() => rendererRef.current.zoomToFit()} 
+          disabled={isLoading}
+        >
+          适应屏幕
+        </button>
       </div>
       <div className="chart-container" ref={containerRef}></div>
-      <style jsx>{`
-        .enhanced-chart-wrapper {
-          position: relative;
-          width: 100%;
-          height: 100%;
-          min-height: 500px;
-          border: 1px solid #eee;
-          border-radius: 8px;
-          overflow: hidden;
-        }
-        
-        .chart-toolbar {
-          position: absolute;
-          top: 10px;
-          right: 10px;
-          display: flex;
-          gap: 8px;
-          padding: 8px;
-          background: rgba(255, 255, 255, 0.9);
-          border-radius: 4px;
-          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-          z-index: 100;
-        }
-        
-        .chart-toolbar select,
-        .chart-toolbar button {
-          padding: 6px 12px;
-          border: 1px solid #ddd;
-          border-radius: 4px;
-          background: white;
-          cursor: pointer;
-          font-size: 14px;
-          transition: all 0.2s;
-        }
-        
-        .chart-toolbar button:hover {
-          background: #f5f5f5;
-        }
-        
-        .chart-container {
-          width: 100%;
-          height: 100%;
-          position: relative;
-        }
-      `}</style>
     </div>
   );
 };
