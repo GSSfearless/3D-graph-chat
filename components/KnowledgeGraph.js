@@ -397,21 +397,22 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
         .toolbar {
           position: absolute;
           top: 16px;
-          right: 16px;
+          left: 50%;
+          transform: translateX(-50%);
           display: flex;
-          gap: 12px;
-          padding: 6px;
+          gap: 16px;
+          padding: 8px;
           background: rgba(255, 255, 255, 0.9);
           backdrop-filter: blur(10px);
-          border-radius: 8px;
-          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+          border-radius: 12px;
+          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
           z-index: 1000;
         }
 
         .toolbar-group {
           display: flex;
-          gap: 4px;
-          padding: 0 6px;
+          gap: 8px;
+          padding: 0 8px;
           border-right: 1px solid rgba(0, 0, 0, 0.1);
         }
 
@@ -423,15 +424,14 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
           display: flex;
           align-items: center;
           justify-content: center;
-          width: 28px;
-          height: 28px;
+          width: 32px;
+          height: 32px;
           border: none;
-          border-radius: 6px;
+          border-radius: 8px;
           background: transparent;
           color: var(--neutral-600);
           cursor: pointer;
           transition: all 0.2s ease;
-          font-size: 14px;
         }
 
         .toolbar-button:hover {
