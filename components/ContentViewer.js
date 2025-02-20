@@ -18,15 +18,14 @@ const ContentViewer = ({ content, type }) => {
       flowchart: {
         useMaxWidth: true,
         htmlLabels: true,
-        curve: 'monotoneX',
-        defaultRenderer: 'elk',
-        padding: 30,
-        nodeSpacing: 80,
-        rankSpacing: 100,
-        diagramPadding: 30,
-        labelBackgroundColor: 'transparent',
-        nodeAlignment: 'center',
-        ranker: 'network-simplex',
+        curve: 'basis',
+        defaultRenderer: 'dagre-d3',
+        padding: 20,
+        nodeSpacing: 50,
+        rankSpacing: 50,
+        diagramPadding: 8,
+        labelBackgroundColor: '#f0f7ff',
+        nodeAlignment: 'center'
       },
       mindmap: {
         padding: 30,
@@ -58,8 +57,8 @@ const ContentViewer = ({ content, type }) => {
         clusterBorder: '#e2e8f0',
         // 思维导图特定样式
         mindmapNode: 'transparent',
-        mindmapNodeText: '#334155',  // 深灰色文字
-        mindmapLine: '#475569',  // 深灰色线条
+        mindmapNodeText: '#1e293b',
+        mindmapLine: '#64748b',
         mindmapOutline: 'none',
         mindmapBorder: 'none'
       }
@@ -70,54 +69,23 @@ const ContentViewer = ({ content, type }) => {
     const renderMermaid = async () => {
       if (type === 'mermaid' && mermaidRef.current) {
         setIsLoading(true);
-        console.log('开始渲染Mermaid图表...');
-        console.log('图表类型:', type);
-        console.log('图表内容:', content);
-        
-        if (!content) {
-          console.log('没有图表内容，显示空状态');
-          setIsLoading(false);
-          return;
-        }
-
         try {
-          // 清除之前的内容
           mermaidRef.current.innerHTML = '';
-          
-          // 生成唯一ID
           const id = `mermaid-${Math.random().toString(36).substr(2, 9)}`;
-          console.log('图表ID:', id);
-          
-          // 创建一个临时容器
           const tempContainer = document.createElement('div');
           tempContainer.id = id;
           tempContainer.className = 'mermaid';
           tempContainer.textContent = content;
           mermaidRef.current.appendChild(tempContainer);
 
-          try {
-            // 尝试渲染
-            console.log('调用mermaid.render，内容:', content);
-            const { svg } = await mermaid.render(id, content);
-            console.log('Mermaid渲染成功，SVG长度:', svg.length);
-            setMermaidSvg(svg);
-            console.log('✅ Mermaid 图表渲染成功');
-          } catch (error) {
-            console.error('Mermaid渲染错误:', error);
-            console.error('问题内容:', content);
-            mermaidRef.current.innerHTML = `
-              <div class="p-4 text-red-500 bg-red-50 rounded-lg">
-                <p class="font-bold">图表渲染失败</p>
-                <p class="text-sm mt-2">${error.message}</p>
-                <pre class="text-xs mt-2 p-2 bg-red-100 rounded overflow-auto">${content}</pre>
-              </div>
-            `;
-          }
+          // 直接调用render，不再重新初始化
+          const { svg } = await mermaid.render(id, content);
+          setMermaidSvg(svg);
         } catch (error) {
-          console.error('Mermaid初始化错误:', error);
+          console.error('Mermaid渲染错误:', error);
           mermaidRef.current.innerHTML = `
             <div class="p-4 text-red-500 bg-red-50 rounded-lg">
-              <p class="font-bold">图表初始化失败</p>
+              <p class="font-bold">图表渲染失败</p>
               <p class="text-sm mt-2">${error.message}</p>
             </div>
           `;
