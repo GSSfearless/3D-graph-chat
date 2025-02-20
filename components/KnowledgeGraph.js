@@ -30,8 +30,9 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
     },
     label: {
       color: '#1E293B',
-      size: '12px',
-      font: 'Inter, sans-serif'
+      size: '14px',
+      font: 'Inter, system-ui, -apple-system, sans-serif',
+      weight: '500'
     }
   };
 
@@ -189,10 +190,18 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
     // 创建标签
     const labelDiv = document.createElement('div');
     labelDiv.className = 'node-label';
-    labelDiv.textContent = nodeData.label;
+    // 清理文本内容，移除特殊字符
+    const cleanText = nodeData.label.replace(/[#*]/g, '').replace(/\s+/g, ' ').trim();
+    labelDiv.textContent = cleanText;
     labelDiv.style.color = theme.label.color;
     labelDiv.style.fontSize = theme.label.size;
     labelDiv.style.fontFamily = theme.label.font;
+    labelDiv.style.background = 'transparent';
+    labelDiv.style.padding = '4px 8px';
+    labelDiv.style.borderRadius = '4px';
+    labelDiv.style.whiteSpace = 'nowrap';
+    labelDiv.style.pointerEvents = 'none';
+    labelDiv.style.userSelect = 'none';
     
     const label = new CSS2DObject(labelDiv);
     label.position.set(0, theme.node.size + 5, 0);
