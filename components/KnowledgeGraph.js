@@ -262,13 +262,12 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
       labelDiv.style.color = theme.label.color;
       labelDiv.style.fontSize = '12px';
       labelDiv.style.fontFamily = theme.label.font;
-      labelDiv.style.background = 'rgba(255, 255, 255, 0.9)';
+      labelDiv.style.background = 'transparent';
       labelDiv.style.padding = '2px 4px';
-      labelDiv.style.borderRadius = '2px';
       labelDiv.style.whiteSpace = 'nowrap';
       labelDiv.style.pointerEvents = 'none';
       labelDiv.style.userSelect = 'none';
-      labelDiv.style.zIndex = '1000';
+      labelDiv.style.textShadow = '0 0 3px rgba(255,255,255,0.8)';
       
       const label = new CSS2DObject(labelDiv);
       
@@ -286,9 +285,8 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
       const up = new THREE.Vector3(0, 1, 0);
       const right = new THREE.Vector3().crossVectors(direction, up).normalize();
       
-      // 根据边的方向计算偏移距离
-      const angle = Math.atan2(direction.y, direction.x);
-      const offsetDistance = 20 + Math.abs(Math.sin(angle) * 10);
+      // 减小偏移距离
+      const offsetDistance = 8 + Math.abs(Math.sin(Math.atan2(direction.y, direction.x)) * 4);
       
       // 根据边的ID计算不同的偏移方向
       const edgeId = `${source.userData.id}-${target.userData.id}`;
@@ -634,15 +632,13 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
 
         :global(.edge-label) {
           color: #1a1a1a;
-          font-size: 10px;
-          padding: 1px 3px;
-          background: rgba(255, 255, 255, 0.9);
-          border-radius: 2px;
+          font-size: 12px;
+          padding: 2px 4px;
+          background: transparent;
           pointer-events: none;
           white-space: nowrap;
           text-align: center;
-          z-index: 1000;
-          box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+          text-shadow: 0 0 3px rgba(255,255,255,0.8);
         }
       `}</style>
     </div>
