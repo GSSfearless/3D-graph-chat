@@ -35,6 +35,12 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
     }
   };
 
+  // 检查数据是否有效
+  const isValidData = data && 
+    Array.isArray(data.nodes) && 
+    Array.isArray(data.edges) && 
+    data.nodes.length > 0;
+
   const initScene = () => {
     const container = containerRef.current;
     const width = container.clientWidth;
@@ -304,6 +310,14 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
       scene.remove(scene.children[0]);
     }
 
+    // 如果数据无效，显示空场景
+    if (!isValidData) {
+      // 添加基本光源
+      const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+      scene.add(ambientLight);
+      return;
+    }
+
     // 添加光源
     const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
     scene.add(ambientLight);
@@ -312,29 +326,43 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
     pointLight.position.set(100, 100, 100);
     scene.add(pointLight);
 
-    // 创建节点
-    const nodes3D = new Map();
-    data.nodes.forEach((node, index) => {
-      const node3D = createNode3D(node.data, index, data.nodes.length);
-      scene.add(node3D);
-      nodes3D.set(node.data.id, node3D);
+    try {
+      // 创建节点
+      const nodes3D = new Map();
+      data.nodes.forEach((node, index) => {
+        if (!node || !node.data || !node.data.id || !node.data.label) {
+          console.warn('Invalid node data:', node);
+          return;
+        }
+        const node3D = createNode3D(node.data, index, data.nodes.length);
+        scene.add(node3D);
+        nodes3D.set(node.data.id, node3D);
 
-      // 添加点击事件
-      node3D.children[0].callback = () => handleNodeClick(node3D.children[0]);
-    });
+        // 添加点击事件
+        node3D.children[0].callback = () => handleNodeClick(node3D.children[0]);
+      });
 
-    // 创建边
-    data.edges.forEach(edge => {
-      const source = nodes3D.get(edge.data.source);
-      const target = nodes3D.get(edge.data.target);
-      if (source && target) {
-        const edge3D = createEdge3D(source, target);
-        scene.add(edge3D);
-      }
-    });
+      // 创建边
+      data.edges.forEach(edge => {
+        if (!edge || !edge.data || !edge.data.source || !edge.data.target) {
+          console.warn('Invalid edge data:', edge);
+          return;
+        }
+        const source = nodes3D.get(edge.data.source);
+        const target = nodes3D.get(edge.data.target);
+        if (source && target) {
+          const edge3D = createEdge3D(source, target);
+          scene.add(edge3D);
+        }
+      });
+    } catch (error) {
+      console.error('Error creating 3D objects:', error);
+    }
 
     // 动画循环
     const animate = () => {
+      if (!sceneRef.current) return;
+      
       requestAnimationFrame(animate);
       
       const { controls, renderer, labelRenderer, camera } = sceneRef.current;
@@ -358,6 +386,11 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
 
   return (
     <div className="knowledge-graph-container" style={{ width: '100%', height: '100%', ...style }}>
+      {!isValidData && (
+        <div className="empty-state">
+          <p>暂无可视化数据</p>
+        </div>
+      )}
       <div className="toolbar">
         <div className="toolbar-group">
           <button onClick={() => sceneRef.current.controls.zoomIn()} className="toolbar-button" title="放大">
@@ -453,6 +486,16 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
           border-radius: 4px;
           pointer-events: none;
           white-space: nowrap;
+        }
+
+        .empty-state {
+          position: absolute;
+          top: 50%;
+          left: 50%;
+          transform: translate(-50%, -50%);
+          text-align: center;
+          color: #666;
+          z-index: 1;
         }
       `}</style>
     </div>

@@ -56,33 +56,46 @@ export const analyzeSentiment = (content) => {
 
 // 实体抽取函数
 export const extractEntities = async (text) => {
-  // 简单的实体抽取实现
-  const sentences = text.split(/[。！？.!?]/);
-  const entities = [];
-  let entityId = 0;
+  try {
+    // 确保输入文本有效
+    if (!text || typeof text !== 'string') {
+      console.warn('Invalid input text in extractEntities');
+      return [];
+    }
 
-  sentences.forEach(sentence => {
-    // 提取可能的实体（2个或更多连续的非标点字符）
-    const matches = sentence.match(/[一-龥A-Za-z][一-龥A-Za-z\d]*[一-龥A-Za-z]+/g) || [];
-    
-    matches.forEach(match => {
-      const cleanMatch = match.replace(/[*]/g, '').trim(); // 清理特殊字符
-      if (isValidEntity(cleanMatch)) {
-        entities.push({
-          id: `node-${entityId++}`,
-          text: cleanMatch,
-          label: cleanMatch, // 确保每个实体都有label属性
-          isEvent: hasEventIndicators(cleanMatch),
-          isAttribute: hasAttributeIndicators(cleanMatch),
-          isConcept: hasConceptIndicators(cleanMatch),
-          importance: calculateImportance(cleanMatch, text),
-          properties: {}
-        });
-      }
+    const sentences = text.split(/[。！？.!?]/);
+    const entities = new Map(); // 使用 Map 来去重
+    let entityId = 0;
+
+    sentences.forEach(sentence => {
+      // 提取可能的实体（2个或更多连续的非标点字符）
+      const matches = sentence.match(/[一-龥A-Za-z][一-龥A-Za-z\d]*[一-龥A-Za-z]+/g) || [];
+      
+      matches.forEach(match => {
+        const cleanMatch = match.replace(/[*]/g, '').trim();
+        if (isValidEntity(cleanMatch) && !entities.has(cleanMatch)) {
+          const entity = {
+            id: `node-${cleanMatch.replace(/[^a-zA-Z0-9]/g, '_')}`,
+            text: cleanMatch,
+            label: cleanMatch,
+            isEvent: hasEventIndicators(cleanMatch),
+            isAttribute: hasAttributeIndicators(cleanMatch),
+            isConcept: hasConceptIndicators(cleanMatch),
+            importance: calculateImportance(cleanMatch, text),
+            properties: {}
+          };
+          entities.set(cleanMatch, entity);
+        }
+      });
     });
-  });
 
-  return entities;
+    const result = Array.from(entities.values());
+    console.log('Extracted entities:', result); // 添加日志
+    return result;
+  } catch (error) {
+    console.error('Error in extractEntities:', error);
+    return [];
+  }
 };
 
 // 关系抽取函数
