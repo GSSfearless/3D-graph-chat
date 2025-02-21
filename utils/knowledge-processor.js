@@ -136,28 +136,17 @@ export class KnowledgeProcessor {
       const questionId = this.generateId(mainQuestion.content);
       nodes.push({
         id: questionId,
-        ...mainQuestion,
-        position: {
-          x: 0,
-          y: 0,
-          z: 0
-        }
+        ...mainQuestion
       });
       nodeMap.set(mainQuestion.content, questionId);
     }
 
     // 添加概念节点
-    concepts.forEach((concept, index) => {
+    concepts.forEach(concept => {
       const nodeId = this.generateId(concept.content);
-      const angle = (index * Math.PI * 2) / concepts.length;
       nodes.push({
         id: nodeId,
-        ...concept,
-        position: {
-          x: Math.cos(angle) * 10,
-          y: Math.sin(angle) * 10,
-          z: 0
-        }
+        ...concept
       });
       nodeMap.set(concept.content, nodeId);
 
@@ -170,7 +159,7 @@ export class KnowledgeProcessor {
           relationship: {
             type: this.relationTypes.EXPLAINS,
             label: '解释',
-            strength: concept.importance || 0.8
+            strength: concept.importance
           }
         });
       }
@@ -180,17 +169,11 @@ export class KnowledgeProcessor {
     examples.forEach(([concept, exampleList]) => {
       const conceptId = nodeMap.get(concept);
       if (conceptId) {
-        exampleList.forEach((example, index) => {
+        exampleList.forEach(example => {
           const exampleId = this.generateId(example.content);
-          const angle = index * (Math.PI / 4);
           nodes.push({
             id: exampleId,
-            ...example,
-            position: {
-              x: Math.cos(angle) * 15,
-              y: Math.sin(angle) * 15,
-              z: 5
-            }
+            ...example
           });
           edges.push({
             id: `${conceptId}-${exampleId}`,
@@ -210,17 +193,11 @@ export class KnowledgeProcessor {
     summaries.forEach(([concept, summaryList]) => {
       const conceptId = nodeMap.get(concept);
       if (conceptId) {
-        summaryList.forEach((summary, index) => {
+        summaryList.forEach(summary => {
           const summaryId = this.generateId(summary.content);
-          const angle = index * (Math.PI / 4);
           nodes.push({
             id: summaryId,
-            ...summary,
-            position: {
-              x: Math.cos(angle) * 20,
-              y: Math.sin(angle) * 20,
-              z: -5
-            }
+            ...summary
           });
           edges.push({
             id: `${conceptId}-${summaryId}`,
@@ -240,17 +217,11 @@ export class KnowledgeProcessor {
     details.forEach(([concept, detailList]) => {
       const conceptId = nodeMap.get(concept);
       if (conceptId) {
-        detailList.forEach((detail, index) => {
+        detailList.forEach(detail => {
           const detailId = this.generateId(detail.content);
-          const angle = index * (Math.PI / 4);
           nodes.push({
             id: detailId,
-            ...detail,
-            position: {
-              x: Math.cos(angle) * 25,
-              y: Math.sin(angle) * 25,
-              z: 0
-            }
+            ...detail
           });
           edges.push({
             id: `${conceptId}-${detailId}`,
@@ -267,14 +238,8 @@ export class KnowledgeProcessor {
     });
 
     return {
-      mainQuestion,
-      nodes: [mainQuestion, ...nodes],
-      edges,
-      metadata: {
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-        version: '1.0.0'
-      }
+      nodes,
+      edges
     };
   }
 
