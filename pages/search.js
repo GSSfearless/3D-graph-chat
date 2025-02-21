@@ -199,9 +199,9 @@ export default function Search() {
       {/* 主要内容区域 - 扩大高度 */}
       <main className="w-full px-4 py-2">
         <div className="grid grid-cols-12 gap-4 h-[calc(100vh-4rem)]">
-          {/* 3D知识图谱显示区域 - 扩大比例 */}
+          {/* 3D知识图谱显示区域 - 固定位置 */}
           <div className="col-span-9 relative">
-            <div className="bg-white rounded-xl shadow-sm border border-gray-100 h-full">
+            <div className="bg-white rounded-xl shadow-sm border border-gray-100 h-full sticky top-0">
               {loading ? (
                 <div className="flex items-center justify-center h-full">
                   <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
@@ -221,9 +221,9 @@ export default function Search() {
             </div>
           </div>
 
-          {/* 文本显示区域 - 减小比例但增加高度 */}
-          <div className="col-span-3">
-            <div className="bg-white rounded-xl shadow-sm border border-gray-100 h-full overflow-auto p-4">
+          {/* 文本显示区域 - 可滚动 */}
+          <div className="col-span-3 h-[calc(100vh-4rem)] overflow-y-auto">
+            <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
               {useDeepThinking && reasoningProcess && (
                 <div className="mb-4 p-3 bg-purple-50 rounded-lg border border-purple-200">
                   <div className="flex items-center space-x-2 mb-2">
