@@ -15,10 +15,8 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
   const theme = {
     node: {
       color: '#6366F1',
-      centerNodeColor: '#F43F5E',
       highlightColor: '#F43F5E',
       size: 10,
-      centerNodeSize: 15,
       segments: 32,
       opacity: 0.9,
       glowColor: '#818CF8'
@@ -27,9 +25,7 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
       color: '#94A3B8',
       highlightColor: '#64748B',
       opacity: 0.6,
-      width: 2,
-      labelColor: '#64748B',
-      labelSize: '12px'
+      width: 2
     },
     label: {
       color: '#1E293B',
@@ -129,25 +125,25 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
     labelRenderer.setSize(newWidth, newHeight);
   };
 
-  const createNode3D = (nodeData, index, total, isCenter = false) => {
+  const createNode3D = (nodeData, index, total) => {
     const group = new THREE.Group();
-    
-    // 根据节点类型设置大小和颜色
-    const size = isCenter ? theme.node.centerNodeSize : theme.node.size;
-    const color = isCenter ? theme.node.centerNodeColor : theme.node.color;
-    
+
     // 创建球体几何体
-    const geometry = new THREE.SphereGeometry(size, theme.node.segments, theme.node.segments);
-    
+    const geometry = new THREE.SphereGeometry(
+      theme.node.size,
+      theme.node.segments,
+      theme.node.segments
+    );
+
     // 创建发光材质
     const material = new THREE.MeshPhongMaterial({
-      color: color,
+      color: theme.node.color,
       specular: 0x666666,
       shininess: 50,
       transparent: true,
       opacity: theme.node.opacity
     });
-    
+
     const sphere = new THREE.Mesh(geometry, material);
     sphere.castShadow = true;
     sphere.receiveShadow = true;
@@ -185,7 +181,7 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
     });
 
     const glowSphere = new THREE.Mesh(
-      new THREE.SphereGeometry(size * 1.2, theme.node.segments, theme.node.segments),
+      new THREE.SphereGeometry(theme.node.size * 1.2, theme.node.segments, theme.node.segments),
       glowMaterial
     );
     group.add(glowSphere);
@@ -193,85 +189,69 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
     // 创建标签
     const labelDiv = document.createElement('div');
     labelDiv.className = 'node-label';
+    // 清理文本内容，移除特殊字符
     const cleanText = nodeData.label.replace(/[#*]/g, '').replace(/\s+/g, ' ').trim();
     labelDiv.textContent = cleanText;
     labelDiv.style.color = theme.label.color;
-    labelDiv.style.fontSize = isCenter ? '16px' : theme.label.size;
-    labelDiv.style.fontWeight = isCenter ? '600' : theme.label.weight;
+    labelDiv.style.fontSize = theme.label.size;
     labelDiv.style.fontFamily = theme.label.font;
-    labelDiv.style.background = isCenter ? 'rgba(255, 255, 255, 0.95)' : 'rgba(255, 255, 255, 0.8)';
-    labelDiv.style.padding = isCenter ? '6px 12px' : '4px 8px';
+    labelDiv.style.background = 'transparent';
+    labelDiv.style.padding = '4px 8px';
     labelDiv.style.borderRadius = '4px';
     labelDiv.style.whiteSpace = 'nowrap';
     labelDiv.style.pointerEvents = 'none';
     labelDiv.style.userSelect = 'none';
     
     const label = new CSS2DObject(labelDiv);
-    label.position.set(0, size + 5, 0);
+    label.position.set(0, theme.node.size + 5, 0);
     group.add(label);
 
     // 计算节点位置
-    if (isCenter) {
-      group.position.set(0, 0, 0);
-    } else {
-      const radius = 250;
-      const angleStep = (2 * Math.PI) / (total - 1);
-      const angle = index * angleStep;
-      
-      group.position.x = radius * Math.cos(angle);
-      group.position.y = radius * Math.sin(angle) * 0.5; // 压缩Y轴使布局更扁平
-      group.position.z = radius * Math.sin(angle) * 0.3; // 添加一些深度变化
-    }
+    const phi = Math.acos(-1 + (2 * index) / total);
+    const theta = Math.sqrt(total * Math.PI) * phi;
+    const radius = 200;
 
+    group.position.x = radius * Math.cos(theta) * Math.sin(phi);
+    group.position.y = radius * Math.sin(theta) * Math.sin(phi);
+    group.position.z = radius * Math.cos(phi);
+
+    // 添加用户数据
     group.userData = nodeData;
+
     return group;
   };
 
-  const createEdge3D = (source, target, label) => {
-    const group = new THREE.Group();
-    
-    // 创建曲线控制点
-    const start = source.position.clone();
-    const end = target.position.clone();
-    const mid = new THREE.Vector3().addVectors(start, end).multiplyScalar(0.5);
-    
-    // 添加一些弧度
-    mid.y += Math.abs(end.x - start.x) * 0.2;
-    
-    // 创建二次贝塞尔曲线
-    const curve = new THREE.QuadraticBezierCurve3(start, mid, end);
-    const points = curve.getPoints(50);
-    
+  const createEdge3D = (source, target) => {
+    const points = [];
+    points.push(source.position);
+    points.push(target.position);
+
     const geometry = new THREE.BufferGeometry().setFromPoints(points);
+    
+    // 创建发光材质
     const material = new THREE.LineBasicMaterial({
       color: theme.edge.color,
       transparent: true,
       opacity: theme.edge.opacity,
       linewidth: theme.edge.width
     });
-    
+
     const line = new THREE.Line(geometry, material);
+    
+    // 添加发光效果
+    const glowMaterial = new THREE.LineBasicMaterial({
+      color: theme.edge.color,
+      transparent: true,
+      opacity: theme.edge.opacity * 0.5,
+      linewidth: theme.edge.width * 2
+    });
+
+    const glowLine = new THREE.Line(geometry, glowMaterial);
+    
+    const group = new THREE.Group();
     group.add(line);
-    
-    // 添加边标签
-    if (label) {
-      const labelDiv = document.createElement('div');
-      labelDiv.className = 'edge-label';
-      labelDiv.textContent = label;
-      labelDiv.style.color = theme.edge.labelColor;
-      labelDiv.style.fontSize = theme.edge.labelSize;
-      labelDiv.style.fontFamily = theme.label.font;
-      labelDiv.style.fontWeight = theme.label.weight;
-      labelDiv.style.padding = '2px 4px';
-      labelDiv.style.background = 'rgba(255, 255, 255, 0.9)';
-      labelDiv.style.borderRadius = '4px';
-      labelDiv.style.boxShadow = '0 1px 2px rgba(0,0,0,0.1)';
-      
-      const labelObject = new CSS2DObject(labelDiv);
-      labelObject.position.copy(mid);
-      group.add(labelObject);
-    }
-    
+    group.add(glowLine);
+
     return group;
   };
 
@@ -334,25 +314,12 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
 
     // 创建节点
     const nodes3D = new Map();
-    
-    // 首先创建中心节点
-    if (data.centerNode) {
-      const centerNode3D = createNode3D(data.centerNode, 0, data.nodes.length, true);
-      scene.add(centerNode3D);
-      nodes3D.set(data.centerNode.id, centerNode3D);
-    }
-    
-    // 创建其他节点
     data.nodes.forEach((node, index) => {
-      if (node.data.id !== data.centerNode?.id) {
-        const node3D = createNode3D(node.data, index, data.nodes.length);
-        scene.add(node3D);
-        nodes3D.set(node.data.id, node3D);
-      }
-    });
+      const node3D = createNode3D(node.data, index, data.nodes.length);
+      scene.add(node3D);
+      nodes3D.set(node.data.id, node3D);
 
-    // 添加点击事件
-    nodes3D.forEach((node3D) => {
+      // 添加点击事件
       node3D.children[0].callback = () => handleNodeClick(node3D.children[0]);
     });
 
@@ -361,7 +328,7 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
       const source = nodes3D.get(edge.data.source);
       const target = nodes3D.get(edge.data.target);
       if (source && target) {
-        const edge3D = createEdge3D(source, target, edge.data.label);
+        const edge3D = createEdge3D(source, target);
         scene.add(edge3D);
       }
     });
