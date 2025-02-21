@@ -4,7 +4,6 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 import { CSS2DRenderer, CSS2DObject } from 'three/examples/jsm/renderers/CSS2DRenderer';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faExpand, faCompress, faSearch, faRefresh, faSave, faDownload } from '@fortawesome/free-solid-svg-icons';
-import { faDiscord, faGithub } from '@fortawesome/free-brands-svg-icons';
 
 const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
   const containerRef = useRef(null);
@@ -374,26 +373,9 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
             <FontAwesomeIcon icon={faDownload} />
           </button>
         </div>
-        <div className="toolbar-group">
-          <a href="https://discord.gg/your-discord" target="_blank" rel="noopener noreferrer" 
-             className="toolbar-button discord-button" title="加入Discord">
-            <FontAwesomeIcon icon={faDiscord} />
-          </a>
-          <a href="https://github.com/your-repo" target="_blank" rel="noopener noreferrer" 
-             className="toolbar-button github-button" title="GitHub">
-            <FontAwesomeIcon icon={faGithub} />
-          </a>
-        </div>
       </div>
       
       <div ref={containerRef} style={{ width: '100%', height: '100%' }} />
-      
-      {selectedNode && (
-        <div className="node-details-panel">
-          <h3 className="text-lg font-semibold mb-2">{selectedNode.userData.label}</h3>
-          <p className="text-sm text-gray-600">{selectedNode.userData.description || '暂无描述'}</p>
-        </div>
-      )}
       
       <style jsx>{`
         .knowledge-graph-container {
@@ -406,8 +388,7 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
         .toolbar {
           position: absolute;
           top: 16px;
-          left: 50%;
-          transform: translateX(-50%);
+          right: 16px;
           display: flex;
           gap: 16px;
           padding: 8px;
@@ -446,37 +427,6 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
         .toolbar-button:hover {
           background: rgba(0, 0, 0, 0.05);
           color: var(--neutral-900);
-        }
-
-        .discord-button {
-          color: #5865F2;
-        }
-
-        .discord-button:hover {
-          background: rgba(88, 101, 242, 0.1);
-          color: #4752C4;
-        }
-
-        .github-button {
-          color: #24292e;
-        }
-
-        .github-button:hover {
-          background: rgba(36, 41, 46, 0.1);
-        }
-        
-        .node-details-panel {
-          position: absolute;
-          bottom: 20px;
-          right: 20px;
-          background: rgba(255, 255, 255, 0.9);
-          backdrop-filter: blur(10px);
-          padding: 16px;
-          border-radius: 8px;
-          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-          max-width: 300px;
-          z-index: 1000;
-          transition: all 0.3s ease;
         }
 
         :global(.node-label) {

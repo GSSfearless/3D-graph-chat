@@ -1,4 +1,4 @@
-import { faArrowRight } from '@fortawesome/free-solid-svg-icons';
+import { faArrowRight, faDiscord } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import dynamic from 'next/dynamic';
 import { useRouter } from 'next/router';
@@ -181,8 +181,12 @@ export default function Search() {
               </a>
             </div>
             <div className="flex items-center space-x-4">
+              <a href="https://discord.gg/your-discord" target="_blank" rel="noopener noreferrer" 
+                 className="flex items-center space-x-2 text-sm text-gray-500 hover:text-gray-700">
+                <FontAwesomeIcon icon={faDiscord} className="w-5 h-5" />
+              </a>
               <div className="flex items-center space-x-2 text-sm text-gray-500">
-                <span className="font-medium bg-gradient-to-r from-purple-600 to-pink-600 text-transparent bg-clip-text">Deepseek</span>
+                <span className="font-medium bg-gradient-to-r from-purple-600 to-pink-600 text-transparent bg-clip-text">Powered by deepseek</span>
               </div>
             </div>
           </div>

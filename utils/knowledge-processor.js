@@ -126,23 +126,51 @@ export class KnowledgeProcessor {
   isValidConcept(text) {
     const invalidPatterns = [
       /^[的地得]/, // 开头是的地得
-      /^[和与或]/, // 开头是连接词
+      /^[和与或而且但是然后因此所以总之以下等等]/, // 开头是连接词
       /^[了过着]/, // 开头是时态词
       /^\d+$/, // 纯数字
-      /^[一二三四五六七八九十百千万亿]+$/ // 中文数字
+      /^[一二三四五六七八九十百千万亿]+$/, // 中文数字
+      /^[1-9]\.?$/, // 序号（如1. 2.）
+      /^[①②③④⑤⑥⑦⑧⑨⑩]/, // 圆圈数字
+      /^[,.，。、；：！？]/, // 标点符号
+      /^[的地得之].*[的地得之]$/, // 前后都是助词
+      /^(这|那|此|该|这些|那些|这样|那样)/, // 指示代词
+      /^(就是|也是|还是|即是|乃是)/, // 判断词
+      /^(有|没有|不是|不能|不可以)/, // 否定词
+      /^(在|于|对于|关于)/, // 介词
+      /[，。、；：！？]+/ // 包含标点符号
     ];
 
-    return text.length >= 2 && 
+    const minLength = 2; // 最小长度
+    const maxLength = 20; // 最大长度
+
+    return text.length >= minLength && 
+           text.length <= maxLength && 
            !invalidPatterns.some(pattern => pattern.test(text)) &&
            !/^[a-zA-Z0-9_]+$/.test(text); // 不是纯英文或数字
   }
 
   // 验证实体有效性
   isValidEntity(text) {
-    return text.length >= 2 && 
-           !/^[的地得]/.test(text) && // 不以的地得开头
-           !/^[和与或]/.test(text) && // 不以连接词开头
-           !/^\d+$/.test(text); // 不是纯数字
+    const invalidPatterns = [
+      /^[的地得]/, // 不以的地得开头
+      /^[和与或而且但是然后因此所以总之以下等等]/, // 不以连接词开头
+      /^\d+$/, // 不是纯数字
+      /^[一二三四五六七八九十百千万亿]+$/, // 不是纯中文数字
+      /^[1-9]\.?$/, // 不是序号
+      /^[①②③④⑤⑥⑦⑧⑨⑩]/, // 不是圆圈数字
+      /^[,.，。、；：！？]/, // 不是标点符号
+      /^(这|那|此|该|这些|那些|这样|那样)/, // 不是指示代词
+      /^(就是|也是|还是|即是|乃是)/, // 不是判断词
+      /[，。、；：！？]+/ // 不包含标点符号
+    ];
+
+    const minLength = 2; // 最小长度
+    const maxLength = 20; // 最大长度
+
+    return text.length >= minLength && 
+           text.length <= maxLength && 
+           !invalidPatterns.some(pattern => pattern.test(text));
   }
 
   // 提取关系
