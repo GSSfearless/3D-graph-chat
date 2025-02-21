@@ -108,42 +108,51 @@ export const extractRelations = async (text) => {
     const entityMap = new Map(entities.map(entity => [entity.text, entity]));
     console.log('Entity map:', entityMap);
 
-    // 定义关系模式
+    // 定义关系模式（简化并优化正则表达式）
     const patterns = [
-      { regex: /([^，。！？]+?)是([^，。！？]+)/g, type: 'is-a', label: '是' },
-      { regex: /([^，。！？]+?)包含([^，。！？]+)/g, type: 'contains', label: '包含' },
-      { regex: /([^，。！？]+?)属于([^，。！？]+)/g, type: 'belongs-to', label: '属于' },
-      { regex: /([^，。！？]+?)需要([^，。！？]+)/g, type: 'requires', label: '需要' },
-      { regex: /([^，。！？]+?)通过([^，。！？]+)/g, type: 'through', label: '通过' },
-      { regex: /([^，。！？]+?)使用([^，。！？]+)/g, type: 'uses', label: '使用' },
-      { regex: /([^，。！？]+?)进行([^，。！？]+)/g, type: 'performs', label: '进行' },
-      { regex: /([^，。！？]+?)提供([^，。！？]+)/g, type: 'provides', label: '提供' },
-      { regex: /([^，。！？]+?)获得([^，。！？]+)/g, type: 'obtains', label: '获得' },
-      { regex: /([^，。！？]+?)参与([^，。！？]+)/g, type: 'participates', label: '参与' },
-      { regex: /([^，。！？]+?)了解([^，。！？]+)/g, type: 'understands', label: '了解' },
-      { regex: /([^，。！？]+?)准备([^，。！？]+)/g, type: 'prepares', label: '准备' },
-      { regex: /([^，。！？]+?)掌握([^，。！？]+)/g, type: 'masters', label: '掌握' },
-      { regex: /([^，。！？]+?)对([^，。！？]+)/g, type: 'towards', label: '对' },
-      { regex: /([^，。！？]+?)与([^，。！？]+)/g, type: 'with', label: '与' },
-      { regex: /([^，。！？]+?)和([^，。！？]+)/g, type: 'and', label: '和' },
-      { regex: /([^，。！？]+?)在([^，。！？]+)/g, type: 'in', label: '在' },
-      { regex: /([^，。！？]+?)为([^，。！？]+)/g, type: 'for', label: '为' },
-      { regex: /([^，。！？]+?)由([^，。！？]+)/g, type: 'by', label: '由' }
+      { regex: /(.{2,20}?)是(.{2,20})/g, type: 'is-a', label: '是' },
+      { regex: /(.{2,20}?)包含(.{2,20})/g, type: 'contains', label: '包含' },
+      { regex: /(.{2,20}?)属于(.{2,20})/g, type: 'belongs-to', label: '属于' },
+      { regex: /(.{2,20}?)和(.{2,20})/g, type: 'and', label: '和' },
+      { regex: /(.{2,20}?)与(.{2,20})/g, type: 'with', label: '与' },
+      { regex: /(.{2,20}?)通过(.{2,20})/g, type: 'through', label: '通过' }
     ];
 
     sentences.forEach(sentence => {
+      // 移除多余的空格和标点
+      const cleanSentence = sentence.trim().replace(/\s+/g, '');
+      if (!cleanSentence) return;
+
+      console.log('Processing sentence:', cleanSentence);
+
+      // 处理每个关系模式
       patterns.forEach(pattern => {
-        let matches;
-        while ((matches = pattern.regex.exec(sentence)) !== null) {
-          if (matches && matches.length >= 3) {
-            const [, sourceText, targetText] = matches;
-            const cleanSource = sourceText.replace(/[*]/g, '').trim();
-            const cleanTarget = targetText.replace(/[*]/g, '').trim();
+        const regex = new RegExp(pattern.regex);
+        let match;
+        
+        // 重置正则表达式的lastIndex
+        regex.lastIndex = 0;
+        
+        while ((match = regex.exec(cleanSentence)) !== null) {
+          if (match && match.length >= 3) {
+            const sourceText = match[1].trim();
+            const targetText = match[2].trim();
             
-            const sourceEntity = entityMap.get(cleanSource);
-            const targetEntity = entityMap.get(cleanTarget);
+            // 查找实体
+            let sourceEntity = null;
+            let targetEntity = null;
             
-            if (sourceEntity && targetEntity) {
+            // 遍历实体映射以查找最佳匹配
+            for (const [key, entity] of entityMap.entries()) {
+              if (sourceText.includes(key)) {
+                sourceEntity = entity;
+              }
+              if (targetText.includes(key)) {
+                targetEntity = entity;
+              }
+            }
+            
+            if (sourceEntity && targetEntity && sourceEntity.id !== targetEntity.id) {
               const relation = {
                 id: `edge-${relationId++}`,
                 source: sourceEntity.id,
@@ -152,10 +161,11 @@ export const extractRelations = async (text) => {
                 label: pattern.label,
                 weight: 1,
                 properties: {
-                  sourceText: cleanSource,
-                  targetText: cleanTarget
+                  sourceText: sourceEntity.text,
+                  targetText: targetEntity.text
                 }
               };
+              
               console.log('Created relation:', relation);
               relations.push(relation);
             }
@@ -164,36 +174,48 @@ export const extractRelations = async (text) => {
       });
 
       // 处理并列关系
-      const parallelPattern = /([^，。！？]+)[和与]([^，。！？]+)/g;
-      let parallelMatch;
-      while ((parallelMatch = parallelPattern.exec(sentence)) !== null) {
-        const [, entity1Text, entity2Text] = parallelMatch;
-        const cleanEntity1 = entity1Text.trim();
-        const cleanEntity2 = entity2Text.trim();
-        
-        const entity1 = entityMap.get(cleanEntity1);
-        const entity2 = entityMap.get(cleanEntity2);
-        
-        if (entity1 && entity2) {
-          const relation = {
-            id: `edge-${relationId++}`,
-            source: entity1.id,
-            target: entity2.id,
-            type: 'related',
-            label: '相关',
-            weight: 0.5,
-            properties: {
-              sourceText: cleanEntity1,
-              targetText: cleanEntity2
+      const parallelMatches = cleanSentence.match(/(.{2,20})[和与](.{2,20})/g) || [];
+      parallelMatches.forEach(match => {
+        const parts = match.split(/[和与]/);
+        if (parts.length === 2) {
+          const [part1, part2] = parts.map(p => p.trim());
+          
+          // 查找实体
+          let entity1 = null;
+          let entity2 = null;
+          
+          // 遍历实体映射以查找最佳匹配
+          for (const [key, entity] of entityMap.entries()) {
+            if (part1.includes(key)) {
+              entity1 = entity;
             }
-          };
-          console.log('Created parallel relation:', relation);
-          relations.push(relation);
+            if (part2.includes(key)) {
+              entity2 = entity;
+            }
+          }
+          
+          if (entity1 && entity2 && entity1.id !== entity2.id) {
+            const relation = {
+              id: `edge-${relationId++}`,
+              source: entity1.id,
+              target: entity2.id,
+              type: 'related',
+              label: '相关',
+              weight: 0.5,
+              properties: {
+                sourceText: entity1.text,
+                targetText: entity2.text
+              }
+            };
+            
+            console.log('Created parallel relation:', relation);
+            relations.push(relation);
+          }
         }
-      }
+      });
     });
 
-    console.log('Extracted relations:', relations);
+    console.log('Final extracted relations:', relations);
     return relations;
   } catch (error) {
     console.error('Error in extractRelations:', error);
