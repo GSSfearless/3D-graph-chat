@@ -233,7 +233,10 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
     return group;
   };
 
-  const createEdge3D = (source, target) => {
+  const createEdge3D = (source, target, edgeData) => {
+    const group = new THREE.Group();
+
+    // 创建边的线条
     const points = [];
     points.push(source.position);
     points.push(target.position);
@@ -249,6 +252,7 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
     });
 
     const line = new THREE.Line(geometry, material);
+    group.add(line);
     
     // 添加发光效果
     const glowMaterial = new THREE.LineBasicMaterial({
@@ -259,10 +263,34 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
     });
 
     const glowLine = new THREE.Line(geometry, glowMaterial);
-    
-    const group = new THREE.Group();
-    group.add(line);
     group.add(glowLine);
+
+    // 添加边的标签
+    if (edgeData && edgeData.label) {
+      const labelDiv = document.createElement('div');
+      labelDiv.className = 'edge-label';
+      labelDiv.textContent = edgeData.label;
+      labelDiv.style.color = theme.label.color;
+      labelDiv.style.fontSize = '12px';
+      labelDiv.style.fontFamily = theme.label.font;
+      labelDiv.style.background = 'rgba(255, 255, 255, 0.8)';
+      labelDiv.style.padding = '2px 4px';
+      labelDiv.style.borderRadius = '4px';
+      labelDiv.style.whiteSpace = 'nowrap';
+      labelDiv.style.pointerEvents = 'none';
+      labelDiv.style.userSelect = 'none';
+      
+      const label = new CSS2DObject(labelDiv);
+      
+      // 将标签放置在边的中间位置
+      label.position.set(
+        (source.position.x + target.position.x) / 2,
+        (source.position.y + target.position.y) / 2,
+        (source.position.z + target.position.z) / 2
+      );
+      
+      group.add(label);
+    }
 
     return group;
   };
@@ -362,7 +390,7 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
         const source = nodes3D.get(edgeData.source);
         const target = nodes3D.get(edgeData.target);
         if (source && target) {
-          const edge3D = createEdge3D(source, target);
+          const edge3D = createEdge3D(source, target, edgeData);
           scene.add(edge3D);
         } else {
           console.warn('Could not find source or target node for edge:', edgeData);
@@ -509,6 +537,17 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
           text-align: center;
           color: #666;
           z-index: 1;
+        }
+
+        :global(.edge-label) {
+          color: #1a1a1a;
+          font-size: 10px;
+          padding: 1px 3px;
+          background: rgba(255, 255, 255, 0.8);
+          border-radius: 2px;
+          pointer-events: none;
+          white-space: nowrap;
+          text-align: center;
         }
       `}</style>
     </div>
