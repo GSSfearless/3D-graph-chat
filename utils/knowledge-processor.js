@@ -27,60 +27,107 @@ export class KnowledgeGraphProcessor {
   }
 
   async processText(text) {
-    // 1. 实体抽取
-    const entities = await extractEntities(text);
-    
-    // 2. 关系抽取
-    const relations = await extractRelations(text);
-    
-    // 3. 计算实体向量嵌入
-    const embeddings = await computeEmbeddings(entities);
-    
-    // 4. 构建节点和边的映射
-    const nodeMap = new Map(entities.map(entity => [entity.text, entity]));
-    
-    // 5. 构建节点
-    const nodes = this.buildNodes(entities, embeddings);
-    
-    // 6. 构建边（只保留存在对应节点的边）
-    const edges = this.buildEdges(relations.filter(relation => 
-      nodeMap.has(relation.source) && nodeMap.has(relation.target)
-    ));
-    
-    // 7. 应用布局
-    const graphData = this.applyLayout({
-      nodes,
-      edges,
-      type: this.layoutTypes.FORCE
-    });
+    try {
+      if (!text || typeof text !== 'string') {
+        console.warn('Invalid input text:', text);
+        return { nodes: [], edges: [] };
+      }
 
-    return graphData;
+      // 1. 实体抽取
+      const entities = await extractEntities(text);
+      if (!Array.isArray(entities)) {
+        console.warn('Invalid entities result:', entities);
+        return { nodes: [], edges: [] };
+      }
+      
+      // 2. 关系抽取
+      const relations = await extractRelations(text);
+      if (!Array.isArray(relations)) {
+        console.warn('Invalid relations result:', relations);
+        return { nodes: [], edges: [] };
+      }
+      
+      // 3. 计算实体向量嵌入
+      const embeddings = await computeEmbeddings(entities);
+      
+      // 4. 构建节点和边的映射
+      const nodeMap = new Map(entities.map(entity => [
+        entity.text,
+        { ...entity, id: `node-${entity.text.replace(/[^a-zA-Z0-9]/g, '_')}` }
+      ]));
+      
+      // 5. 构建节点
+      const nodes = this.buildNodes(entities, embeddings);
+      if (!nodes.length) {
+        console.warn('No valid nodes generated');
+        return { nodes: [], edges: [] };
+      }
+      
+      // 6. 构建边（只保留存在对应节点的边）
+      const edges = this.buildEdges(relations.filter(relation => 
+        nodeMap.has(relation.source) && nodeMap.has(relation.target)
+      ));
+      
+      // 7. 应用布局
+      const graphData = this.applyLayout({
+        nodes,
+        edges,
+        type: this.layoutTypes.FORCE
+      });
+
+      // 8. 验证最终数据
+      if (!graphData.nodes || !graphData.edges) {
+        console.warn('Invalid graph data generated:', graphData);
+        return { nodes: [], edges: [] };
+      }
+
+      return graphData;
+    } catch (error) {
+      console.error('Error processing text:', error);
+      return { nodes: [], edges: [] };
+    }
   }
 
   buildNodes(entities, embeddings) {
-    return entities.map((entity, index) => ({
-      id: entity.id,
-      label: entity.text,
-      type: this.getNodeType(entity),
-      size: this.calculateNodeSize(entity),
-      color: this.colorScheme[this.getNodeType(entity)],
-      embedding: embeddings[index],
-      properties: entity.properties || {},
-      cluster: entity.cluster || 0,
-      x: 0,  // 初始位置
-      y: 0
-    }));
+    return entities.map((entity, index) => {
+      // 确保 entity.text 存在，如果不存在则使用一个默认值
+      const label = entity.text || entity.label || `Entity ${index + 1}`;
+      return {
+        id: entity.id || `node-${index}`,
+        label: label,
+        text: entity.text || label,
+        type: this.getNodeType(entity),
+        size: this.calculateNodeSize(entity),
+        color: this.colorScheme[this.getNodeType(entity)],
+        embedding: embeddings[index],
+        properties: entity.properties || {},
+        cluster: entity.cluster || 0,
+        x: 0,
+        y: 0
+      };
+    }).filter(node => node.label && typeof node.label === 'string');  // 过滤掉没有有效 label 的节点
   }
 
   buildEdges(relations) {
-    return relations.map((relation, index) => ({
-      id: relation.id,
-      source: `node-${relation.source.replace(/[^a-zA-Z0-9]/g, '_')}`,
-      target: `node-${relation.target.replace(/[^a-zA-Z0-9]/g, '_')}`,
-      type: relation.type,
-      weight: relation.weight || 1,
-      label: relation.label
-    }));
+    return relations
+      .filter(relation => relation && relation.source && relation.target)  // 过滤掉无效的关系
+      .map((relation, index) => {
+        const sourceId = typeof relation.source === 'string' 
+          ? `node-${relation.source.replace(/[^a-zA-Z0-9]/g, '_')}`
+          : relation.source.id;
+        const targetId = typeof relation.target === 'string'
+          ? `node-${relation.target.replace(/[^a-zA-Z0-9]/g, '_')}`
+          : relation.target.id;
+        
+        return {
+          id: relation.id || `edge-${index}`,
+          source: sourceId,
+          target: targetId,
+          type: relation.type || 'default',
+          weight: relation.weight || 1,
+          label: relation.label || ''
+        };
+      });
   }
 
   getNodeType(entity) {
