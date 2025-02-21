@@ -26,11 +26,7 @@ export class AnimationController {
     const startTarget = this.controls.target.clone();
     
     // 计算目标位置
-    const nodePosition = new THREE.Vector3(
-      node.position.x,
-      node.position.y,
-      node.position.z
-    );
+    const nodePosition = node.position.clone();
     const cameraOffset = new THREE.Vector3(20, 20, 30);
     const targetPosition = nodePosition.clone().add(cameraOffset);
     const targetTarget = nodePosition.clone();
