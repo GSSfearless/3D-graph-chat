@@ -54,13 +54,32 @@ export const analyzeSentiment = (content) => {
   };
 };
 
-// 添加一个统一的ID生成函数
+// 修改ID生成函数
 const generateNodeId = (text) => {
-  const normalized = text.toLowerCase().trim().replace(/[^a-zA-Z0-9\u4e00-\u9fa5]/g, '_');
+  // 对于较长的中文文本，提取关键词
+  let processedText = text;
+  if (text.length > 10) {
+    // 提取最后一个动词或名词短语
+    const keywords = text.match(/[一-龥]+(?:的)?[一-龥]+$/);
+    if (keywords) {
+      processedText = keywords[0];
+    } else {
+      // 如果没有找到合适的短语，取最后几个字
+      processedText = text.slice(-5);
+    }
+  }
+  
+  // 规范化文本
+  const normalized = processedText
+    .toLowerCase()
+    .trim()
+    .replace(/[的地得了过着]/g, '')  // 移除常见虚词
+    .replace(/[^a-zA-Z0-9\u4e00-\u9fa5]/g, '_');
+    
   return `node-${normalized}`;
 };
 
-// 实体抽取函数
+// 改进实体提取函数
 export const extractEntities = async (text) => {
   try {
     if (!text || typeof text !== 'string') {
@@ -70,29 +89,44 @@ export const extractEntities = async (text) => {
 
     const sentences = text.split(/[。！？.!?]/);
     const entities = new Map();
-    let entityId = 0;
+
+    // 定义实体提取模式
+    const entityPatterns = [
+      // 名词短语
+      /(?:[一-龥]+的)?[一-龥]{2,6}/g,
+      // 动词短语
+      /[一-龥]{1,3}[了过着][一-龥]{2,6}/g,
+      // 形容词短语
+      /[一-龥]{1,2}的[一-龥]{2,6}/g
+    ];
 
     sentences.forEach(sentence => {
-      const matches = sentence.match(/[一-龥A-Za-z][一-龥A-Za-z\d]*[一-龥A-Za-z]+/g) || [];
-      
-      matches.forEach(match => {
-        const cleanMatch = match.replace(/[*]/g, '').trim();
-        if (isValidEntity(cleanMatch) && !entities.has(cleanMatch)) {
-          const nodeId = generateNodeId(cleanMatch);
-          const entity = {
-            id: nodeId,
-            text: cleanMatch,
-            label: cleanMatch,
-            isEvent: hasEventIndicators(cleanMatch),
-            isAttribute: hasAttributeIndicators(cleanMatch),
-            isConcept: hasConceptIndicators(cleanMatch),
-            importance: calculateImportance(cleanMatch, text),
-            properties: {}
-          };
-          entities.set(cleanMatch, entity);
-          // 同时用ID作为键存储
-          entities.set(nodeId, entity);
-        }
+      // 对每个句子应用所有模式
+      entityPatterns.forEach(pattern => {
+        const matches = sentence.match(pattern) || [];
+        matches.forEach(match => {
+          const cleanMatch = match.replace(/[*\s]/g, '').trim();
+          if (isValidEntity(cleanMatch) && !entities.has(cleanMatch)) {
+            const nodeId = generateNodeId(cleanMatch);
+            const entity = {
+              id: nodeId,
+              text: cleanMatch,
+              label: cleanMatch,
+              isEvent: hasEventIndicators(cleanMatch),
+              isAttribute: hasAttributeIndicators(cleanMatch),
+              isConcept: hasConceptIndicators(cleanMatch),
+              importance: calculateImportance(cleanMatch, text),
+              properties: {}
+            };
+            
+            // 存储实体，使用多个键以增加匹配成功率
+            entities.set(cleanMatch, entity);
+            entities.set(nodeId, entity);
+            // 存储规范化后的文本作为键
+            const normalizedText = cleanMatch.toLowerCase().replace(/[的地得了过着]/g, '');
+            entities.set(normalizedText, entity);
+          }
+        });
       });
     });
 
@@ -107,7 +141,29 @@ export const extractEntities = async (text) => {
   }
 };
 
-// 关系抽取函数
+// 改进关系提取函数中的实体验证
+const isValidEntityPair = (source, target) => {
+  // 检查源实体和目标实体是否有效
+  if (!source || !target || source === target) {
+    return false;
+  }
+
+  // 确保实体不是常见的无意义词组
+  const invalidWords = ['这个', '那个', '什么', '怎么', '为什么', '如何'];
+  if (invalidWords.some(word => source.includes(word) || target.includes(word))) {
+    return false;
+  }
+
+  // 检查实体长度
+  if (source.length < 2 || target.length < 2) {
+    return false;
+  }
+
+  // 使用原有的实体验证逻辑
+  return isValidEntity(source) && isValidEntity(target);
+};
+
+// 修改关系提取函数中的验证逻辑
 export const extractRelations = async (text) => {
   try {
     const relations = [];
@@ -137,28 +193,21 @@ export const extractRelations = async (text) => {
     ];
 
     sentences.forEach(sentence => {
-      // 对每个句子应用所有模式
       patterns.forEach(pattern => {
         let matches;
-        pattern.regex.lastIndex = 0; // 重置正则表达式的lastIndex
+        pattern.regex.lastIndex = 0;
         
         while ((matches = pattern.regex.exec(sentence)) !== null) {
           if (matches && matches.length >= 3) {
             const [, source, target] = matches;
-            // 清理和规范化文本
             const cleanSource = source.replace(/[*\s]/g, '').trim();
             const cleanTarget = target.replace(/[*\s]/g, '').trim();
             
-            // 验证实体的有效性
-            if (cleanSource && cleanTarget && 
-                cleanSource !== cleanTarget && 
-                isValidEntity(cleanSource) && 
-                isValidEntity(cleanTarget)) {
-              
+            // 使用改进的实体验证
+            if (isValidEntityPair(cleanSource, cleanTarget)) {
               const sourceId = generateNodeId(cleanSource);
               const targetId = generateNodeId(cleanTarget);
               
-              // 添加详细的调试信息
               console.log('Found relation:', {
                 pattern: pattern.type,
                 source: cleanSource,
@@ -169,7 +218,6 @@ export const extractRelations = async (text) => {
               });
               
               // 避免重复关系
-              const relationKey = `${sourceId}-${pattern.type}-${targetId}`;
               if (!relations.some(r => 
                   r.source === sourceId && 
                   r.target === targetId && 
@@ -234,7 +282,6 @@ export const extractRelations = async (text) => {
       }
     });
 
-    // 添加详细的调试信息
     console.log('Extracted relations details:', {
       totalRelations: relations.length,
       relationTypes: [...new Set(relations.map(r => r.type))],
