@@ -140,12 +140,9 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
   const createNode3D = (nodeData, index, total) => {
     const group = new THREE.Group();
 
-    // 使用节点的实际大小，如果没有则使用默认大小
-    const nodeSize = nodeData.size || theme.node.size;
-
     // 创建球体几何体
     const geometry = new THREE.SphereGeometry(
-      nodeSize,
+      theme.node.size,
       theme.node.segments,
       theme.node.segments
     );
@@ -196,7 +193,7 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
     });
 
     const glowSphere = new THREE.Mesh(
-      new THREE.SphereGeometry(nodeSize * 1.2, theme.node.segments, theme.node.segments),
+      new THREE.SphereGeometry(theme.node.size * 1.2, theme.node.segments, theme.node.segments),
       glowMaterial
     );
     group.add(glowSphere);
@@ -208,11 +205,9 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
     const cleanText = nodeData.label.replace(/[#*]/g, '').replace(/\s+/g, ' ').trim();
     labelDiv.textContent = cleanText;
     labelDiv.style.color = theme.label.color;
-    // 根据节点大小调整标签大小
-    const fontSize = Math.max(12, Math.min(16, 12 + (nodeSize - 10) / 2));
-    labelDiv.style.fontSize = `${fontSize}px`;
+    labelDiv.style.fontSize = theme.label.size;
     labelDiv.style.fontFamily = theme.label.font;
-    labelDiv.style.background = 'rgba(255,255,255,0.8)';
+    labelDiv.style.background = 'transparent';
     labelDiv.style.padding = '4px 8px';
     labelDiv.style.borderRadius = '4px';
     labelDiv.style.whiteSpace = 'nowrap';
@@ -220,7 +215,7 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
     labelDiv.style.userSelect = 'none';
     
     const label = new CSS2DObject(labelDiv);
-    label.position.set(0, nodeSize + 5, 0);
+    label.position.set(0, theme.node.size + 5, 0);
     group.add(label);
 
     // 计算节点位置
@@ -233,10 +228,7 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
     group.position.z = radius * Math.cos(phi);
 
     // 添加用户数据
-    group.userData = {
-      ...nodeData,
-      size: nodeSize
-    };
+    group.userData = nodeData;
 
     return group;
   };
@@ -244,62 +236,22 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
   const createEdge3D = (source, target, edgeData) => {
     const group = new THREE.Group();
 
-    // 创建曲线路径
-    const curve = edgeData.curve;
-    let points;
-    if (curve) {
-      // 使用二次贝塞尔曲线
-      const curveObject = new THREE.QuadraticBezierCurve3(
-        new THREE.Vector3(curve.x1, curve.y1, 0),
-        new THREE.Vector3(curve.cpx, curve.cpy, 0),
-        new THREE.Vector3(curve.x2, curve.y2, 0)
-      );
-      points = curveObject.getPoints(50);
-    } else {
-      points = [source.position, target.position];
-    }
+    // 创建边的线条
+    const points = [];
+    points.push(source.position);
+    points.push(target.position);
 
     const geometry = new THREE.BufferGeometry().setFromPoints(points);
     
     // 创建发光材质
     const material = new THREE.LineBasicMaterial({
-      color: edgeData.color || theme.edge.color,
+      color: theme.edge.color,
       transparent: true,
       opacity: theme.edge.opacity,
-      linewidth: edgeData.width || theme.edge.width
+      linewidth: theme.edge.width
     });
 
     const line = new THREE.Line(geometry, material);
-    
-    // 添加发光效果
-    const glowMaterial = new THREE.ShaderMaterial({
-      uniforms: {
-        color: { value: new THREE.Color(edgeData.color || theme.edge.color) },
-        opacity: { value: 0.35 }
-      },
-      vertexShader: `
-        varying vec2 vUv;
-        void main() {
-          vUv = uv;
-          gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-        }
-      `,
-      fragmentShader: `
-        uniform vec3 color;
-        uniform float opacity;
-        varying vec2 vUv;
-        void main() {
-          float intensity = 1.0 - length(vUv - vec2(0.5));
-          gl_FragColor = vec4(color, opacity * intensity);
-        }
-      `,
-      transparent: true,
-      blending: THREE.AdditiveBlending
-    });
-
-    const glowLine = new THREE.Line(geometry, glowMaterial);
-    glowLine.scale.multiplyScalar(1.2);
-    group.add(glowLine);
     group.add(line);
 
     // 添加边标签
@@ -310,25 +262,52 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
       labelDiv.style.color = theme.label.color;
       labelDiv.style.fontSize = '12px';
       labelDiv.style.fontFamily = theme.label.font;
-      labelDiv.style.background = 'rgba(255,255,255,0.8)';
-      labelDiv.style.padding = '2px 6px';
-      labelDiv.style.borderRadius = '4px';
+      labelDiv.style.background = 'transparent';
+      labelDiv.style.padding = '2px 4px';
       labelDiv.style.whiteSpace = 'nowrap';
       labelDiv.style.pointerEvents = 'none';
       labelDiv.style.userSelect = 'none';
+      labelDiv.style.textShadow = '0 0 3px rgba(255,255,255,0.8)';
       
       const label = new CSS2DObject(labelDiv);
       
-      // 如果有曲线，将标签放在控制点位置
-      if (curve) {
-        label.position.set(curve.cpx, curve.cpy, 0);
-      } else {
-        // 否则放在边的中点
-        const midPoint = new THREE.Vector3()
-          .addVectors(source.position, target.position)
-          .multiplyScalar(0.5);
-        label.position.copy(midPoint);
-      }
+      // 计算边的方向向量
+      const direction = new THREE.Vector3()
+        .subVectors(target.position, source.position)
+        .normalize();
+      
+      // 计算边的中点
+      const midPoint = new THREE.Vector3()
+        .addVectors(source.position, target.position)
+        .multiplyScalar(0.5);
+      
+      // 使用边的方向计算更智能的偏移
+      const up = new THREE.Vector3(0, 1, 0);
+      const right = new THREE.Vector3().crossVectors(direction, up).normalize();
+      
+      // 减小偏移距离
+      const offsetDistance = 8 + Math.abs(Math.sin(Math.atan2(direction.y, direction.x)) * 4);
+      
+      // 根据边的ID计算不同的偏移方向
+      const edgeId = `${source.userData.id}-${target.userData.id}`;
+      const hashCode = [...edgeId].reduce((acc, char) => char.charCodeAt(0) + ((acc << 5) - acc), 0);
+      const offsetSign = hashCode % 2 === 0 ? 1 : -1;
+      
+      const offset = right.multiplyScalar(offsetDistance * offsetSign);
+      
+      // 应用偏移
+      midPoint.add(offset);
+      
+      // 设置标签位置
+      label.position.copy(midPoint);
+      
+      // 存储计算数据用于更新
+      label.userData = {
+        offset,
+        direction,
+        offsetDistance,
+        offsetSign
+      };
       
       group.add(label);
     }
@@ -343,34 +322,36 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
 
     // 更新边的位置和标签的方法
     group.updatePosition = () => {
-      if (curve) {
-        const curveObject = new THREE.QuadraticBezierCurve3(
-          new THREE.Vector3(curve.x1, curve.y1, 0),
-          new THREE.Vector3(curve.cpx, curve.cpy, 0),
-          new THREE.Vector3(curve.x2, curve.y2, 0)
-        );
-        const points = curveObject.getPoints(50);
-        geometry.setFromPoints(points);
-      } else {
-        const positions = new Float32Array([
-          source.position.x, source.position.y, source.position.z,
-          target.position.x, target.position.y, target.position.z
-        ]);
-        geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-      }
+      // 更新线条几何体
+      const positions = new Float32Array([
+        source.position.x, source.position.y, source.position.z,
+        target.position.x, target.position.y, target.position.z
+      ]);
+      geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
       geometry.computeBoundingSphere();
       
       // 更新标签位置
-      if (group.children[2]) {
-        const label = group.children[2];
-        if (curve) {
-          label.position.set(curve.cpx, curve.cpy, 0);
-        } else {
-          const midPoint = new THREE.Vector3()
-            .addVectors(source.position, target.position)
-            .multiplyScalar(0.5);
-          label.position.copy(midPoint);
-        }
+      if (group.children[1]) {
+        const label = group.children[1];
+        
+        // 重新计算边的中点
+        const midPoint = new THREE.Vector3()
+          .addVectors(source.position, target.position)
+          .multiplyScalar(0.5);
+        
+        // 重新计算方向向量
+        const direction = new THREE.Vector3()
+          .subVectors(target.position, source.position)
+          .normalize();
+        
+        // 使用存储的偏移
+        const offset = label.userData.offset;
+        
+        // 应用偏移
+        midPoint.add(offset);
+        
+        // 更新标签位置
+        label.position.copy(midPoint);
       }
     };
 
