@@ -1,6 +1,6 @@
 import { useSpring, animated } from '@react-spring/three';
 import { Billboard, Text } from '@react-three/drei';
-import { Edge, Node } from '../types/graph';
+import { Edge, Node, EdgeType } from '../types/graph';
 import { getEdgeColor } from '../utils/colors';
 import * as THREE from 'three';
 
@@ -10,16 +10,33 @@ interface EdgeProps {
   targetNode: Node;
 }
 
+const defaultRelationship = {
+  type: EdgeType.EXPLAINS,
+  label: '关联',
+  strength: 1
+};
+
 const EdgeLine: React.FC<EdgeProps> = ({ edge, sourceNode, targetNode }) => {
+  // 首先检查所有必需的属性
+  if (!edge || !sourceNode || !targetNode) {
+    console.warn('Missing required props in EdgeLine');
+    return null;
+  }
+
+  // 确保position属性存在
+  if (!sourceNode.position || !targetNode.position) {
+    console.warn('Missing position data in nodes');
+    return null;
+  }
+
+  // 使用默认关系数据如果relationship未定义
+  const relationship = edge.relationship || defaultRelationship;
+
   const { spring } = useSpring({
     spring: 1,
     from: { spring: 0 },
     config: { mass: 5, tension: 400, friction: 50, precision: 0.0001 }
   });
-
-  if (!sourceNode?.position || !targetNode?.position || !edge?.relationship) {
-    return null;
-  }
 
   const sourcePos = sourceNode.position;
   const targetPos = targetNode.position;
@@ -47,8 +64,8 @@ const EdgeLine: React.FC<EdgeProps> = ({ edge, sourceNode, targetNode }) => {
         </bufferGeometry>
         <lineBasicMaterial
           attach="material"
-          color={getEdgeColor(edge.relationship.type)}
-          linewidth={edge.relationship.strength || 1}
+          color={getEdgeColor(relationship.type)}
+          linewidth={relationship.strength || 1}
           opacity={spring.get()}
           transparent
         />
@@ -66,7 +83,7 @@ const EdgeLine: React.FC<EdgeProps> = ({ edge, sourceNode, targetNode }) => {
           anchorX="center"
           anchorY="middle"
         >
-          {edge.relationship.label || '关联'}
+          {relationship.label || '关联'}
         </Text>
       </Billboard>
     </group>
