@@ -244,10 +244,15 @@ export class KnowledgeProcessor {
   }
 
   calculateImportance(concept, text) {
+    // 转义正则表达式中的特殊字符
+    const escapedConcept = concept.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    
     // 基于出现频率和位置计算重要性
-    const frequency = (text.match(new RegExp(concept, 'g')) || []).length;
+    const frequency = (text.match(new RegExp(escapedConcept, 'g')) || []).length;
     const position = text.indexOf(concept) / text.length;
-    return Math.min(1, (frequency * 0.3 + (1 - position) * 0.7));
+    
+    // 确保返回值在0到1之间
+    return Math.min(1, Math.max(0, (frequency * 0.3 + (1 - position) * 0.7)));
   }
 
   findRelatedConcept(text, concepts) {
@@ -256,10 +261,13 @@ export class KnowledgeProcessor {
     let relatedConcept = null;
 
     concepts.forEach(concept => {
-      const similarity = this.calculateTextSimilarity(text, concept.content);
-      if (similarity > maxSimilarity) {
-        maxSimilarity = similarity;
-        relatedConcept = concept.content;
+      // 确保concept.content存在
+      if (concept && concept.content) {
+        const similarity = this.calculateTextSimilarity(text, concept.content);
+        if (similarity > maxSimilarity) {
+          maxSimilarity = similarity;
+          relatedConcept = concept.content;
+        }
       }
     });
 
@@ -267,9 +275,14 @@ export class KnowledgeProcessor {
   }
 
   calculateTextSimilarity(text1, text2) {
+    if (!text1 || !text2) return 0;
+    
     // 简单的文本相似度计算
-    const words1 = new Set(text1.split(/\s+/));
-    const words2 = new Set(text2.split(/\s+/));
+    const words1 = new Set(text1.split(/\s+/).filter(Boolean));
+    const words2 = new Set(text2.split(/\s+/).filter(Boolean));
+    
+    if (words1.size === 0 || words2.size === 0) return 0;
+    
     const intersection = new Set([...words1].filter(x => words2.has(x)));
     return intersection.size / Math.max(words1.size, words2.size);
   }
