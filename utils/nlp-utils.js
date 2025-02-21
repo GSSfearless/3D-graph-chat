@@ -79,6 +79,77 @@ const generateNodeId = (text) => {
   return `node-${normalized}`;
 };
 
+// 计算节点大小
+const calculateNodeSize = (entity, text) => {
+  try {
+    let baseSize = 10;  // 基础大小
+    let importanceMultiplier = 1;  // 重要性乘数
+    let typeMultiplier = 1;  // 类型乘数
+
+    // 根据实体类型调整大小
+    if (entity.isEvent) {
+      typeMultiplier = 1.5;  // 事件节点稍大
+    } else if (entity.isConcept) {
+      typeMultiplier = 1.8;  // 概念节点最大
+    } else if (entity.isAttribute) {
+      typeMultiplier = 0.8;  // 属性节点稍小
+    }
+
+    // 计算文本重要性
+    const frequency = calculateFrequency(entity.text, text);
+    const length = entity.text.length;
+    const positionWeight = calculatePositionWeight(entity.text, text);
+    
+    // 重要性分数计算
+    importanceMultiplier = Math.min(2.5, (
+      frequency * 0.4 +  // 频率权重
+      Math.min(length / 4, 1) * 0.3 +  // 长度权重（最多贡献0.3）
+      positionWeight * 0.3  // 位置权重
+    ));
+
+    // 最终大小计算
+    const finalSize = baseSize * typeMultiplier * importanceMultiplier;
+    
+    // 确保大小在合理范围内
+    return Math.max(8, Math.min(25, finalSize));
+  } catch (error) {
+    console.error('计算节点大小时出错:', error);
+    return 10;  // 返回默认大小
+  }
+};
+
+// 计算词频
+const calculateFrequency = (term, text) => {
+  try {
+    const escapedTerm = term.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
+    const regex = new RegExp(escapedTerm, 'g');
+    const matches = text.match(regex) || [];
+    return Math.min(1 + (matches.length * 0.2), 2);  // 最多贡献2倍大小
+  } catch (error) {
+    console.error('计算词频时出错:', error);
+    return 1;
+  }
+};
+
+// 计算位置权重（句首句尾的词更重要）
+const calculatePositionWeight = (term, text) => {
+  try {
+    const sentences = text.split(/[。！？.!?]/);
+    let weight = 1;
+    
+    for (const sentence of sentences) {
+      if (sentence.trim().startsWith(term) || sentence.trim().endsWith(term)) {
+        weight += 0.2;  // 句首句尾加权
+      }
+    }
+    
+    return Math.min(weight, 1.6);  // 最多贡献1.6倍大小
+  } catch (error) {
+    console.error('计算位置权重时出错:', error);
+    return 1;
+  }
+};
+
 // 改进实体提取函数
 export const extractEntities = async (text) => {
   try {
@@ -101,7 +172,6 @@ export const extractEntities = async (text) => {
     ];
 
     sentences.forEach(sentence => {
-      // 对每个句子应用所有模式
       entityPatterns.forEach(pattern => {
         const matches = sentence.match(pattern) || [];
         matches.forEach(match => {
@@ -115,14 +185,14 @@ export const extractEntities = async (text) => {
               isEvent: hasEventIndicators(cleanMatch),
               isAttribute: hasAttributeIndicators(cleanMatch),
               isConcept: hasConceptIndicators(cleanMatch),
-              importance: calculateImportance(cleanMatch, text),
+              size: calculateNodeSize({ text: cleanMatch, isEvent: hasEventIndicators(cleanMatch), 
+                                     isConcept: hasConceptIndicators(cleanMatch), 
+                                     isAttribute: hasAttributeIndicators(cleanMatch) }, text),
               properties: {}
             };
             
-            // 存储实体，使用多个键以增加匹配成功率
             entities.set(cleanMatch, entity);
             entities.set(nodeId, entity);
-            // 存储规范化后的文本作为键
             const normalizedText = cleanMatch.toLowerCase().replace(/[的地得了过着]/g, '');
             entities.set(normalizedText, entity);
           }
@@ -131,9 +201,12 @@ export const extractEntities = async (text) => {
     });
 
     const result = Array.from(entities.values());
-    // 去重，确保每个ID只出现一次
     const uniqueResult = Array.from(new Map(result.map(item => [item.id, item])).values());
-    console.log('Extracted entities:', uniqueResult);
+    console.log('Extracted entities with sizes:', uniqueResult.map(e => ({
+      text: e.text,
+      size: e.size,
+      type: e.isEvent ? 'event' : e.isConcept ? 'concept' : e.isAttribute ? 'attribute' : 'entity'
+    })));
     return uniqueResult;
   } catch (error) {
     console.error('Error in extractEntities:', error);
@@ -363,17 +436,4 @@ const hasConceptIndicators = (text) => {
     /(思想|观点|主义)$/
   ];
   return conceptPatterns.some(pattern => pattern.test(text));
-};
-
-const calculateImportance = (entity, fullText) => {
-  try {
-    // 安全地创建正则表达式
-    const escapedEntity = entity.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
-    const regex = new RegExp(escapedEntity, 'g');
-    const frequency = (fullText.match(regex) || []).length;
-    return Math.min(1, 0.3 + (frequency * 0.1));
-  } catch (error) {
-    console.error('计算重要性时出错:', error);
-    return 0.3; // 返回默认重要性
-  }
 }; 
