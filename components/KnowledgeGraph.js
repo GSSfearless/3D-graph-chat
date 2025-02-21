@@ -10,6 +10,7 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
   const sceneRef = useRef(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [selectedNode, setSelectedNode] = useState(null);
+  const [isMobile, setIsMobile] = useState(false);
   
   // 主题配置
   const theme = {
@@ -516,6 +517,60 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
     }
   }, [data, isValidData]);
 
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
+  // 添加触摸事件支持
+  useEffect(() => {
+    if (!containerRef.current) return;
+
+    let touchStartX = 0;
+    let touchStartY = 0;
+    let isDragging = false;
+
+    const handleTouchStart = (e) => {
+      touchStartX = e.touches[0].clientX;
+      touchStartY = e.touches[0].clientY;
+      isDragging = true;
+    };
+
+    const handleTouchMove = (e) => {
+      if (!isDragging) return;
+      
+      const deltaX = e.touches[0].clientX - touchStartX;
+      const deltaY = e.touches[0].clientY - touchStartY;
+      
+      // 在这里处理图谱的平移
+      // 可以根据需要调整移动速度
+      containerRef.current.scrollLeft -= deltaX;
+      containerRef.current.scrollTop -= deltaY;
+      
+      touchStartX = e.touches[0].clientX;
+      touchStartY = e.touches[0].clientY;
+    };
+
+    const handleTouchEnd = () => {
+      isDragging = false;
+    };
+
+    const element = containerRef.current;
+    element.addEventListener('touchstart', handleTouchStart);
+    element.addEventListener('touchmove', handleTouchMove);
+    element.addEventListener('touchend', handleTouchEnd);
+
+    return () => {
+      element.removeEventListener('touchstart', handleTouchStart);
+      element.removeEventListener('touchmove', handleTouchMove);
+      element.removeEventListener('touchend', handleTouchEnd);
+    };
+  }, []);
+
   return (
     <div className="knowledge-graph-container" style={{ width: '100%', height: '100%', ...style }}>
       {!isValidData && (
@@ -523,7 +578,11 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
           <p>暂无可视化数据</p>
         </div>
       )}
-      <div className="toolbar">
+      <div className="toolbar" style={{ 
+        flexDirection: isMobile ? 'column' : 'row',
+        right: isMobile ? '8px' : '16px',
+        top: isMobile ? '8px' : '16px'
+      }}>
         <div className="toolbar-group">
           <button onClick={() => sceneRef.current.controls.zoomIn()} className="toolbar-button" title="放大">
             <FontAwesomeIcon icon={faSearch} className="mr-1" />+
@@ -564,20 +623,36 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
           border-radius: 12px;
           overflow: hidden;
           isolation: isolate;
+          touch-action: none; /* 防止移动端浏览器默认行为 */
+          -webkit-overflow-scrolling: touch; /* iOS平滑滚动 */
         }
         
         .toolbar {
           position: absolute;
-          top: 16px;
-          right: 16px;
           display: flex;
-          gap: 16px;
+          gap: 8px;
           padding: 8px;
           background: rgba(255, 255, 255, 0.9);
           backdrop-filter: blur(10px);
           border-radius: 12px;
           box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
           z-index: 1000;
+        }
+
+        @media (max-width: 768px) {
+          .toolbar-button {
+            width: 28px;
+            height: 28px;
+          }
+
+          :global(.node-label) {
+            font-size: 10px;
+            padding: 1px 2px;
+          }
+
+          :global(.edge-label) {
+            font-size: 10px;
+          }
         }
 
         .toolbar-group {

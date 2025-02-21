@@ -181,3 +181,53 @@ button {
 .fixed-search-bar button:hover {
   background-color: #2b6cb0;
 }
+
+/* Mobile Optimizations */
+@media (max-width: 768px) {
+  html {
+    font-size: 14px;
+  }
+
+  body {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* 优化移动端点击区域 */
+  button, 
+  [role="button"],
+  a {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  /* 优化移动端输入框 */
+  input,
+  select,
+  textarea {
+    font-size: 16px !important; /* 防止iOS自动缩放 */
+  }
+
+  /* 优化移动端滚动 */
+  .overflow-auto,
+  .overflow-y-auto,
+  .overflow-x-auto {
+    -webkit-overflow-scrolling: touch;
+    scroll-behavior: smooth;
+  }
+
+  /* 优化移动端长按选择 */
+  .no-select {
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    user-select: none;
+  }
+}
+
+/* 优化移动端动画性能 */
+@media (prefers-reduced-motion: no-preference) {
+  .animate-gpu {
+    transform: translateZ(0);
+    backface-visibility: hidden;
+    perspective: 1000px;
+  }
+}
