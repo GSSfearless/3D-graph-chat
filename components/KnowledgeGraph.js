@@ -275,6 +275,21 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
     onNodeClick && onNodeClick(node.userData);
   };
 
+  const handleResetView = () => {
+    if (!sceneRef.current) return;
+    
+    const { camera, controls } = sceneRef.current;
+    
+    // 重置相机位置
+    camera.position.set(0, 0, 500);
+    camera.lookAt(0, 0, 0);
+    
+    // 重置控制器
+    controls.reset();
+    controls.target.set(0, 0, 0);
+    controls.update();
+  };
+
   useEffect(() => {
     initScene();
   }, []);
@@ -351,7 +366,7 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
           <button onClick={() => sceneRef.current.controls.zoomOut()} className="toolbar-button" title="缩小">
             <FontAwesomeIcon icon={faSearch} className="mr-1" />-
           </button>
-          <button onClick={() => sceneRef.current.controls.reset()} className="toolbar-button" title="重置视角">
+          <button onClick={handleResetView} className="toolbar-button" title="重置视角">
             <FontAwesomeIcon icon={faRefresh} />
           </button>
         </div>
@@ -375,7 +390,7 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
         </div>
       </div>
       
-      <div ref={containerRef} style={{ width: '100%', height: '100%' }} />
+      <div ref={containerRef} style={{ width: '100%', height: '100%' }} onWheel={e => e.stopPropagation()} />
       
       <style jsx>{`
         .knowledge-graph-container {
@@ -383,6 +398,7 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
           background: var(--neutral-50);
           border-radius: 12px;
           overflow: hidden;
+          isolation: isolate;
         }
         
         .toolbar {

@@ -180,12 +180,15 @@ export default function Search() {
                 <span className="text-xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 text-transparent bg-clip-text">Think Graph</span>
               </a>
             </div>
-            <div className="flex items-center space-x-4">
-              <a href="https://discord.gg/your-discord" target="_blank" rel="noopener noreferrer" 
-                 className="flex items-center space-x-2 text-sm text-gray-500 hover:text-gray-700">
+            <div className="flex items-center space-x-6">
+              <a href="https://discord.gg/your-discord" 
+                 target="_blank" 
+                 rel="noopener noreferrer"
+                 className="flex items-center space-x-2 text-gray-500 hover:text-[#5865F2] transition-colors duration-200"
+              >
                 <FontAwesomeIcon icon={faDiscord} className="w-5 h-5" />
               </a>
-              <div className="flex items-center space-x-2 text-sm text-gray-500">
+              <div className="flex items-center">
                 <span className="font-medium bg-gradient-to-r from-purple-600 to-pink-600 text-transparent bg-clip-text">Powered by deepseek</span>
               </div>
             </div>
@@ -244,38 +247,49 @@ export default function Search() {
           </div>
         </div>
 
-        {/* 底部搜索区域 - 简化并减小高度 */}
+        {/* 底部搜索区域 */}
         <div className="fixed bottom-4 left-1/2 transform -translate-x-1/2 w-full max-w-2xl px-4">
-          <div className="bg-white/80 backdrop-blur-sm rounded-xl shadow-lg border border-gray-100 p-3">
+          <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-gray-100 p-4 transition-all duration-300 hover:shadow-xl hover:bg-white/90">
             <div className="flex items-center space-x-4">
-              <div className="flex items-center space-x-2">
-                <span className="text-sm text-gray-600">深度思考</span>
+              <div className="flex items-center space-x-3">
+                <span className="text-sm font-medium text-gray-600">深度思考</span>
                 <button
                   onClick={() => setUseDeepThinking(!useDeepThinking)}
-                  className={`relative inline-flex h-5 w-10 items-center rounded-full transition-colors focus:outline-none ${
-                    useDeepThinking ? 'bg-purple-500' : 'bg-gray-300'
+                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 ${
+                    useDeepThinking ? 'bg-purple-500' : 'bg-gray-200'
                   }`}
                 >
                   <span
-                    className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                      useDeepThinking ? 'translate-x-5' : 'translate-x-1'
+                    className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-lg transition-transform duration-300 ease-in-out ${
+                      useDeepThinking ? 'translate-x-6' : 'translate-x-1'
                     }`}
                   />
                 </button>
               </div>
-              <input
-                ref={searchInputRef}
-                type="text"
-                value={query}
-                onChange={handleInputChange}
-                onKeyPress={(e) => e.key === 'Enter' && handleSubmit(e)}
-                placeholder={defaultQuery}
-                className="flex-1 p-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all bg-white/50 text-sm"
-              />
+              <div className="relative flex-1">
+                <input
+                  ref={searchInputRef}
+                  type="text"
+                  value={query}
+                  onChange={handleInputChange}
+                  onKeyPress={(e) => e.key === 'Enter' && handleSubmit(e)}
+                  placeholder={defaultQuery}
+                  className="w-full px-4 py-2.5 bg-white/50 border border-gray-200 rounded-xl 
+                           text-sm transition-all duration-300
+                           focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent
+                           hover:border-blue-300 hover:shadow-sm"
+                />
+              </div>
               <button
                 onClick={handleSubmit}
-                className="bg-gradient-to-r from-blue-500 to-blue-600 text-white p-2 rounded-lg hover:from-blue-600 hover:to-blue-700 transition-all shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
                 disabled={loading}
+                className="flex items-center justify-center w-10 h-10 rounded-xl 
+                         bg-gradient-to-r from-blue-500 to-blue-600 
+                         text-white shadow-md transition-all duration-300
+                         hover:from-blue-600 hover:to-blue-700 hover:shadow-lg
+                         focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2
+                         disabled:opacity-50 disabled:cursor-not-allowed
+                         disabled:hover:shadow-none"
               >
                 <FontAwesomeIcon icon={faArrowRight} className="w-4 h-4" />
               </button>
