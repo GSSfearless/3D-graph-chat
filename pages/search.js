@@ -109,9 +109,13 @@ export default function Search() {
                       answer += decodedContent;
                       setStreamedAnswer(answer);
                       
-                      // 实时更新知识图谱
-                      const graphData = knowledgeProcessor.current.processSearchResponse(answer);
-                      setGraphData(graphData);
+                      try {
+                        // 实时更新知识图谱
+                        const graphData = await knowledgeProcessor.current.processText(answer);
+                        setGraphData(graphData);
+                      } catch (error) {
+                        console.error('生成知识图谱失败:', error);
+                      }
                     }
                     break;
                   case 'complete':
@@ -119,9 +123,13 @@ export default function Search() {
                       const completeAnswer = decodeURIComponent(parsed.content);
                       setStreamedAnswer(completeAnswer);
                       
-                      // 处理完整回答，生成最终知识图谱
-                      const finalGraphData = knowledgeProcessor.current.processSearchResponse(completeAnswer);
-                      setGraphData(finalGraphData);
+                      try {
+                        // 处理完整回答，生成最终知识图谱
+                        const finalGraphData = await knowledgeProcessor.current.processText(completeAnswer);
+                        setGraphData(finalGraphData);
+                      } catch (error) {
+                        console.error('生成最终知识图谱失败:', error);
+                      }
                     }
                     break;
                 }
