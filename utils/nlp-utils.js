@@ -100,42 +100,83 @@ export const extractEntities = async (text) => {
 
 // 关系抽取函数
 export const extractRelations = async (text) => {
-  const relations = [];
-  const sentences = text.split(/[。！？.!?]/);
-  let relationId = 0;
+  try {
+    const relations = [];
+    const sentences = text.split(/[。！？.!?]/);
+    let relationId = 0;
 
-  const patterns = [
-    { regex: /([^，。！？]+)是([^，。！？]+)/, type: 'is-a', label: '是' },
-    { regex: /([^，。！？]+)包含([^，。！？]+)/, type: 'contains', label: '包含' },
-    { regex: /([^，。！？]+)属于([^，。！？]+)/, type: 'belongs-to', label: '属于' },
-    { regex: /([^，。！？]+)导致([^，。！？]+)/, type: 'causes', label: '导致' },
-    { regex: /([^，。！？]+)使用([^，。！？]+)/, type: 'uses', label: '使用' },
-    { regex: /([^，。！？]+)产生([^，。！？]+)/, type: 'produces', label: '产生' }
-  ];
+    // 定义更丰富的关系模式
+    const patterns = [
+      { regex: /([^，。！？]+)是([^，。！？]+)/, type: 'is-a', label: '是' },
+      { regex: /([^，。！？]+)包含([^，。！？]+)/, type: 'contains', label: '包含' },
+      { regex: /([^，。！？]+)属于([^，。！？]+)/, type: 'belongs-to', label: '属于' },
+      { regex: /([^，。！？]+)需要([^，。！？]+)/, type: 'requires', label: '需要' },
+      { regex: /([^，。！？]+)通过([^，。！？]+)/, type: 'through', label: '通过' },
+      { regex: /([^，。！？]+)使用([^，。！？]+)/, type: 'uses', label: '使用' },
+      { regex: /([^，。！？]+)进行([^，。！？]+)/, type: 'performs', label: '进行' },
+      { regex: /([^，。！？]+)提供([^，。！？]+)/, type: 'provides', label: '提供' },
+      { regex: /([^，。！？]+)获得([^，。！？]+)/, type: 'obtains', label: '获得' },
+      { regex: /([^，。！？]+)参与([^，。！？]+)/, type: 'participates', label: '参与' },
+      // 添加更多的关系模式
+      { regex: /([^，。！？]+)了解([^，。！？]+)/, type: 'understands', label: '了解' },
+      { regex: /([^，。！？]+)准备([^，。！？]+)/, type: 'prepares', label: '准备' },
+      { regex: /([^，。！？]+)掌握([^，。！？]+)/, type: 'masters', label: '掌握' }
+    ];
 
-  sentences.forEach(sentence => {
-    patterns.forEach(pattern => {
-      const matches = sentence.match(pattern.regex);
-      if (matches && matches.length >= 3) {
-        const [, source, target] = matches;
-        const cleanSource = source.replace(/[*]/g, '').trim();
-        const cleanTarget = target.replace(/[*]/g, '').trim();
-        
-        if (isValidEntity(cleanSource) && isValidEntity(cleanTarget)) {
+    sentences.forEach(sentence => {
+      // 对每个句子应用所有模式
+      patterns.forEach(pattern => {
+        const matches = sentence.match(pattern.regex);
+        if (matches && matches.length >= 3) {
+          const [, source, target] = matches;
+          const cleanSource = source.replace(/[*]/g, '').trim();
+          const cleanTarget = target.replace(/[*]/g, '').trim();
+          
+          if (isValidEntity(cleanSource) && isValidEntity(cleanTarget)) {
+            // 为源节点和目标节点创建规范化的ID
+            const sourceId = `node-${cleanSource.replace(/[^a-zA-Z0-9]/g, '_')}`;
+            const targetId = `node-${cleanTarget.replace(/[^a-zA-Z0-9]/g, '_')}`;
+            
+            relations.push({
+              id: `edge-${relationId++}`,
+              source: sourceId,
+              target: targetId,
+              type: pattern.type,
+              label: pattern.label,
+              weight: 1
+            });
+          }
+        }
+      });
+
+      // 处理并列关系
+      const parallelPattern = /([^，。！？]+)[和与]([^，。！？]+)/g;
+      let parallelMatch;
+      while ((parallelMatch = parallelPattern.exec(sentence)) !== null) {
+        const [, entity1, entity2] = parallelMatch;
+        if (isValidEntity(entity1) && isValidEntity(entity2)) {
+          const entity1Id = `node-${entity1.replace(/[^a-zA-Z0-9]/g, '_')}`;
+          const entity2Id = `node-${entity2.replace(/[^a-zA-Z0-9]/g, '_')}`;
+          
           relations.push({
             id: `edge-${relationId++}`,
-            source: cleanSource,
-            target: cleanTarget,
-            type: pattern.type,
-            label: pattern.label,
-            weight: 1
+            source: entity1Id,
+            target: entity2Id,
+            type: 'related',
+            label: '相关',
+            weight: 0.5
           });
         }
       }
     });
-  });
 
-  return relations;
+    // 添加调试日志
+    console.log('Extracted relations:', relations);
+    return relations;
+  } catch (error) {
+    console.error('Error in extractRelations:', error);
+    return [];
+  }
 };
 
 // 计算向量嵌入

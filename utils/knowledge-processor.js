@@ -92,7 +92,7 @@ export class KnowledgeGraphProcessor {
     return entities.map((entity, index) => {
       // 确保 entity.text 存在，如果不存在则使用一个默认值
       const label = entity.text || entity.label || `Entity ${index + 1}`;
-      const nodeId = entity.id || `node-${label.replace(/[^a-zA-Z0-9]/g, '_')}`;
+      const nodeId = `node-${label.replace(/[^a-zA-Z0-9]/g, '_')}`;
       
       return {
         id: nodeId,
@@ -116,17 +116,17 @@ export class KnowledgeGraphProcessor {
   }
 
   buildEdges(relations) {
+    // 添加调试日志
+    console.log('Building edges from relations:', relations);
+
     return relations
       .filter(relation => relation && relation.source && relation.target)
       .map((relation, index) => {
-        const sourceId = typeof relation.source === 'string' 
-          ? `node-${relation.source.replace(/[^a-zA-Z0-9]/g, '_')}`
-          : relation.source.id;
-        const targetId = typeof relation.target === 'string'
-          ? `node-${relation.target.replace(/[^a-zA-Z0-9]/g, '_')}`
-          : relation.target.id;
+        // 源节点和目标节点的ID应该已经是正确格式
+        const sourceId = relation.source;
+        const targetId = relation.target;
         
-        return {
+        const edge = {
           id: relation.id || `edge-${index}`,
           source: sourceId,
           target: targetId,
@@ -134,6 +134,10 @@ export class KnowledgeGraphProcessor {
           weight: relation.weight || 1,
           label: relation.label || ''
         };
+
+        // 添加调试日志
+        console.log('Created edge:', edge);
+        return edge;
       })
       .filter(edge => 
         edge && 
