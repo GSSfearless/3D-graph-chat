@@ -53,17 +53,17 @@ export class KnowledgeGraphProcessor {
       
       // 4. 构建节点和边的映射
       const nodeMap = new Map();
-      entities.forEach(entity => {
-        const nodeId = `node-${entity.text.replace(/[^a-zA-Z0-9]/g, '_')}`;
-        nodeMap.set(nodeId, { ...entity, id: nodeId });
-        // 同时用文本作为键存储
-        nodeMap.set(entity.text, { ...entity, id: nodeId });
+      const nodes = this.buildNodes(entities, embeddings);
+      
+      // 使用生成的节点ID建立映射
+      nodes.forEach(node => {
+        nodeMap.set(node.id, node);
+        nodeMap.set(node.text, node);
+        nodeMap.set(node.label, node);
       });
 
       console.log('Node map:', Array.from(nodeMap.entries()));
       
-      // 5. 构建节点
-      const nodes = this.buildNodes(entities, embeddings);
       if (!nodes.length) {
         console.warn('No valid nodes generated');
         return { nodes: [], edges: [] };
@@ -72,18 +72,30 @@ export class KnowledgeGraphProcessor {
       // 6. 构建边（只保留存在对应节点的边）
       const validRelations = relations.filter(relation => {
         console.log('Checking relation:', relation);
-        // 检查源节点和目标节点是否存在
-        const hasSource = nodeMap.has(relation.source);
-        const hasTarget = nodeMap.has(relation.target);
         
-        if (!hasSource) {
-          console.warn('Source node not found:', relation.source);
+        // 获取源节点和目标节点的文本
+        const sourceText = relation.properties?.sourceText || relation.source;
+        const targetText = relation.properties?.targetText || relation.target;
+        
+        // 尝试通过文本找到对应的节点
+        const sourceNode = nodes.find(node => node.text === sourceText || node.label === sourceText);
+        const targetNode = nodes.find(node => node.text === targetText || node.label === targetText);
+        
+        if (!sourceNode) {
+          console.warn('Source node not found for text:', sourceText);
         }
-        if (!hasTarget) {
-          console.warn('Target node not found:', relation.target);
+        if (!targetNode) {
+          console.warn('Target node not found for text:', targetText);
         }
         
-        return hasSource && hasTarget;
+        // 如果找到了节点，更新relation中的source和target为节点ID
+        if (sourceNode && targetNode) {
+          relation.source = sourceNode.id;
+          relation.target = targetNode.id;
+          return true;
+        }
+        
+        return false;
       });
 
       console.log('Valid relations after filtering:', validRelations);
@@ -116,7 +128,8 @@ export class KnowledgeGraphProcessor {
     return entities.map((entity, index) => {
       // 确保 entity.text 存在，如果不存在则使用一个默认值
       const label = entity.text || entity.label || `Entity ${index + 1}`;
-      const nodeId = `node-${label.replace(/[^a-zA-Z0-9]/g, '_')}`;
+      // 修改ID生成逻辑，保留中文字符
+      const nodeId = `node-${index}-${label.replace(/[^\w\u4e00-\u9fa5]/g, '_')}`;
       
       return {
         id: nodeId,
@@ -140,31 +153,32 @@ export class KnowledgeGraphProcessor {
   }
 
   buildEdges(relations) {
-    // 添加调试日志
     console.log('Building edges from relations:', relations);
 
     return relations
-      .filter(relation => relation && typeof relation.source === 'string' && typeof relation.target === 'string')
+      .filter(relation => relation && relation.source && relation.target)
       .map((relation, index) => {
-        // 确保边的属性都存在
         const edge = {
-          id: relation.id || `edge-${index}`,
+          id: `edge-${index}`,
           source: relation.source,
           target: relation.target,
           type: relation.type || 'default',
           label: relation.label || '关联',
           weight: relation.weight || 1,
-          properties: relation.properties || {}
+          properties: {
+            ...relation.properties,
+            sourceText: relation.properties?.sourceText,
+            targetText: relation.properties?.targetText
+          }
         };
 
-        // 添加调试日志
         console.log('Created edge:', edge);
         return edge;
       })
       .filter(edge => 
         edge && 
-        typeof edge.source === 'string' && 
-        typeof edge.target === 'string' &&
+        edge.source && 
+        edge.target &&
         edge.source !== edge.target // 过滤掉自环
       );
   }
