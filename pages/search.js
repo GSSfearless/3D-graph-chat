@@ -1,4 +1,5 @@
-import { faArrowRight, faDiscord } from '@fortawesome/free-solid-svg-icons';
+import { faArrowRight } from '@fortawesome/free-solid-svg-icons';
+import { faDiscord } from '@fortawesome/free-brands-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import dynamic from 'next/dynamic';
 import { useRouter } from 'next/router';
@@ -7,7 +8,7 @@ import 'tailwindcss/tailwind.css';
 import '../styles/globals.css';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import { KnowledgeProcessor } from '../utils/knowledge-processor';
+import { KnowledgeGraphProcessor } from '../utils/knowledge-processor';
 
 const KnowledgeGraph = dynamic(() => import('../components/KnowledgeGraph'), {
   ssr: false,
@@ -28,7 +29,7 @@ export default function Search() {
   const [useDeepThinking, setUseDeepThinking] = useState(false);
   const [reasoningProcess, setReasoningProcess] = useState('');
   const searchInputRef = useRef(null);
-  const knowledgeProcessor = useRef(new KnowledgeProcessor());
+  const knowledgeProcessor = useRef(new KnowledgeGraphProcessor());
 
   const defaultQuery = "What is the answer to life, the universe, and everything?";
 

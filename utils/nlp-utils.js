@@ -54,45 +54,79 @@ export const analyzeSentiment = (content) => {
   };
 };
 
-// 提取关系
-export const extractRelations = (content) => {
-  // 简单的关系提取
-  const sentences = content.split(/[。！？.!?]/);
-  const nodes = new Set();
-  const edges = [];
-  const nodeTypes = ['concept', 'entity', 'action', 'property'];
+// 实体抽取函数
+export const extractEntities = async (text) => {
+  // 简单的实体抽取实现
+  const sentences = text.split(/[。！？.!?]/);
+  const entities = [];
+  let entityId = 0;
 
   sentences.forEach(sentence => {
-    const words = sentence.split(/\s+/);
-    words.forEach((word, index) => {
-      if (word.length > 1) {
-        nodes.add(word);
-        if (index > 0) {
-          edges.push({
-            source: words[index - 1],
-            target: word,
-            weight: Math.random(),
-            type: ['relation', 'dependency', 'influence'][Math.floor(Math.random() * 3)]
+    // 提取可能的实体（2个或更多连续的非标点字符）
+    const matches = sentence.match(/([^，。！？,!?\s]{2,})/g) || [];
+    
+    matches.forEach(match => {
+      if (isValidEntity(match)) {
+        entities.push({
+          id: entityId++,
+          text: match.trim(),
+          isEvent: hasEventIndicators(match),
+          isAttribute: hasAttributeIndicators(match),
+          isConcept: hasConceptIndicators(match),
+          importance: calculateImportance(match, text),
+          properties: {}
+        });
+      }
+    });
+  });
+
+  return entities;
+};
+
+// 关系抽取函数
+export const extractRelations = async (text) => {
+  const relations = [];
+  const sentences = text.split(/[。！？.!?]/);
+  let relationId = 0;
+
+  const patterns = [
+    { regex: /(.+)是(.+)/, type: 'is-a', label: '是' },
+    { regex: /(.+)包含(.+)/, type: 'contains', label: '包含' },
+    { regex: /(.+)属于(.+)/, type: 'belongs-to', label: '属于' },
+    { regex: /(.+)导致(.+)/, type: 'causes', label: '导致' },
+    { regex: /(.+)使用(.+)/, type: 'uses', label: '使用' },
+    { regex: /(.+)产生(.+)/, type: 'produces', label: '产生' }
+  ];
+
+  sentences.forEach(sentence => {
+    patterns.forEach(pattern => {
+      const matches = sentence.match(pattern.regex);
+      if (matches && matches.length >= 3) {
+        const [, source, target] = matches;
+        if (isValidEntity(source) && isValidEntity(target)) {
+          relations.push({
+            id: relationId++,
+            source: source.trim(),
+            target: target.trim(),
+            type: pattern.type,
+            label: pattern.label,
+            weight: 1
           });
         }
       }
     });
   });
 
-  return {
-    nodes: Array.from(nodes).map(text => ({
-      text,
-      weight: Math.random() * 0.5 + 0.5,
-      type: nodeTypes[Math.floor(Math.random() * nodeTypes.length)]
-    })),
-    edges,
-    categories: [
-      { name: '概念' },
-      { name: '实体' },
-      { name: '动作' },
-      { name: '属性' }
-    ]
-  };
+  return relations;
+};
+
+// 计算向量嵌入
+export const computeEmbeddings = async (entities) => {
+  // 简单的向量嵌入实现
+  return entities.map(entity => {
+    // 生成一个简单的 5 维向量作为嵌入
+    return Array.from({ length: 5 }, () => Math.random());
+  });
 };
 
 // 辅助函数
@@ -115,4 +149,49 @@ const generateSentimentTimeline = (content) => {
     time: i,
     value: Math.sin(i * 0.1) * 0.5 + 0.5 + Math.random() * 0.1
   }));
+};
+
+const isValidEntity = (text) => {
+  const invalidPatterns = [
+    /^[的地得]/, // 不以助词开头
+    /^[和与或而且但是然后因此所以]/, // 不以连接词开头
+    /^\d+$/, // 不是纯数字
+    /^[,.，。、；：！？]/, // 不是标点符号
+    /[，。、；：！？]+/ // 不包含标点符号
+  ];
+
+  return text.length >= 2 && 
+         text.length <= 20 && 
+         !invalidPatterns.some(pattern => pattern.test(text));
+};
+
+const hasEventIndicators = (text) => {
+  const eventPatterns = [
+    /[了过着]$/,
+    /^(发生|开始|结束|完成)/,
+    /(举[办行]|开展|进行)/
+  ];
+  return eventPatterns.some(pattern => pattern.test(text));
+};
+
+const hasAttributeIndicators = (text) => {
+  const attributePatterns = [
+    /^(大小|长度|宽度|高度|重量|颜色|性质|特征)/,
+    /(程度|等级|级别|品质)$/
+  ];
+  return attributePatterns.some(pattern => pattern.test(text));
+};
+
+const hasConceptIndicators = (text) => {
+  const conceptPatterns = [
+    /^(概念|理论|方法|系统|原理)/,
+    /(思想|观点|主义)$/
+  ];
+  return conceptPatterns.some(pattern => pattern.test(text));
+};
+
+const calculateImportance = (entity, fullText) => {
+  // 基于实体在文本中的出现频率计算重要性
+  const frequency = (fullText.match(new RegExp(entity, 'g')) || []).length;
+  return Math.min(1, 0.3 + (frequency * 0.1)); // 基础重要性 0.3，每次出现增加 0.1，最大为 1
 }; 
