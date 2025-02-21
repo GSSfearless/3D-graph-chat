@@ -152,8 +152,7 @@ export const extractRelations = async (text) => {
                 targetId
               });
               
-              // 创建关系对象
-              const relation = {
+              relations.push({
                 id: `edge-${relationId++}`,
                 source: sourceId,
                 target: targetId,
@@ -164,11 +163,7 @@ export const extractRelations = async (text) => {
                   sourceText: cleanSource,
                   targetText: cleanTarget
                 }
-              };
-
-              // 添加调试日志
-              console.log('Created relation:', relation);
-              relations.push(relation);
+              });
             }
           }
         }
@@ -194,8 +189,7 @@ export const extractRelations = async (text) => {
             entity2Id
           });
           
-          // 创建并列关系对象
-          const relation = {
+          relations.push({
             id: `edge-${relationId++}`,
             source: entity1Id,
             target: entity2Id,
@@ -206,11 +200,7 @@ export const extractRelations = async (text) => {
               sourceText: cleanEntity1,
               targetText: cleanEntity2
             }
-          };
-
-          // 添加调试日志
-          console.log('Created parallel relation:', relation);
-          relations.push(relation);
+          });
         }
       }
     });
