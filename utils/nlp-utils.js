@@ -63,17 +63,19 @@ export const extractEntities = async (text) => {
 
   sentences.forEach(sentence => {
     // 提取可能的实体（2个或更多连续的非标点字符）
-    const matches = sentence.match(/([^，。！？,!?\s]{2,})/g) || [];
+    const matches = sentence.match(/[一-龥A-Za-z][一-龥A-Za-z\d]*[一-龥A-Za-z]+/g) || [];
     
     matches.forEach(match => {
-      if (isValidEntity(match)) {
+      const cleanMatch = match.replace(/[*]/g, '').trim(); // 清理特殊字符
+      if (isValidEntity(cleanMatch)) {
         entities.push({
-          id: entityId++,
-          text: match.trim(),
-          isEvent: hasEventIndicators(match),
-          isAttribute: hasAttributeIndicators(match),
-          isConcept: hasConceptIndicators(match),
-          importance: calculateImportance(match, text),
+          id: `node-${entityId++}`,
+          text: cleanMatch,
+          label: cleanMatch, // 确保每个实体都有label属性
+          isEvent: hasEventIndicators(cleanMatch),
+          isAttribute: hasAttributeIndicators(cleanMatch),
+          isConcept: hasConceptIndicators(cleanMatch),
+          importance: calculateImportance(cleanMatch, text),
           properties: {}
         });
       }
@@ -90,12 +92,12 @@ export const extractRelations = async (text) => {
   let relationId = 0;
 
   const patterns = [
-    { regex: /(.+)是(.+)/, type: 'is-a', label: '是' },
-    { regex: /(.+)包含(.+)/, type: 'contains', label: '包含' },
-    { regex: /(.+)属于(.+)/, type: 'belongs-to', label: '属于' },
-    { regex: /(.+)导致(.+)/, type: 'causes', label: '导致' },
-    { regex: /(.+)使用(.+)/, type: 'uses', label: '使用' },
-    { regex: /(.+)产生(.+)/, type: 'produces', label: '产生' }
+    { regex: /([^，。！？]+)是([^，。！？]+)/, type: 'is-a', label: '是' },
+    { regex: /([^，。！？]+)包含([^，。！？]+)/, type: 'contains', label: '包含' },
+    { regex: /([^，。！？]+)属于([^，。！？]+)/, type: 'belongs-to', label: '属于' },
+    { regex: /([^，。！？]+)导致([^，。！？]+)/, type: 'causes', label: '导致' },
+    { regex: /([^，。！？]+)使用([^，。！？]+)/, type: 'uses', label: '使用' },
+    { regex: /([^，。！？]+)产生([^，。！？]+)/, type: 'produces', label: '产生' }
   ];
 
   sentences.forEach(sentence => {
@@ -103,11 +105,14 @@ export const extractRelations = async (text) => {
       const matches = sentence.match(pattern.regex);
       if (matches && matches.length >= 3) {
         const [, source, target] = matches;
-        if (isValidEntity(source) && isValidEntity(target)) {
+        const cleanSource = source.replace(/[*]/g, '').trim();
+        const cleanTarget = target.replace(/[*]/g, '').trim();
+        
+        if (isValidEntity(cleanSource) && isValidEntity(cleanTarget)) {
           relations.push({
-            id: relationId++,
-            source: source.trim(),
-            target: target.trim(),
+            id: `edge-${relationId++}`,
+            source: cleanSource,
+            target: cleanTarget,
             type: pattern.type,
             label: pattern.label,
             weight: 1
@@ -191,7 +196,14 @@ const hasConceptIndicators = (text) => {
 };
 
 const calculateImportance = (entity, fullText) => {
-  // 基于实体在文本中的出现频率计算重要性
-  const frequency = (fullText.match(new RegExp(entity, 'g')) || []).length;
-  return Math.min(1, 0.3 + (frequency * 0.1)); // 基础重要性 0.3，每次出现增加 0.1，最大为 1
+  try {
+    // 安全地创建正则表达式
+    const escapedEntity = entity.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
+    const regex = new RegExp(escapedEntity, 'g');
+    const frequency = (fullText.match(regex) || []).length;
+    return Math.min(1, 0.3 + (frequency * 0.1));
+  } catch (error) {
+    console.error('计算重要性时出错:', error);
+    return 0.3; // 返回默认重要性
+  }
 }; 

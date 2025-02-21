@@ -36,13 +36,18 @@ export class KnowledgeGraphProcessor {
     // 3. 计算实体向量嵌入
     const embeddings = await computeEmbeddings(entities);
     
-    // 4. 构建节点
+    // 4. 构建节点和边的映射
+    const nodeMap = new Map(entities.map(entity => [entity.text, entity]));
+    
+    // 5. 构建节点
     const nodes = this.buildNodes(entities, embeddings);
     
-    // 5. 构建边
-    const edges = this.buildEdges(relations);
+    // 6. 构建边（只保留存在对应节点的边）
+    const edges = this.buildEdges(relations.filter(relation => 
+      nodeMap.has(relation.source) && nodeMap.has(relation.target)
+    ));
     
-    // 6. 应用布局
+    // 7. 应用布局
     const graphData = this.applyLayout({
       nodes,
       edges,
@@ -54,22 +59,24 @@ export class KnowledgeGraphProcessor {
 
   buildNodes(entities, embeddings) {
     return entities.map((entity, index) => ({
-      id: `node-${index}`,
+      id: entity.id,
       label: entity.text,
       type: this.getNodeType(entity),
       size: this.calculateNodeSize(entity),
       color: this.colorScheme[this.getNodeType(entity)],
       embedding: embeddings[index],
       properties: entity.properties || {},
-      cluster: entity.cluster || 0
+      cluster: entity.cluster || 0,
+      x: 0,  // 初始位置
+      y: 0
     }));
   }
 
   buildEdges(relations) {
     return relations.map((relation, index) => ({
-      id: `edge-${index}`,
-      source: relation.source,
-      target: relation.target,
+      id: relation.id,
+      source: `node-${relation.source.replace(/[^a-zA-Z0-9]/g, '_')}`,
+      target: `node-${relation.target.replace(/[^a-zA-Z0-9]/g, '_')}`,
       type: relation.type,
       weight: relation.weight || 1,
       label: relation.label
@@ -105,16 +112,24 @@ export class KnowledgeGraphProcessor {
   }
 
   applyForceLayout(nodes, edges) {
+    if (!nodes.length) return { nodes, edges };
+
     const simulation = d3.forceSimulation(nodes)
-      .force('link', d3.forceLink(edges).id(d => d.id))
-      .force('charge', d3.forceManyBody().strength(-100))
+      .force('link', d3.forceLink(edges).id(d => d.id).distance(100))
+      .force('charge', d3.forceManyBody().strength(-300))
       .force('center', d3.forceCenter(0, 0))
-      .force('collision', d3.forceCollide().radius(d => d.size + 10))
+      .force('collision', d3.forceCollide().radius(d => d.size * 2))
       .force('x', d3.forceX())
       .force('y', d3.forceY());
 
     // 运行模拟
     for (let i = 0; i < 300; ++i) simulation.tick();
+
+    // 确保所有节点都有坐标
+    nodes.forEach(node => {
+      if (typeof node.x !== 'number') node.x = 0;
+      if (typeof node.y !== 'number') node.y = 0;
+    });
 
     return { nodes, edges };
   }
