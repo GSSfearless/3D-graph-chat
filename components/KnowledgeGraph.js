@@ -262,13 +262,13 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
       labelDiv.style.color = theme.label.color;
       labelDiv.style.fontSize = '12px';
       labelDiv.style.fontFamily = theme.label.font;
-      labelDiv.style.background = 'rgba(255, 255, 255, 0.9)';
+      labelDiv.style.background = 'transparent';
       labelDiv.style.padding = '2px 4px';
       labelDiv.style.borderRadius = '2px';
       labelDiv.style.whiteSpace = 'nowrap';
       labelDiv.style.pointerEvents = 'none';
       labelDiv.style.userSelect = 'none';
-      labelDiv.style.zIndex = '1000';
+      labelDiv.style.textShadow = '0 0 3px white, 0 0 3px white, 0 0 3px white, 0 0 3px white';
       
       const label = new CSS2DObject(labelDiv);
       
@@ -634,15 +634,15 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
 
         :global(.edge-label) {
           color: #1a1a1a;
-          font-size: 10px;
-          padding: 1px 3px;
-          background: rgba(255, 255, 255, 0.9);
+          font-size: 12px;
+          padding: 2px 4px;
+          background: transparent;
           border-radius: 2px;
           pointer-events: none;
           white-space: nowrap;
           text-align: center;
           z-index: 1000;
-          box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+          text-shadow: 0 0 3px white, 0 0 3px white, 0 0 3px white, 0 0 3px white;
         }
       `}</style>
     </div>
