@@ -321,13 +321,18 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
     
     // 创建新的边
     data.edges.forEach(edge => {
-      const sourceNode = nodeMap.get(edge.source);
-      const targetNode = nodeMap.get(edge.target);
-      
-      if (sourceNode && targetNode) {
-        const edgeObject = createEdge3D(sourceNode, targetNode, edge);
-        edgeObject.userData.isEdge = true;
-        scene.add(edgeObject);
+      if (!edge || !edge.source || !edge.target) {
+        console.warn('Invalid edge data:', edge);
+        return;
+      }
+      const source = nodeMap.get(edge.source.id);
+      const target = nodeMap.get(edge.target.id);
+      if (source && target) {
+        const edge3D = createEdge3D(source, target, edge);
+        edge3D.userData.isEdge = true;
+        scene.add(edge3D);
+      } else {
+        console.warn('Could not find source or target node for edge:', edge);
       }
     });
   };
@@ -402,14 +407,13 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
       // 创建节点
       const nodes3D = new Map();
       data.nodes.forEach((node, index) => {
-        const nodeData = node.data;
-        if (!nodeData || !nodeData.id || !nodeData.label) {
-          console.warn('Invalid node data:', nodeData);
+        if (!node || !node.id || !node.label) {
+          console.warn('Invalid node data:', node);
           return;
         }
-        const node3D = createNode3D(nodeData, index, data.nodes.length);
+        const node3D = createNode3D(node, index, data.nodes.length);
         scene.add(node3D);
-        nodes3D.set(nodeData.id, node3D);
+        nodes3D.set(node.id, node3D);
 
         // 添加点击事件
         if (node3D.children[0]) {
@@ -419,18 +423,17 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
 
       // 创建边
       data.edges.forEach(edge => {
-        const edgeData = edge.data;
-        if (!edgeData || !edgeData.source || !edgeData.target) {
-          console.warn('Invalid edge data:', edgeData);
+        if (!edge || !edge.source || !edge.target) {
+          console.warn('Invalid edge data:', edge);
           return;
         }
-        const source = nodes3D.get(edgeData.source);
-        const target = nodes3D.get(edgeData.target);
+        const source = nodes3D.get(edge.source.id);
+        const target = nodes3D.get(edge.target.id);
         if (source && target) {
-          const edge3D = createEdge3D(source, target, edgeData);
+          const edge3D = createEdge3D(source, target, edge);
           scene.add(edge3D);
         } else {
-          console.warn('Could not find source or target node for edge:', edgeData);
+          console.warn('Could not find source or target node for edge:', edge);
         }
       });
     } catch (error) {
