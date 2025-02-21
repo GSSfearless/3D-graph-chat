@@ -1,3 +1,5 @@
+import { v4 as uuidv4 } from 'uuid';
+
 export class KnowledgeProcessor {
   constructor() {
     this.nodeTypes = {
@@ -16,110 +18,237 @@ export class KnowledgeProcessor {
       CAUSES: 'causes',
       BELONGS_TO: 'belongs_to'
     };
+
+    this.entityMap = new Map(); // 用于去重实体
+    this.relationMap = new Map(); // 用于存储关系
   }
 
   // 处理搜索响应，生成知识图谱数据
   processSearchResponse(content) {
-    const { concepts, entities, relations } = this.extractKnowledgeElements(content);
-    return this.buildGraphData(concepts, entities, relations);
+    // 重置状态
+    this.entityMap.clear();
+    this.relationMap.clear();
+
+    // 1. 分段处理
+    const paragraphs = content.split('\n\n').filter(p => p.trim());
+
+    // 2. 实体识别和关系抽取
+    paragraphs.forEach(paragraph => {
+      const { entities, relations } = this.extractKnowledge(paragraph);
+      
+      // 3. 实体去重和合并
+      entities.forEach(entity => {
+        const key = this.normalizeEntity(entity.text);
+        if (!this.entityMap.has(key)) {
+          this.entityMap.set(key, {
+            id: uuidv4(),
+            text: entity.text,
+            type: entity.type,
+            weight: 1,
+            properties: entity.properties || {}
+          });
+        } else {
+          const existing = this.entityMap.get(key);
+          existing.weight += 1;
+          // 合并属性
+          Object.assign(existing.properties, entity.properties);
+        }
+      });
+
+      // 4. 关系处理
+      relations.forEach(relation => {
+        const key = `${relation.source}:${relation.target}:${relation.type}`;
+        if (!this.relationMap.has(key)) {
+          this.relationMap.set(key, {
+            id: uuidv4(),
+            source: this.getEntityId(relation.source),
+            target: this.getEntityId(relation.target),
+            type: relation.type,
+            weight: 1,
+            properties: relation.properties || {}
+          });
+        } else {
+          const existing = this.relationMap.get(key);
+          existing.weight += 1;
+        }
+      });
+    });
+
+    // 5. 构建图谱数据
+    return this.buildGraphData();
   }
 
   // 从文本中提取知识元素
-  extractKnowledgeElements(text) {
-    const concepts = new Set();
-    const entities = new Set();
-    const relations = new Map();
+  extractKnowledge(text) {
+    // 使用规则和启发式方法进行知识抽取
+    const entities = [];
+    const relations = [];
 
-    // 分句处理
-    const sentences = text.split(/[。！？.!?]/);
-    
-    sentences.forEach(sentence => {
-      // 提取概念（通常是抽象的名词短语）
-      const conceptMatches = sentence.match(/([一个])?([的地得])?([^，。！？,!?]{2,})/g) || [];
-      conceptMatches.forEach(match => {
-        if (this.isValidConcept(match)) {
-          concepts.add(match.trim());
-        }
-      });
+    // 1. 抽取实体
+    // 使用正则表达式匹配可能的实体
+    const entityPatterns = [
+      { pattern: /([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*)/g, type: 'Concept' },
+      { pattern: /\b(\d+(?:\.\d+)?)\s*([A-Za-z]+)\b/g, type: 'Measurement' },
+      { pattern: /"([^"]+)"/g, type: 'Term' }
+    ];
 
-      // 提取实体（具体的人、物、地点等）
-      const entityMatches = sentence.match(/([的])?([^，。！？,!?]{2,})/g) || [];
-      entityMatches.forEach(match => {
-        if (this.isValidEntity(match)) {
-          entities.add(match.trim());
-        }
-      });
-
-      // 提取关系
-      this.extractRelations(sentence, relations);
-    });
-
-    return {
-      concepts: Array.from(concepts),
-      entities: Array.from(entities),
-      relations: Array.from(relations.entries()).map(([key, value]) => ({
-        source: value.source,
-        target: value.target,
-        type: value.type
-      }))
-    };
-  }
-
-  // 构建图数据
-  buildGraphData(concepts, entities, relations) {
-    const nodes = [];
-    const edges = [];
-    const nodeMap = new Map();
-
-    // 添加概念节点
-    concepts.forEach(concept => {
-      const nodeId = this.generateId(concept);
-      nodes.push({
-        data: {
-          id: nodeId,
-          label: concept,
-          type: this.nodeTypes.CONCEPT,
-          category: 0
-        }
-      });
-      nodeMap.set(concept, nodeId);
-    });
-
-    // 添加实体节点
-    entities.forEach(entity => {
-      const nodeId = this.generateId(entity);
-      nodes.push({
-        data: {
-          id: nodeId,
-          label: entity,
-          type: this.nodeTypes.ENTITY,
-          category: 1
-        }
-      });
-      nodeMap.set(entity, nodeId);
-    });
-
-    // 添加关系边
-    relations.forEach(relation => {
-      const sourceId = nodeMap.get(relation.source);
-      const targetId = nodeMap.get(relation.target);
-      
-      if (sourceId && targetId) {
-        edges.push({
-          data: {
-            source: sourceId,
-            target: targetId,
-            label: this.getRelationLabel(relation.type),
-            type: relation.type
-          }
+    entityPatterns.forEach(({ pattern, type }) => {
+      let match;
+      while ((match = pattern.exec(text)) !== null) {
+        entities.push({
+          text: match[1],
+          type,
+          position: match.index
         });
       }
     });
 
-    return {
-      nodes,
-      edges
-    };
+    // 2. 抽取关系
+    // 使用依存句法模式匹配关系
+    const relationPatterns = [
+      { pattern: /(\w+)\s+(is|are|was|were)\s+(\w+)/g, type: 'is-a' },
+      { pattern: /(\w+)\s+has\s+(\w+)/g, type: 'has' },
+      { pattern: /(\w+)\s+contains\s+(\w+)/g, type: 'contains' },
+      { pattern: /(\w+)\s+depends\s+on\s+(\w+)/g, type: 'depends-on' }
+    ];
+
+    relationPatterns.forEach(({ pattern, type }) => {
+      let match;
+      while ((match = pattern.exec(text)) !== null) {
+        relations.push({
+          source: match[1],
+          target: match[3] || match[2],
+          type
+        });
+      }
+    });
+
+    return { entities, relations };
+  }
+
+  normalizeEntity(text) {
+    // 标准化实体文本以便去重
+    return text.toLowerCase().trim();
+  }
+
+  getEntityId(text) {
+    // 获取实体ID，如果不存在则创建新实体
+    const key = this.normalizeEntity(text);
+    if (!this.entityMap.has(key)) {
+      this.entityMap.set(key, {
+        id: uuidv4(),
+        text,
+        type: 'Unknown',
+        weight: 1
+      });
+    }
+    return this.entityMap.get(key).id;
+  }
+
+  // 构建图数据
+  buildGraphData() {
+    // 构建图谱数据结构
+    const nodes = Array.from(this.entityMap.values()).map(entity => ({
+      data: {
+        id: entity.id,
+        label: entity.text,
+        type: entity.type,
+        weight: entity.weight,
+        properties: entity.properties
+      }
+    }));
+
+    const edges = Array.from(this.relationMap.values()).map(relation => ({
+      data: {
+        id: relation.id,
+        source: relation.source,
+        target: relation.target,
+        label: relation.type,
+        weight: relation.weight,
+        properties: relation.properties
+      }
+    }));
+
+    // 使用力导向布局算法计算初始位置
+    const positions = this.calculateLayout(nodes, edges);
+    nodes.forEach((node, index) => {
+      Object.assign(node.data, positions[index]);
+    });
+
+    return { nodes, edges };
+  }
+
+  calculateLayout(nodes, edges) {
+    // 实现三维力导向布局算法
+    const positions = [];
+    const repulsionForce = 100;
+    const attractionForce = 10;
+    const iterations = 100;
+
+    // 1. 初始化随机位置
+    nodes.forEach(() => {
+      positions.push({
+        x: Math.random() * 1000 - 500,
+        y: Math.random() * 1000 - 500,
+        z: Math.random() * 1000 - 500
+      });
+    });
+
+    // 2. 迭代优化位置
+    for (let i = 0; i < iterations; i++) {
+      // 计算节点间斥力
+      for (let j = 0; j < nodes.length; j++) {
+        for (let k = j + 1; k < nodes.length; k++) {
+          const dx = positions[k].x - positions[j].x;
+          const dy = positions[k].y - positions[j].y;
+          const dz = positions[k].z - positions[j].z;
+          const distance = Math.sqrt(dx * dx + dy * dy + dz * dz);
+          
+          if (distance > 0) {
+            const force = repulsionForce / (distance * distance);
+            const fx = dx * force / distance;
+            const fy = dy * force / distance;
+            const fz = dz * force / distance;
+
+            positions[k].x += fx;
+            positions[k].y += fy;
+            positions[k].z += fz;
+            positions[j].x -= fx;
+            positions[j].y -= fy;
+            positions[j].z -= fz;
+          }
+        }
+      }
+
+      // 计算边的引力
+      edges.forEach(edge => {
+        const sourceIndex = nodes.findIndex(n => n.data.id === edge.data.source);
+        const targetIndex = nodes.findIndex(n => n.data.id === edge.data.target);
+        
+        if (sourceIndex >= 0 && targetIndex >= 0) {
+          const dx = positions[targetIndex].x - positions[sourceIndex].x;
+          const dy = positions[targetIndex].y - positions[sourceIndex].y;
+          const dz = positions[targetIndex].z - positions[sourceIndex].z;
+          const distance = Math.sqrt(dx * dx + dy * dy + dz * dz);
+          
+          if (distance > 0) {
+            const force = distance * attractionForce / 1000;
+            const fx = dx * force / distance;
+            const fy = dy * force / distance;
+            const fz = dz * force / distance;
+
+            positions[sourceIndex].x += fx;
+            positions[sourceIndex].y += fy;
+            positions[sourceIndex].z += fz;
+            positions[targetIndex].x -= fx;
+            positions[targetIndex].y -= fy;
+            positions[targetIndex].z -= fz;
+          }
+        }
+      });
+    }
+
+    return positions;
   }
 
   // 验证概念有效性
