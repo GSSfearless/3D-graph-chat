@@ -54,33 +54,28 @@ export const analyzeSentiment = (content) => {
   };
 };
 
-// 添加一个统一的ID生成函数
-const generateNodeId = (text) => {
-  const normalized = text.toLowerCase().trim().replace(/[^a-zA-Z0-9\u4e00-\u9fa5]/g, '_');
-  return `node-${normalized}`;
-};
-
 // 实体抽取函数
 export const extractEntities = async (text) => {
   try {
+    // 确保输入文本有效
     if (!text || typeof text !== 'string') {
       console.warn('Invalid input text in extractEntities');
       return [];
     }
 
     const sentences = text.split(/[。！？.!?]/);
-    const entities = new Map();
+    const entities = new Map(); // 使用 Map 来去重
     let entityId = 0;
 
     sentences.forEach(sentence => {
+      // 提取可能的实体（2个或更多连续的非标点字符）
       const matches = sentence.match(/[一-龥A-Za-z][一-龥A-Za-z\d]*[一-龥A-Za-z]+/g) || [];
       
       matches.forEach(match => {
         const cleanMatch = match.replace(/[*]/g, '').trim();
         if (isValidEntity(cleanMatch) && !entities.has(cleanMatch)) {
-          const nodeId = generateNodeId(cleanMatch);
           const entity = {
-            id: nodeId,
+            id: `node-${cleanMatch.replace(/[^a-zA-Z0-9]/g, '_')}`,
             text: cleanMatch,
             label: cleanMatch,
             isEvent: hasEventIndicators(cleanMatch),
@@ -90,17 +85,13 @@ export const extractEntities = async (text) => {
             properties: {}
           };
           entities.set(cleanMatch, entity);
-          // 同时用ID作为键存储
-          entities.set(nodeId, entity);
         }
       });
     });
 
     const result = Array.from(entities.values());
-    // 去重，确保每个ID只出现一次
-    const uniqueResult = Array.from(new Map(result.map(item => [item.id, item])).values());
-    console.log('Extracted entities:', uniqueResult);
-    return uniqueResult;
+    console.log('Extracted entities:', result); // 添加日志
+    return result;
   } catch (error) {
     console.error('Error in extractEntities:', error);
     return [];
@@ -125,10 +116,21 @@ export const extractRelations = async (text) => {
       { regex: /([^，。！？]+?)进行([^，。！？]+)/g, type: 'performs', label: '进行' },
       { regex: /([^，。！？]+?)提供([^，。！？]+)/g, type: 'provides', label: '提供' },
       { regex: /([^，。！？]+?)获得([^，。！？]+)/g, type: 'obtains', label: '获得' },
-      { regex: /([^，。！？]+?)参与([^，。！？]+)/g, type: 'participates', label: '参与' }
+      { regex: /([^，。！？]+?)参与([^，。！？]+)/g, type: 'participates', label: '参与' },
+      { regex: /([^，。！？]+?)了解([^，。！？]+)/g, type: 'understands', label: '了解' },
+      { regex: /([^，。！？]+?)准备([^，。！？]+)/g, type: 'prepares', label: '准备' },
+      { regex: /([^，。！？]+?)掌握([^，。！？]+)/g, type: 'masters', label: '掌握' },
+      // 添加更多常见的中文关系模式
+      { regex: /([^，。！？]+?)对([^，。！？]+)/g, type: 'towards', label: '对' },
+      { regex: /([^，。！？]+?)与([^，。！？]+)/g, type: 'with', label: '与' },
+      { regex: /([^，。！？]+?)和([^，。！？]+)/g, type: 'and', label: '和' },
+      { regex: /([^，。！？]+?)在([^，。！？]+)/g, type: 'in', label: '在' },
+      { regex: /([^，。！？]+?)为([^，。！？]+)/g, type: 'for', label: '为' },
+      { regex: /([^，。！？]+?)由([^，。！？]+)/g, type: 'by', label: '由' }
     ];
 
     sentences.forEach(sentence => {
+      // 对每个句子应用所有模式
       patterns.forEach(pattern => {
         let matches;
         while ((matches = pattern.regex.exec(sentence)) !== null) {
@@ -138,9 +140,11 @@ export const extractRelations = async (text) => {
             const cleanTarget = target.replace(/[*]/g, '').trim();
             
             if (isValidEntity(cleanSource) && isValidEntity(cleanTarget)) {
-              const sourceId = generateNodeId(cleanSource);
-              const targetId = generateNodeId(cleanTarget);
+              // 为源节点和目标节点创建规范化的ID
+              const sourceId = `node-${cleanSource.replace(/[^a-zA-Z0-9]/g, '_')}`;
+              const targetId = `node-${cleanTarget.replace(/[^a-zA-Z0-9]/g, '_')}`;
               
+              // 添加调试日志
               console.log('Creating relation:', {
                 source: cleanSource,
                 target: cleanTarget,
@@ -164,8 +168,44 @@ export const extractRelations = async (text) => {
           }
         }
       });
+
+      // 处理并列关系
+      const parallelPattern = /([^，。！？]+)[和与]([^，。！？]+)/g;
+      let parallelMatch;
+      while ((parallelMatch = parallelPattern.exec(sentence)) !== null) {
+        const [, entity1, entity2] = parallelMatch;
+        const cleanEntity1 = entity1.trim();
+        const cleanEntity2 = entity2.trim();
+        
+        if (isValidEntity(cleanEntity1) && isValidEntity(cleanEntity2)) {
+          const entity1Id = `node-${cleanEntity1.replace(/[^a-zA-Z0-9]/g, '_')}`;
+          const entity2Id = `node-${cleanEntity2.replace(/[^a-zA-Z0-9]/g, '_')}`;
+          
+          // 添加调试日志
+          console.log('Creating parallel relation:', {
+            entity1: cleanEntity1,
+            entity2: cleanEntity2,
+            entity1Id,
+            entity2Id
+          });
+          
+          relations.push({
+            id: `edge-${relationId++}`,
+            source: entity1Id,
+            target: entity2Id,
+            type: 'related',
+            label: '相关',
+            weight: 0.5,
+            properties: {
+              sourceText: cleanEntity1,
+              targetText: cleanEntity2
+            }
+          });
+        }
+      }
     });
 
+    // 添加调试日志
     console.log('Extracted relations:', relations);
     return relations;
   } catch (error) {
