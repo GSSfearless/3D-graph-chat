@@ -320,7 +320,7 @@ export default function Search() {
           <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-gray-100 p-4 transition-all duration-300 hover:shadow-xl hover:bg-white/90">
             <div className="flex items-center space-x-4">
               <div className="flex items-center space-x-3">
-                <span className="text-sm font-medium text-gray-600">Deepseek</span>
+                <span className="text-sm font-medium bg-gradient-to-r from-purple-600 to-pink-600 text-transparent bg-clip-text">Deepseek</span>
                 <button
                   onClick={() => setUseDeepThinking(!useDeepThinking)}
                   className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 ${
