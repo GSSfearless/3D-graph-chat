@@ -268,39 +268,36 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
       labelDiv.style.whiteSpace = 'nowrap';
       labelDiv.style.pointerEvents = 'none';
       labelDiv.style.userSelect = 'none';
+      labelDiv.style.zIndex = '1000'; // 确保标签在最上层
       
       const label = new CSS2DObject(labelDiv);
-      
-      // 计算边的中点和方向
-      const direction = new THREE.Vector3()
-        .subVectors(target.position, source.position)
-        .normalize();
       
       // 计算边的中点
       const midPoint = new THREE.Vector3()
         .addVectors(source.position, target.position)
         .multiplyScalar(0.5);
       
-      // 添加一些随机偏移以避免标签重叠
-      const offset = new THREE.Vector3(
-        (Math.random() - 0.5) * 10,
-        (Math.random() - 0.5) * 10,
-        (Math.random() - 0.5) * 10
-      );
+      // 计算边的方向向量
+      const direction = new THREE.Vector3()
+        .subVectors(target.position, source.position)
+        .normalize();
       
-      // 将偏移向量投影到垂直于边的平面上
-      const projectedOffset = new THREE.Vector3()
-        .copy(offset)
-        .sub(direction.multiplyScalar(offset.dot(direction)));
+      // 计算垂直于边的偏移向量
+      const up = new THREE.Vector3(0, 1, 0);
+      const right = new THREE.Vector3().crossVectors(direction, up).normalize();
+      const offset = right.multiplyScalar(10); // 固定偏移距离
       
       // 应用偏移
-      midPoint.add(projectedOffset);
+      midPoint.add(offset);
       
       // 设置标签位置
       label.position.copy(midPoint);
       
-      // 确保标签始终朝向相机
-      label.layers.set(1); // 将标签放在单独的层上
+      // 存储原始位置用于动画更新
+      label.userData = {
+        offset: offset.clone(),
+        direction: direction.clone()
+      };
       
       group.add(label);
     }
@@ -327,30 +324,21 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
       if (group.children[1]) {
         const label = group.children[1];
         
-        // 重新计算边的方向和中点
-        const direction = new THREE.Vector3()
-          .subVectors(target.position, source.position)
-          .normalize();
-        
+        // 重新计算边的中点
         const midPoint = new THREE.Vector3()
           .addVectors(source.position, target.position)
           .multiplyScalar(0.5);
         
-        // 获取之前计算的随机偏移（存储在userData中）
-        const offset = label.userData.offset || new THREE.Vector3(
-          (Math.random() - 0.5) * 10,
-          (Math.random() - 0.5) * 10,
-          (Math.random() - 0.5) * 10
-        );
-        label.userData.offset = offset;
+        // 重新计算方向向量
+        const direction = new THREE.Vector3()
+          .subVectors(target.position, source.position)
+          .normalize();
         
-        // 将偏移向量投影到垂直于边的平面上
-        const projectedOffset = new THREE.Vector3()
-          .copy(offset)
-          .sub(direction.multiplyScalar(offset.dot(direction)));
+        // 使用存储的偏移
+        const offset = label.userData.offset;
         
         // 应用偏移
-        midPoint.add(projectedOffset);
+        midPoint.add(offset);
         
         // 更新标签位置
         label.position.copy(midPoint);
@@ -381,9 +369,19 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
     
     // 创建新的边
     data.edges.forEach(edge => {
+      console.log('Edge data structure:', JSON.stringify(edge, null, 2)); // 更详细的日志
       const edgeData = edge.data || edge;
-      const sourceId = edgeData.source?.id || edgeData.source;
-      const targetId = edgeData.target?.id || edgeData.target;
+      
+      // 获取源节点和目标节点的ID
+      const sourceId = typeof edgeData.source === 'object' ? edgeData.source.id : edgeData.source;
+      const targetId = typeof edgeData.target === 'object' ? edgeData.target.id : edgeData.target;
+      
+      console.log('Processing edge:', {
+        sourceId,
+        targetId,
+        label: edgeData.label,
+        type: edgeData.type
+      });
       
       if (!sourceId || !targetId) {
         console.warn('Invalid edge data - missing source or target:', edge);
@@ -394,9 +392,18 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
       const target = nodeMap.get(targetId);
       
       if (source && target) {
-        const edge3D = createEdge3D(source, target, edgeData);
+        const edge3D = createEdge3D(source, target, {
+          ...edgeData,
+          label: edgeData.label || edgeData.type || '关系' // 确保有标签显示
+        });
         edge3D.userData.isEdge = true;
         scene.add(edge3D);
+        console.log('Successfully created edge:', {
+          sourceId,
+          targetId,
+          label: edgeData.label,
+          type: edgeData.type
+        });
       } else {
         console.warn('Could not find source or target node for edge:', {
           edge: edge,
@@ -497,17 +504,19 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
 
       // 创建边
       data.edges.forEach(edge => {
-        console.log('Edge data structure:', edge); // 添加调试日志
+        console.log('Edge data structure:', JSON.stringify(edge, null, 2)); // 更详细的日志
         const edgeData = edge.data || edge;
-        console.log('Source:', edgeData.source);
-        console.log('Target:', edgeData.target);
         
         // 获取源节点和目标节点的ID
-        const sourceId = edgeData.source?.id || edgeData.source;
-        const targetId = edgeData.target?.id || edgeData.target;
+        const sourceId = typeof edgeData.source === 'object' ? edgeData.source.id : edgeData.source;
+        const targetId = typeof edgeData.target === 'object' ? edgeData.target.id : edgeData.target;
         
-        console.log('Looking for nodes with IDs:', sourceId, targetId);
-        console.log('Available node IDs:', Array.from(nodes3D.keys()));
+        console.log('Processing edge:', {
+          sourceId,
+          targetId,
+          label: edgeData.label,
+          type: edgeData.type
+        });
         
         if (!sourceId || !targetId) {
           console.warn('Invalid edge data - missing source or target:', edge);
@@ -518,16 +527,26 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
         const target = nodes3D.get(targetId);
         
         if (source && target) {
-          const edge3D = createEdge3D(source, target, edgeData);
+          const edge3D = createEdge3D(source, target, {
+            ...edgeData,
+            label: edgeData.label || edgeData.type || '关系' // 确保有标签显示
+          });
           edge3D.userData.isEdge = true;
           scene.add(edge3D);
+          console.log('Successfully created edge:', {
+            sourceId,
+            targetId,
+            label: edgeData.label,
+            type: edgeData.type
+          });
         } else {
           console.warn('Could not find source or target node for edge:', {
             edge: edge,
             sourceFound: !!source,
             targetFound: !!target,
             sourceId,
-            targetId
+            targetId,
+            availableNodes: Array.from(nodes3D.keys())
           });
         }
       });
@@ -692,11 +711,13 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
           color: #1a1a1a;
           font-size: 10px;
           padding: 1px 3px;
-          background: rgba(255, 255, 255, 0.8);
+          background: rgba(255, 255, 255, 0.9);
           border-radius: 2px;
           pointer-events: none;
           white-space: nowrap;
           text-align: center;
+          z-index: 1000;
+          box-shadow: 0 1px 2px rgba(0,0,0,0.1);
         }
       `}</style>
     </div>
