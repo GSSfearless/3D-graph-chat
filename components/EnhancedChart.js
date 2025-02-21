@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState, useCallback } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { AdvancedChartRenderer } from '../utils/advanced-charts';
 import ChartSelector from './ChartSelector';
 import '../styles/chart.css';
@@ -82,7 +82,34 @@ const EnhancedChart = ({ chartData = defaultData, initialType = 'tagSphere', onN
   const [isLoading, setIsLoading] = useState(false);
   const [chartType, setChartType] = useState(initialType);
 
-  const renderChart = useCallback(async () => {
+  useEffect(() => {
+    if (containerRef.current && !rendererRef.current) {
+      rendererRef.current = new AdvancedChartRenderer(containerRef.current);
+    }
+
+    // 监听窗口大小变化
+    const handleResize = () => {
+      if (rendererRef.current) {
+        rendererRef.current.resize();
+      }
+    };
+    window.addEventListener('resize', handleResize);
+
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      if (rendererRef.current) {
+        rendererRef.current.dispose();
+      }
+    };
+  }, []);
+
+  useEffect(() => {
+    if (rendererRef.current) {
+      renderChart();
+    }
+  }, [chartType]);
+
+  const renderChart = async () => {
     try {
       setIsLoading(true);
       const renderer = rendererRef.current;
@@ -119,34 +146,7 @@ const EnhancedChart = ({ chartData = defaultData, initialType = 'tagSphere', onN
     } finally {
       setIsLoading(false);
     }
-  }, [chartType, chartData, onChartUpdate]);
-
-  useEffect(() => {
-    if (containerRef.current && !rendererRef.current) {
-      rendererRef.current = new AdvancedChartRenderer(containerRef.current);
-    }
-
-    // 监听窗口大小变化
-    const handleResize = () => {
-      if (rendererRef.current) {
-        rendererRef.current.resize();
-      }
-    };
-    window.addEventListener('resize', handleResize);
-
-    return () => {
-      window.removeEventListener('resize', handleResize);
-      if (rendererRef.current) {
-        rendererRef.current.dispose();
-      }
-    };
-  }, []);
-
-  useEffect(() => {
-    if (rendererRef.current) {
-      renderChart();
-    }
-  }, [chartType, chartData, renderChart]);
+  };
 
   const handleChartTypeChange = (type) => {
     setChartType(type);
