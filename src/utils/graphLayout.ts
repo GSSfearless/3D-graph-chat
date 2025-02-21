@@ -12,18 +12,16 @@ export const calculateNodePosition = (node: Node, depth: number, index: number, 
   );
 };
 
-export const generateCurvedPath = (start: { x: number; y: number; z: number }, end: { x: number; y: number; z: number }): THREE.CatmullRomCurve3 => {
-  const startVec = new THREE.Vector3(start.x, start.y, start.z);
-  const endVec = new THREE.Vector3(end.x, end.y, end.z);
-  const midPoint = new THREE.Vector3().addVectors(startVec, endVec).multiplyScalar(0.5);
-  const distance = startVec.distanceTo(endVec);
+export const generateCurvedPath = (start: THREE.Vector3, end: THREE.Vector3): THREE.CatmullRomCurve3 => {
+  const midPoint = new THREE.Vector3().addVectors(start, end).multiplyScalar(0.5);
+  const distance = start.distanceTo(end);
   
   midPoint.z += distance * 0.2;
   
   const points = [
-    startVec,
+    start,
     midPoint,
-    endVec
+    end
   ];
   
   return new THREE.CatmullRomCurve3(points);
@@ -44,9 +42,8 @@ export const calculateForces = (nodes: Node[], edges: Edge[]) => {
     nodes.slice(i + 1).forEach(node2 => {
       if (!node1.position || !node2.position) return;
       
-      const pos1 = new THREE.Vector3(node1.position.x, node1.position.y, node1.position.z);
-      const pos2 = new THREE.Vector3(node2.position.x, node2.position.y, node2.position.z);
-      const direction = new THREE.Vector3().subVectors(pos1, pos2);
+      const direction = new THREE.Vector3()
+        .subVectors(node1.position, node2.position);
       const distance = direction.length();
       
       if (distance === 0) return;
@@ -67,9 +64,8 @@ export const calculateForces = (nodes: Node[], edges: Edge[]) => {
     
     if (!sourceNode?.position || !targetNode?.position) return;
     
-    const pos1 = new THREE.Vector3(sourceNode.position.x, sourceNode.position.y, sourceNode.position.z);
-    const pos2 = new THREE.Vector3(targetNode.position.x, targetNode.position.y, targetNode.position.z);
-    const direction = new THREE.Vector3().subVectors(pos2, pos1);
+    const direction = new THREE.Vector3()
+      .subVectors(targetNode.position, sourceNode.position);
     const distance = direction.length();
     
     const force = direction.normalize().multiplyScalar(distance * attractionForce);
@@ -90,13 +86,6 @@ export const applyForces = (nodes: Node[], forces: Map<string, THREE.Vector3>, d
     const force = forces.get(node.id);
     if (!force) return;
     
-    const nodePos = new THREE.Vector3(node.position.x, node.position.y, node.position.z);
-    nodePos.add(force.multiplyScalar(damping));
-    
-    node.position = {
-      x: nodePos.x,
-      y: nodePos.y,
-      z: nodePos.z
-    };
+    node.position.add(force.multiplyScalar(damping));
   });
 }; 
