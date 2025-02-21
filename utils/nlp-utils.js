@@ -64,25 +64,15 @@ export const extractEntities = async (text) => {
 
     const sentences = text.split(/[。！？.!?]/);
     const entities = new Map();
-    const entityTexts = new Set(); // 用于存储已处理的实体文本
 
     sentences.forEach(sentence => {
-      // 先尝试提取较长的实体
       const matches = sentence.match(/[一-龥A-Za-z][一-龥A-Za-z\d]*[一-龥A-Za-z]+/g) || [];
-      
-      matches.sort((a, b) => b.length - a.length); // 按长度降序排序
       
       matches.forEach(match => {
         const cleanMatch = match.replace(/[*]/g, '').trim();
-        // 检查是否已经包含在其他实体中
-        const isSubstring = Array.from(entityTexts).some(text => 
-          text !== cleanMatch && text.includes(cleanMatch)
-        );
-        
-        if (!isSubstring && isValidEntity(cleanMatch) && !entities.has(cleanMatch)) {
-          const nodeId = `node-${hashString(cleanMatch)}`;
+        if (isValidEntity(cleanMatch) && !entities.has(cleanMatch)) {
           const entity = {
-            id: nodeId,
+            id: `node-${hashString(cleanMatch)}`,
             text: cleanMatch,
             label: cleanMatch,
             isEvent: hasEventIndicators(cleanMatch),
@@ -91,9 +81,8 @@ export const extractEntities = async (text) => {
             importance: calculateImportance(cleanMatch, text),
             properties: {}
           };
-          console.log('Created entity:', entity);
+          console.log('Created entity:', entity); // 添加日志
           entities.set(cleanMatch, entity);
-          entityTexts.add(cleanMatch);
         }
       });
     });
@@ -114,14 +103,12 @@ export const extractRelations = async (text) => {
     const sentences = text.split(/[。！？.!?]/);
     let relationId = 0;
 
-    // 创建实体映射
+    // 创建实体映射，用于查找和验证实体
     const entities = await extractEntities(text);
     const entityMap = new Map(entities.map(entity => [entity.text, entity]));
-    const entityIds = new Set(entities.map(entity => entity.id));
-    
     console.log('Entity map:', entityMap);
 
-    // 定义关系模式
+    // 定义关系模式（简化并优化正则表达式）
     const patterns = [
       { regex: /(.{2,20}?)是(.{2,20})/g, type: 'is-a', label: '是' },
       { regex: /(.{2,20}?)包含(.{2,20})/g, type: 'contains', label: '包含' },
@@ -131,20 +118,8 @@ export const extractRelations = async (text) => {
       { regex: /(.{2,20}?)通过(.{2,20})/g, type: 'through', label: '通过' }
     ];
 
-    const findMatchingEntity = (text) => {
-      // 按长度降序排序实体，优先匹配较长的实体
-      const sortedEntities = Array.from(entityMap.entries())
-        .sort(([a], [b]) => b.length - a.length);
-      
-      for (const [entityText, entity] of sortedEntities) {
-        if (text.includes(entityText)) {
-          return entity;
-        }
-      }
-      return null;
-    };
-
     sentences.forEach(sentence => {
+      // 移除多余的空格和标点
       const cleanSentence = sentence.trim().replace(/\s+/g, '');
       if (!cleanSentence) return;
 
@@ -155,19 +130,29 @@ export const extractRelations = async (text) => {
         const regex = new RegExp(pattern.regex);
         let match;
         
+        // 重置正则表达式的lastIndex
+        regex.lastIndex = 0;
+        
         while ((match = regex.exec(cleanSentence)) !== null) {
           if (match && match.length >= 3) {
             const sourceText = match[1].trim();
             const targetText = match[2].trim();
             
-            const sourceEntity = findMatchingEntity(sourceText);
-            const targetEntity = findMatchingEntity(targetText);
+            // 查找实体
+            let sourceEntity = null;
+            let targetEntity = null;
             
-            if (sourceEntity && targetEntity && 
-                sourceEntity.id !== targetEntity.id &&
-                entityIds.has(sourceEntity.id) && 
-                entityIds.has(targetEntity.id)) {
-              
+            // 遍历实体映射以查找最佳匹配
+            for (const [key, entity] of entityMap.entries()) {
+              if (sourceText.includes(key)) {
+                sourceEntity = entity;
+              }
+              if (targetText.includes(key)) {
+                targetEntity = entity;
+              }
+            }
+            
+            if (sourceEntity && targetEntity && sourceEntity.id !== targetEntity.id) {
               const relation = {
                 id: `edge-${relationId++}`,
                 source: sourceEntity.id,
@@ -195,14 +180,21 @@ export const extractRelations = async (text) => {
         if (parts.length === 2) {
           const [part1, part2] = parts.map(p => p.trim());
           
-          const entity1 = findMatchingEntity(part1);
-          const entity2 = findMatchingEntity(part2);
+          // 查找实体
+          let entity1 = null;
+          let entity2 = null;
           
-          if (entity1 && entity2 && 
-              entity1.id !== entity2.id &&
-              entityIds.has(entity1.id) && 
-              entityIds.has(entity2.id)) {
-            
+          // 遍历实体映射以查找最佳匹配
+          for (const [key, entity] of entityMap.entries()) {
+            if (part1.includes(key)) {
+              entity1 = entity;
+            }
+            if (part2.includes(key)) {
+              entity2 = entity;
+            }
+          }
+          
+          if (entity1 && entity2 && entity1.id !== entity2.id) {
             const relation = {
               id: `edge-${relationId++}`,
               source: entity1.id,
