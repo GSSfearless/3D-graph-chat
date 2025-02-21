@@ -1,117 +1,238 @@
 export class KnowledgeProcessor {
   constructor() {
     this.nodeTypes = {
+      QUESTION: 'question',
       CONCEPT: 'concept',
-      ENTITY: 'entity',
-      EVENT: 'event',
-      PROPERTY: 'property',
-      RELATION: 'relation'
+      EXAMPLE: 'example',
+      SUMMARY: 'summary',
+      DETAIL: 'detail'
     };
 
     this.relationTypes = {
-      IS_A: 'is_a',
-      PART_OF: 'part_of',
-      HAS_PROPERTY: 'has_property',
-      RELATED_TO: 'related_to',
-      CAUSES: 'causes',
-      BELONGS_TO: 'belongs_to'
+      EXPLAINS: 'explains',
+      EXEMPLIFIES: 'exemplifies',
+      SUMMARIZES: 'summarizes',
+      DETAILS: 'details',
+      RELATES_TO: 'relates_to'
     };
   }
 
-  // 处理搜索响应，生成知识图谱数据
   processSearchResponse(content) {
-    const { concepts, entities, relations } = this.extractKnowledgeElements(content);
-    return this.buildGraphData(concepts, entities, relations);
+    const mainQuestion = this.extractMainQuestion(content);
+    const { concepts, examples, summaries, details } = this.extractKnowledgeElements(content);
+    return this.buildGraphData(mainQuestion, concepts, examples, summaries, details);
   }
 
-  // 从文本中提取知识元素
+  extractMainQuestion(text) {
+    // 提取主要问题，通常是第一句话或带有问号的句子
+    const questionMatch = text.match(/^[^。！？.!?]+[？?]/);
+    if (questionMatch) {
+      return {
+        content: questionMatch[0].trim(),
+        type: this.nodeTypes.QUESTION,
+        importance: 1.0,
+        depth: 0
+      };
+    }
+    return null;
+  }
+
   extractKnowledgeElements(text) {
     const concepts = new Set();
-    const entities = new Set();
-    const relations = new Map();
+    const examples = new Map();
+    const summaries = new Map();
+    const details = new Map();
 
-    // 分句处理
-    const sentences = text.split(/[。！？.!?]/);
+    // 分段处理
+    const paragraphs = text.split('\n').filter(p => p.trim());
     
-    sentences.forEach(sentence => {
-      // 提取概念（通常是抽象的名词短语）
-      const conceptMatches = sentence.match(/([一个])?([的地得])?([^，。！？,!?]{2,})/g) || [];
+    paragraphs.forEach(paragraph => {
+      // 提取概念（通常是关键词或重要短语）
+      const conceptMatches = paragraph.match(/([一个])?([的地得])?([^，。！？,!?]{2,})/g) || [];
       conceptMatches.forEach(match => {
-        if (this.isValidConcept(match)) {
-          concepts.add(match.trim());
+        const concept = match.trim();
+        if (this.isValidConcept(concept)) {
+          concepts.add({
+            content: concept,
+            type: this.nodeTypes.CONCEPT,
+            importance: this.calculateImportance(concept, text),
+            depth: 1
+          });
         }
       });
 
-      // 提取实体（具体的人、物、地点等）
-      const entityMatches = sentence.match(/([的])?([^，。！？,!?]{2,})/g) || [];
-      entityMatches.forEach(match => {
-        if (this.isValidEntity(match)) {
-          entities.add(match.trim());
+      // 提取示例（通常跟在"例如"、"比如"等词后面）
+      const exampleMatches = paragraph.match(/(?:例如|比如|举例)[：:]?([^。！？]+)/g) || [];
+      exampleMatches.forEach(match => {
+        const example = match.replace(/(?:例如|比如|举例)[：:]?/, '').trim();
+        if (example) {
+          const relatedConcept = this.findRelatedConcept(example, concepts);
+          if (relatedConcept) {
+            if (!examples.has(relatedConcept)) {
+              examples.set(relatedConcept, []);
+            }
+            examples.get(relatedConcept).push({
+              content: example,
+              type: this.nodeTypes.EXAMPLE,
+              importance: 0.7,
+              depth: 2
+            });
+          }
         }
       });
 
-      // 提取关系
-      this.extractRelations(sentence, relations);
+      // 提取总结（通常在段落末尾或带有"总之"、"总结"等词）
+      const summaryMatches = paragraph.match(/(?:总之|总结|综上)[^。！？]+[。！？]/g) || [];
+      summaryMatches.forEach(match => {
+        const summary = match.trim();
+        const relatedConcept = this.findRelatedConcept(summary, concepts);
+        if (relatedConcept) {
+          if (!summaries.has(relatedConcept)) {
+            summaries.set(relatedConcept, []);
+          }
+          summaries.get(relatedConcept).push({
+            content: summary,
+            type: this.nodeTypes.SUMMARY,
+            importance: 0.8,
+            depth: 2
+          });
+        }
+      });
+
+      // 提取细节（补充说明和详细内容）
+      const detailMatches = paragraph.match(/(?:具体来说|详细地说|也就是说)[^。！？]+[。！？]/g) || [];
+      detailMatches.forEach(match => {
+        const detail = match.trim();
+        const relatedConcept = this.findRelatedConcept(detail, concepts);
+        if (relatedConcept) {
+          if (!details.has(relatedConcept)) {
+            details.set(relatedConcept, []);
+          }
+          details.get(relatedConcept).push({
+            content: detail,
+            type: this.nodeTypes.DETAIL,
+            importance: 0.6,
+            depth: 3
+          });
+        }
+      });
     });
 
     return {
       concepts: Array.from(concepts),
-      entities: Array.from(entities),
-      relations: Array.from(relations.entries()).map(([key, value]) => ({
-        source: value.source,
-        target: value.target,
-        type: value.type
-      }))
+      examples: Array.from(examples.entries()),
+      summaries: Array.from(summaries.entries()),
+      details: Array.from(details.entries())
     };
   }
 
-  // 构建图数据
-  buildGraphData(concepts, entities, relations) {
+  buildGraphData(mainQuestion, concepts, examples, summaries, details) {
     const nodes = [];
     const edges = [];
     const nodeMap = new Map();
 
+    // 添加主问题节点
+    if (mainQuestion) {
+      const questionId = this.generateId(mainQuestion.content);
+      nodes.push({
+        id: questionId,
+        ...mainQuestion
+      });
+      nodeMap.set(mainQuestion.content, questionId);
+    }
+
     // 添加概念节点
     concepts.forEach(concept => {
-      const nodeId = this.generateId(concept);
+      const nodeId = this.generateId(concept.content);
       nodes.push({
-        data: {
-          id: nodeId,
-          label: concept,
-          type: this.nodeTypes.CONCEPT,
-          category: 0
-        }
+        id: nodeId,
+        ...concept
       });
-      nodeMap.set(concept, nodeId);
-    });
+      nodeMap.set(concept.content, nodeId);
 
-    // 添加实体节点
-    entities.forEach(entity => {
-      const nodeId = this.generateId(entity);
-      nodes.push({
-        data: {
-          id: nodeId,
-          label: entity,
-          type: this.nodeTypes.ENTITY,
-          category: 1
-        }
-      });
-      nodeMap.set(entity, nodeId);
-    });
-
-    // 添加关系边
-    relations.forEach(relation => {
-      const sourceId = nodeMap.get(relation.source);
-      const targetId = nodeMap.get(relation.target);
-      
-      if (sourceId && targetId) {
+      // 连接到主问题
+      if (mainQuestion) {
         edges.push({
-          data: {
-            source: sourceId,
-            target: targetId,
-            label: this.getRelationLabel(relation.type),
-            type: relation.type
+          id: `${nodeMap.get(mainQuestion.content)}-${nodeId}`,
+          source: nodeMap.get(mainQuestion.content),
+          target: nodeId,
+          relationship: {
+            type: this.relationTypes.EXPLAINS,
+            label: '解释',
+            strength: concept.importance
           }
+        });
+      }
+    });
+
+    // 添加示例节点和边
+    examples.forEach(([concept, exampleList]) => {
+      const conceptId = nodeMap.get(concept);
+      if (conceptId) {
+        exampleList.forEach(example => {
+          const exampleId = this.generateId(example.content);
+          nodes.push({
+            id: exampleId,
+            ...example
+          });
+          edges.push({
+            id: `${conceptId}-${exampleId}`,
+            source: conceptId,
+            target: exampleId,
+            relationship: {
+              type: this.relationTypes.EXEMPLIFIES,
+              label: '举例',
+              strength: 0.7
+            }
+          });
+        });
+      }
+    });
+
+    // 添加总结节点和边
+    summaries.forEach(([concept, summaryList]) => {
+      const conceptId = nodeMap.get(concept);
+      if (conceptId) {
+        summaryList.forEach(summary => {
+          const summaryId = this.generateId(summary.content);
+          nodes.push({
+            id: summaryId,
+            ...summary
+          });
+          edges.push({
+            id: `${conceptId}-${summaryId}`,
+            source: conceptId,
+            target: summaryId,
+            relationship: {
+              type: this.relationTypes.SUMMARIZES,
+              label: '总结',
+              strength: 0.8
+            }
+          });
+        });
+      }
+    });
+
+    // 添加细节节点和边
+    details.forEach(([concept, detailList]) => {
+      const conceptId = nodeMap.get(concept);
+      if (conceptId) {
+        detailList.forEach(detail => {
+          const detailId = this.generateId(detail.content);
+          nodes.push({
+            id: detailId,
+            ...detail
+          });
+          edges.push({
+            id: `${conceptId}-${detailId}`,
+            source: conceptId,
+            target: detailId,
+            relationship: {
+              type: this.relationTypes.DETAILS,
+              label: '详述',
+              strength: 0.6
+            }
+          });
         });
       }
     });
@@ -122,190 +243,45 @@ export class KnowledgeProcessor {
     };
   }
 
-  // 验证概念有效性
-  isValidConcept(text) {
-    const invalidPatterns = [
-      /^[的地得]/, // 开头是的地得
-      /^[和与或而且但是然后因此所以总之以下等等]/, // 开头是连接词
-      /^[了过着]/, // 开头是时态词
-      /^\d+$/, // 纯数字
-      /^[一二三四五六七八九十百千万亿]+$/, // 中文数字
-      /^[1-9]\.?$/, // 序号（如1. 2.）
-      /^[①②③④⑤⑥⑦⑧⑨⑩]/, // 圆圈数字
-      /^[,.，。、；：！？]/, // 标点符号
-      /^[的地得之].*[的地得之]$/, // 前后都是助词
-      /^(这|那|此|该|这些|那些|这样|那样)/, // 指示代词
-      /^(就是|也是|还是|即是|乃是)/, // 判断词
-      /^(有|没有|不是|不能|不可以)/, // 否定词
-      /^(在|于|对于|关于)/, // 介词
-      /[，。、；：！？]+/ // 包含标点符号
-    ];
-
-    const minLength = 2; // 最小长度
-    const maxLength = 20; // 最大长度
-
-    return text.length >= minLength && 
-           text.length <= maxLength && 
-           !invalidPatterns.some(pattern => pattern.test(text)) &&
-           !/^[a-zA-Z0-9_]+$/.test(text); // 不是纯英文或数字
+  calculateImportance(concept, text) {
+    // 基于出现频率和位置计算重要性
+    const frequency = (text.match(new RegExp(concept, 'g')) || []).length;
+    const position = text.indexOf(concept) / text.length;
+    return Math.min(1, (frequency * 0.3 + (1 - position) * 0.7));
   }
 
-  // 验证实体有效性
-  isValidEntity(text) {
-    const invalidPatterns = [
-      /^[的地得]/, // 不以的地得开头
-      /^[和与或而且但是然后因此所以总之以下等等]/, // 不以连接词开头
-      /^\d+$/, // 不是纯数字
-      /^[一二三四五六七八九十百千万亿]+$/, // 不是纯中文数字
-      /^[1-9]\.?$/, // 不是序号
-      /^[①②③④⑤⑥⑦⑧⑨⑩]/, // 不是圆圈数字
-      /^[,.，。、；：！？]/, // 不是标点符号
-      /^(这|那|此|该|这些|那些|这样|那样)/, // 不是指示代词
-      /^(就是|也是|还是|即是|乃是)/, // 不是判断词
-      /[，。、；：！？]+/ // 不包含标点符号
-    ];
+  findRelatedConcept(text, concepts) {
+    // 找到与文本最相关的概念
+    let maxSimilarity = 0;
+    let relatedConcept = null;
 
-    const minLength = 2; // 最小长度
-    const maxLength = 20; // 最大长度
-
-    return text.length >= minLength && 
-           text.length <= maxLength && 
-           !invalidPatterns.some(pattern => pattern.test(text));
-  }
-
-  // 提取关系
-  extractRelations(sentence, relations) {
-    // 是...的关系
-    const isPattern = /(.+)是(.+)的?/;
-    // 包含...的关系
-    const containsPattern = /(.+)包含(.+)的?/;
-    // 属于...的关系
-    const belongsPattern = /(.+)属于(.+)的?/;
-    // 导致...的关系
-    const causesPattern = /(.+)导致(.+)的?/;
-
-    const patterns = [
-      { regex: isPattern, type: this.relationTypes.IS_A },
-      { regex: containsPattern, type: this.relationTypes.PART_OF },
-      { regex: belongsPattern, type: this.relationTypes.BELONGS_TO },
-      { regex: causesPattern, type: this.relationTypes.CAUSES }
-    ];
-
-    patterns.forEach(pattern => {
-      const match = sentence.match(pattern.regex);
-      if (match) {
-        const [, source, target] = match;
-        if (source && target) {
-          const relationKey = `${source}-${target}`;
-          relations.set(relationKey, {
-            source: source.trim(),
-            target: target.trim(),
-            type: pattern.type
-          });
-        }
+    concepts.forEach(concept => {
+      const similarity = this.calculateTextSimilarity(text, concept.content);
+      if (similarity > maxSimilarity) {
+        maxSimilarity = similarity;
+        relatedConcept = concept.content;
       }
     });
+
+    return relatedConcept;
   }
 
-  // 获取关系标签
-  getRelationLabel(type) {
-    const labels = {
-      [this.relationTypes.IS_A]: '是',
-      [this.relationTypes.PART_OF]: '包含',
-      [this.relationTypes.HAS_PROPERTY]: '具有',
-      [this.relationTypes.RELATED_TO]: '相关',
-      [this.relationTypes.CAUSES]: '导致',
-      [this.relationTypes.BELONGS_TO]: '属于'
-    };
-    return labels[type] || '关联';
+  calculateTextSimilarity(text1, text2) {
+    // 简单的文本相似度计算
+    const words1 = new Set(text1.split(/\s+/));
+    const words2 = new Set(text2.split(/\s+/));
+    const intersection = new Set([...words1].filter(x => words2.has(x)));
+    return intersection.size / Math.max(words1.size, words2.size);
   }
 
-  // 生成唯一ID
   generateId(text) {
-    return `node-${text.replace(/[^a-zA-Z0-9]/g, '-')}-${Math.random().toString(36).substr(2, 9)}`;
+    return text.slice(0, 20).replace(/\s+/g, '_').toLowerCase() +
+           '_' + Math.random().toString(36).substr(2, 9);
   }
 
-  // 计算节点重要性
-  calculateNodeImportance(nodes, edges) {
-    const degrees = new Map();
-    
-    // 计算度数
-    edges.forEach(edge => {
-      degrees.set(edge.data.source, (degrees.get(edge.data.source) || 0) + 1);
-      degrees.set(edge.data.target, (degrees.get(edge.data.target) || 0) + 1);
-    });
-
-    // 更新节点大小
-    return nodes.map(node => ({
-      ...node,
-      data: {
-        ...node.data,
-        size: Math.max(30, Math.min(80, (degrees.get(node.data.id) || 0) * 10))
-      }
-    }));
-  }
-
-  // 聚类分析
-  performClustering(nodes, edges) {
-    // 实现社区发现算法
-    // 这里使用简单的度数聚类作为示例
-    const clusters = new Map();
-    
-    nodes.forEach(node => {
-      const degree = edges.filter(e => 
-        e.data.source === node.data.id || e.data.target === node.data.id
-      ).length;
-
-      const clusterIndex = Math.floor(degree / 5); // 每5个度数为一个簇
-      if (!clusters.has(clusterIndex)) {
-        clusters.set(clusterIndex, []);
-      }
-      clusters.get(clusterIndex).push(node);
-    });
-
-    return clusters;
-  }
-
-  // 路径分析
-  findShortestPath(nodes, edges, startId, endId) {
-    const graph = new Map();
-    
-    // 构建邻接表
-    edges.forEach(edge => {
-      if (!graph.has(edge.data.source)) {
-        graph.set(edge.data.source, []);
-      }
-      if (!graph.has(edge.data.target)) {
-        graph.set(edge.data.target, []);
-      }
-      graph.get(edge.data.source).push(edge.data.target);
-      graph.get(edge.data.target).push(edge.data.source);
-    });
-
-    // BFS查找最短路径
-    const queue = [[startId]];
-    const visited = new Set();
-
-    while (queue.length > 0) {
-      const path = queue.shift();
-      const node = path[path.length - 1];
-
-      if (node === endId) {
-        return path;
-      }
-
-      if (!visited.has(node)) {
-        visited.add(node);
-        const neighbors = graph.get(node) || [];
-        
-        for (const neighbor of neighbors) {
-          if (!visited.has(neighbor)) {
-            queue.push([...path, neighbor]);
-          }
-        }
-      }
-    }
-
-    return null; // 没有找到路径
+  isValidConcept(text) {
+    return text.length >= 2 && 
+           !text.match(/^[的地得]/) && 
+           !text.match(/[的地得]$/);
   }
 } 
