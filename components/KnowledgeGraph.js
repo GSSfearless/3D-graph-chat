@@ -291,9 +291,8 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
   };
 
   useEffect(() => {
-    const cleanup = initScene();
-    return () => cleanup && cleanup();
-  }, [initScene]);
+    initScene();
+  }, []);
 
   useEffect(() => {
     if (!sceneRef.current || !data) return;
@@ -355,7 +354,7 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
       labelRenderer.render(scene, camera);
     };
     animate();
-  }, [data, createNode3D, createEdge3D, handleNodeClick]);
+  }, [data]);
 
   return (
     <div className="knowledge-graph-container" style={{ width: '100%', height: '100%', ...style }}>

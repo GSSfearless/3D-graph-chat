@@ -26,25 +26,24 @@ export const InfoPanel: React.FC<InfoPanelProps> = ({
   onExpandNode,
   isExpanded
 }) => {
+  if (!selectedNode) return null;
+
   // 获取相关节点
   const relatedNodes = React.useMemo(() => {
-    const relatedNodeIds = new Set<string>();
+    if (!selectedNode) return [];
     
-    if (selectedNode) {
-      edges.forEach(edge => {
-        if (edge.source === selectedNode.id) {
-          relatedNodeIds.add(edge.target);
-        }
-        if (edge.target === selectedNode.id) {
-          relatedNodeIds.add(edge.source);
-        }
-      });
-    }
+    const relatedNodeIds = new Set<string>();
+    edges.forEach(edge => {
+      if (edge.source === selectedNode.id) {
+        relatedNodeIds.add(edge.target);
+      }
+      if (edge.target === selectedNode.id) {
+        relatedNodeIds.add(edge.source);
+      }
+    });
 
     return nodes.filter(node => relatedNodeIds.has(node.id));
   }, [selectedNode, edges, nodes]);
-
-  if (!selectedNode) return null;
 
   const isNodeExpanded = isExpanded(selectedNode.id);
 
