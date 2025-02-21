@@ -17,22 +17,27 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
     node: {
       color: '#6366F1',
       highlightColor: '#F43F5E',
-      size: 10,
+      size: {
+        min: 8,
+        max: 20,
+        default: 12
+      },
       segments: 32,
-      opacity: 0.9,
+      opacity: 0.85,
       glowColor: '#818CF8'
     },
     edge: {
       color: '#94A3B8',
       highlightColor: '#64748B',
-      opacity: 0.6,
-      width: 2
+      opacity: 0.4,
+      width: 1.5
     },
     label: {
       color: '#1E293B',
-      size: '14px',
+      size: '13px',
       font: 'Inter, system-ui, -apple-system, sans-serif',
-      weight: '500'
+      weight: '500',
+      background: 'rgba(255, 255, 255, 0.7)'
     }
   };
 
@@ -126,12 +131,28 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
     labelRenderer.setSize(newWidth, newHeight);
   };
 
+  const calculateNodeSize = (nodeData) => {
+    const connections = data.edges.filter(edge => 
+      edge.data.source === nodeData.id || edge.data.target === nodeData.id
+    ).length;
+    
+    const size = Math.max(
+      theme.node.size.min,
+      Math.min(theme.node.size.max, 
+        theme.node.size.default + (connections * 0.5)
+      )
+    );
+    
+    return size;
+  };
+
   const createNode3D = (nodeData, index, total) => {
     const group = new THREE.Group();
+    const nodeSize = calculateNodeSize(nodeData);
 
     // 创建球体几何体
     const geometry = new THREE.SphereGeometry(
-      theme.node.size,
+      nodeSize,
       theme.node.segments,
       theme.node.segments
     );
@@ -182,7 +203,7 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
     });
 
     const glowSphere = new THREE.Mesh(
-      new THREE.SphereGeometry(theme.node.size * 1.2, theme.node.segments, theme.node.segments),
+      new THREE.SphereGeometry(nodeSize * 1.2, theme.node.segments, theme.node.segments),
       glowMaterial
     );
     group.add(glowSphere);
@@ -196,7 +217,7 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
     labelDiv.style.color = theme.label.color;
     labelDiv.style.fontSize = theme.label.size;
     labelDiv.style.fontFamily = theme.label.font;
-    labelDiv.style.background = 'transparent';
+    labelDiv.style.background = theme.label.background;
     labelDiv.style.padding = '4px 8px';
     labelDiv.style.borderRadius = '4px';
     labelDiv.style.whiteSpace = 'nowrap';
@@ -204,7 +225,7 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
     labelDiv.style.userSelect = 'none';
     
     const label = new CSS2DObject(labelDiv);
-    label.position.set(0, theme.node.size + 5, 0);
+    label.position.set(0, nodeSize + 5, 0);
     group.add(label);
 
     // 计算节点位置
@@ -276,6 +297,118 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
     onNodeClick && onNodeClick(node.userData);
   };
 
+  const handleNodeHover = (node, isHover) => {
+    if (!node) return;
+    
+    const material = node.material;
+    const relatedNodes = new Set();
+    const relatedEdges = new Set();
+    
+    // 找到相关节点和边
+    data.edges.forEach(edge => {
+      if (edge.data.source === node.userData.id) {
+        relatedNodes.add(edge.data.target);
+        relatedEdges.add(edge);
+      }
+      if (edge.data.target === node.userData.id) {
+        relatedNodes.add(edge.data.source);
+        relatedEdges.add(edge);
+      }
+    });
+
+    // 更新节点样式
+    scene.traverse((object) => {
+      if (object instanceof THREE.Mesh) {
+        const isRelated = relatedNodes.has(object.userData?.id);
+        const isCurrent = object.userData?.id === node.userData.id;
+        
+        if (object.material.type === 'MeshPhongMaterial') {
+          if (isHover) {
+            if (isCurrent) {
+              object.material.opacity = 1;
+              object.material.color.setHex(parseInt(theme.node.highlightColor.replace('#', '0x')));
+            } else if (isRelated) {
+              object.material.opacity = 0.8;
+            } else {
+              object.material.opacity = 0.3;
+            }
+          } else {
+            object.material.opacity = theme.node.opacity;
+            if (!object.isSelected) {
+              object.material.color.setHex(parseInt(theme.node.color.replace('#', '0x')));
+            }
+          }
+        }
+      }
+      
+      // 更新边的样式
+      if (object instanceof THREE.Line) {
+        const edge = object.userData;
+        if (edge) {
+          const isRelated = relatedEdges.has(edge);
+          if (isHover) {
+            object.material.opacity = isRelated ? theme.edge.opacity * 2 : theme.edge.opacity * 0.2;
+          } else {
+            object.material.opacity = theme.edge.opacity;
+          }
+        }
+      }
+    });
+  };
+
+  // 添加射线检测器用于鼠标交互
+  const raycaster = new THREE.Raycaster();
+  const mouse = new THREE.Vector2();
+  let hoveredNode = null;
+
+  const onMouseMove = (event) => {
+    const rect = containerRef.current.getBoundingClientRect();
+    mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+    mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+
+    raycaster.setFromCamera(mouse, sceneRef.current.camera);
+    const intersects = raycaster.intersectObjects(scene.children, true);
+    
+    const hitNode = intersects.find(intersect => 
+      intersect.object instanceof THREE.Mesh && 
+      intersect.object.material.type === 'MeshPhongMaterial'
+    )?.object;
+
+    if (hitNode !== hoveredNode) {
+      handleNodeHover(hoveredNode, false);
+      handleNodeHover(hitNode, true);
+      hoveredNode = hitNode;
+      
+      // 更新鼠标样式
+      containerRef.current.style.cursor = hitNode ? 'pointer' : 'default';
+    }
+  };
+
+  // 添加平滑过渡
+  const handleZoom = (delta) => {
+    const camera = sceneRef.current.camera;
+    const controls = sceneRef.current.controls;
+    
+    const targetZoom = camera.zoom * (delta > 0 ? 1.2 : 0.8);
+    const duration = 500;
+    const startZoom = camera.zoom;
+    
+    const animate = (currentTime) => {
+      const progress = Math.min((currentTime - startTime) / duration, 1);
+      const easeProgress = 1 - Math.pow(1 - progress, 3); // 缓动函数
+      
+      camera.zoom = startZoom + (targetZoom - startZoom) * easeProgress;
+      camera.updateProjectionMatrix();
+      
+      if (progress < 1) {
+        requestAnimationFrame(animate);
+      }
+    };
+    
+    const startTime = performance.now();
+    requestAnimationFrame(animate);
+  };
+
   useEffect(() => {
     initScene();
   }, []);
@@ -298,10 +431,91 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
     pointLight.position.set(100, 100, 100);
     scene.add(pointLight);
 
-    // 创建节点
+    // 力导向布局参数
+    const forceLayout = {
+      centerForce: 1,
+      repulsionForce: 50,
+      linkDistance: 100,
+      damping: 0.5,
+      iterations: 100
+    };
+
+    // 计算节点初始位置
     const nodes3D = new Map();
+    const positions = new Map();
+    const velocities = new Map();
+
     data.nodes.forEach((node, index) => {
-      const node3D = createNode3D(node.data, index, data.nodes.length);
+      // 随机初始位置
+      const theta = Math.random() * Math.PI * 2;
+      const phi = Math.acos(2 * Math.random() - 1);
+      const radius = 200 + Math.random() * 100;
+      
+      const position = new THREE.Vector3(
+        radius * Math.sin(phi) * Math.cos(theta),
+        radius * Math.sin(phi) * Math.sin(theta),
+        radius * Math.cos(phi)
+      );
+      
+      positions.set(node.data.id, position);
+      velocities.set(node.data.id, new THREE.Vector3());
+    });
+
+    // 力导向布局迭代
+    for (let i = 0; i < forceLayout.iterations; i++) {
+      // 计算排斥力
+      data.nodes.forEach((node1) => {
+        data.nodes.forEach((node2) => {
+          if (node1.data.id !== node2.data.id) {
+            const pos1 = positions.get(node1.data.id);
+            const pos2 = positions.get(node2.data.id);
+            const diff = pos1.clone().sub(pos2);
+            const distance = diff.length();
+            
+            if (distance < forceLayout.repulsionForce * 2) {
+              const force = diff.normalize().multiplyScalar(
+                forceLayout.repulsionForce / (distance * distance)
+              );
+              velocities.get(node1.data.id).add(force);
+              velocities.get(node2.data.id).sub(force);
+            }
+          }
+        });
+      });
+
+      // 计算连接力
+      data.edges.forEach(edge => {
+        const pos1 = positions.get(edge.data.source);
+        const pos2 = positions.get(edge.data.target);
+        if (pos1 && pos2) {
+          const diff = pos2.clone().sub(pos1);
+          const distance = diff.length();
+          const force = diff.normalize().multiplyScalar(
+            (distance - forceLayout.linkDistance) * 0.05
+          );
+          velocities.get(edge.data.source).add(force);
+          velocities.get(edge.data.target).sub(force);
+        }
+      });
+
+      // 更新位置
+      positions.forEach((position, nodeId) => {
+        const velocity = velocities.get(nodeId);
+        velocity.multiplyScalar(forceLayout.damping);
+        position.add(velocity);
+        
+        // 限制最大距离
+        if (position.length() > 500) {
+          position.normalize().multiplyScalar(500);
+        }
+      });
+    }
+
+    // 创建节点
+    data.nodes.forEach((node) => {
+      const node3D = createNode3D(node.data, 0, data.nodes.length);
+      const position = positions.get(node.data.id);
+      node3D.position.copy(position);
       scene.add(node3D);
       nodes3D.set(node.data.id, node3D);
 
@@ -340,6 +554,15 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
       labelRenderer.render(scene, camera);
     };
     animate();
+  }, [data]);
+
+  // 添加事件监听
+  useEffect(() => {
+    const container = containerRef.current;
+    container.addEventListener('mousemove', onMouseMove);
+    return () => {
+      container.removeEventListener('mousemove', onMouseMove);
+    };
   }, [data]);
 
   return (
