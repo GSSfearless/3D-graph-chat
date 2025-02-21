@@ -262,30 +262,40 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
       labelDiv.style.color = theme.label.color;
       labelDiv.style.fontSize = '12px';
       labelDiv.style.fontFamily = theme.label.font;
-      labelDiv.style.background = 'rgba(255, 255, 255, 0.8)';
+      labelDiv.style.background = 'rgba(255, 255, 255, 0.9)';
       labelDiv.style.padding = '2px 4px';
       labelDiv.style.borderRadius = '2px';
       labelDiv.style.whiteSpace = 'nowrap';
       labelDiv.style.pointerEvents = 'none';
       labelDiv.style.userSelect = 'none';
-      labelDiv.style.zIndex = '1000'; // 确保标签在最上层
+      labelDiv.style.zIndex = '1000';
       
       const label = new CSS2DObject(labelDiv);
-      
-      // 计算边的中点
-      const midPoint = new THREE.Vector3()
-        .addVectors(source.position, target.position)
-        .multiplyScalar(0.5);
       
       // 计算边的方向向量
       const direction = new THREE.Vector3()
         .subVectors(target.position, source.position)
         .normalize();
       
-      // 计算垂直于边的偏移向量
+      // 计算边的中点
+      const midPoint = new THREE.Vector3()
+        .addVectors(source.position, target.position)
+        .multiplyScalar(0.5);
+      
+      // 使用边的方向计算更智能的偏移
       const up = new THREE.Vector3(0, 1, 0);
       const right = new THREE.Vector3().crossVectors(direction, up).normalize();
-      const offset = right.multiplyScalar(10); // 固定偏移距离
+      
+      // 根据边的方向计算偏移距离
+      const angle = Math.atan2(direction.y, direction.x);
+      const offsetDistance = 20 + Math.abs(Math.sin(angle) * 10);
+      
+      // 根据边的ID计算不同的偏移方向
+      const edgeId = `${source.userData.id}-${target.userData.id}`;
+      const hashCode = [...edgeId].reduce((acc, char) => char.charCodeAt(0) + ((acc << 5) - acc), 0);
+      const offsetSign = hashCode % 2 === 0 ? 1 : -1;
+      
+      const offset = right.multiplyScalar(offsetDistance * offsetSign);
       
       // 应用偏移
       midPoint.add(offset);
@@ -293,10 +303,12 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
       // 设置标签位置
       label.position.copy(midPoint);
       
-      // 存储原始位置用于动画更新
+      // 存储计算数据用于更新
       label.userData = {
-        offset: offset.clone(),
-        direction: direction.clone()
+        offset,
+        direction,
+        offsetDistance,
+        offsetSign
       };
       
       group.add(label);
@@ -346,75 +358,6 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
     };
 
     return group;
-  };
-
-  // 添加渲染边的逻辑
-  const renderEdges = () => {
-    if (!isValidData || !sceneRef.current) return;
-    
-    const { scene } = sceneRef.current;
-    const nodeMap = new Map();
-    
-    // 清除现有的边
-    scene.children = scene.children.filter(child => !child.userData?.isEdge);
-    
-    // 创建节点映射
-    scene.children.forEach(child => {
-      if (child.userData?.id) {
-        nodeMap.set(child.userData.id, child);
-      }
-    });
-    
-    console.log('Available nodes in renderEdges:', Array.from(nodeMap.keys()));
-    
-    // 创建新的边
-    data.edges.forEach(edge => {
-      console.log('Edge data structure:', JSON.stringify(edge, null, 2)); // 更详细的日志
-      const edgeData = edge.data || edge;
-      
-      // 获取源节点和目标节点的ID
-      const sourceId = typeof edgeData.source === 'object' ? edgeData.source.id : edgeData.source;
-      const targetId = typeof edgeData.target === 'object' ? edgeData.target.id : edgeData.target;
-      
-      console.log('Processing edge:', {
-        sourceId,
-        targetId,
-        label: edgeData.label,
-        type: edgeData.type
-      });
-      
-      if (!sourceId || !targetId) {
-        console.warn('Invalid edge data - missing source or target:', edge);
-        return;
-      }
-      
-      const source = nodeMap.get(sourceId);
-      const target = nodeMap.get(targetId);
-      
-      if (source && target) {
-        const edge3D = createEdge3D(source, target, {
-          ...edgeData,
-          label: edgeData.label || edgeData.type || '关系' // 确保有标签显示
-        });
-        edge3D.userData.isEdge = true;
-        scene.add(edge3D);
-        console.log('Successfully created edge:', {
-          sourceId,
-          targetId,
-          label: edgeData.label,
-          type: edgeData.type
-        });
-      } else {
-        console.warn('Could not find source or target node for edge:', {
-          edge: edge,
-          sourceFound: !!source,
-          targetFound: !!target,
-          sourceId,
-          targetId,
-          availableNodes: Array.from(nodeMap.keys())
-        });
-      }
-    });
   };
 
   const handleFullscreen = () => {
@@ -502,54 +445,36 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
         }
       });
 
-      // 创建边
+      // 创建边的映射以避免重复
+      const edgeMap = new Map();
+      
+      // 处理边数据
       data.edges.forEach(edge => {
-        console.log('Edge data structure:', JSON.stringify(edge, null, 2)); // 更详细的日志
         const edgeData = edge.data || edge;
         
         // 获取源节点和目标节点的ID
         const sourceId = typeof edgeData.source === 'object' ? edgeData.source.id : edgeData.source;
         const targetId = typeof edgeData.target === 'object' ? edgeData.target.id : edgeData.target;
         
-        console.log('Processing edge:', {
-          sourceId,
-          targetId,
-          label: edgeData.label,
-          type: edgeData.type
-        });
+        // 创建唯一的边标识符
+        const edgeKey = `${sourceId}-${targetId}`;
         
-        if (!sourceId || !targetId) {
-          console.warn('Invalid edge data - missing source or target:', edge);
-          return;
-        }
-        
-        const source = nodes3D.get(sourceId);
-        const target = nodes3D.get(targetId);
-        
-        if (source && target) {
-          const edge3D = createEdge3D(source, target, {
-            ...edgeData,
-            label: edgeData.label || edgeData.type || '关系' // 确保有标签显示
-          });
-          edge3D.userData.isEdge = true;
-          scene.add(edge3D);
-          console.log('Successfully created edge:', {
-            sourceId,
-            targetId,
-            label: edgeData.label,
-            type: edgeData.type
-          });
-        } else {
-          console.warn('Could not find source or target node for edge:', {
-            edge: edge,
-            sourceFound: !!source,
-            targetFound: !!target,
-            sourceId,
-            targetId,
-            availableNodes: Array.from(nodes3D.keys())
-          });
+        if (!edgeMap.has(edgeKey)) {
+          const source = nodes3D.get(sourceId);
+          const target = nodes3D.get(targetId);
+          
+          if (source && target) {
+            const edge3D = createEdge3D(source, target, {
+              ...edgeData,
+              label: edgeData.label || edgeData.type || '关系'
+            });
+            edge3D.userData.isEdge = true;
+            scene.add(edge3D);
+            edgeMap.set(edgeKey, edge3D);
+          }
         }
       });
+
     } catch (error) {
       console.error('Error creating 3D objects:', error);
     }
@@ -589,7 +514,7 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
 
   useEffect(() => {
     if (isValidData && sceneRef.current) {
-      renderEdges();
+      // 不再需要renderEdges，因为边的创建已经在主useEffect中处理
     }
   }, [data, isValidData]);
 
