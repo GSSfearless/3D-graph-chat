@@ -267,23 +267,22 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
       labelDiv.style.borderRadius = '2px';
       labelDiv.style.whiteSpace = 'nowrap';
       labelDiv.style.pointerEvents = 'none';
-      labelDiv.style.userSelect = 'none';
       
       const label = new CSS2DObject(labelDiv);
+      // 将标签放置在边的中间
+      label.position.set(
+        (source.position.x + target.position.x) / 2,
+        (source.position.y + target.position.y) / 2,
+        (source.position.z + target.position.z) / 2
+      );
       group.add(label);
     }
 
     // 添加用户数据
-    group.userData = {
-      ...edgeData,
-      isEdge: true,
-      source: source,
-      target: target
-    };
+    group.userData = edgeData;
 
-    // 更新边的位置和标签的方法
+    // 更新边的位置的方法
     group.updatePosition = () => {
-      // 更新线条位置
       const positions = new Float32Array([
         source.position.x, source.position.y, source.position.z,
         target.position.x, target.position.y, target.position.z
@@ -291,35 +290,12 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
       geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
       geometry.computeBoundingSphere();
       
-      // 更新标签位置
-      if (group.children[1]) {
-        const label = group.children[1];
-        // 计算边的中点
-        const midPoint = new THREE.Vector3(
+      if (group.children[1]) { // 更新标签位置
+        group.children[1].position.set(
           (source.position.x + target.position.x) / 2,
           (source.position.y + target.position.y) / 2,
           (source.position.z + target.position.z) / 2
         );
-        
-        // 获取当前相机位置
-        const camera = sceneRef.current.camera;
-        
-        // 计算标签偏移
-        const offset = new THREE.Vector3(0, 5, 0); // 向上偏移一点
-        midPoint.add(offset);
-        
-        // 更新标签位置
-        label.position.copy(midPoint);
-        
-        // 使标签始终面向相机
-        const labelDiv = label.element;
-        const cameraPosition = camera.position;
-        const direction = new THREE.Vector3();
-        direction.subVectors(cameraPosition, midPoint).normalize();
-        
-        // 计算旋转角度
-        const angle = Math.atan2(direction.x, direction.z);
-        labelDiv.style.transform = `rotate(${-angle}rad)`;
       }
     };
 
@@ -510,7 +486,7 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
       // 更新控制器
       controls.update();
 
-      // 更新所有边的位置和标签
+      // 更新所有边的位置
       scene.children.forEach(child => {
         if (child.userData?.isEdge && child.updatePosition) {
           child.updatePosition();
