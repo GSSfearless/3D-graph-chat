@@ -114,133 +114,59 @@ export const extractRelations = async (text) => {
     const sentences = text.split(/[。！？.!?]/);
     let relationId = 0;
 
-    // 扩展关系模式，增加更多常见的中文关系表达
+    // 定义更丰富的关系模式
     const patterns = [
-      // 基础关系
-      { regex: /([^，。！？]+?)[是为]+([^，。！？]+)/g, type: 'is-a', label: '是' },
+      { regex: /([^，。！？]+?)是([^，。！？]+)/g, type: 'is-a', label: '是' },
       { regex: /([^，。！？]+?)包含([^，。！？]+)/g, type: 'contains', label: '包含' },
       { regex: /([^，。！？]+?)属于([^，。！？]+)/g, type: 'belongs-to', label: '属于' },
-      // 动作关系
+      { regex: /([^，。！？]+?)需要([^，。！？]+)/g, type: 'requires', label: '需要' },
+      { regex: /([^，。！？]+?)通过([^，。！？]+)/g, type: 'through', label: '通过' },
       { regex: /([^，。！？]+?)使用([^，。！？]+)/g, type: 'uses', label: '使用' },
       { regex: /([^，。！？]+?)进行([^，。！？]+)/g, type: 'performs', label: '进行' },
-      { regex: /([^，。！？]+?)需要([^，。！？]+)/g, type: 'requires', label: '需要' },
-      // 并列关系
-      { regex: /([^，。！？]+?)[和与及]+([^，。！？]+)/g, type: 'and', label: '和' },
-      // 修饰关系
-      { regex: /([^，。！？]+?)的([^，。！？]+)/g, type: 'of', label: '的' },
-      // 因果关系
-      { regex: /([^，。！？]+?)导致([^，。！？]+)/g, type: 'causes', label: '导致' },
-      { regex: /([^，。！？]+?)影响([^，。！？]+)/g, type: 'affects', label: '影响' },
-      // 位置关系
-      { regex: /([^，。！？]+?)在([^，。！？]+)/g, type: 'in', label: '在' },
-      { regex: /([^，。！？]+?)到([^，。！？]+)/g, type: 'to', label: '到' }
+      { regex: /([^，。！？]+?)提供([^，。！？]+)/g, type: 'provides', label: '提供' },
+      { regex: /([^，。！？]+?)获得([^，。！？]+)/g, type: 'obtains', label: '获得' },
+      { regex: /([^，。！？]+?)参与([^，。！？]+)/g, type: 'participates', label: '参与' }
     ];
 
     sentences.forEach(sentence => {
-      // 对每个句子应用所有模式
       patterns.forEach(pattern => {
         let matches;
-        pattern.regex.lastIndex = 0; // 重置正则表达式的lastIndex
-        
         while ((matches = pattern.regex.exec(sentence)) !== null) {
           if (matches && matches.length >= 3) {
             const [, source, target] = matches;
-            // 清理和规范化文本
-            const cleanSource = source.replace(/[*\s]/g, '').trim();
-            const cleanTarget = target.replace(/[*\s]/g, '').trim();
+            const cleanSource = source.replace(/[*]/g, '').trim();
+            const cleanTarget = target.replace(/[*]/g, '').trim();
             
-            // 验证实体的有效性
-            if (cleanSource && cleanTarget && 
-                cleanSource !== cleanTarget && 
-                isValidEntity(cleanSource) && 
-                isValidEntity(cleanTarget)) {
-              
+            if (isValidEntity(cleanSource) && isValidEntity(cleanTarget)) {
               const sourceId = generateNodeId(cleanSource);
               const targetId = generateNodeId(cleanTarget);
               
-              // 添加详细的调试信息
-              console.log('Found relation:', {
-                pattern: pattern.type,
+              console.log('Creating relation:', {
                 source: cleanSource,
                 target: cleanTarget,
                 sourceId,
-                targetId,
-                originalText: matches[0]
+                targetId
               });
               
-              // 避免重复关系
-              const relationKey = `${sourceId}-${pattern.type}-${targetId}`;
-              if (!relations.some(r => 
-                  r.source === sourceId && 
-                  r.target === targetId && 
-                  r.type === pattern.type)) {
-                relations.push({
-                  id: `edge-${relationId++}`,
-                  source: sourceId,
-                  target: targetId,
-                  type: pattern.type,
-                  label: pattern.label,
-                  weight: 1,
-                  properties: {
-                    sourceText: cleanSource,
-                    targetText: cleanTarget,
-                    originalText: matches[0]
-                  }
-                });
-              }
+              relations.push({
+                id: `edge-${relationId++}`,
+                source: sourceId,
+                target: targetId,
+                type: pattern.type,
+                label: pattern.label,
+                weight: 1,
+                properties: {
+                  sourceText: cleanSource,
+                  targetText: cleanTarget
+                }
+              });
             }
           }
         }
       });
-
-      // 处理特殊的并列关系
-      const parallelPattern = /([^，。！？]+)[和与及]([^，。！？]+)/g;
-      let parallelMatch;
-      while ((parallelMatch = parallelPattern.exec(sentence)) !== null) {
-        const [, entity1, entity2] = parallelMatch;
-        const cleanEntity1 = entity1.replace(/[*\s]/g, '').trim();
-        const cleanEntity2 = entity2.replace(/[*\s]/g, '').trim();
-        
-        if (cleanEntity1 && cleanEntity2 && 
-            cleanEntity1 !== cleanEntity2 && 
-            isValidEntity(cleanEntity1) && 
-            isValidEntity(cleanEntity2)) {
-          
-          const entity1Id = generateNodeId(cleanEntity1);
-          const entity2Id = generateNodeId(cleanEntity2);
-          
-          // 添加双向关系
-          const relationKey1 = `${entity1Id}-parallel-${entity2Id}`;
-          const relationKey2 = `${entity2Id}-parallel-${entity1Id}`;
-          
-          if (!relations.some(r => 
-              (r.source === entity1Id && r.target === entity2Id) || 
-              (r.source === entity2Id && r.target === entity1Id))) {
-            relations.push({
-              id: `edge-${relationId++}`,
-              source: entity1Id,
-              target: entity2Id,
-              type: 'related',
-              label: '相关',
-              weight: 0.8,
-              properties: {
-                sourceText: cleanEntity1,
-                targetText: cleanEntity2,
-                originalText: parallelMatch[0]
-              }
-            });
-          }
-        }
-      }
     });
 
-    // 添加详细的调试信息
-    console.log('Extracted relations details:', {
-      totalRelations: relations.length,
-      relationTypes: [...new Set(relations.map(r => r.type))],
-      relations: relations
-    });
-
+    console.log('Extracted relations:', relations);
     return relations;
   } catch (error) {
     console.error('Error in extractRelations:', error);
