@@ -8,7 +8,6 @@ import { faExpand, faCompress, faSearch, faRefresh, faSave, faDownload } from '@
 const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
   const containerRef = useRef(null);
   const sceneRef = useRef(null);
-  const animationFrameRef = useRef(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [selectedNode, setSelectedNode] = useState(null);
   
@@ -49,11 +48,9 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
     );
 
   const initScene = () => {
-    if (!containerRef.current) return null;
-    
     const container = containerRef.current;
-    const width = container.clientWidth || 800;
-    const height = container.clientHeight || 600;
+    const width = container.clientWidth;
+    const height = container.clientHeight;
 
     // 创建场景
     const scene = new THREE.Scene();
@@ -101,13 +98,11 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
     controls.maxDistance = 1000;
 
     // 清除原有内容并添加新的渲染器
-    while (container.firstChild) {
-      container.removeChild(container.firstChild);
-    }
+    container.innerHTML = '';
     container.appendChild(renderer.domElement);
     container.appendChild(labelRenderer.domElement);
 
-    return {
+    sceneRef.current = {
       scene,
       camera,
       renderer,
@@ -116,15 +111,24 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
       width,
       height
     };
+
+    // 添加事件监听
+    window.addEventListener('resize', handleResize);
+
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      renderer.dispose();
+      controls.dispose();
+    };
   };
 
   const handleResize = () => {
-    if (!sceneRef.current || !containerRef.current) return;
+    if (!sceneRef.current) return;
 
+    const { camera, renderer, labelRenderer, width, height } = sceneRef.current;
     const container = containerRef.current;
-    const { camera, renderer, labelRenderer } = sceneRef.current;
-    const newWidth = container.clientWidth || 800;
-    const newHeight = container.clientHeight || 600;
+    const newWidth = container.clientWidth;
+    const newHeight = container.clientHeight;
 
     camera.aspect = newWidth / newHeight;
     camera.updateProjectionMatrix();
@@ -409,23 +413,7 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
   };
 
   useEffect(() => {
-    const scene = initScene();
-    if (scene) {
-      sceneRef.current = scene;
-    }
-
-    return () => {
-      if (sceneRef.current) {
-        const { renderer, labelRenderer, controls } = sceneRef.current;
-        renderer.dispose();
-        labelRenderer.domElement.remove();
-        controls.dispose();
-      }
-      if (animationFrameRef.current) {
-        cancelAnimationFrame(animationFrameRef.current);
-      }
-      window.removeEventListener('resize', handleResize);
-    };
+    initScene();
   }, []);
 
   useEffect(() => {
@@ -435,14 +423,7 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
 
     // 清除现有内容
     while (scene.children.length > 0) {
-      const obj = scene.children[0];
-      if (obj.material) {
-        obj.material.dispose();
-      }
-      if (obj.geometry) {
-        obj.geometry.dispose();
-      }
-      scene.remove(obj);
+      scene.remove(scene.children[0]);
     }
 
     // 如果数据无效，显示空场景
@@ -521,6 +502,7 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
       
       const { scene, camera, renderer, labelRenderer, controls } = sceneRef.current;
       
+      // 更新控制器
       controls.update();
 
       // 更新所有边的位置和标签
@@ -532,23 +514,19 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
 
       // 更新节点发光效果
       scene.traverse((object) => {
-        if (object.material?.uniforms?.viewVector) {
+        if (object.material && object.material.uniforms) {
           object.material.uniforms.viewVector.value = camera.position;
         }
       });
 
+      // 渲染场景
       renderer.render(scene, camera);
       labelRenderer.render(scene, camera);
 
-      animationFrameRef.current = requestAnimationFrame(animate);
+      // 继续动画循环
+      requestAnimationFrame(animate);
     };
     animate();
-
-    return () => {
-      if (animationFrameRef.current) {
-        cancelAnimationFrame(animationFrameRef.current);
-      }
-    };
   }, [data]);
 
   useEffect(() => {
