@@ -56,34 +56,53 @@ export const analyzeSentiment = (content) => {
 
 // 提取关系
 export const extractRelations = (content) => {
-  // 简单的关系提取
   const sentences = content.split(/[。！？.!?]/);
   const nodes = new Set();
   const edges = [];
   const nodeTypes = ['concept', 'entity', 'action', 'property'];
+  
+  // 关键词提取
+  const keywords = content.match(/[一-龥]{2,}/g) || [];
+  keywords.forEach(word => {
+    if (word.length >= 2) {
+      nodes.add(word);
+    }
+  });
 
+  // 基于语义的关系提取
   sentences.forEach(sentence => {
-    const words = sentence.split(/\s+/);
-    words.forEach((word, index) => {
-      if (word.length > 1) {
-        nodes.add(word);
-        if (index > 0) {
+    const words = sentence.match(/[一-龥]{2,}/g) || [];
+    if (words.length >= 2) {
+      // 主题词（通常是句子开头的名词）
+      const subject = words[0];
+      
+      // 对每个主题词，寻找相关的对象词
+      words.slice(1).forEach(word => {
+        if (word !== subject && nodes.has(word)) {
+          // 判断关系类型
+          let relationType = 'relation';
+          if (sentence.includes('是') || sentence.includes('为')) {
+            relationType = 'dependency';
+          } else if (sentence.includes('影响') || sentence.includes('导致')) {
+            relationType = 'influence';
+          }
+          
           edges.push({
-            source: words[index - 1],
+            source: subject,
             target: word,
-            weight: Math.random(),
-            type: ['relation', 'dependency', 'influence'][Math.floor(Math.random() * 3)]
+            weight: 1.0,  // 使用固定权重，避免随机性
+            type: relationType
           });
         }
-      }
-    });
+      });
+    }
   });
 
   return {
     nodes: Array.from(nodes).map(text => ({
       text,
-      weight: Math.random() * 0.5 + 0.5,
-      type: nodeTypes[Math.floor(Math.random() * nodeTypes.length)]
+      weight: 1.0,  // 使用固定权重，避免随机性
+      type: nodeTypes[0]  // 默认使用concept类型
     })),
     edges,
     categories: [

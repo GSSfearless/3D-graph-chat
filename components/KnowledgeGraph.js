@@ -222,10 +222,27 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
   };
 
   const createEdge3D = (source, target) => {
-    const points = [];
-    points.push(source.position);
-    points.push(target.position);
+    // 创建曲线控制点
+    const start = source.position;
+    const end = target.position;
+    const midPoint = new THREE.Vector3(
+      (start.x + end.x) / 2,
+      (start.y + end.y) / 2,
+      (start.z + end.z) / 2
+    );
+    
+    // 添加一些弧度
+    midPoint.y += 20;
 
+    // 创建二次贝塞尔曲线
+    const curve = new THREE.QuadraticBezierCurve3(
+      start,
+      midPoint,
+      end
+    );
+
+    // 生成曲线上的点
+    const points = curve.getPoints(50);
     const geometry = new THREE.BufferGeometry().setFromPoints(points);
     
     // 创建发光材质
@@ -233,7 +250,8 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
       color: theme.edge.color,
       transparent: true,
       opacity: theme.edge.opacity,
-      linewidth: theme.edge.width
+      linewidth: theme.edge.width,
+      blending: THREE.AdditiveBlending
     });
 
     const line = new THREE.Line(geometry, material);
@@ -243,14 +261,32 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
       color: theme.edge.color,
       transparent: true,
       opacity: theme.edge.opacity * 0.5,
-      linewidth: theme.edge.width * 2
+      linewidth: theme.edge.width * 2,
+      blending: THREE.AdditiveBlending
     });
 
     const glowLine = new THREE.Line(geometry, glowMaterial);
+    glowLine.position.z = -0.1; // 稍微偏移，创造深度感
     
     const group = new THREE.Group();
     group.add(line);
     group.add(glowLine);
+
+    // 添加动画效果
+    const points2 = curve.getPoints(50);
+    const geometry2 = new THREE.BufferGeometry().setFromPoints(points2);
+    const dashMaterial = new THREE.LineDashedMaterial({
+      color: theme.edge.highlightColor,
+      dashSize: 3,
+      gapSize: 1,
+      transparent: true,
+      opacity: 0.5,
+      blending: THREE.AdditiveBlending
+    });
+
+    const dashLine = new THREE.Line(geometry2, dashMaterial);
+    dashLine.computeLineDistances();
+    group.add(dashLine);
 
     return group;
   };
