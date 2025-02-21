@@ -55,8 +55,12 @@ export class KnowledgeGraphProcessor {
       const nodeMap = new Map();
       entities.forEach(entity => {
         const nodeId = `node-${entity.text.replace(/[^a-zA-Z0-9]/g, '_')}`;
+        nodeMap.set(nodeId, { ...entity, id: nodeId });
+        // 同时用文本作为键存储
         nodeMap.set(entity.text, { ...entity, id: nodeId });
       });
+
+      console.log('Node map:', Array.from(nodeMap.entries()));
       
       // 5. 构建节点
       const nodes = this.buildNodes(entities, embeddings);
@@ -67,11 +71,21 @@ export class KnowledgeGraphProcessor {
       
       // 6. 构建边（只保留存在对应节点的边）
       const validRelations = relations.filter(relation => {
-        // 从 source 和 target 中提取实体文本
-        const sourceText = relation.source.replace(/^node-/, '').replace(/_/g, '');
-        const targetText = relation.target.replace(/^node-/, '').replace(/_/g, '');
-        return nodeMap.has(sourceText) && nodeMap.has(targetText);
+        console.log('Checking relation:', relation);
+        // 检查源节点和目标节点是否存在
+        const hasSource = nodeMap.has(relation.source);
+        const hasTarget = nodeMap.has(relation.target);
+        
+        if (!hasSource) {
+          console.warn('Source node not found:', relation.source);
+        }
+        if (!hasTarget) {
+          console.warn('Target node not found:', relation.target);
+        }
+        
+        return hasSource && hasTarget;
       });
+
       console.log('Valid relations after filtering:', validRelations);
       
       const edges = this.buildEdges(validRelations);

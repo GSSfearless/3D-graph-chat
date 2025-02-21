@@ -144,13 +144,25 @@ export const extractRelations = async (text) => {
               const sourceId = `node-${cleanSource.replace(/[^a-zA-Z0-9]/g, '_')}`;
               const targetId = `node-${cleanTarget.replace(/[^a-zA-Z0-9]/g, '_')}`;
               
+              // 添加调试日志
+              console.log('Creating relation:', {
+                source: cleanSource,
+                target: cleanTarget,
+                sourceId,
+                targetId
+              });
+              
               relations.push({
                 id: `edge-${relationId++}`,
                 source: sourceId,
                 target: targetId,
                 type: pattern.type,
                 label: pattern.label,
-                weight: 1
+                weight: 1,
+                properties: {
+                  sourceText: cleanSource,
+                  targetText: cleanTarget
+                }
               });
             }
           }
@@ -162,9 +174,20 @@ export const extractRelations = async (text) => {
       let parallelMatch;
       while ((parallelMatch = parallelPattern.exec(sentence)) !== null) {
         const [, entity1, entity2] = parallelMatch;
-        if (isValidEntity(entity1) && isValidEntity(entity2)) {
-          const entity1Id = `node-${entity1.replace(/[^a-zA-Z0-9]/g, '_')}`;
-          const entity2Id = `node-${entity2.replace(/[^a-zA-Z0-9]/g, '_')}`;
+        const cleanEntity1 = entity1.trim();
+        const cleanEntity2 = entity2.trim();
+        
+        if (isValidEntity(cleanEntity1) && isValidEntity(cleanEntity2)) {
+          const entity1Id = `node-${cleanEntity1.replace(/[^a-zA-Z0-9]/g, '_')}`;
+          const entity2Id = `node-${cleanEntity2.replace(/[^a-zA-Z0-9]/g, '_')}`;
+          
+          // 添加调试日志
+          console.log('Creating parallel relation:', {
+            entity1: cleanEntity1,
+            entity2: cleanEntity2,
+            entity1Id,
+            entity2Id
+          });
           
           relations.push({
             id: `edge-${relationId++}`,
@@ -172,7 +195,11 @@ export const extractRelations = async (text) => {
             target: entity2Id,
             type: 'related',
             label: '相关',
-            weight: 0.5
+            weight: 0.5,
+            properties: {
+              sourceText: cleanEntity1,
+              targetText: cleanEntity2
+            }
           });
         }
       }
