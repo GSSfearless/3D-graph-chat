@@ -267,22 +267,55 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
       labelDiv.style.borderRadius = '2px';
       labelDiv.style.whiteSpace = 'nowrap';
       labelDiv.style.pointerEvents = 'none';
+      labelDiv.style.userSelect = 'none';
       
       const label = new CSS2DObject(labelDiv);
-      // 将标签放置在边的中间
-      label.position.set(
-        (source.position.x + target.position.x) / 2,
-        (source.position.y + target.position.y) / 2,
-        (source.position.z + target.position.z) / 2
+      
+      // 计算边的中点和方向
+      const direction = new THREE.Vector3()
+        .subVectors(target.position, source.position)
+        .normalize();
+      
+      // 计算边的中点
+      const midPoint = new THREE.Vector3()
+        .addVectors(source.position, target.position)
+        .multiplyScalar(0.5);
+      
+      // 添加一些随机偏移以避免标签重叠
+      const offset = new THREE.Vector3(
+        (Math.random() - 0.5) * 10,
+        (Math.random() - 0.5) * 10,
+        (Math.random() - 0.5) * 10
       );
+      
+      // 将偏移向量投影到垂直于边的平面上
+      const projectedOffset = new THREE.Vector3()
+        .copy(offset)
+        .sub(direction.multiplyScalar(offset.dot(direction)));
+      
+      // 应用偏移
+      midPoint.add(projectedOffset);
+      
+      // 设置标签位置
+      label.position.copy(midPoint);
+      
+      // 确保标签始终朝向相机
+      label.layers.set(1); // 将标签放在单独的层上
+      
       group.add(label);
     }
 
     // 添加用户数据
-    group.userData = edgeData;
+    group.userData = {
+      ...edgeData,
+      isEdge: true,
+      source: source,
+      target: target
+    };
 
-    // 更新边的位置的方法
+    // 更新边的位置和标签的方法
     group.updatePosition = () => {
+      // 更新线条几何体
       const positions = new Float32Array([
         source.position.x, source.position.y, source.position.z,
         target.position.x, target.position.y, target.position.z
@@ -290,12 +323,37 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
       geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
       geometry.computeBoundingSphere();
       
-      if (group.children[1]) { // 更新标签位置
-        group.children[1].position.set(
-          (source.position.x + target.position.x) / 2,
-          (source.position.y + target.position.y) / 2,
-          (source.position.z + target.position.z) / 2
+      // 更新标签位置
+      if (group.children[1]) {
+        const label = group.children[1];
+        
+        // 重新计算边的方向和中点
+        const direction = new THREE.Vector3()
+          .subVectors(target.position, source.position)
+          .normalize();
+        
+        const midPoint = new THREE.Vector3()
+          .addVectors(source.position, target.position)
+          .multiplyScalar(0.5);
+        
+        // 获取之前计算的随机偏移（存储在userData中）
+        const offset = label.userData.offset || new THREE.Vector3(
+          (Math.random() - 0.5) * 10,
+          (Math.random() - 0.5) * 10,
+          (Math.random() - 0.5) * 10
         );
+        label.userData.offset = offset;
+        
+        // 将偏移向量投影到垂直于边的平面上
+        const projectedOffset = new THREE.Vector3()
+          .copy(offset)
+          .sub(direction.multiplyScalar(offset.dot(direction)));
+        
+        // 应用偏移
+        midPoint.add(projectedOffset);
+        
+        // 更新标签位置
+        label.position.copy(midPoint);
       }
     };
 
@@ -486,7 +544,7 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
       // 更新控制器
       controls.update();
 
-      // 更新所有边的位置
+      // 更新所有边的位置和标签
       scene.children.forEach(child => {
         if (child.userData?.isEdge && child.updatePosition) {
           child.updatePosition();
