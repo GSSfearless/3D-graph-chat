@@ -11,15 +11,15 @@ interface EdgeProps {
 }
 
 const EdgeLine: React.FC<EdgeProps> = ({ edge, sourceNode, targetNode }) => {
-  if (!sourceNode?.position || !targetNode?.position || !edge?.relationship) {
-    return null;
-  }
-
   const { spring } = useSpring({
     spring: 1,
     from: { spring: 0 },
     config: { mass: 5, tension: 400, friction: 50, precision: 0.0001 }
   });
+
+  if (!sourceNode?.position || !targetNode?.position || !edge?.relationship) {
+    return null;
+  }
 
   const sourcePos = sourceNode.position;
   const targetPos = targetNode.position;
