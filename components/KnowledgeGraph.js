@@ -221,26 +221,14 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
     return group;
   };
 
-  const createEdge3D = (source, target, label) => {
-    const group = new THREE.Group();
+  const createEdge3D = (source, target) => {
+    const points = [];
+    points.push(source.position);
+    points.push(target.position);
 
-    // 创建曲线
-    const midPoint = new THREE.Vector3(
-      (source.position.x + target.position.x) / 2,
-      (source.position.y + target.position.y) / 2 + 20, // 向上偏移以创建弧度
-      (source.position.z + target.position.z) / 2
-    );
-
-    const curve = new THREE.QuadraticBezierCurve3(
-      source.position,
-      midPoint,
-      target.position
-    );
-
-    const points = curve.getPoints(50);
     const geometry = new THREE.BufferGeometry().setFromPoints(points);
     
-    // 创建边的材质
+    // 创建发光材质
     const material = new THREE.LineBasicMaterial({
       color: theme.edge.color,
       transparent: true,
@@ -249,48 +237,20 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
     });
 
     const line = new THREE.Line(geometry, material);
-    group.add(line);
-
-    // 创建边标签
-    if (label) {
-      const labelDiv = document.createElement('div');
-      labelDiv.className = 'edge-label';
-      labelDiv.textContent = label;
-      labelDiv.style.background = 'rgba(255, 255, 255, 0.8)';
-      labelDiv.style.padding = '2px 6px';
-      labelDiv.style.borderRadius = '4px';
-      labelDiv.style.fontSize = '12px';
-      labelDiv.style.color = '#666';
-      labelDiv.style.pointerEvents = 'none';
-
-      const edgeLabel = new CSS2DObject(labelDiv);
-      // 将标签放在曲线的中点
-      edgeLabel.position.copy(midPoint);
-      group.add(edgeLabel);
-    }
-
-    // 添加箭头
-    const dir = new THREE.Vector3().subVectors(target.position, source.position).normalize();
-    const arrowLength = 5;
-    const arrowPosition = new THREE.Vector3().copy(target.position).sub(dir.multiplyScalar(arrowLength * 2));
     
-    const arrowGeometry = new THREE.ConeGeometry(2, arrowLength, 8);
-    const arrowMaterial = new THREE.MeshBasicMaterial({ 
+    // 添加发光效果
+    const glowMaterial = new THREE.LineBasicMaterial({
       color: theme.edge.color,
       transparent: true,
-      opacity: theme.edge.opacity 
+      opacity: theme.edge.opacity * 0.5,
+      linewidth: theme.edge.width * 2
     });
+
+    const glowLine = new THREE.Line(geometry, glowMaterial);
     
-    const arrow = new THREE.Mesh(arrowGeometry, arrowMaterial);
-    arrow.position.copy(arrowPosition);
-    
-    // 计算箭头朝向
-    const quaternion = new THREE.Quaternion();
-    const up = new THREE.Vector3(0, 1, 0);
-    quaternion.setFromUnitVectors(up, dir);
-    arrow.setRotationFromQuaternion(quaternion);
-    
-    group.add(arrow);
+    const group = new THREE.Group();
+    group.add(line);
+    group.add(glowLine);
 
     return group;
   };
@@ -355,13 +315,12 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
     // 创建节点
     const nodes3D = new Map();
     data.nodes.forEach((node, index) => {
-      // 跳过纯数字节点，因为它们将作为边的标签
-      if (!isNaN(node.data.label) && node.data.label.trim() !== '') {
-        return;
-      }
       const node3D = createNode3D(node.data, index, data.nodes.length);
       scene.add(node3D);
       nodes3D.set(node.data.id, node3D);
+
+      // 添加点击事件
+      node3D.children[0].callback = () => handleNodeClick(node3D.children[0]);
     });
 
     // 创建边
@@ -369,13 +328,7 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
       const source = nodes3D.get(edge.data.source);
       const target = nodes3D.get(edge.data.target);
       if (source && target) {
-        // 查找是否有对应的数字节点作为边的标签
-        const label = data.nodes.find(n => 
-          !isNaN(n.data.label) && 
-          (n.data.id === edge.data.source || n.data.id === edge.data.target)
-        )?.data.label;
-        
-        const edge3D = createEdge3D(source, target, label);
+        const edge3D = createEdge3D(source, target);
         scene.add(edge3D);
       }
     });
@@ -500,24 +453,6 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
           border-radius: 4px;
           pointer-events: none;
           white-space: nowrap;
-        }
-
-        :global(.edge-label) {
-          color: #666;
-          font-size: 12px;
-          padding: 2px 6px;
-          background: rgba(255, 255, 255, 0.8);
-          border-radius: 4px;
-          pointer-events: none;
-          white-space: nowrap;
-          box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
-          transform: translate(-50%, -50%);
-          transition: all 0.2s ease;
-        }
-
-        :global(.edge-label:hover) {
-          background: rgba(255, 255, 255, 0.95);
-          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
         }
       `}</style>
     </div>

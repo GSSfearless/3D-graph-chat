@@ -221,30 +221,28 @@ export default function Search() {
             </div>
           </div>
 
-          {/* 文本显示区域 - 固定高度和滚动 */}
+          {/* 文本显示区域 - 减小比例但增加高度 */}
           <div className="col-span-3">
-            <div className="bg-white rounded-xl shadow-sm border border-gray-100 h-[calc(100vh-6rem)] overflow-y-auto overflow-x-hidden">
-              <div className="p-4">
-                {useDeepThinking && reasoningProcess && (
-                  <div className="mb-4 p-3 bg-purple-50 rounded-lg border border-purple-200">
-                    <div className="flex items-center space-x-2 mb-2">
-                      <h3 className="text-sm font-semibold text-purple-700">💭 思考过程</h3>
-                    </div>
-                    <div className="prose prose-sm prose-purple max-w-none">
-                      <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                        {reasoningProcess}
-                      </ReactMarkdown>
-                    </div>
+            <div className="bg-white rounded-xl shadow-sm border border-gray-100 h-full overflow-auto p-4">
+              {useDeepThinking && reasoningProcess && (
+                <div className="mb-4 p-3 bg-purple-50 rounded-lg border border-purple-200">
+                  <div className="flex items-center space-x-2 mb-2">
+                    <h3 className="text-sm font-semibold text-purple-700">💭 思考过程</h3>
                   </div>
-                )}
-                {streamedAnswer && (
-                  <div className={useDeepThinking && reasoningProcess ? "mt-4" : ""}>
-                    <ReactMarkdown remarkPlugins={[remarkGfm]} className="prose prose-sm max-w-none">
-                      {streamedAnswer}
+                  <div className="prose prose-sm prose-purple max-w-none">
+                    <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                      {reasoningProcess}
                     </ReactMarkdown>
                   </div>
-                )}
-              </div>
+                </div>
+              )}
+              {streamedAnswer && (
+                <div className={useDeepThinking && reasoningProcess ? "mt-4" : ""}>
+                  <ReactMarkdown remarkPlugins={[remarkGfm]} className="prose prose-sm max-w-none">
+                    {streamedAnswer}
+                  </ReactMarkdown>
+                </div>
+              )}
             </div>
           </div>
         </div>
