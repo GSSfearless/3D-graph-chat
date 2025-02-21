@@ -170,7 +170,7 @@ export default function Search() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 overflow-hidden">
       {/* 顶部导航栏 - 减小高度 */}
       <nav className="bg-white/80 backdrop-blur-sm sticky top-0 z-50 border-b border-gray-100 h-12">
         <div className="max-w-7xl mx-auto px-4">
@@ -222,7 +222,7 @@ export default function Search() {
           </div>
 
           {/* 文本显示区域 - 可滚动 */}
-          <div className="col-span-3 h-[calc(100vh-4rem)] overflow-y-auto">
+          <div className="col-span-3 h-[calc(100vh-4rem)] overflow-y-auto custom-scrollbar">
             <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
               {useDeepThinking && reasoningProcess && (
                 <div className="mb-4 p-3 bg-purple-50 rounded-lg border border-purple-200">
@@ -305,6 +305,24 @@ export default function Search() {
         }
         .hide-scrollbar::-webkit-scrollbar {
           display: none;
+        }
+        
+        .custom-scrollbar::-webkit-scrollbar {
+          width: 6px;
+        }
+        
+        .custom-scrollbar::-webkit-scrollbar-track {
+          background: #f1f1f1;
+          border-radius: 3px;
+        }
+        
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+          background: #c1c1c1;
+          border-radius: 3px;
+        }
+        
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+          background: #a8a8a8;
         }
       `}</style>
     </div>
