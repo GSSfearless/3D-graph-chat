@@ -119,23 +119,25 @@ export class KnowledgeGraphProcessor {
       const nodeId = `node-${label.replace(/[^a-zA-Z0-9]/g, '_')}`;
       
       return {
-        id: nodeId,
-        label: label,
-        text: entity.text || label,
-        type: this.getNodeType(entity),
-        size: this.calculateNodeSize(entity),
-        color: this.colorScheme[this.getNodeType(entity)],
-        embedding: embeddings[index],
-        properties: entity.properties || {},
-        cluster: entity.cluster || 0,
-        x: 0,
-        y: 0
+        data: {
+          id: nodeId,
+          label: label,
+          text: entity.text || label,
+          type: this.getNodeType(entity),
+          size: this.calculateNodeSize(entity),
+          color: this.colorScheme[this.getNodeType(entity)],
+          embedding: embeddings[index],
+          properties: entity.properties || {},
+          cluster: entity.cluster || 0
+        },
+        position: { x: 0, y: 0 }
       };
     }).filter(node => 
       node && 
-      typeof node.id === 'string' && 
-      typeof node.label === 'string' && 
-      node.label.length > 0
+      node.data &&
+      typeof node.data.id === 'string' && 
+      typeof node.data.label === 'string' && 
+      node.data.label.length > 0
     );
   }
 
@@ -144,29 +146,37 @@ export class KnowledgeGraphProcessor {
     console.log('Building edges from relations:', relations);
 
     return relations
-      .filter(relation => relation && typeof relation.source === 'string' && typeof relation.target === 'string')
+      .filter(relation => {
+        // 验证关系对象的有效性
+        const isValid = relation && 
+          typeof relation.source === 'string' && 
+          typeof relation.target === 'string' &&
+          relation.source !== relation.target; // 过滤掉自环
+
+        if (!isValid) {
+          console.warn('Invalid relation:', relation);
+        }
+
+        return isValid;
+      })
       .map((relation, index) => {
         // 确保边的属性都存在
         const edge = {
-          id: relation.id || `edge-${index}`,
-          source: relation.source,
-          target: relation.target,
-          type: relation.type || 'default',
-          label: relation.label || '关联',
-          weight: relation.weight || 1,
-          properties: relation.properties || {}
+          data: {
+            id: relation.id || `edge-${index}`,
+            source: relation.source,
+            target: relation.target,
+            type: relation.type || 'default',
+            label: relation.label || '关联',
+            weight: relation.weight || 1,
+            properties: relation.properties || {}
+          }
         };
 
         // 添加调试日志
         console.log('Created edge:', edge);
         return edge;
-      })
-      .filter(edge => 
-        edge && 
-        typeof edge.source === 'string' && 
-        typeof edge.target === 'string' &&
-        edge.source !== edge.target // 过滤掉自环
-      );
+      });
   }
 
   getNodeType(entity) {
@@ -200,8 +210,12 @@ export class KnowledgeGraphProcessor {
   applyForceLayout(nodes, edges) {
     if (!nodes.length) return { nodes, edges };
 
-    const simulation = d3.forceSimulation(nodes)
-      .force('link', d3.forceLink(edges).id(d => d.id).distance(100))
+    const simulation = d3.forceSimulation(nodes.map(node => ({
+      ...node.data,
+      x: node.position.x,
+      y: node.position.y
+    })))
+      .force('link', d3.forceLink(edges.map(edge => edge.data)).id(d => d.id).distance(100))
       .force('charge', d3.forceManyBody().strength(-300))
       .force('center', d3.forceCenter(0, 0))
       .force('collision', d3.forceCollide().radius(d => d.size * 2))
@@ -211,13 +225,16 @@ export class KnowledgeGraphProcessor {
     // 运行模拟
     for (let i = 0; i < 300; ++i) simulation.tick();
 
-    // 确保所有节点都有坐标
-    nodes.forEach(node => {
-      if (typeof node.x !== 'number') node.x = 0;
-      if (typeof node.y !== 'number') node.y = 0;
-    });
+    // 更新节点位置
+    const updatedNodes = nodes.map((node, i) => ({
+      ...node,
+      position: {
+        x: simulation.nodes()[i].x || 0,
+        y: simulation.nodes()[i].y || 0
+      }
+    }));
 
-    return { nodes, edges };
+    return { nodes: updatedNodes, edges };
   }
 
   applyHierarchicalLayout(nodes, edges) {
