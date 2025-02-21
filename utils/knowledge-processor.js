@@ -92,8 +92,10 @@ export class KnowledgeGraphProcessor {
     return entities.map((entity, index) => {
       // 确保 entity.text 存在，如果不存在则使用一个默认值
       const label = entity.text || entity.label || `Entity ${index + 1}`;
+      const nodeId = entity.id || `node-${label.replace(/[^a-zA-Z0-9]/g, '_')}`;
+      
       return {
-        id: entity.id || `node-${index}`,
+        id: nodeId,
         label: label,
         text: entity.text || label,
         type: this.getNodeType(entity),
@@ -105,12 +107,17 @@ export class KnowledgeGraphProcessor {
         x: 0,
         y: 0
       };
-    }).filter(node => node.label && typeof node.label === 'string');  // 过滤掉没有有效 label 的节点
+    }).filter(node => 
+      node && 
+      typeof node.id === 'string' && 
+      typeof node.label === 'string' && 
+      node.label.length > 0
+    );
   }
 
   buildEdges(relations) {
     return relations
-      .filter(relation => relation && relation.source && relation.target)  // 过滤掉无效的关系
+      .filter(relation => relation && relation.source && relation.target)
       .map((relation, index) => {
         const sourceId = typeof relation.source === 'string' 
           ? `node-${relation.source.replace(/[^a-zA-Z0-9]/g, '_')}`
@@ -127,7 +134,13 @@ export class KnowledgeGraphProcessor {
           weight: relation.weight || 1,
           label: relation.label || ''
         };
-      });
+      })
+      .filter(edge => 
+        edge && 
+        typeof edge.id === 'string' && 
+        typeof edge.source === 'string' && 
+        typeof edge.target === 'string'
+      );
   }
 
   getNodeType(entity) {

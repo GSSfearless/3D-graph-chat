@@ -115,9 +115,28 @@ export default function Search() {
                         if (graphData && Array.isArray(graphData.nodes) && Array.isArray(graphData.edges)) {
                           // 转换数据格式以适配 KnowledgeGraph 组件
                           const formattedData = {
-                            nodes: graphData.nodes.map(node => ({ data: node })),
-                            edges: graphData.edges.map(edge => ({ data: edge }))
+                            nodes: graphData.nodes.map(node => ({
+                              data: {
+                                id: node.id,
+                                label: node.label || node.text,
+                                type: node.type,
+                                size: node.size,
+                                color: node.color,
+                                properties: node.properties || {}
+                              }
+                            })),
+                            edges: graphData.edges.map(edge => ({
+                              data: {
+                                id: edge.id,
+                                source: edge.source,
+                                target: edge.target,
+                                label: edge.label,
+                                type: edge.type,
+                                weight: edge.weight
+                              }
+                            }))
                           };
+                          console.log('Formatted graph data:', formattedData);
                           setGraphData(formattedData);
                         } else {
                           console.warn('Invalid graph data structure:', graphData);
@@ -125,6 +144,7 @@ export default function Search() {
                         }
                       } catch (error) {
                         console.error('生成知识图谱失败:', error);
+                        setGraphData(null);
                       }
                     }
                     break;
@@ -136,9 +156,39 @@ export default function Search() {
                       try {
                         // 处理完整回答，生成最终知识图谱
                         const finalGraphData = await knowledgeProcessor.current.processText(completeAnswer);
-                        setGraphData(finalGraphData);
+                        if (finalGraphData && Array.isArray(finalGraphData.nodes) && Array.isArray(finalGraphData.edges)) {
+                          // 转换数据格式以适配 KnowledgeGraph 组件
+                          const formattedData = {
+                            nodes: finalGraphData.nodes.map(node => ({
+                              data: {
+                                id: node.id,
+                                label: node.label || node.text,
+                                type: node.type,
+                                size: node.size,
+                                color: node.color,
+                                properties: node.properties || {}
+                              }
+                            })),
+                            edges: finalGraphData.edges.map(edge => ({
+                              data: {
+                                id: edge.id,
+                                source: edge.source,
+                                target: edge.target,
+                                label: edge.label,
+                                type: edge.type,
+                                weight: edge.weight
+                              }
+                            }))
+                          };
+                          console.log('Formatted final graph data:', formattedData);
+                          setGraphData(formattedData);
+                        } else {
+                          console.warn('Invalid final graph data structure:', finalGraphData);
+                          setGraphData(null);
+                        }
                       } catch (error) {
                         console.error('生成最终知识图谱失败:', error);
+                        setGraphData(null);
                       }
                     }
                     break;
