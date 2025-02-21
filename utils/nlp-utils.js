@@ -74,6 +74,7 @@ export const extractEntities = async (text) => {
       matches.forEach(match => {
         const cleanMatch = match.replace(/[*]/g, '').trim();
         if (isValidEntity(cleanMatch) && !entities.has(cleanMatch)) {
+          const importance = calculateImportance(cleanMatch, text);
           const entity = {
             id: `node-${cleanMatch.replace(/[^a-zA-Z0-9]/g, '_')}`,
             text: cleanMatch,
@@ -81,8 +82,13 @@ export const extractEntities = async (text) => {
             isEvent: hasEventIndicators(cleanMatch),
             isAttribute: hasAttributeIndicators(cleanMatch),
             isConcept: hasConceptIndicators(cleanMatch),
-            importance: calculateImportance(cleanMatch, text),
-            properties: {}
+            importance: importance,
+            // 根据重要性计算节点大小
+            size: 10 + (importance * 20), // 节点大小从10到30不等
+            properties: {
+              frequency: (text.match(new RegExp(cleanMatch, 'g')) || []).length,
+              importance: importance
+            }
           };
           entities.set(cleanMatch, entity);
         }
@@ -90,7 +96,11 @@ export const extractEntities = async (text) => {
     });
 
     const result = Array.from(entities.values());
-    console.log('Extracted entities:', result); // 添加日志
+    console.log('Extracted entities with sizes:', result.map(e => ({
+      text: e.text,
+      importance: e.importance,
+      size: e.size
+    })));
     return result;
   } catch (error) {
     console.error('Error in extractEntities:', error);
@@ -107,28 +117,48 @@ export const extractRelations = async (text) => {
 
     // 定义更丰富的关系模式
     const patterns = [
+      // 基本关系
       { regex: /([^，。！？]+?)是([^，。！？]+)/g, type: 'is-a', label: '是' },
       { regex: /([^，。！？]+?)包含([^，。！？]+)/g, type: 'contains', label: '包含' },
       { regex: /([^，。！？]+?)属于([^，。！？]+)/g, type: 'belongs-to', label: '属于' },
       { regex: /([^，。！？]+?)需要([^，。！？]+)/g, type: 'requires', label: '需要' },
+      
+      // 动作关系
       { regex: /([^，。！？]+?)通过([^，。！？]+)/g, type: 'through', label: '通过' },
       { regex: /([^，。！？]+?)使用([^，。！？]+)/g, type: 'uses', label: '使用' },
       { regex: /([^，。！？]+?)进行([^，。！？]+)/g, type: 'performs', label: '进行' },
       { regex: /([^，。！？]+?)提供([^，。！？]+)/g, type: 'provides', label: '提供' },
       { regex: /([^，。！？]+?)获得([^，。！？]+)/g, type: 'obtains', label: '获得' },
       { regex: /([^，。！？]+?)参与([^，。！？]+)/g, type: 'participates', label: '参与' },
+      
+      // 认知关系
       { regex: /([^，。！？]+?)了解([^，。！？]+)/g, type: 'understands', label: '了解' },
       { regex: /([^，。！？]+?)准备([^，。！？]+)/g, type: 'prepares', label: '准备' },
       { regex: /([^，。！？]+?)掌握([^，。！？]+)/g, type: 'masters', label: '掌握' },
-      // 添加更多常见的中文关系模式
+      { regex: /([^，。！？]+?)学习([^，。！？]+)/g, type: 'learns', label: '学习' },
+      { regex: /([^，。！？]+?)研究([^，。！？]+)/g, type: 'studies', label: '研究' },
+      
+      // 修饰关系
+      { regex: /([^，。！？]+?)的([^，。！？]+)/g, type: 'of', label: '的' },
       { regex: /([^，。！？]+?)对([^，。！？]+)/g, type: 'towards', label: '对' },
       { regex: /([^，。！？]+?)与([^，。！？]+)/g, type: 'with', label: '与' },
       { regex: /([^，。！？]+?)和([^，。！？]+)/g, type: 'and', label: '和' },
       { regex: /([^，。！？]+?)在([^，。！？]+)/g, type: 'in', label: '在' },
       { regex: /([^，。！？]+?)为([^，。！？]+)/g, type: 'for', label: '为' },
-      { regex: /([^，。！？]+?)由([^，。！？]+)/g, type: 'by', label: '由' }
+      { regex: /([^，。！？]+?)由([^，。！？]+)/g, type: 'by', label: '由' },
+      
+      // 因果关系
+      { regex: /([^，。！？]+?)导致([^，。！？]+)/g, type: 'causes', label: '导致' },
+      { regex: /([^，。！？]+?)引起([^，。！？]+)/g, type: 'triggers', label: '引起' },
+      { regex: /([^，。！？]+?)促进([^，。！？]+)/g, type: 'promotes', label: '促进' },
+      
+      // 时序关系
+      { regex: /([^，。！？]+?)之前([^，。！？]+)/g, type: 'before', label: '之前' },
+      { regex: /([^，。！？]+?)之后([^，。！？]+)/g, type: 'after', label: '之后' },
+      { regex: /([^，。！？]+?)期间([^，。！？]+)/g, type: 'during', label: '期间' }
     ];
 
+    // 处理每个句子
     sentences.forEach(sentence => {
       // 对每个句子应用所有模式
       patterns.forEach(pattern => {
@@ -136,6 +166,7 @@ export const extractRelations = async (text) => {
         while ((matches = pattern.regex.exec(sentence)) !== null) {
           if (matches && matches.length >= 3) {
             const [, source, target] = matches;
+            // 清理和验证实体
             const cleanSource = source.replace(/[*]/g, '').trim();
             const cleanTarget = target.replace(/[*]/g, '').trim();
             
@@ -149,19 +180,23 @@ export const extractRelations = async (text) => {
                 source: cleanSource,
                 target: cleanTarget,
                 sourceId,
-                targetId
+                targetId,
+                type: pattern.type,
+                label: pattern.label
               });
               
+              // 创建关系
               relations.push({
                 id: `edge-${relationId++}`,
                 source: sourceId,
                 target: targetId,
                 type: pattern.type,
                 label: pattern.label,
-                weight: 1,
+                weight: calculateRelationWeight(pattern.type),
                 properties: {
                   sourceText: cleanSource,
-                  targetText: cleanTarget
+                  targetText: cleanTarget,
+                  context: sentence
                 }
               });
             }
@@ -170,39 +205,40 @@ export const extractRelations = async (text) => {
       });
 
       // 处理并列关系
-      const parallelPattern = /([^，。！？]+)[和与]([^，。！？]+)/g;
-      let parallelMatch;
-      while ((parallelMatch = parallelPattern.exec(sentence)) !== null) {
-        const [, entity1, entity2] = parallelMatch;
-        const cleanEntity1 = entity1.trim();
-        const cleanEntity2 = entity2.trim();
-        
-        if (isValidEntity(cleanEntity1) && isValidEntity(cleanEntity2)) {
-          const entity1Id = `node-${cleanEntity1.replace(/[^a-zA-Z0-9]/g, '_')}`;
-          const entity2Id = `node-${cleanEntity2.replace(/[^a-zA-Z0-9]/g, '_')}`;
+      const parallelPatterns = [
+        { regex: /([^，。！？]+)[和与及]([^，。！？]+)/g, type: 'parallel', label: '相关' },
+        { regex: /([^，。！？]+)[、]([^，。！？]+)/g, type: 'parallel', label: '相关' }
+      ];
+
+      parallelPatterns.forEach(pattern => {
+        let parallelMatch;
+        while ((parallelMatch = pattern.regex.exec(sentence)) !== null) {
+          const [, entity1, entity2] = parallelMatch;
+          const cleanEntity1 = entity1.trim();
+          const cleanEntity2 = entity2.trim();
           
-          // 添加调试日志
-          console.log('Creating parallel relation:', {
-            entity1: cleanEntity1,
-            entity2: cleanEntity2,
-            entity1Id,
-            entity2Id
-          });
-          
-          relations.push({
-            id: `edge-${relationId++}`,
-            source: entity1Id,
-            target: entity2Id,
-            type: 'related',
-            label: '相关',
-            weight: 0.5,
-            properties: {
-              sourceText: cleanEntity1,
-              targetText: cleanEntity2
-            }
-          });
+          if (isValidEntity(cleanEntity1) && isValidEntity(cleanEntity2)) {
+            const entity1Id = `node-${cleanEntity1.replace(/[^a-zA-Z0-9]/g, '_')}`;
+            const entity2Id = `node-${cleanEntity2.replace(/[^a-zA-Z0-9]/g, '_')}`;
+            
+            // 添加双向关系
+            relations.push({
+              id: `edge-${relationId++}`,
+              source: entity1Id,
+              target: entity2Id,
+              type: 'related',
+              label: '相关',
+              weight: 0.8,
+              properties: {
+                sourceText: cleanEntity1,
+                targetText: cleanEntity2,
+                context: sentence,
+                bidirectional: true
+              }
+            });
+          }
         }
-      }
+      });
     });
 
     // 添加调试日志
@@ -212,6 +248,42 @@ export const extractRelations = async (text) => {
     console.error('Error in extractRelations:', error);
     return [];
   }
+};
+
+// 计算关系权重
+const calculateRelationWeight = (type) => {
+  const weights = {
+    'is-a': 1.0,
+    'contains': 0.9,
+    'belongs-to': 0.9,
+    'requires': 0.8,
+    'through': 0.7,
+    'uses': 0.7,
+    'performs': 0.7,
+    'provides': 0.7,
+    'obtains': 0.7,
+    'participates': 0.7,
+    'understands': 0.6,
+    'prepares': 0.6,
+    'masters': 0.6,
+    'learns': 0.6,
+    'studies': 0.6,
+    'of': 0.5,
+    'towards': 0.5,
+    'with': 0.5,
+    'and': 0.5,
+    'in': 0.5,
+    'for': 0.5,
+    'by': 0.5,
+    'causes': 0.8,
+    'triggers': 0.8,
+    'promotes': 0.7,
+    'before': 0.6,
+    'after': 0.6,
+    'during': 0.6,
+    'default': 0.5
+  };
+  return weights[type] || weights.default;
 };
 
 // 计算向量嵌入
@@ -289,8 +361,47 @@ const calculateImportance = (entity, fullText) => {
     // 安全地创建正则表达式
     const escapedEntity = entity.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
     const regex = new RegExp(escapedEntity, 'g');
+    
+    // 计算实体在文本中的出现频率
     const frequency = (fullText.match(regex) || []).length;
-    return Math.min(1, 0.3 + (frequency * 0.1));
+    
+    // 计算实体的长度权重（较长的实体可能更重要）
+    const lengthWeight = Math.min(1, entity.length / 10);
+    
+    // 计算实体的位置权重（句子开头的实体可能更重要）
+    const sentences = fullText.split(/[。！？.!?]/);
+    let positionWeight = 0;
+    sentences.forEach(sentence => {
+      if (sentence.trim().startsWith(entity)) {
+        positionWeight += 0.2;
+      }
+    });
+    
+    // 特殊标记的权重（如果实体是事件、概念或属性）
+    let typeWeight = 0;
+    if (hasEventIndicators(entity)) typeWeight += 0.3;
+    if (hasConceptIndicators(entity)) typeWeight += 0.2;
+    if (hasAttributeIndicators(entity)) typeWeight += 0.1;
+    
+    // 综合计算重要性分数
+    const importance = Math.min(1, 
+      0.3 + // 基础分数
+      (frequency * 0.15) + // 频率权重
+      (lengthWeight * 0.2) + // 长度权重
+      (positionWeight * 0.15) + // 位置权重
+      (typeWeight * 0.2) // 类型权重
+    );
+    
+    console.log('Entity importance calculation:', {
+      entity,
+      frequency,
+      lengthWeight,
+      positionWeight,
+      typeWeight,
+      finalImportance: importance
+    });
+    
+    return importance;
   } catch (error) {
     console.error('计算重要性时出错:', error);
     return 0.3; // 返回默认重要性
