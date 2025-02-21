@@ -1,8 +1,5 @@
-import { NLPProcessor } from './nlp-processor';
-
 export class KnowledgeProcessor {
   constructor() {
-    this.nlp = new NLPProcessor();
     this.nodeTypes = {
       CONCEPT: 'concept',
       ENTITY: 'entity',
@@ -22,63 +19,9 @@ export class KnowledgeProcessor {
   }
 
   // 处理搜索响应，生成知识图谱数据
-  processSearchResponse(text) {
-    // 1. 使用NLP提取关键信息
-    const { entities, relations } = this.nlp.extractKnowledge(text);
-    
-    // 2. 构建节点
-    const nodes = entities.map((entity, index) => ({
-      id: `node-${index}`,
-      data: {
-        id: `node-${index}`,
-        label: entity.text,
-        type: entity.type,
-        weight: entity.importance || 1,
-        // 使用球面坐标系计算初始位置
-        position: this.calculateSpherePosition(index, entities.length)
-      }
-    }));
-
-    // 3. 构建边
-    const edges = relations.map((relation, index) => ({
-      id: `edge-${index}`,
-      data: {
-        id: `edge-${index}`,
-        source: `node-${relation.source}`,
-        target: `node-${relation.target}`,
-        label: relation.type,
-        weight: relation.strength || 1
-      }
-    }));
-
-    // 4. 返回图谱数据
-    return {
-      nodes,
-      edges,
-      // 添加布局配置
-      layout: {
-        type: '3d-force',
-        options: {
-          strength: -1000,  // 节点间斥力
-          distance: 200,    // 理想边长
-          decay: 0.9,      // 力导向衰减系数
-          gravity: 0.1     // 向心力
-        }
-      }
-    };
-  }
-
-  // 计算球面上的均匀分布位置
-  calculateSpherePosition(index, total) {
-    const phi = Math.acos(-1 + (2 * index) / total);
-    const theta = Math.sqrt(total * Math.PI) * phi;
-    const radius = 200;
-
-    return {
-      x: radius * Math.cos(theta) * Math.sin(phi),
-      y: radius * Math.sin(theta) * Math.sin(phi),
-      z: radius * Math.cos(phi)
-    };
+  processSearchResponse(content) {
+    const { concepts, entities, relations } = this.extractKnowledgeElements(content);
+    return this.buildGraphData(concepts, entities, relations);
   }
 
   // 从文本中提取知识元素
