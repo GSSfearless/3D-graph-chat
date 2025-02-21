@@ -44,8 +44,7 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
       node && 
       node.data && 
       typeof node.data.id === 'string' && 
-      typeof node.data.label === 'string' &&
-      node.data.label.length > 0
+      typeof node.data.label === 'string'
     );
 
   const initScene = () => {
