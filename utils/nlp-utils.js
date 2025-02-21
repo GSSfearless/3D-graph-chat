@@ -74,9 +74,8 @@ export const extractEntities = async (text) => {
       matches.forEach(match => {
         const cleanMatch = match.replace(/[*]/g, '').trim();
         if (isValidEntity(cleanMatch) && !entities.has(cleanMatch)) {
-          // 修改ID生成方式，使用更简单的格式
           const entity = {
-            id: `node_${entityId++}`,  // 使用数字ID
+            id: `node-${cleanMatch.replace(/[^a-zA-Z0-9]/g, '_')}`,
             text: cleanMatch,
             label: cleanMatch,
             isEvent: hasEventIndicators(cleanMatch),
@@ -91,7 +90,7 @@ export const extractEntities = async (text) => {
     });
 
     const result = Array.from(entities.values());
-    console.log('Extracted entities:', result);
+    console.log('Extracted entities:', result); // 添加日志
     return result;
   } catch (error) {
     console.error('Error in extractEntities:', error);
@@ -105,13 +104,6 @@ export const extractRelations = async (text) => {
     const relations = [];
     const sentences = text.split(/[。！？.!?]/);
     let relationId = 0;
-    
-    // 创建实体到ID的映射
-    const entityToId = new Map();
-    const entities = await extractEntities(text);
-    entities.forEach(entity => {
-      entityToId.set(entity.text, entity.id);
-    });
 
     // 定义更丰富的关系模式
     const patterns = [
@@ -148,24 +140,30 @@ export const extractRelations = async (text) => {
             const cleanTarget = target.replace(/[*]/g, '').trim();
             
             if (isValidEntity(cleanSource) && isValidEntity(cleanTarget)) {
-              // 使用实体映射获取正确的ID
-              const sourceId = entityToId.get(cleanSource);
-              const targetId = entityToId.get(cleanTarget);
+              // 为源节点和目标节点创建规范化的ID
+              const sourceId = `node-${cleanSource.replace(/[^a-zA-Z0-9]/g, '_')}`;
+              const targetId = `node-${cleanTarget.replace(/[^a-zA-Z0-9]/g, '_')}`;
               
-              if (sourceId && targetId) {
-                relations.push({
-                  id: `edge_${relationId++}`,
-                  source: sourceId,
-                  target: targetId,
-                  type: pattern.type,
-                  label: pattern.label,
-                  weight: 1,
-                  properties: {
-                    sourceText: cleanSource,
-                    targetText: cleanTarget
-                  }
-                });
-              }
+              // 添加调试日志
+              console.log('Creating relation:', {
+                source: cleanSource,
+                target: cleanTarget,
+                sourceId,
+                targetId
+              });
+              
+              relations.push({
+                id: `edge-${relationId++}`,
+                source: sourceId,
+                target: targetId,
+                type: pattern.type,
+                label: pattern.label,
+                weight: 1,
+                properties: {
+                  sourceText: cleanSource,
+                  targetText: cleanTarget
+                }
+              });
             }
           }
         }
@@ -180,27 +178,34 @@ export const extractRelations = async (text) => {
         const cleanEntity2 = entity2.trim();
         
         if (isValidEntity(cleanEntity1) && isValidEntity(cleanEntity2)) {
-          const entity1Id = entityToId.get(cleanEntity1);
-          const entity2Id = entityToId.get(cleanEntity2);
+          const entity1Id = `node-${cleanEntity1.replace(/[^a-zA-Z0-9]/g, '_')}`;
+          const entity2Id = `node-${cleanEntity2.replace(/[^a-zA-Z0-9]/g, '_')}`;
           
-          if (entity1Id && entity2Id) {
-            relations.push({
-              id: `edge_${relationId++}`,
-              source: entity1Id,
-              target: entity2Id,
-              type: 'related',
-              label: '相关',
-              weight: 0.5,
-              properties: {
-                sourceText: cleanEntity1,
-                targetText: cleanEntity2
-              }
-            });
-          }
+          // 添加调试日志
+          console.log('Creating parallel relation:', {
+            entity1: cleanEntity1,
+            entity2: cleanEntity2,
+            entity1Id,
+            entity2Id
+          });
+          
+          relations.push({
+            id: `edge-${relationId++}`,
+            source: entity1Id,
+            target: entity2Id,
+            type: 'related',
+            label: '相关',
+            weight: 0.5,
+            properties: {
+              sourceText: cleanEntity1,
+              targetText: cleanEntity2
+            }
+          });
         }
       }
     });
 
+    // 添加调试日志
     console.log('Extracted relations:', relations);
     return relations;
   } catch (error) {
