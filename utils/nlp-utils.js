@@ -74,8 +74,10 @@ export const extractEntities = async (text) => {
       matches.forEach(match => {
         const cleanMatch = match.replace(/[*]/g, '').trim();
         if (isValidEntity(cleanMatch) && !entities.has(cleanMatch)) {
+          // 使用实体文本的哈希值作为ID的一部分
+          const hash = hashString(cleanMatch);
           const entity = {
-            id: `node-${cleanMatch.replace(/[^a-zA-Z0-9]/g, '_')}`,
+            id: `node-${hash}`,
             text: cleanMatch,
             label: cleanMatch,
             isEvent: hasEventIndicators(cleanMatch),
@@ -140,9 +142,11 @@ export const extractRelations = async (text) => {
             const cleanTarget = target.replace(/[*]/g, '').trim();
             
             if (isValidEntity(cleanSource) && isValidEntity(cleanTarget)) {
-              // 为源节点和目标节点创建规范化的ID
-              const sourceId = `node-${cleanSource.replace(/[^a-zA-Z0-9]/g, '_')}`;
-              const targetId = `node-${cleanTarget.replace(/[^a-zA-Z0-9]/g, '_')}`;
+              // 使用实体文本的哈希值作为ID的一部分
+              const sourceHash = hashString(cleanSource);
+              const targetHash = hashString(cleanTarget);
+              const sourceId = `node-${sourceHash}`;
+              const targetId = `node-${targetHash}`;
               
               // 添加调试日志
               console.log('Creating relation:', {
@@ -183,8 +187,10 @@ export const extractRelations = async (text) => {
         const cleanEntity2 = entity2.trim();
         
         if (isValidEntity(cleanEntity1) && isValidEntity(cleanEntity2)) {
-          const entity1Id = `node-${cleanEntity1.replace(/[^a-zA-Z0-9]/g, '_')}`;
-          const entity2Id = `node-${cleanEntity2.replace(/[^a-zA-Z0-9]/g, '_')}`;
+          const entity1Hash = hashString(cleanEntity1);
+          const entity2Hash = hashString(cleanEntity2);
+          const entity1Id = `node-${entity1Hash}`;
+          const entity2Id = `node-${entity2Hash}`;
           
           // 添加调试日志
           console.log('Creating parallel relation:', {
@@ -305,4 +311,16 @@ const calculateImportance = (entity, fullText) => {
     console.error('计算重要性时出错:', error);
     return 0.3; // 返回默认重要性
   }
+};
+
+// 添加哈希函数
+const hashString = (str) => {
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    const char = str.charCodeAt(i);
+    hash = ((hash << 5) - hash) + char;
+    hash = hash & hash; // Convert to 32-bit integer
+  }
+  // 确保哈希值为正数并且不超过一定长度
+  return Math.abs(hash).toString(36).substring(0, 8);
 }; 
