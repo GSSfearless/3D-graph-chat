@@ -319,21 +319,35 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
       }
     });
     
+    console.log('Available nodes in renderEdges:', Array.from(nodeMap.keys()));
+    
     // 创建新的边
     data.edges.forEach(edge => {
-      const edgeData = edge.data;
-      if (!edgeData || !edgeData.source || !edgeData.target) {
-        console.warn('Invalid edge data:', edge);
+      const edgeData = edge.data || edge;
+      const sourceId = edgeData.source?.id || edgeData.source;
+      const targetId = edgeData.target?.id || edgeData.target;
+      
+      if (!sourceId || !targetId) {
+        console.warn('Invalid edge data - missing source or target:', edge);
         return;
       }
-      const source = nodeMap.get(edgeData.source);
-      const target = nodeMap.get(edgeData.target);
+      
+      const source = nodeMap.get(sourceId);
+      const target = nodeMap.get(targetId);
+      
       if (source && target) {
         const edge3D = createEdge3D(source, target, edgeData);
         edge3D.userData.isEdge = true;
         scene.add(edge3D);
       } else {
-        console.warn('Could not find source or target node for edge:', edge);
+        console.warn('Could not find source or target node for edge:', {
+          edge: edge,
+          sourceFound: !!source,
+          targetFound: !!target,
+          sourceId,
+          targetId,
+          availableNodes: Array.from(nodeMap.keys())
+        });
       }
     });
   };
@@ -425,18 +439,38 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
 
       // 创建边
       data.edges.forEach(edge => {
-        const edgeData = edge.data;
-        if (!edgeData || !edgeData.source || !edgeData.target) {
-          console.warn('Invalid edge data:', edge);
+        console.log('Edge data structure:', edge); // 添加调试日志
+        const edgeData = edge.data || edge;
+        console.log('Source:', edgeData.source);
+        console.log('Target:', edgeData.target);
+        
+        // 获取源节点和目标节点的ID
+        const sourceId = edgeData.source?.id || edgeData.source;
+        const targetId = edgeData.target?.id || edgeData.target;
+        
+        console.log('Looking for nodes with IDs:', sourceId, targetId);
+        console.log('Available node IDs:', Array.from(nodes3D.keys()));
+        
+        if (!sourceId || !targetId) {
+          console.warn('Invalid edge data - missing source or target:', edge);
           return;
         }
-        const source = nodes3D.get(edgeData.source);
-        const target = nodes3D.get(edgeData.target);
+        
+        const source = nodes3D.get(sourceId);
+        const target = nodes3D.get(targetId);
+        
         if (source && target) {
           const edge3D = createEdge3D(source, target, edgeData);
+          edge3D.userData.isEdge = true;
           scene.add(edge3D);
         } else {
-          console.warn('Could not find source or target node for edge:', edge);
+          console.warn('Could not find source or target node for edge:', {
+            edge: edge,
+            sourceFound: !!source,
+            targetFound: !!target,
+            sourceId,
+            targetId
+          });
         }
       });
     } catch (error) {
