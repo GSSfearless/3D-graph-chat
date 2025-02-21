@@ -2,6 +2,7 @@ import { faArrowRight, faDiscord } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import dynamic from 'next/dynamic';
 import { useRouter } from 'next/router';
+import Link from 'next/link';
 import { useState, useCallback, useEffect, useRef } from 'react';
 import 'tailwindcss/tailwind.css';
 import '../styles/globals.css';
@@ -176,9 +177,9 @@ export default function Search() {
         <div className="max-w-7xl mx-auto px-4">
           <div className="flex justify-between h-12">
             <div className="flex items-center">
-              <a href="/" className="flex items-center space-x-2">
+              <Link href="/" className="flex items-center space-x-2">
                 <span className="text-xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 text-transparent bg-clip-text">Think Graph</span>
-              </a>
+              </Link>
             </div>
             <div className="flex items-center space-x-6">
               <a href="https://discord.gg/your-discord" 

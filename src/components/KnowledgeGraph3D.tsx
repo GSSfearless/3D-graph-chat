@@ -94,19 +94,18 @@ const EdgeLine: React.FC<EdgeLineProps> = ({
 }) => {
   const sourceNode = nodes.find(n => n.id === edge.source);
   const targetNode = nodes.find(n => n.id === edge.target);
+  const edgeStyle = theme.edges[edge.relationship.type];
   
+  const { opacity } = useSpring({
+    opacity: isHighlighted ? edgeStyle.opacity : edgeStyle.opacity * 0.5,
+    config: { tension: 300, friction: 10 }
+  });
+
   if (!sourceNode?.position || !targetNode?.position) return null;
   
   const curve = generateCurvedPath(sourceNode.position, targetNode.position);
   const points = curve.getPoints(50);
   const geometry = new THREE.BufferGeometry().setFromPoints(points);
-  
-  const edgeStyle = theme.edges[edge.relationship.type];
-
-  const { opacity } = useSpring({
-    opacity: isHighlighted ? edgeStyle.opacity : edgeStyle.opacity * 0.5,
-    config: { tension: 300, friction: 10 }
-  });
   
   return (
     <primitive object={new THREE.Line(
