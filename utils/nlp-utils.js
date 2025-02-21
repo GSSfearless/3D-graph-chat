@@ -150,6 +150,24 @@ const calculatePositionWeight = (term, text) => {
   }
 };
 
+// 修改实体提取模式
+const entityPatterns = {
+  // 核心概念（2-6个字的名词）
+  CONCEPT: /(?:[一-龥]{2,6}(?:概念|理论|方法|系统|原理|思想|观点|主义))|(?:(?:概念|理论|方法|系统|原理)(?:[一-龥]{2,6}))/g,
+  
+  // 动作（2-8个字的动词短语）
+  ACTION: /[一-龥]{2,4}(?:进行|开展|使用|需要|获得|完成)[一-龥]{0,4}/g,
+  
+  // 状态（2-6个字的状态描述）
+  STATE: /[一-龥]{2,6}(?:状态|情况|阶段|过程|水平)/g,
+  
+  // 属性（2-6个字的属性描述）
+  ATTRIBUTE: /(?:[一-龥]{2,6}(?:的|之|与))?[一-龥]{2,6}(?:特征|特点|性质|程度|等级|品质)/g,
+  
+  // 关键短语（3-8个字的重要短语）
+  KEY_PHRASE: /[一-龥]{3,8}(?:是|的|之|与)[一-龥]{2,6}/g
+};
+
 // 改进实体提取函数
 export const extractEntities = async (text) => {
   try {
@@ -161,40 +179,49 @@ export const extractEntities = async (text) => {
     const sentences = text.split(/[。！？.!?]/);
     const entities = new Map();
 
-    // 定义实体提取模式
-    const entityPatterns = [
-      // 名词短语
-      /(?:[一-龥]+的)?[一-龥]{2,6}/g,
-      // 动词短语
-      /[一-龥]{1,3}[了过着][一-龥]{2,6}/g,
-      // 形容词短语
-      /[一-龥]{1,2}的[一-龥]{2,6}/g
-    ];
-
+    // 处理每个句子
     sentences.forEach(sentence => {
-      entityPatterns.forEach(pattern => {
+      // 对每种模式进行匹配
+      Object.entries(entityPatterns).forEach(([type, pattern]) => {
         const matches = sentence.match(pattern) || [];
         matches.forEach(match => {
-          const cleanMatch = match.replace(/[*\s]/g, '').trim();
+          // 清理和规范化文本
+          const cleanMatch = match.replace(/[*\s]/g, '').trim()
+            .replace(/^[的之与]|[的之与]$/, '')  // 移除首尾的虚词
+            .replace(/[，。、；：！？]+/g, '');   // 移除标点符号
+          
           if (isValidEntity(cleanMatch) && !entities.has(cleanMatch)) {
-            const nodeId = generateNodeId(cleanMatch);
+            // 提取核心短语
+            const corePhrase = extractCorePhrase(cleanMatch);
+            const nodeId = generateNodeId(corePhrase);
+            
             const entity = {
               id: nodeId,
               text: cleanMatch,
-              label: cleanMatch,
-              isEvent: hasEventIndicators(cleanMatch),
-              isAttribute: hasAttributeIndicators(cleanMatch),
-              isConcept: hasConceptIndicators(cleanMatch),
-              size: calculateNodeSize({ text: cleanMatch, isEvent: hasEventIndicators(cleanMatch), 
-                                     isConcept: hasConceptIndicators(cleanMatch), 
-                                     isAttribute: hasAttributeIndicators(cleanMatch) }, text),
-              properties: {}
+              label: corePhrase,
+              type: type.toLowerCase(),
+              isEvent: type === 'ACTION',
+              isAttribute: type === 'ATTRIBUTE',
+              isConcept: type === 'CONCEPT',
+              size: calculateNodeSize({ 
+                text: corePhrase,
+                type: type.toLowerCase(),
+                isEvent: type === 'ACTION',
+                isAttribute: type === 'ATTRIBUTE',
+                isConcept: type === 'CONCEPT'
+              }, text),
+              properties: {
+                originalText: cleanMatch,
+                corePhrase: corePhrase,
+                entityType: type
+              }
             };
             
+            // 存储实体的多种形式
             entities.set(cleanMatch, entity);
             entities.set(nodeId, entity);
-            const normalizedText = cleanMatch.toLowerCase().replace(/[的地得了过着]/g, '');
-            entities.set(normalizedText, entity);
+            entities.set(corePhrase, entity);
+            entities.set(corePhrase.toLowerCase(), entity);
           }
         });
       });
@@ -202,11 +229,15 @@ export const extractEntities = async (text) => {
 
     const result = Array.from(entities.values());
     const uniqueResult = Array.from(new Map(result.map(item => [item.id, item])).values());
-    console.log('Extracted entities with sizes:', uniqueResult.map(e => ({
+    
+    console.log('Extracted entities:', uniqueResult.map(e => ({
       text: e.text,
-      size: e.size,
-      type: e.isEvent ? 'event' : e.isConcept ? 'concept' : e.isAttribute ? 'attribute' : 'entity'
+      label: e.label,
+      id: e.id,
+      type: e.type,
+      size: e.size
     })));
+    
     return uniqueResult;
   } catch (error) {
     console.error('Error in extractEntities:', error);
@@ -214,27 +245,49 @@ export const extractEntities = async (text) => {
   }
 };
 
-// 改进关系提取函数中的实体验证
-const isValidEntityPair = (source, target) => {
-  // 检查源实体和目标实体是否有效
-  if (!source || !target || source === target) {
-    return false;
+// 提取核心短语
+const extractCorePhrase = (text) => {
+  // 如果文本较短，直接返回
+  if (text.length <= 6) return text;
+  
+  // 尝试提取核心短语的模式
+  const patterns = [
+    // 提取"XXX的YYY"中的YYY
+    /^.+的(.{2,6})$/,
+    // 提取"XXX是YYY"中的YYY
+    /^.+是(.{2,6})$/,
+    // 提取最后2-6个字
+    /(.{2,6})$/
+  ];
+  
+  for (const pattern of patterns) {
+    const match = text.match(pattern);
+    if (match && match[1]) {
+      return match[1];
+    }
   }
-
-  // 确保实体不是常见的无意义词组
-  const invalidWords = ['这个', '那个', '什么', '怎么', '为什么', '如何'];
-  if (invalidWords.some(word => source.includes(word) || target.includes(word))) {
-    return false;
-  }
-
-  // 检查实体长度
-  if (source.length < 2 || target.length < 2) {
-    return false;
-  }
-
-  // 使用原有的实体验证逻辑
-  return isValidEntity(source) && isValidEntity(target);
+  
+  // 如果没有匹配到任何模式，返回最后6个字
+  return text.slice(-6);
 };
+
+// 修改关系提取函数中的模式
+const relationPatterns = [
+  // 定义关系
+  { regex: /(.{2,8})是(.{2,8})/g, type: 'is-a', label: '是' },
+  { regex: /(.{2,8})为(.{2,8})/g, type: 'is-a', label: '为' },
+  // 包含关系
+  { regex: /(.{2,8})包含(.{2,8})/g, type: 'contains', label: '包含' },
+  { regex: /(.{2,8})涵盖(.{2,8})/g, type: 'contains', label: '涵盖' },
+  // 属性关系
+  { regex: /(.{2,8})的(.{2,8})/g, type: 'has', label: '的' },
+  { regex: /(.{2,8})具有(.{2,8})/g, type: 'has', label: '具有' },
+  // 动作关系
+  { regex: /(.{2,8})进行(.{2,8})/g, type: 'performs', label: '进行' },
+  { regex: /(.{2,8})需要(.{2,8})/g, type: 'requires', label: '需要' },
+  // 并列关系
+  { regex: /(.{2,8})[和与及](.{2,8})/g, type: 'and', label: '和' }
+];
 
 // 修改关系提取函数中的验证逻辑
 export const extractRelations = async (text) => {
@@ -436,4 +489,25 @@ const hasConceptIndicators = (text) => {
     /(思想|观点|主义)$/
   ];
   return conceptPatterns.some(pattern => pattern.test(text));
+};
+
+const isValidEntityPair = (source, target) => {
+  // 检查源实体和目标实体是否有效
+  if (!source || !target || source === target) {
+    return false;
+  }
+
+  // 确保实体不是常见的无意义词组
+  const invalidWords = ['这个', '那个', '什么', '怎么', '为什么', '如何'];
+  if (invalidWords.some(word => source.includes(word) || target.includes(word))) {
+    return false;
+  }
+
+  // 检查实体长度
+  if (source.length < 2 || target.length < 2) {
+    return false;
+  }
+
+  // 使用原有的实体验证逻辑
+  return isValidEntity(source) && isValidEntity(target);
 }; 
