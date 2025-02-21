@@ -23,22 +23,16 @@ export const generateGraph = (options: GenerateGraphOptions): KnowledgeGraph => 
     content: options.question,
     importance: 1,
     depth: 0,
-    position: {
-      x: 0,
-      y: 0,
-      z: 0
-    }
+    position: new THREE.Vector3(0, 0, 0)
   };
 
   // 为每个概念创建节点和边
   options.concepts.forEach((concept, conceptIndex) => {
-    const angle = (conceptIndex * Math.PI * 2) / options.concepts.length;
-    const radius = 10;
-    const conceptPosition = {
-      x: Math.cos(angle) * radius,
-      y: Math.sin(angle) * radius,
-      z: 0
-    };
+    const conceptPosition = new THREE.Vector3(
+      Math.cos(conceptIndex * Math.PI * 2 / options.concepts.length) * 10,
+      Math.sin(conceptIndex * Math.PI * 2 / options.concepts.length) * 10,
+      0
+    );
 
     // 创建概念节点
     const conceptNode: Node = {
@@ -57,26 +51,24 @@ export const generateGraph = (options: GenerateGraphOptions): KnowledgeGraph => 
       source: mainQuestion.id,
       target: conceptNode.id,
       relationship: {
-        type: EdgeType.EXPLAINS,
-        label: '解释',
-        strength: 0.8
+        type: EdgeType.SEQUENCE,
+        label: '包含'
       }
     });
 
     // 创建示例节点
     concept.examples?.forEach((example, index) => {
-      const exampleAngle = angle + (index * Math.PI / 4) - (Math.PI / 8);
       const exampleNode: Node = {
         id: `ex${idCounter++}`,
         type: NodeType.EXAMPLE,
         content: example,
         importance: 0.6,
         depth: 2,
-        position: {
-          x: conceptPosition.x + Math.cos(exampleAngle) * 5,
-          y: conceptPosition.y + Math.sin(exampleAngle) * 5,
-          z: 5
-        }
+        position: new THREE.Vector3(
+          conceptPosition.x + Math.cos(index * Math.PI / 2) * 5,
+          conceptPosition.y + Math.sin(index * Math.PI / 2) * 5,
+          5
+        )
       };
       nodes.push(exampleNode);
 
@@ -85,27 +77,25 @@ export const generateGraph = (options: GenerateGraphOptions): KnowledgeGraph => 
         source: conceptNode.id,
         target: exampleNode.id,
         relationship: {
-          type: EdgeType.EXEMPLIFIES,
-          label: '例如',
-          strength: 0.6
+          type: EdgeType.EXAMPLE,
+          label: '例如'
         }
       });
     });
 
     // 创建总结节点
     concept.summaries?.forEach((summary, index) => {
-      const summaryAngle = angle + (index * Math.PI / 4) + (Math.PI / 8);
       const summaryNode: Node = {
         id: `s${idCounter++}`,
         type: NodeType.SUMMARY,
         content: summary,
         importance: 0.7,
         depth: 2,
-        position: {
-          x: conceptPosition.x + Math.cos(summaryAngle) * 7,
-          y: conceptPosition.y + Math.sin(summaryAngle) * 7,
-          z: -5
-        }
+        position: new THREE.Vector3(
+          conceptPosition.x + Math.cos(index * Math.PI / 2 + Math.PI / 4) * 7,
+          conceptPosition.y + Math.sin(index * Math.PI / 2 + Math.PI / 4) * 7,
+          -5
+        )
       };
       nodes.push(summaryNode);
 
@@ -114,27 +104,25 @@ export const generateGraph = (options: GenerateGraphOptions): KnowledgeGraph => 
         source: conceptNode.id,
         target: summaryNode.id,
         relationship: {
-          type: EdgeType.SUMMARIZES,
-          label: '总结',
-          strength: 0.7
+          type: EdgeType.SUMMARY,
+          label: '总结'
         }
       });
     });
 
     // 创建详细信息节点
     concept.details?.forEach((detail, index) => {
-      const detailAngle = angle + (index * Math.PI / 4);
       const detailNode: Node = {
         id: `d${idCounter++}`,
         type: NodeType.DETAIL,
         content: detail,
         importance: 0.5,
         depth: 2,
-        position: {
-          x: conceptPosition.x + Math.cos(detailAngle) * 6,
-          y: conceptPosition.y + Math.sin(detailAngle) * 6,
-          z: 0
-        }
+        position: new THREE.Vector3(
+          conceptPosition.x + Math.cos(index * Math.PI / 2 + Math.PI / 2) * 6,
+          conceptPosition.y + Math.sin(index * Math.PI / 2 + Math.PI / 2) * 6,
+          0
+        )
       };
       nodes.push(detailNode);
 
@@ -143,9 +131,8 @@ export const generateGraph = (options: GenerateGraphOptions): KnowledgeGraph => 
         source: conceptNode.id,
         target: detailNode.id,
         relationship: {
-          type: EdgeType.DETAILS,
-          label: '详述',
-          strength: 0.5
+          type: EdgeType.DETAIL,
+          label: '详细'
         }
       });
     });
