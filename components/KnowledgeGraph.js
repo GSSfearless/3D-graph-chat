@@ -253,20 +253,9 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
 
     const line = new THREE.Line(geometry, material);
     group.add(line);
-    
-    // 添加发光效果
-    const glowMaterial = new THREE.LineBasicMaterial({
-      color: theme.edge.color,
-      transparent: true,
-      opacity: theme.edge.opacity * 0.5,
-      linewidth: theme.edge.width * 2
-    });
 
-    const glowLine = new THREE.Line(geometry, glowMaterial);
-    group.add(glowLine);
-
-    // 添加边的标签
-    if (edgeData && edgeData.label) {
+    // 添加边标签
+    if (edgeData.label) {
       const labelDiv = document.createElement('div');
       labelDiv.className = 'edge-label';
       labelDiv.textContent = edgeData.label;
@@ -275,24 +264,72 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
       labelDiv.style.fontFamily = theme.label.font;
       labelDiv.style.background = 'rgba(255, 255, 255, 0.8)';
       labelDiv.style.padding = '2px 4px';
-      labelDiv.style.borderRadius = '4px';
+      labelDiv.style.borderRadius = '2px';
       labelDiv.style.whiteSpace = 'nowrap';
       labelDiv.style.pointerEvents = 'none';
-      labelDiv.style.userSelect = 'none';
       
       const label = new CSS2DObject(labelDiv);
-      
-      // 将标签放置在边的中间位置
+      // 将标签放置在边的中间
       label.position.set(
         (source.position.x + target.position.x) / 2,
         (source.position.y + target.position.y) / 2,
         (source.position.z + target.position.z) / 2
       );
-      
       group.add(label);
     }
 
+    // 添加用户数据
+    group.userData = edgeData;
+
+    // 更新边的位置的方法
+    group.updatePosition = () => {
+      const positions = new Float32Array([
+        source.position.x, source.position.y, source.position.z,
+        target.position.x, target.position.y, target.position.z
+      ]);
+      geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+      geometry.computeBoundingSphere();
+      
+      if (group.children[1]) { // 更新标签位置
+        group.children[1].position.set(
+          (source.position.x + target.position.x) / 2,
+          (source.position.y + target.position.y) / 2,
+          (source.position.z + target.position.z) / 2
+        );
+      }
+    };
+
     return group;
+  };
+
+  // 添加渲染边的逻辑
+  const renderEdges = () => {
+    if (!isValidData || !sceneRef.current) return;
+    
+    const { scene } = sceneRef.current;
+    const nodeMap = new Map();
+    
+    // 清除现有的边
+    scene.children = scene.children.filter(child => !child.userData?.isEdge);
+    
+    // 创建节点映射
+    scene.children.forEach(child => {
+      if (child.userData?.id) {
+        nodeMap.set(child.userData.id, child);
+      }
+    });
+    
+    // 创建新的边
+    data.edges.forEach(edge => {
+      const sourceNode = nodeMap.get(edge.source);
+      const targetNode = nodeMap.get(edge.target);
+      
+      if (sourceNode && targetNode) {
+        const edgeObject = createEdge3D(sourceNode, targetNode, edge);
+        edgeObject.userData.isEdge = true;
+        scene.add(edgeObject);
+      }
+    });
   };
 
   const handleFullscreen = () => {
@@ -404,12 +441,17 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
     const animate = () => {
       if (!sceneRef.current) return;
       
-      requestAnimationFrame(animate);
-      
-      const { controls, renderer, labelRenderer, camera } = sceneRef.current;
+      const { scene, camera, renderer, labelRenderer, controls } = sceneRef.current;
       
       // 更新控制器
       controls.update();
+
+      // 更新所有边的位置
+      scene.children.forEach(child => {
+        if (child.userData?.isEdge && child.updatePosition) {
+          child.updatePosition();
+        }
+      });
 
       // 更新节点发光效果
       scene.traverse((object) => {
@@ -421,9 +463,18 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
       // 渲染场景
       renderer.render(scene, camera);
       labelRenderer.render(scene, camera);
+
+      // 继续动画循环
+      requestAnimationFrame(animate);
     };
     animate();
   }, [data]);
+
+  useEffect(() => {
+    if (isValidData && sceneRef.current) {
+      renderEdges();
+    }
+  }, [data, isValidData]);
 
   return (
     <div className="knowledge-graph-container" style={{ width: '100%', height: '100%', ...style }}>
