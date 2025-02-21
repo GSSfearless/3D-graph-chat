@@ -51,20 +51,13 @@ export class KnowledgeGraphProcessor {
       // 3. 计算实体向量嵌入
       const embeddings = await computeEmbeddings(entities);
       
-      // 4. 构建节点和边的映射（改进的映射逻辑）
+      // 4. 构建节点和边的映射
       const nodeMap = new Map();
-      const normalizeText = (text) => text.toLowerCase().trim().replace(/[^a-zA-Z0-9\u4e00-\u9fa5]/g, '_');
-      
       entities.forEach(entity => {
-        const normalizedText = normalizeText(entity.text);
-        const nodeId = `node-${normalizedText}`;
-        const nodeData = { ...entity, id: nodeId };
-        
-        // 存储多个可能的键以增加匹配成功率
-        nodeMap.set(nodeId, nodeData);
-        nodeMap.set(normalizedText, nodeData);
-        nodeMap.set(entity.text, nodeData);
-        nodeMap.set(entity.text.toLowerCase(), nodeData);
+        const nodeId = `node-${entity.text.replace(/[^a-zA-Z0-9]/g, '_')}`;
+        nodeMap.set(nodeId, { ...entity, id: nodeId });
+        // 同时用文本作为键存储
+        nodeMap.set(entity.text, { ...entity, id: nodeId });
       });
 
       console.log('Node map:', Array.from(nodeMap.entries()));
@@ -76,33 +69,21 @@ export class KnowledgeGraphProcessor {
         return { nodes: [], edges: [] };
       }
       
-      // 6. 构建边（改进的边过滤逻辑）
+      // 6. 构建边（只保留存在对应节点的边）
       const validRelations = relations.filter(relation => {
         console.log('Checking relation:', relation);
+        // 检查源节点和目标节点是否存在
+        const hasSource = nodeMap.has(relation.source);
+        const hasTarget = nodeMap.has(relation.target);
         
-        // 规范化源节点和目标节点的文本
-        const normalizedSource = normalizeText(relation.source);
-        const normalizedTarget = normalizeText(relation.target);
-        
-        // 尝试多种可能的键来查找节点
-        const sourceNode = nodeMap.get(`node-${normalizedSource}`) || 
-                         nodeMap.get(normalizedSource) || 
-                         nodeMap.get(relation.source) ||
-                         nodeMap.get(relation.source.toLowerCase());
-                         
-        const targetNode = nodeMap.get(`node-${normalizedTarget}`) || 
-                         nodeMap.get(normalizedTarget) || 
-                         nodeMap.get(relation.target) ||
-                         nodeMap.get(relation.target.toLowerCase());
-        
-        if (!sourceNode) {
-          console.warn('Source node not found:', relation.source, 'Normalized:', normalizedSource);
+        if (!hasSource) {
+          console.warn('Source node not found:', relation.source);
         }
-        if (!targetNode) {
-          console.warn('Target node not found:', relation.target, 'Normalized:', normalizedTarget);
+        if (!hasTarget) {
+          console.warn('Target node not found:', relation.target);
         }
         
-        return sourceNode && targetNode;
+        return hasSource && hasTarget;
       });
 
       console.log('Valid relations after filtering:', validRelations);
