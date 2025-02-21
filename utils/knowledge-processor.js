@@ -116,7 +116,7 @@ export class KnowledgeGraphProcessor {
     return entities.map((entity, index) => {
       // 确保 entity.text 存在，如果不存在则使用一个默认值
       const label = entity.text || entity.label || `Entity ${index + 1}`;
-      const nodeId = entity.id || `node-${this.hashString(label)}`;
+      const nodeId = `node-${label.replace(/[^a-zA-Z0-9]/g, '_')}`;
       
       return {
         data: {
@@ -277,16 +277,5 @@ export class KnowledgeGraphProcessor {
   findParent(node, edges) {
     const edge = edges.find(e => e.target === node.id);
     return edge ? edge.source : null;
-  }
-
-  hashString(str) {
-    let hash = 0;
-    for (let i = 0; i < str.length; i++) {
-      const char = str.charCodeAt(i);
-      hash = ((hash << 5) - hash) + char;
-      hash = hash & hash; // Convert to 32-bit integer
-    }
-    // 确保哈希值为正数并且不超过一定长度
-    return Math.abs(hash).toString(36).substring(0, 8);
   }
 } 
