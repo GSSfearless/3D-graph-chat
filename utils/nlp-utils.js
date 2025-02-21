@@ -107,44 +107,52 @@ export const extractRelations = async (text) => {
 
     // 定义更丰富的关系模式
     const patterns = [
-      { regex: /([^，。！？]+)是([^，。！？]+)/, type: 'is-a', label: '是' },
-      { regex: /([^，。！？]+)包含([^，。！？]+)/, type: 'contains', label: '包含' },
-      { regex: /([^，。！？]+)属于([^，。！？]+)/, type: 'belongs-to', label: '属于' },
-      { regex: /([^，。！？]+)需要([^，。！？]+)/, type: 'requires', label: '需要' },
-      { regex: /([^，。！？]+)通过([^，。！？]+)/, type: 'through', label: '通过' },
-      { regex: /([^，。！？]+)使用([^，。！？]+)/, type: 'uses', label: '使用' },
-      { regex: /([^，。！？]+)进行([^，。！？]+)/, type: 'performs', label: '进行' },
-      { regex: /([^，。！？]+)提供([^，。！？]+)/, type: 'provides', label: '提供' },
-      { regex: /([^，。！？]+)获得([^，。！？]+)/, type: 'obtains', label: '获得' },
-      { regex: /([^，。！？]+)参与([^，。！？]+)/, type: 'participates', label: '参与' },
-      // 添加更多的关系模式
-      { regex: /([^，。！？]+)了解([^，。！？]+)/, type: 'understands', label: '了解' },
-      { regex: /([^，。！？]+)准备([^，。！？]+)/, type: 'prepares', label: '准备' },
-      { regex: /([^，。！？]+)掌握([^，。！？]+)/, type: 'masters', label: '掌握' }
+      { regex: /([^，。！？]+?)是([^，。！？]+)/g, type: 'is-a', label: '是' },
+      { regex: /([^，。！？]+?)包含([^，。！？]+)/g, type: 'contains', label: '包含' },
+      { regex: /([^，。！？]+?)属于([^，。！？]+)/g, type: 'belongs-to', label: '属于' },
+      { regex: /([^，。！？]+?)需要([^，。！？]+)/g, type: 'requires', label: '需要' },
+      { regex: /([^，。！？]+?)通过([^，。！？]+)/g, type: 'through', label: '通过' },
+      { regex: /([^，。！？]+?)使用([^，。！？]+)/g, type: 'uses', label: '使用' },
+      { regex: /([^，。！？]+?)进行([^，。！？]+)/g, type: 'performs', label: '进行' },
+      { regex: /([^，。！？]+?)提供([^，。！？]+)/g, type: 'provides', label: '提供' },
+      { regex: /([^，。！？]+?)获得([^，。！？]+)/g, type: 'obtains', label: '获得' },
+      { regex: /([^，。！？]+?)参与([^，。！？]+)/g, type: 'participates', label: '参与' },
+      { regex: /([^，。！？]+?)了解([^，。！？]+)/g, type: 'understands', label: '了解' },
+      { regex: /([^，。！？]+?)准备([^，。！？]+)/g, type: 'prepares', label: '准备' },
+      { regex: /([^，。！？]+?)掌握([^，。！？]+)/g, type: 'masters', label: '掌握' },
+      // 添加更多常见的中文关系模式
+      { regex: /([^，。！？]+?)对([^，。！？]+)/g, type: 'towards', label: '对' },
+      { regex: /([^，。！？]+?)与([^，。！？]+)/g, type: 'with', label: '与' },
+      { regex: /([^，。！？]+?)和([^，。！？]+)/g, type: 'and', label: '和' },
+      { regex: /([^，。！？]+?)在([^，。！？]+)/g, type: 'in', label: '在' },
+      { regex: /([^，。！？]+?)为([^，。！？]+)/g, type: 'for', label: '为' },
+      { regex: /([^，。！？]+?)由([^，。！？]+)/g, type: 'by', label: '由' }
     ];
 
     sentences.forEach(sentence => {
       // 对每个句子应用所有模式
       patterns.forEach(pattern => {
-        const matches = sentence.match(pattern.regex);
-        if (matches && matches.length >= 3) {
-          const [, source, target] = matches;
-          const cleanSource = source.replace(/[*]/g, '').trim();
-          const cleanTarget = target.replace(/[*]/g, '').trim();
-          
-          if (isValidEntity(cleanSource) && isValidEntity(cleanTarget)) {
-            // 为源节点和目标节点创建规范化的ID
-            const sourceId = `node-${cleanSource.replace(/[^a-zA-Z0-9]/g, '_')}`;
-            const targetId = `node-${cleanTarget.replace(/[^a-zA-Z0-9]/g, '_')}`;
+        let matches;
+        while ((matches = pattern.regex.exec(sentence)) !== null) {
+          if (matches && matches.length >= 3) {
+            const [, source, target] = matches;
+            const cleanSource = source.replace(/[*]/g, '').trim();
+            const cleanTarget = target.replace(/[*]/g, '').trim();
             
-            relations.push({
-              id: `edge-${relationId++}`,
-              source: sourceId,
-              target: targetId,
-              type: pattern.type,
-              label: pattern.label,
-              weight: 1
-            });
+            if (isValidEntity(cleanSource) && isValidEntity(cleanTarget)) {
+              // 为源节点和目标节点创建规范化的ID
+              const sourceId = `node-${cleanSource.replace(/[^a-zA-Z0-9]/g, '_')}`;
+              const targetId = `node-${cleanTarget.replace(/[^a-zA-Z0-9]/g, '_')}`;
+              
+              relations.push({
+                id: `edge-${relationId++}`,
+                source: sourceId,
+                target: targetId,
+                type: pattern.type,
+                label: pattern.label,
+                weight: 1
+              });
+            }
           }
         }
       });

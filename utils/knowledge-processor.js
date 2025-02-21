@@ -42,6 +42,7 @@ export class KnowledgeGraphProcessor {
       
       // 2. 关系抽取
       const relations = await extractRelations(text);
+      console.log('Extracted relations before filtering:', relations);
       if (!Array.isArray(relations)) {
         console.warn('Invalid relations result:', relations);
         return { nodes: [], edges: [] };
@@ -51,10 +52,11 @@ export class KnowledgeGraphProcessor {
       const embeddings = await computeEmbeddings(entities);
       
       // 4. 构建节点和边的映射
-      const nodeMap = new Map(entities.map(entity => [
-        entity.text,
-        { ...entity, id: `node-${entity.text.replace(/[^a-zA-Z0-9]/g, '_')}` }
-      ]));
+      const nodeMap = new Map();
+      entities.forEach(entity => {
+        const nodeId = `node-${entity.text.replace(/[^a-zA-Z0-9]/g, '_')}`;
+        nodeMap.set(entity.text, { ...entity, id: nodeId });
+      });
       
       // 5. 构建节点
       const nodes = this.buildNodes(entities, embeddings);
@@ -64,9 +66,16 @@ export class KnowledgeGraphProcessor {
       }
       
       // 6. 构建边（只保留存在对应节点的边）
-      const edges = this.buildEdges(relations.filter(relation => 
-        nodeMap.has(relation.source) && nodeMap.has(relation.target)
-      ));
+      const validRelations = relations.filter(relation => {
+        // 从 source 和 target 中提取实体文本
+        const sourceText = relation.source.replace(/^node-/, '').replace(/_/g, '');
+        const targetText = relation.target.replace(/^node-/, '').replace(/_/g, '');
+        return nodeMap.has(sourceText) && nodeMap.has(targetText);
+      });
+      console.log('Valid relations after filtering:', validRelations);
+      
+      const edges = this.buildEdges(validRelations);
+      console.log('Built edges:', edges);
       
       // 7. 应用布局
       const graphData = this.applyLayout({
@@ -81,6 +90,7 @@ export class KnowledgeGraphProcessor {
         return { nodes: [], edges: [] };
       }
 
+      console.log('Final graph data:', graphData);
       return graphData;
     } catch (error) {
       console.error('Error processing text:', error);
@@ -120,19 +130,17 @@ export class KnowledgeGraphProcessor {
     console.log('Building edges from relations:', relations);
 
     return relations
-      .filter(relation => relation && relation.source && relation.target)
+      .filter(relation => relation && typeof relation.source === 'string' && typeof relation.target === 'string')
       .map((relation, index) => {
-        // 源节点和目标节点的ID应该已经是正确格式
-        const sourceId = relation.source;
-        const targetId = relation.target;
-        
+        // 确保边的属性都存在
         const edge = {
           id: relation.id || `edge-${index}`,
-          source: sourceId,
-          target: targetId,
+          source: relation.source,
+          target: relation.target,
           type: relation.type || 'default',
+          label: relation.label || '关联',
           weight: relation.weight || 1,
-          label: relation.label || ''
+          properties: relation.properties || {}
         };
 
         // 添加调试日志
@@ -141,9 +149,9 @@ export class KnowledgeGraphProcessor {
       })
       .filter(edge => 
         edge && 
-        typeof edge.id === 'string' && 
         typeof edge.source === 'string' && 
-        typeof edge.target === 'string'
+        typeof edge.target === 'string' &&
+        edge.source !== edge.target // 过滤掉自环
       );
   }
 
