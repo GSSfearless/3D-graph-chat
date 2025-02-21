@@ -72,20 +72,15 @@ export class KnowledgeGraphProcessor {
       // 6. 构建边（只保留存在对应节点的边）
       const validRelations = relations.filter(relation => {
         console.log('Checking relation:', relation);
-        
-        // 获取源节点和目标节点的ID
-        const sourceId = typeof relation.source === 'object' ? relation.source.id : relation.source;
-        const targetId = typeof relation.target === 'object' ? relation.target.id : relation.target;
-        
         // 检查源节点和目标节点是否存在
-        const hasSource = nodes.some(node => node.id === sourceId);
-        const hasTarget = nodes.some(node => node.id === targetId);
+        const hasSource = nodeMap.has(relation.source);
+        const hasTarget = nodeMap.has(relation.target);
         
         if (!hasSource) {
-          console.warn('Source node not found:', sourceId);
+          console.warn('Source node not found:', relation.source);
         }
         if (!hasTarget) {
-          console.warn('Target node not found:', targetId);
+          console.warn('Target node not found:', relation.target);
         }
         
         return hasSource && hasTarget;
@@ -149,17 +144,13 @@ export class KnowledgeGraphProcessor {
     console.log('Building edges from relations:', relations);
 
     return relations
-      .filter(relation => relation && relation.source && relation.target)
+      .filter(relation => relation && typeof relation.source === 'string' && typeof relation.target === 'string')
       .map((relation, index) => {
-        // 获取源节点和目标节点的ID
-        const sourceId = typeof relation.source === 'object' ? relation.source.id : relation.source;
-        const targetId = typeof relation.target === 'object' ? relation.target.id : relation.target;
-
         // 确保边的属性都存在
         const edge = {
           id: relation.id || `edge-${index}`,
-          source: sourceId,
-          target: targetId,
+          source: relation.source,
+          target: relation.target,
           type: relation.type || 'default',
           label: relation.label || '关联',
           weight: relation.weight || 1,
