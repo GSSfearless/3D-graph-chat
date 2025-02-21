@@ -9,11 +9,11 @@ export enum NodeType {
 }
 
 export enum EdgeType {
-  EXPLAINS = 'explains',
-  EXEMPLIFIES = 'exemplifies',
-  SUMMARIZES = 'summarizes',
-  DETAILS = 'details',
-  RELATES_TO = 'relates_to'
+  SEQUENCE = 'sequence',
+  EXAMPLE = 'example',
+  SUMMARY = 'summary',
+  DETAIL = 'detail',
+  RELATED = 'related'
 }
 
 export interface Node {
@@ -22,16 +22,8 @@ export interface Node {
   content: string;
   importance: number;
   depth: number;
-  position?: {
-    x: number;
-    y: number;
-    z: number;
-  };
+  position?: THREE.Vector3;
   color?: string;
-  size?: number;
-  metadata?: {
-    [key: string]: any;
-  };
 }
 
 export interface Edge {
@@ -41,10 +33,6 @@ export interface Edge {
   relationship: {
     type: EdgeType;
     label?: string;
-    strength?: number;
-  };
-  metadata?: {
-    [key: string]: any;
   };
 }
 
@@ -62,17 +50,17 @@ export interface KnowledgeGraph {
 export interface GraphTheme {
   nodes: {
     [key in NodeType]: {
+      size: number;
       color: string;
       emissive: string;
-      size: number;
       opacity: number;
     };
   };
   edges: {
     [key in EdgeType]: {
       color: string;
-      width: number;
       opacity: number;
+      width: number;
     };
   };
 } 

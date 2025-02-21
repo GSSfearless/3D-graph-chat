@@ -1,63 +1,63 @@
-import { GraphTheme, NodeType, EdgeType } from '../types/graph';
+import { GraphTheme } from '../types/graph';
 
 export const defaultTheme: GraphTheme = {
   nodes: {
-    [NodeType.QUESTION]: {
-      color: '#F43F5E',
-      emissive: '#FCA5A5',
-      size: 1.5,
+    question: {
+      size: 2.5,
+      color: '#1a365d',
+      emissive: '#3b82f6',
+      opacity: 1
+    },
+    concept: {
+      size: 1.8,
+      color: '#3b82f6',
+      emissive: '#60a5fa',
       opacity: 0.9
     },
-    [NodeType.CONCEPT]: {
-      color: '#6366F1',
-      emissive: '#818CF8',
+    example: {
       size: 1.2,
+      color: '#7c3aed',
+      emissive: '#a78bfa',
+      opacity: 0.8
+    },
+    summary: {
+      size: 2,
+      color: '#2563eb',
+      emissive: '#93c5fd',
       opacity: 0.9
     },
-    [NodeType.EXAMPLE]: {
-      color: '#10B981',
-      emissive: '#34D399',
-      size: 1.0,
-      opacity: 0.8
-    },
-    [NodeType.SUMMARY]: {
-      color: '#F59E0B',
-      emissive: '#FCD34D',
-      size: 1.1,
-      opacity: 0.85
-    },
-    [NodeType.DETAIL]: {
-      color: '#8B5CF6',
-      emissive: '#A78BFA',
-      size: 0.9,
-      opacity: 0.8
+    detail: {
+      size: 1,
+      color: '#6366f1',
+      emissive: '#a5b4fc',
+      opacity: 0.7
     }
   },
   edges: {
-    [EdgeType.EXPLAINS]: {
-      color: '#6366F1',
-      width: 2,
-      opacity: 0.6
+    sequence: {
+      color: '#94a3b8',
+      opacity: 0.8,
+      width: 2
     },
-    [EdgeType.EXEMPLIFIES]: {
-      color: '#10B981',
-      width: 1.5,
-      opacity: 0.5
+    example: {
+      color: '#a78bfa',
+      opacity: 0.6,
+      width: 1
     },
-    [EdgeType.SUMMARIZES]: {
-      color: '#F59E0B',
-      width: 1.8,
-      opacity: 0.55
+    summary: {
+      color: '#60a5fa',
+      opacity: 0.8,
+      width: 3
     },
-    [EdgeType.DETAILS]: {
-      color: '#8B5CF6',
-      width: 1.5,
-      opacity: 0.5
+    detail: {
+      color: '#93c5fd',
+      opacity: 0.5,
+      width: 1
     },
-    [EdgeType.RELATES_TO]: {
-      color: '#94A3B8',
-      width: 1,
-      opacity: 0.4
+    related: {
+      color: '#cbd5e1',
+      opacity: 0.4,
+      width: 1
     }
   }
 }; 
