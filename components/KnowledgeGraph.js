@@ -146,10 +146,15 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
     const connections = data.edges.filter(edge => {
       console.log('检查边:', edge);
       console.log('当前节点ID:', nodeData.id);
-      console.log('边的source:', edge.data.source);
-      console.log('边的target:', edge.data.target);
       
-      const isConnected = edge.data.source === nodeData.id || edge.data.target === nodeData.id;
+      // 获取边的源节点和目标节点ID
+      const sourceId = edge.data.source.id || edge.data.source;
+      const targetId = edge.data.target.id || edge.data.target;
+      
+      console.log('边的source:', sourceId);
+      console.log('边的target:', targetId);
+      
+      const isConnected = sourceId === nodeData.id || targetId === nodeData.id;
       console.log('是否连接:', isConnected);
       return isConnected;
     }).length;
@@ -163,10 +168,13 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
 
     // 找出最大连接数
     const allConnectionCounts = data.nodes.map(node => {
-      const count = data.edges.filter(edge => 
-        edge.data.source === node.data.id || edge.data.target === node.data.id
-      ).length;
-      console.log('节点', node.data.id, '的连接数:', count);
+      const nodeId = node.data.id;
+      const count = data.edges.filter(edge => {
+        const sourceId = edge.data.source.id || edge.data.source;
+        const targetId = edge.data.target.id || edge.data.target;
+        return sourceId === nodeId || targetId === nodeId;
+      }).length;
+      console.log('节点', nodeId, '的连接数:', count);
       return count;
     });
     
