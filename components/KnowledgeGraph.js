@@ -156,10 +156,12 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
       ).length
     ));
 
-    // 使用对数比例计算大小
+    // 使用指数函数计算大小
+    const base = 1.5; // 指数基数
+    const normalizedConnections = connections / maxConnections;
     const size = theme.node.minSize + 
       (theme.node.maxSize - theme.node.minSize) * 
-      Math.log1p(connections) / Math.log1p(maxConnections);
+      (Math.pow(base, normalizedConnections) - 1) / (base - 1);
 
     return size;
   };
