@@ -11,6 +11,8 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [selectedNode, setSelectedNode] = useState(null);
   const [isMobile, setIsMobile] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [expandedNodes, setExpandedNodes] = useState(new Set());
   
   // 主题配置
   const theme = {
@@ -36,6 +38,84 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
     }
   };
 
+  // 控制器配置
+  const initControls = (camera, renderer) => {
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.05;
+    controls.screenSpacePanning = true;
+    controls.minDistance = 100;
+    controls.maxDistance = 1000;
+    controls.zoomSpeed = 1.5;
+    return controls;
+  };
+
+  // 节点大小计算
+  const calculateNodeSize = (nodeData) => {
+    const baseSize = theme.node.size;
+    const importance = nodeData.importance || 1;
+    const isExpanded = expandedNodes.has(nodeData.id);
+    return baseSize * Math.sqrt(importance) * (isExpanded ? 1.5 : 1);
+  };
+
+  // 节点颜色计算
+  const calculateNodeColor = (nodeData) => {
+    const baseColor = new THREE.Color(theme.node.color);
+    const type = nodeData.type || 'default';
+    const colorMap = {
+      concept: '#4A90E2',
+      entity: '#50E3C2',
+      event: '#F5A623',
+      attribute: '#B8E986',
+      relation: '#BD10E0',
+      default: theme.node.color
+    };
+    return new THREE.Color(colorMap[type] || colorMap.default);
+  };
+
+  // 搜索节点
+  const searchNodes = (term) => {
+    if (!term) return;
+    const searchResults = data.nodes.filter(node => 
+      node.data.label.toLowerCase().includes(term.toLowerCase())
+    );
+    if (searchResults.length > 0) {
+      const firstResult = searchResults[0];
+      focusOnNode(firstResult.data.id);
+    }
+  };
+
+  // 聚焦节点
+  const focusOnNode = (nodeId) => {
+    const node3D = sceneRef.current.scene.getObjectByName(`node-${nodeId}`);
+    if (node3D) {
+      const { controls, camera } = sceneRef.current;
+      const position = node3D.position.clone();
+      const distance = camera.position.distanceTo(position);
+      controls.target.copy(position);
+      camera.position.copy(position.clone().add(new THREE.Vector3(0, 0, distance)));
+      controls.update();
+    }
+  };
+
+  // 处理节点点击
+  const handleNodeClick = (node) => {
+    const nodeId = node.userData.id;
+    setSelectedNode(nodeId);
+    setExpandedNodes(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(nodeId)) {
+        newSet.delete(nodeId);
+      } else {
+        newSet.add(nodeId);
+      }
+      return newSet;
+    });
+    if (onNodeClick) {
+      onNodeClick(node.userData);
+    }
+  };
+
   // 检查数据是否有效
   const isValidData = data && 
     Array.isArray(data.nodes) && 
@@ -55,23 +135,22 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
 
     // 创建场景
     const scene = new THREE.Scene();
-    scene.background = new THREE.Color(0xf8fafc);
-    scene.fog = new THREE.Fog(0xf8fafc, 100, 1000);
+    scene.background = new THREE.Color(0xffffff);
 
     // 创建相机
-    const camera = new THREE.PerspectiveCamera(60, width / height, 1, 10000);
+    const camera = new THREE.PerspectiveCamera(
+      75,
+      width / height,
+      1,
+      10000
+    );
     camera.position.z = 500;
 
     // 创建渲染器
-    const renderer = new THREE.WebGLRenderer({ 
-      antialias: true,
-      alpha: true,
-      logarithmicDepthBuffer: true
-    });
+    const renderer = new THREE.WebGLRenderer({ antialias: true });
     renderer.setSize(width, height);
     renderer.setPixelRatio(window.devicePixelRatio);
-    renderer.shadowMap.enabled = true;
-    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    container.appendChild(renderer.domElement);
 
     // 创建标签渲染器
     const labelRenderer = new CSS2DRenderer();
@@ -79,6 +158,7 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
     labelRenderer.domElement.style.position = 'absolute';
     labelRenderer.domElement.style.top = '0';
     labelRenderer.domElement.style.pointerEvents = 'none';
+    container.appendChild(labelRenderer.domElement);
 
     // 添加光源
     const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
@@ -86,23 +166,12 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
 
     const pointLight = new THREE.PointLight(0xffffff, 1);
     pointLight.position.set(100, 100, 100);
-    pointLight.castShadow = true;
     scene.add(pointLight);
 
     // 添加控制器
-    const controls = new OrbitControls(camera, renderer.domElement);
-    controls.enableDamping = true;
-    controls.dampingFactor = 0.05;
-    controls.rotateSpeed = 0.5;
-    controls.zoomSpeed = 0.8;
-    controls.minDistance = 100;
-    controls.maxDistance = 1000;
+    const controls = initControls(camera, renderer);
 
-    // 清除原有内容并添加新的渲染器
-    container.innerHTML = '';
-    container.appendChild(renderer.domElement);
-    container.appendChild(labelRenderer.domElement);
-
+    // 保存引用
     sceneRef.current = {
       scene,
       camera,
@@ -114,112 +183,171 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
     };
 
     // 添加事件监听
-    window.addEventListener('resize', handleResize);
+    const handleResize = () => {
+      if (!container) return;
+      const width = container.clientWidth;
+      const height = container.clientHeight;
 
+      camera.aspect = width / height;
+      camera.updateProjectionMatrix();
+
+      renderer.setSize(width, height);
+      labelRenderer.setSize(width, height);
+    };
+
+    const handleMouseMove = (event) => {
+      event.preventDefault();
+      const rect = container.getBoundingClientRect();
+      const mouse = new THREE.Vector2(
+        ((event.clientX - rect.left) / rect.width) * 2 - 1,
+        -((event.clientY - rect.top) / rect.height) * 2 + 1
+      );
+
+      const raycaster = new THREE.Raycaster();
+      raycaster.setFromCamera(mouse, camera);
+
+      const intersects = raycaster.intersectObjects(scene.children, true);
+      
+      // 重置所有节点的发光效果
+      scene.traverse((object) => {
+        if (object.material && object.material.uniforms && !object.userData?.isSelected) {
+          object.material.uniforms.isSelected.value = 0.0;
+        }
+      });
+
+      // 设置悬停节点的发光效果
+      for (const intersect of intersects) {
+        if (intersect.object.userData?.isNode) {
+          intersect.object.material.uniforms.isSelected.value = 0.5;
+          break;
+        }
+      }
+    };
+
+    const handleClick = (event) => {
+      event.preventDefault();
+      const rect = container.getBoundingClientRect();
+      const mouse = new THREE.Vector2(
+        ((event.clientX - rect.left) / rect.width) * 2 - 1,
+        -((event.clientY - rect.top) / rect.height) * 2 + 1
+      );
+
+      const raycaster = new THREE.Raycaster();
+      raycaster.setFromCamera(mouse, camera);
+
+      const intersects = raycaster.intersectObjects(scene.children, true);
+      
+      for (const intersect of intersects) {
+        if (intersect.object.callback) {
+          intersect.object.callback();
+          break;
+        }
+      }
+    };
+
+    window.addEventListener('resize', handleResize);
+    container.addEventListener('mousemove', handleMouseMove);
+    container.addEventListener('click', handleClick);
+
+    // 清理函数
     return () => {
       window.removeEventListener('resize', handleResize);
-      renderer.dispose();
-      controls.dispose();
+      if (container) {
+        container.removeEventListener('mousemove', handleMouseMove);
+        container.removeEventListener('click', handleClick);
+        container.removeChild(renderer.domElement);
+        container.removeChild(labelRenderer.domElement);
+      }
+      
+      scene.traverse((object) => {
+        if (object.geometry) object.geometry.dispose();
+        if (object.material) {
+          if (Array.isArray(object.material)) {
+            object.material.forEach(material => material.dispose());
+          } else {
+            object.material.dispose();
+          }
+        }
+      });
     };
-  };
-
-  const handleResize = () => {
-    if (!sceneRef.current) return;
-
-    const { camera, renderer, labelRenderer, width, height } = sceneRef.current;
-    const container = containerRef.current;
-    const newWidth = container.clientWidth;
-    const newHeight = container.clientHeight;
-
-    camera.aspect = newWidth / newHeight;
-    camera.updateProjectionMatrix();
-
-    renderer.setSize(newWidth, newHeight);
-    labelRenderer.setSize(newWidth, newHeight);
   };
 
   const createNode3D = (nodeData, index, total) => {
     const group = new THREE.Group();
+    group.name = `node-${nodeData.id}`;
 
-    // 创建球体几何体
-    const geometry = new THREE.SphereGeometry(
-      theme.node.size,
-      theme.node.segments,
-      theme.node.segments
-    );
-
-    // 创建发光材质
-    const material = new THREE.MeshPhongMaterial({
-      color: theme.node.color,
-      specular: 0x666666,
-      shininess: 50,
-      transparent: true,
-      opacity: theme.node.opacity
-    });
-
-    const sphere = new THREE.Mesh(geometry, material);
-    sphere.castShadow = true;
-    sphere.receiveShadow = true;
-    group.add(sphere);
-
-    // 添加发光效果
-    const glowMaterial = new THREE.ShaderMaterial({
+    // 计算节点大小
+    const size = calculateNodeSize(nodeData);
+    
+    // 创建节点球体
+    const geometry = new THREE.SphereGeometry(size, theme.node.segments, theme.node.segments);
+    
+    // 创建自定义着色器材质
+    const material = new THREE.ShaderMaterial({
       uniforms: {
-        c: { type: 'f', value: 0.5 },
-        p: { type: 'f', value: 1.4 },
-        glowColor: { type: 'c', value: new THREE.Color(theme.node.glowColor) },
-        viewVector: { type: 'v3', value: sceneRef.current.camera.position }
+        color: { value: calculateNodeColor(nodeData) },
+        glowColor: { value: new THREE.Color(theme.node.glowColor) },
+        viewVector: { value: new THREE.Vector3() },
+        isSelected: { value: selectedNode === nodeData.id ? 1.0 : 0.0 }
       },
       vertexShader: `
         uniform vec3 viewVector;
-        varying float intensity;
+        varying vec3 vNormal;
+        varying vec3 vViewPosition;
+        
         void main() {
-          vec3 vNormal = normalize(normalMatrix * normal);
-          vec3 vNormel = normalize(normalMatrix * viewVector);
-          intensity = pow(0.5 - dot(vNormal, vNormel), 2.0);
+          vNormal = normalize(normalMatrix * normal);
+          vec4 worldPosition = modelMatrix * vec4(position, 1.0);
+          vViewPosition = viewVector - worldPosition.xyz;
           gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
         }
       `,
       fragmentShader: `
+        uniform vec3 color;
         uniform vec3 glowColor;
-        varying float intensity;
+        uniform float isSelected;
+        varying vec3 vNormal;
+        varying vec3 vViewPosition;
+        
         void main() {
-          vec3 glow = glowColor * intensity;
-          gl_FragColor = vec4(glow, 1.0);
+          float intensity = pow(0.7 - dot(vNormal, normalize(vViewPosition)), 4.0);
+          vec3 finalColor = mix(color, glowColor, intensity + isSelected * 0.3);
+          gl_FragColor = vec4(finalColor, 1.0);
         }
       `,
-      side: THREE.BackSide,
-      blending: THREE.AdditiveBlending,
       transparent: true
     });
 
-    const glowSphere = new THREE.Mesh(
-      new THREE.SphereGeometry(theme.node.size * 1.2, theme.node.segments, theme.node.segments),
-      glowMaterial
-    );
-    group.add(glowSphere);
+    const sphere = new THREE.Mesh(geometry, material);
+    group.add(sphere);
 
     // 创建标签
     const labelDiv = document.createElement('div');
     labelDiv.className = 'node-label';
-    // 清理文本内容，移除特殊字符
     const cleanText = nodeData.label.replace(/[#*]/g, '').replace(/\s+/g, ' ').trim();
     labelDiv.textContent = cleanText;
     labelDiv.style.color = theme.label.color;
     labelDiv.style.fontSize = theme.label.size;
     labelDiv.style.fontFamily = theme.label.font;
-    labelDiv.style.background = 'transparent';
+    labelDiv.style.fontWeight = theme.label.weight;
+    labelDiv.style.background = 'rgba(255, 255, 255, 0.9)';
     labelDiv.style.padding = '4px 8px';
     labelDiv.style.borderRadius = '4px';
     labelDiv.style.whiteSpace = 'nowrap';
     labelDiv.style.pointerEvents = 'none';
     labelDiv.style.userSelect = 'none';
+    labelDiv.style.transform = 'translate(-50%, -50%)';
+    labelDiv.style.boxShadow = '0 2px 4px rgba(0,0,0,0.1)';
     
     const label = new CSS2DObject(labelDiv);
-    label.position.set(0, theme.node.size + 5, 0);
+    label.position.set(0, size + 5, 0);
     group.add(label);
 
-    // 计算节点位置
+    // 添加交互事件
+    sphere.userData = { ...nodeData, isNode: true };
+    sphere.callback = () => handleNodeClick(sphere);
+
+    // 计算初始位置
     const phi = Math.acos(-1 + (2 * index) / total);
     const theta = Math.sqrt(total * Math.PI) * phi;
     const radius = 200;
@@ -227,9 +355,6 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
     group.position.x = radius * Math.cos(theta) * Math.sin(phi);
     group.position.y = radius * Math.sin(theta) * Math.sin(phi);
     group.position.z = radius * Math.cos(phi);
-
-    // 添加用户数据
-    group.userData = nodeData;
 
     return group;
   };
@@ -367,16 +492,6 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
       document.exitFullscreen();
       setIsFullscreen(false);
     }
-  };
-
-  const handleNodeClick = (node) => {
-    if (selectedNode) {
-      selectedNode.material.color.setHex(parseInt(theme.node.color.replace('#', '0x')));
-    }
-    
-    node.material.color.setHex(parseInt(theme.node.highlightColor.replace('#', '0x')));
-    setSelectedNode(node);
-    onNodeClick && onNodeClick(node.userData);
   };
 
   const handleResetView = () => {
@@ -572,7 +687,59 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
   }, []);
 
   return (
-    <div className="knowledge-graph-container" style={{ width: '100%', height: '100%', ...style }}>
+    <div ref={containerRef} style={{ width: '100%', height: '100%', position: 'relative', ...style }}>
+      <div className="graph-controls" style={{
+        position: 'absolute',
+        top: 20,
+        right: 20,
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '10px',
+        zIndex: 1000
+      }}>
+        <div className="search-box" style={{
+          display: 'flex',
+          alignItems: 'center',
+          background: 'white',
+          padding: '8px',
+          borderRadius: '8px',
+          boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+        }}>
+          <input
+            type="text"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            onKeyPress={(e) => e.key === 'Enter' && searchNodes(searchTerm)}
+            placeholder="搜索节点..."
+            style={{
+              border: 'none',
+              outline: 'none',
+              marginRight: '8px',
+              width: '150px'
+            }}
+          />
+          <button onClick={() => searchNodes(searchTerm)} style={{
+            background: 'none',
+            border: 'none',
+            cursor: 'pointer'
+          }}>
+            <FontAwesomeIcon icon={faSearch} />
+          </button>
+        </div>
+        <button
+          onClick={() => setIsFullscreen(!isFullscreen)}
+          style={{
+            background: 'white',
+            border: 'none',
+            padding: '8px',
+            borderRadius: '8px',
+            cursor: 'pointer',
+            boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+          }}
+        >
+          <FontAwesomeIcon icon={isFullscreen ? faCompress : faExpand} />
+        </button>
+      </div>
       {!isValidData && (
         <div className="empty-state">
           <p>暂无可视化数据</p>
@@ -595,9 +762,6 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
           </button>
         </div>
         <div className="toolbar-group">
-          <button onClick={handleFullscreen} className="toolbar-button" title="全屏">
-            <FontAwesomeIcon icon={isFullscreen ? faCompress : faExpand} />
-          </button>
           <button
             onClick={() => {
               const dataUrl = sceneRef.current.renderer.domElement.toDataURL('image/png');
