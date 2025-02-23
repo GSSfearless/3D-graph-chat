@@ -672,36 +672,51 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
 
       // 找到第一个是球体的相交对象
       const nodeIntersect = intersects.find(intersect => 
-        intersect.object.type === 'Mesh' && 
-        intersect.object.geometry.type === 'SphereGeometry'
+        intersect.object?.type === 'Mesh' && 
+        intersect.object?.geometry?.type === 'SphereGeometry'
       );
 
       // 如果之前有悬浮的节点，恢复其状态
       if (hoveredNode && (!nodeIntersect || nodeIntersect.object !== hoveredNode)) {
-        const material = hoveredNode.material;
-        material.color.set(hoveredNode.userData.originalColor);
-        hoveredNode.scale.copy(hoveredNode.userData.originalScale);
-        hoveredNode.userData.isHovered = false;
-        
-        // 更新发光效果
-        const glowSphere = hoveredNode.parent.children[1];
-        glowSphere.material.uniforms.c.value = 0.5;
-        glowSphere.material.uniforms.p.value = 1.4;
+        if (hoveredNode.material && hoveredNode.userData) {
+          const material = hoveredNode.material;
+          if (material.color && material.color.set && hoveredNode.userData.originalColor) {
+            material.color.set(hoveredNode.userData.originalColor);
+          }
+          if (hoveredNode.scale && hoveredNode.scale.copy && hoveredNode.userData.originalScale) {
+            hoveredNode.scale.copy(hoveredNode.userData.originalScale);
+          }
+          hoveredNode.userData.isHovered = false;
+          
+          // 更新发光效果
+          const glowSphere = hoveredNode.parent?.children?.[1];
+          if (glowSphere?.material?.uniforms) {
+            glowSphere.material.uniforms.c.value = 0.5;
+            glowSphere.material.uniforms.p.value = 1.4;
+          }
+        }
         hoveredNode = null;
       }
 
       // 如果找到新的节点，应用悬浮效果
-      if (nodeIntersect && nodeIntersect.object !== hoveredNode) {
+      if (nodeIntersect && nodeIntersect.object && nodeIntersect.object !== hoveredNode) {
         const node = nodeIntersect.object;
-        const material = node.material;
-        material.color.set(theme.node.highlightColor);
-        node.scale.copy(node.userData.hoverScale);
-        node.userData.isHovered = true;
+        if (node.material && node.material.color && node.material.color.set) {
+          node.material.color.set(theme.node.highlightColor);
+        }
+        if (node.scale && node.scale.copy && node.userData?.hoverScale) {
+          node.scale.copy(node.userData.hoverScale);
+        }
+        if (node.userData) {
+          node.userData.isHovered = true;
+        }
         
         // 增强发光效果
-        const glowSphere = node.parent.children[1];
-        glowSphere.material.uniforms.c.value = 0.8;
-        glowSphere.material.uniforms.p.value = 2.0;
+        const glowSphere = node.parent?.children?.[1];
+        if (glowSphere?.material?.uniforms) {
+          glowSphere.material.uniforms.c.value = 0.8;
+          glowSphere.material.uniforms.p.value = 2.0;
+        }
         hoveredNode = node;
       }
     };
