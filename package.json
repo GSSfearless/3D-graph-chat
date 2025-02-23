@@ -52,7 +52,11 @@
     "@react-three/drei": "^9.102.3",
     "r3f-perf": "^7.1.2",
     "three-stdlib": "^2.29.4",
-    "three-spritetext": "^1.8.1"
+    "three-spritetext": "^1.8.1",
+    "pdf-lib": "^1.17.1",
+    "mammoth": "^1.6.0",
+    "marked": "^9.1.5",
+    "react-dropzone": "^14.2.3"
   },
   "devDependencies": {
     "eslint": "^8",
