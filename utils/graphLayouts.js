@@ -1,5 +1,3 @@
-import { generateNodeStyle } from './nodeStyles';
-
 const NODE_WIDTH = 180;
 const NODE_HEIGHT = 60;
 const NODE_COLORS = [
@@ -31,10 +29,12 @@ function centerLayout(nodes) {
   }));
 }
 
-export function createPyramidLayout(nodes, edges) {
+export function createPyramidLayout(nodes) {
   const levels = Math.ceil(Math.sqrt(nodes.length));
   const width = 1200;
   const height = 900;
+  const nodeWidth = 180;
+  const nodeHeight = 60;
   const horizontalSpacing = 50;
   const verticalSpacing = 100;
 
@@ -43,15 +43,22 @@ export function createPyramidLayout(nodes, edges) {
     const nodesInLevel = (level * 2) + 1;
     const nodeIndex = index - (level * level);
     
-    const style = generateNodeStyle(node, edges);
-    const levelWidth = nodesInLevel * style.width + (nodesInLevel - 1) * horizontalSpacing;
-    const x = (width - levelWidth) / 2 + (style.width + horizontalSpacing) * nodeIndex;
+    const levelWidth = nodesInLevel * nodeWidth + (nodesInLevel - 1) * horizontalSpacing;
+    const x = (width - levelWidth) / 2 + (nodeWidth + horizontalSpacing) * nodeIndex;
     const y = verticalSpacing * (level + 1);
 
     return {
       ...node,
       position: { x, y },
-      style
+      style: { 
+        width: nodeWidth, 
+        height: nodeHeight,
+        background: NODE_COLORS[level % NODE_COLORS.length],
+        borderRadius: '8px',
+        border: '1px solid #ddd',
+        padding: '5px',
+        fontSize: '12px'
+      }
     };
   });
 
@@ -84,7 +91,15 @@ export function createRadialTreeLayout(nodes, edges) {
     const childAngleStep = Math.max((Math.PI * 2) / Math.pow(2, level + 1), minAngle);
 
     node.position = { x, y };
-    node.style = generateNodeStyle(node, edges);
+    node.style = {
+      width: NODE_WIDTH,
+      height: NODE_HEIGHT,
+      background: NODE_COLORS[level % NODE_COLORS.length],
+      borderRadius: '8px',
+      border: '1px solid #ddd',
+      padding: '5px',
+      fontSize: '12px'
+    };
 
     children.forEach((childId, index) => {
       const childNode = nodes.find(n => n.id === childId);
@@ -105,7 +120,7 @@ export function createRadialTreeLayout(nodes, edges) {
 
 export function relayoutGraph(nodes, edges, layoutType) {
   // 暂时忽略 layoutType 参数，始终使用金字塔布局
-  const layoutedNodes = createPyramidLayout(nodes, edges);
+  const layoutedNodes = createPyramidLayout(nodes);
   
   return {
     nodes: layoutedNodes,
