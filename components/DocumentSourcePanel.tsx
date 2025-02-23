@@ -1,3 +1,5 @@
+'use client';
+
 import React from 'react';
 import { Tabs, Card, Tree, Button, List, Tag, Space } from 'antd';
 import { FileTextOutlined, PlusOutlined } from '@ant-design/icons';
