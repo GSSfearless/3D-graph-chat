@@ -17,8 +17,8 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
     node: {
       color: '#6366F1',
       highlightColor: '#F43F5E',
-      minSize: 2,        // 最小节点大小
-      maxSize: 20,       // 最大节点大小
+      minSize: 3,        // 最小节点大小
+      maxSize: 15,       // 最大节点大小
       segments: 32,
       opacity: 0.9,
       glowColor: '#818CF8'
@@ -141,33 +141,25 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
 
   const calculateNodeSize = (nodeData) => {
     // 计算节点的连接数
-    const connections = data.edges.filter(edge => {
-      const sourceId = edge.source || (edge.data && edge.data.source);
-      const targetId = edge.target || (edge.data && edge.data.target);
-      const nodeId = nodeData.id || (nodeData.data && nodeData.data.id);
-      return sourceId === nodeId || targetId === nodeId;
-    }).length;
+    const connections = data.edges.filter(edge => 
+      edge.data.source === nodeData.id || edge.data.target === nodeData.id
+    ).length;
 
-    // 找出最大连接数
-    const maxConnections = Math.max(1, ...data.nodes.map(node => {
-      const nodeId = node.id || (node.data && node.data.id);
-      return data.edges.filter(edge => {
-        const sourceId = edge.source || (edge.data && edge.data.source);
-        const targetId = edge.target || (edge.data && edge.data.target);
-        return sourceId === nodeId || targetId === nodeId;
-      }).length;
-    }));
-
-    // 使用指数比例计算大小，增加差异性
     if (connections === 0) {
       return theme.node.minSize;
     }
 
-    const normalizedValue = connections / maxConnections;
-    const exponentialFactor = 2; // 增加指数因子以放大差异
+    // 找出最大连接数
+    const maxConnections = Math.max(...data.nodes.map(node => 
+      data.edges.filter(edge => 
+        edge.data.source === node.data.id || edge.data.target === node.data.id
+      ).length
+    ));
+
+    // 使用对数比例计算大小
     const size = theme.node.minSize + 
       (theme.node.maxSize - theme.node.minSize) * 
-      Math.pow(normalizedValue, 1/exponentialFactor);
+      Math.log1p(connections) / Math.log1p(maxConnections);
 
     return size;
   };
@@ -175,9 +167,8 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
   const createNode3D = (nodeData, index, total) => {
     const group = new THREE.Group();
 
-    // 计算节点大小并添加调试日志
+    // 计算节点大小
     const nodeSize = calculateNodeSize(nodeData);
-    console.log(`Creating node ${nodeData.label} with size ${nodeSize}`);
 
     // 创建球体几何体
     const geometry = new THREE.SphereGeometry(
@@ -240,6 +231,7 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
     // 创建标签
     const labelDiv = document.createElement('div');
     labelDiv.className = 'node-label';
+    // 清理文本内容，移除特殊字符
     const cleanText = nodeData.label.replace(/[#*]/g, '').replace(/\s+/g, ' ').trim();
     labelDiv.textContent = cleanText;
     labelDiv.style.color = theme.label.color;
@@ -256,14 +248,17 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
     label.position.set(0, nodeSize + 5, 0);
     group.add(label);
 
-    // 添加调试信息到userData
-    group.userData = {
-      ...nodeData,
-      size: nodeSize,
-      connections: data.edges.filter(edge => 
-        edge.source === nodeData.id || edge.target === nodeData.id
-      ).length
-    };
+    // 计算节点位置
+    const phi = Math.acos(-1 + (2 * index) / total);
+    const theta = Math.sqrt(total * Math.PI) * phi;
+    const radius = 200;
+
+    group.position.x = radius * Math.cos(theta) * Math.sin(phi);
+    group.position.y = radius * Math.sin(theta) * Math.sin(phi);
+    group.position.z = radius * Math.cos(phi);
+
+    // 添加用户数据
+    group.userData = nodeData;
 
     return group;
   };
