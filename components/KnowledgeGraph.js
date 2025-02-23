@@ -17,7 +17,8 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
     node: {
       color: '#6366F1',
       highlightColor: '#F43F5E',
-      size: 10,
+      minSize: 3,        // 最小节点大小
+      maxSize: 15,       // 最大节点大小
       segments: 32,
       opacity: 0.9,
       glowColor: '#818CF8'
@@ -138,12 +139,40 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
     labelRenderer.setSize(newWidth, newHeight);
   };
 
+  const calculateNodeSize = (nodeData) => {
+    // 计算节点的连接数
+    const connections = data.edges.filter(edge => 
+      edge.data.source === nodeData.id || edge.data.target === nodeData.id
+    ).length;
+
+    if (connections === 0) {
+      return theme.node.minSize;
+    }
+
+    // 找出最大连接数
+    const maxConnections = Math.max(...data.nodes.map(node => 
+      data.edges.filter(edge => 
+        edge.data.source === node.data.id || edge.data.target === node.data.id
+      ).length
+    ));
+
+    // 使用对数比例计算大小
+    const size = theme.node.minSize + 
+      (theme.node.maxSize - theme.node.minSize) * 
+      Math.log1p(connections) / Math.log1p(maxConnections);
+
+    return size;
+  };
+
   const createNode3D = (nodeData, index, total) => {
     const group = new THREE.Group();
 
+    // 计算节点大小
+    const nodeSize = calculateNodeSize(nodeData);
+
     // 创建球体几何体
     const geometry = new THREE.SphereGeometry(
-      theme.node.size,
+      nodeSize,
       theme.node.segments,
       theme.node.segments
     );
@@ -194,7 +223,7 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
     });
 
     const glowSphere = new THREE.Mesh(
-      new THREE.SphereGeometry(theme.node.size * 1.2, theme.node.segments, theme.node.segments),
+      new THREE.SphereGeometry(nodeSize * 1.2, theme.node.segments, theme.node.segments),
       glowMaterial
     );
     group.add(glowSphere);
@@ -216,7 +245,7 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
     labelDiv.style.userSelect = 'none';
     
     const label = new CSS2DObject(labelDiv);
-    label.position.set(0, theme.node.size + 5, 0);
+    label.position.set(0, nodeSize + 5, 0);
     group.add(label);
 
     // 计算节点位置
