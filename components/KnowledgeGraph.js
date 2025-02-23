@@ -516,18 +516,27 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
       
       // 处理边数据
       data.edges.forEach(edge => {
+        console.log('处理边:', edge);
         const edgeData = edge.data || edge;
         
         // 获取源节点和目标节点的ID
-        const sourceId = typeof edgeData.source === 'object' ? edgeData.source.id : edgeData.source;
-        const targetId = typeof edgeData.target === 'object' ? edgeData.target.id : edgeData.target;
+        const sourceId = edgeData.source.id || edgeData.source;
+        const targetId = edgeData.target.id || edgeData.target;
         
-        // 创建唯一的边标识符
-        const edgeKey = `${sourceId}-${targetId}`;
+        console.log('边的源节点ID:', sourceId);
+        console.log('边的目标节点ID:', targetId);
         
-        if (!edgeMap.has(edgeKey)) {
+        // 创建双向的边标识符，确保 A->B 和 B->A 被视为相同的边
+        const edgeKey1 = `${sourceId}-${targetId}`;
+        const edgeKey2 = `${targetId}-${sourceId}`;
+        
+        // 如果这条边还没有被创建过
+        if (!edgeMap.has(edgeKey1) && !edgeMap.has(edgeKey2)) {
           const source = nodes3D.get(sourceId);
           const target = nodes3D.get(targetId);
+          
+          console.log('找到的源节点:', source ? '存在' : '不存在');
+          console.log('找到的目标节点:', target ? '存在' : '不存在');
           
           if (source && target) {
             const edge3D = createEdge3D(source, target, {
@@ -536,8 +545,13 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
             });
             edge3D.userData.isEdge = true;
             scene.add(edge3D);
-            edgeMap.set(edgeKey, edge3D);
+            edgeMap.set(edgeKey1, edge3D);
+            console.log('成功创建边:', edgeKey1);
+          } else {
+            console.warn('无法创建边，节点不存在:', edgeKey1);
           }
+        } else {
+          console.log('边已存在，跳过创建:', edgeKey1);
         }
       });
 
