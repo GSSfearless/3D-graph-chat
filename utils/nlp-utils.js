@@ -80,7 +80,6 @@ export const extractEntities = async (text) => {
             label: cleanMatch,
             isEvent: hasEventIndicators(cleanMatch),
             isAttribute: hasAttributeIndicators(cleanMatch),
-            isConcept: hasConceptIndicators(cleanMatch),
             importance: calculateImportance(cleanMatch, text),
             properties: {}
           };
@@ -90,7 +89,6 @@ export const extractEntities = async (text) => {
     });
 
     const result = Array.from(entities.values());
-    console.log('Extracted entities:', result); // 添加日志
     return result;
   } catch (error) {
     console.error('Error in extractEntities:', error);
@@ -246,47 +244,29 @@ const generateSentimentTimeline = (content) => {
 };
 
 const isValidEntity = (text) => {
-  const invalidPatterns = [
-    /^[的地得]/, // 不以助词开头
-    /^[和与或而且但是然后因此所以]/, // 不以连接词开头
-    /^\d+$/, // 不是纯数字
-    /^[,.，。、；：！？]/, // 不是标点符号
-    /[，。、；：！？]+/ // 不包含标点符号
-  ];
-
-  return text.length >= 2 && 
-         text.length <= 20 && 
-         !invalidPatterns.some(pattern => pattern.test(text));
+  return text.length >= 2 && !/^\d+$/.test(text);
 };
 
 const hasEventIndicators = (text) => {
   const eventPatterns = [
     /[了过着]$/,
-    /^(发生|开始|结束|完成)/,
-    /(举[办行]|开展|进行)/
+    /^(开始|结束|发生|完成|启动)/,
+    /(并|或|而|但|然后)/
   ];
   return eventPatterns.some(pattern => pattern.test(text));
 };
 
 const hasAttributeIndicators = (text) => {
   const attributePatterns = [
-    /^(大小|长度|宽度|高度|重量|颜色|性质|特征)/,
-    /(程度|等级|级别|品质)$/
+    /^(大小|长度|宽度|高度|深度|重量|颜色|形状)/,
+    /(性|度|率|量|值|数|比)$/,
+    /^(可以|能够|应该|必须|不能|不可以)/
   ];
   return attributePatterns.some(pattern => pattern.test(text));
 };
 
-const hasConceptIndicators = (text) => {
-  const conceptPatterns = [
-    /^(概念|理论|方法|系统|原理)/,
-    /(思想|观点|主义)$/
-  ];
-  return conceptPatterns.some(pattern => pattern.test(text));
-};
-
 const calculateImportance = (entity, fullText) => {
   try {
-    // 安全地创建正则表达式
     const escapedEntity = entity.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
     const regex = new RegExp(escapedEntity, 'g');
     const frequency = (fullText.match(regex) || []).length;
