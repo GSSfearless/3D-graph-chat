@@ -123,7 +123,7 @@ export class KnowledgeGraphProcessor {
         label: label,
         text: entity.text || label,
         type: this.getNodeType(entity),
-        size: this.calculateNodeSize(entity),
+        size: 1, // 使用默认大小，实际大小将由KnowledgeGraph组件计算
         color: this.colorScheme[this.getNodeType(entity)],
         embedding: embeddings[index],
         properties: entity.properties || {},
@@ -175,13 +175,6 @@ export class KnowledgeGraphProcessor {
     if (entity.isAttribute) return this.nodeTypes.ATTRIBUTE;
     if (entity.isConcept) return this.nodeTypes.CONCEPT;
     return this.nodeTypes.ENTITY;
-  }
-
-  calculateNodeSize(entity) {
-    // 基于实体重要性计算节点大小
-    const baseSize = 10;
-    const importance = entity.importance || 1;
-    return baseSize * Math.sqrt(importance);
   }
 
   applyLayout({ nodes, edges, type }) {
