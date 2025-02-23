@@ -144,51 +144,53 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
     
     // 计算节点的连接数
     const connections = data.edges.filter(edge => {
-      console.log('检查边:', edge);
-      console.log('当前节点ID:', nodeData.id);
+      const edgeData = edge.data || edge;
       
       // 获取边的源节点和目标节点ID
-      const sourceId = edge.data.source.id || edge.data.source;
-      const targetId = edge.data.target.id || edge.data.target;
+      const sourceId = edgeData.source?.id || edgeData.source;
+      const targetId = edgeData.target?.id || edgeData.target;
       
-      console.log('边的source:', sourceId);
-      console.log('边的target:', targetId);
+      console.log('检查边连接:', {
+        nodeId: nodeData.id,
+        sourceId,
+        targetId,
+        isSource: sourceId === nodeData.id,
+        isTarget: targetId === nodeData.id
+      });
       
-      const isConnected = sourceId === nodeData.id || targetId === nodeData.id;
-      console.log('是否连接:', isConnected);
-      return isConnected;
+      return sourceId === nodeData.id || targetId === nodeData.id;
     }).length;
 
-    console.log('节点连接数:', connections);
-
-    if (connections === 0) {
-      console.log('节点无连接，使用最小尺寸:', theme.node.minSize);
-      return theme.node.minSize;
-    }
+    console.log(`节点 ${nodeData.id} 的连接数:`, connections);
 
     // 找出最大连接数
     const allConnectionCounts = data.nodes.map(node => {
       const nodeId = node.data.id;
       const count = data.edges.filter(edge => {
-        const sourceId = edge.data.source.id || edge.data.source;
-        const targetId = edge.data.target.id || edge.data.target;
+        const edgeData = edge.data || edge;
+        const sourceId = edgeData.source?.id || edgeData.source;
+        const targetId = edgeData.target?.id || edgeData.target;
         return sourceId === nodeId || targetId === nodeId;
       }).length;
-      console.log('节点', nodeId, '的连接数:', count);
       return count;
-    });
+    }).filter(count => count > 0); // 只考虑有连接的节点
     
-    const maxConnections = Math.max(...allConnectionCounts);
+    const maxConnections = Math.max(...allConnectionCounts, 1); // 避免除以0
     console.log('最大连接数:', maxConnections);
 
+    if (connections === 0) {
+      console.log(`节点 ${nodeData.id} 无连接，使用最小尺寸:`, theme.node.minSize);
+      return theme.node.minSize;
+    }
+
     // 使用指数函数计算大小
-    const base = 1.5; // 指数基数
+    const base = 2.0; // 增大指数基数，使差异更明显
     const normalizedConnections = connections / maxConnections;
     const size = theme.node.minSize + 
       (theme.node.maxSize - theme.node.minSize) * 
       (Math.pow(base, normalizedConnections) - 1) / (base - 1);
 
-    console.log('最终计算的节点大小:', size);
+    console.log(`节点 ${nodeData.id} 的最终大小:`, size);
     return size;
   };
 
