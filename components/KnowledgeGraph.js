@@ -1,9 +1,11 @@
+'use client';
+
 import React, { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 import { CSS2DRenderer, CSS2DObject } from 'three/examples/jsm/renderers/CSS2DRenderer';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faExpand, faCompress, faSearch, faRefresh, faSave, faDownload } from '@fortawesome/free-solid-svg-icons';
+import { faExpand, faCompress, faSearch, faRotateRight, faSave, faDownload } from '@fortawesome/free-solid-svg-icons';
 
 const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
   const containerRef = useRef(null);
@@ -591,7 +593,7 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
             <FontAwesomeIcon icon={faSearch} className="mr-1" />-
           </button>
           <button onClick={handleResetView} className="toolbar-button" title="重置视角">
-            <FontAwesomeIcon icon={faRefresh} />
+            <FontAwesomeIcon icon={faRotateRight} />
           </button>
         </div>
         <div className="toolbar-group">
