@@ -4,6 +4,7 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 import { CSS2DRenderer, CSS2DObject } from 'three/examples/jsm/renderers/CSS2DRenderer';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faExpand, faCompress, faSearch, faRefresh, faSave, faDownload } from '@fortawesome/free-solid-svg-icons';
+import { calculateNodeImportance, NodeTypes } from '../utils/nodeStyles';
 
 const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
   const containerRef = useRef(null);
@@ -15,12 +16,20 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
   // 主题配置
   const theme = {
     node: {
-      color: '#6366F1',
-      highlightColor: '#F43F5E',
-      size: 10,
+      size: {
+        [NodeTypes.CORE]: 15,
+        [NodeTypes.IMPORTANT]: 12,
+        [NodeTypes.NORMAL]: 10,
+        [NodeTypes.RELATED]: 8
+      },
       segments: 32,
       opacity: 0.9,
-      glowColor: '#818CF8'
+      glowColor: {
+        [NodeTypes.CORE]: '#4A90E2',
+        [NodeTypes.IMPORTANT]: '#50E3C2',
+        [NodeTypes.NORMAL]: '#C3CFE2',
+        [NodeTypes.RELATED]: '#E1BEE7'
+      }
     },
     edge: {
       color: '#94A3B8',
@@ -140,21 +149,21 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
 
   const createNode3D = (nodeData, index, total) => {
     const group = new THREE.Group();
-
-    // 创建球体几何体
+    const importance = calculateNodeImportance(nodeData, data.edges);
+    
+    // 创建节点球体
     const geometry = new THREE.SphereGeometry(
-      theme.node.size,
+      theme.node.size[importance],
       theme.node.segments,
       theme.node.segments
     );
-
+    
     // 创建发光材质
     const material = new THREE.MeshPhongMaterial({
-      color: theme.node.color,
-      specular: 0x666666,
-      shininess: 50,
+      color: theme.node.glowColor[importance],
       transparent: true,
-      opacity: theme.node.opacity
+      opacity: theme.node.opacity,
+      shininess: 100
     });
 
     const sphere = new THREE.Mesh(geometry, material);
@@ -162,53 +171,19 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
     sphere.receiveShadow = true;
     group.add(sphere);
 
-    // 添加发光效果
-    const glowMaterial = new THREE.ShaderMaterial({
-      uniforms: {
-        c: { type: 'f', value: 0.5 },
-        p: { type: 'f', value: 1.4 },
-        glowColor: { type: 'c', value: new THREE.Color(theme.node.glowColor) },
-        viewVector: { type: 'v3', value: sceneRef.current.camera.position }
-      },
-      vertexShader: `
-        uniform vec3 viewVector;
-        varying float intensity;
-        void main() {
-          vec3 vNormal = normalize(normalMatrix * normal);
-          vec3 vNormel = normalize(normalMatrix * viewVector);
-          intensity = pow(0.5 - dot(vNormal, vNormel), 2.0);
-          gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-        }
-      `,
-      fragmentShader: `
-        uniform vec3 glowColor;
-        varying float intensity;
-        void main() {
-          vec3 glow = glowColor * intensity;
-          gl_FragColor = vec4(glow, 1.0);
-        }
-      `,
-      side: THREE.BackSide,
-      blending: THREE.AdditiveBlending,
-      transparent: true
-    });
-
-    const glowSphere = new THREE.Mesh(
-      new THREE.SphereGeometry(theme.node.size * 1.2, theme.node.segments, theme.node.segments),
-      glowMaterial
-    );
-    group.add(glowSphere);
-
     // 创建标签
     const labelDiv = document.createElement('div');
     labelDiv.className = 'node-label';
-    // 清理文本内容，移除特殊字符
     const cleanText = nodeData.label.replace(/[#*]/g, '').replace(/\s+/g, ' ').trim();
     labelDiv.textContent = cleanText;
-    labelDiv.style.color = theme.label.color;
-    labelDiv.style.fontSize = theme.label.size;
-    labelDiv.style.fontFamily = theme.label.font;
-    labelDiv.style.background = 'transparent';
+    
+    // 根据重要性设置标签样式
+    labelDiv.style.color = theme.node.glowColor[importance];
+    labelDiv.style.fontSize = `${12 + (NodeTypes.CORE === importance ? 4 : 
+                                     NodeTypes.IMPORTANT === importance ? 2 : 0)}px`;
+    labelDiv.style.fontWeight = NodeTypes.CORE === importance ? '600' : '400';
+    labelDiv.style.textShadow = '0 0 3px rgba(0,0,0,0.2)';
+    labelDiv.style.background = 'rgba(255,255,255,0.9)';
     labelDiv.style.padding = '4px 8px';
     labelDiv.style.borderRadius = '4px';
     labelDiv.style.whiteSpace = 'nowrap';
@@ -216,7 +191,7 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
     labelDiv.style.userSelect = 'none';
     
     const label = new CSS2DObject(labelDiv);
-    label.position.set(0, theme.node.size + 5, 0);
+    label.position.set(0, theme.node.size[importance] + 5, 0);
     group.add(label);
 
     // 计算节点位置
@@ -371,10 +346,10 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
 
   const handleNodeClick = (node) => {
     if (selectedNode) {
-      selectedNode.material.color.setHex(parseInt(theme.node.color.replace('#', '0x')));
+      selectedNode.material.color.setHex(parseInt(theme.node.glowColor[calculateNodeImportance(selectedNode.userData, data.edges)].replace('#', '0x')));
     }
     
-    node.material.color.setHex(parseInt(theme.node.highlightColor.replace('#', '0x')));
+    node.material.color.setHex(parseInt(theme.edge.highlightColor.replace('#', '0x')));
     setSelectedNode(node);
     onNodeClick && onNodeClick(node.userData);
   };
