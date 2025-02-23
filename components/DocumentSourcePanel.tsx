@@ -4,6 +4,7 @@ import React from 'react';
 import { Tabs, Card, Tree, Button, List, Tag, Space } from 'antd';
 import { FileTextOutlined, PlusOutlined } from '@ant-design/icons';
 import { ProcessedDocument } from '../types/document';
+import type { DataNode } from 'antd/es/tree';
 
 interface DocumentSourcePanelProps {
   documents: ProcessedDocument[];
@@ -11,6 +12,22 @@ interface DocumentSourcePanelProps {
   onDocumentSelect: (doc: ProcessedDocument) => void;
   onDocumentUpload: () => void;
 }
+
+const convertToTreeData = (structure: any): DataNode[] => {
+  const { title, sections } = structure;
+  return [{
+    key: '0',
+    title: title,
+    children: sections.map((section: any, index: number) => ({
+      key: `${index + 1}`,
+      title: section.title,
+      children: section.subsections.map((subsection: any, subIndex: number) => ({
+        key: `${index + 1}-${subIndex + 1}`,
+        title: subsection.title
+      }))
+    }))
+  }];
+};
 
 const DocumentSourcePanel: React.FC<DocumentSourcePanelProps> = ({
   documents,
@@ -62,7 +79,7 @@ const DocumentSourcePanel: React.FC<DocumentSourcePanelProps> = ({
           {selectedDocument && (
             <div className="document-content">
               <Tree
-                treeData={selectedDocument.structure}
+                treeData={convertToTreeData(selectedDocument.structure)}
                 onSelect={(_, info) => {
                   // 在知识图谱中高亮相关节点
                 }}
