@@ -167,44 +167,23 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
   const createNode3D = (nodeData, index, total) => {
     const group = new THREE.Group();
 
-    // 计算连接数
-    const connections = data.edges.filter(edge => {
-        const sourceId = edge.source || (edge.data && edge.data.source);
-        const targetId = edge.target || (edge.data && edge.data.target);
-        const nodeId = nodeData.id || (nodeData.data && nodeData.data.id);
-        return sourceId === nodeId || targetId === nodeId;
-    }).length;
-
     // 计算节点大小
-    const baseSize = 3;
-    const maxSize = 15;
-    const maxConnections = Math.max(1, Math.max(...data.nodes.map(node => {
-        const nodeId = node.id || (node.data && node.data.id);
-        return data.edges.filter(edge => {
-            const sourceId = edge.source || (edge.data && edge.data.source);
-            const targetId = edge.target || (edge.data && edge.data.target);
-            return sourceId === nodeId || targetId === nodeId;
-        }).length;
-    })));
-
-    // 使用平方根比例计算大小
-    const nodeSize = connections === 0 ? baseSize : 
-        baseSize + (maxSize - baseSize) * Math.sqrt(connections / maxConnections);
+    const nodeSize = calculateNodeSize(nodeData);
 
     // 创建球体几何体
     const geometry = new THREE.SphereGeometry(
-        nodeSize,
-        theme.node.segments,
-        theme.node.segments
+      nodeSize,
+      theme.node.segments,
+      theme.node.segments
     );
 
     // 创建发光材质
     const material = new THREE.MeshPhongMaterial({
-        color: theme.node.color,
-        specular: 0x666666,
-        shininess: 50,
-        transparent: true,
-        opacity: theme.node.opacity
+      color: theme.node.color,
+      specular: 0x666666,
+      shininess: 50,
+      transparent: true,
+      opacity: theme.node.opacity
     });
 
     const sphere = new THREE.Mesh(geometry, material);
@@ -214,46 +193,47 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
 
     // 添加发光效果
     const glowMaterial = new THREE.ShaderMaterial({
-        uniforms: {
-            c: { type: 'f', value: 0.5 },
-            p: { type: 'f', value: 1.4 },
-            glowColor: { type: 'c', value: new THREE.Color(theme.node.glowColor) },
-            viewVector: { type: 'v3', value: sceneRef.current.camera.position }
-        },
-        vertexShader: `
-            uniform vec3 viewVector;
-            varying float intensity;
-            void main() {
-                vec3 vNormal = normalize(normalMatrix * normal);
-                vec3 vNormel = normalize(normalMatrix * viewVector);
-                intensity = pow(0.5 - dot(vNormal, vNormel), 2.0);
-                gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-            }
-        `,
-        fragmentShader: `
-            uniform vec3 glowColor;
-            varying float intensity;
-            void main() {
-                vec3 glow = glowColor * intensity;
-                gl_FragColor = vec4(glow, 1.0);
-            }
-        `,
-        side: THREE.BackSide,
-        blending: THREE.AdditiveBlending,
-        transparent: true
+      uniforms: {
+        c: { type: 'f', value: 0.5 },
+        p: { type: 'f', value: 1.4 },
+        glowColor: { type: 'c', value: new THREE.Color(theme.node.glowColor) },
+        viewVector: { type: 'v3', value: sceneRef.current.camera.position }
+      },
+      vertexShader: `
+        uniform vec3 viewVector;
+        varying float intensity;
+        void main() {
+          vec3 vNormal = normalize(normalMatrix * normal);
+          vec3 vNormel = normalize(normalMatrix * viewVector);
+          intensity = pow(0.5 - dot(vNormal, vNormel), 2.0);
+          gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+        }
+      `,
+      fragmentShader: `
+        uniform vec3 glowColor;
+        varying float intensity;
+        void main() {
+          vec3 glow = glowColor * intensity;
+          gl_FragColor = vec4(glow, 1.0);
+        }
+      `,
+      side: THREE.BackSide,
+      blending: THREE.AdditiveBlending,
+      transparent: true
     });
 
     const glowSphere = new THREE.Mesh(
-        new THREE.SphereGeometry(nodeSize * 1.2, theme.node.segments, theme.node.segments),
-        glowMaterial
+      new THREE.SphereGeometry(nodeSize * 1.2, theme.node.segments, theme.node.segments),
+      glowMaterial
     );
     group.add(glowSphere);
 
     // 创建标签
     const labelDiv = document.createElement('div');
     labelDiv.className = 'node-label';
-    const cleanText = nodeData.label || nodeData.text || nodeData.id;
-    labelDiv.textContent = cleanText.replace(/[#*]/g, '').replace(/\s+/g, ' ').trim();
+    // 清理文本内容，移除特殊字符
+    const cleanText = nodeData.label.replace(/[#*]/g, '').replace(/\s+/g, ' ').trim();
+    labelDiv.textContent = cleanText;
     labelDiv.style.color = theme.label.color;
     labelDiv.style.fontSize = theme.label.size;
     labelDiv.style.fontFamily = theme.label.font;
@@ -268,15 +248,17 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
     label.position.set(0, nodeSize + 5, 0);
     group.add(label);
 
-    // 添加用户数据
-    group.userData = {
-        ...nodeData,
-        size: nodeSize,
-        connections: connections
-    };
+    // 计算节点位置
+    const phi = Math.acos(-1 + (2 * index) / total);
+    const theta = Math.sqrt(total * Math.PI) * phi;
+    const radius = 200;
 
-    // 添加点击事件
-    sphere.callback = () => handleNodeClick(sphere);
+    group.position.x = radius * Math.cos(theta) * Math.sin(phi);
+    group.position.y = radius * Math.sin(theta) * Math.sin(phi);
+    group.position.z = radius * Math.cos(phi);
+
+    // 添加用户数据
+    group.userData = nodeData;
 
     return group;
   };
@@ -452,15 +434,16 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
 
     // 清除现有内容
     while (scene.children.length > 0) {
-        scene.remove(scene.children[0]);
+      scene.remove(scene.children[0]);
     }
 
     // 如果数据无效，显示空场景
     if (!isValidData) {
-        console.warn('Invalid graph data:', data);
-        const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
-        scene.add(ambientLight);
-        return;
+      console.warn('Invalid graph data:', data);
+      // 添加基本光源
+      const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+      scene.add(ambientLight);
+      return;
     }
 
     // 添加光源
@@ -472,62 +455,56 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
     scene.add(pointLight);
 
     try {
-        // 首先计算所有节点的连接数
-        const nodeConnections = new Map();
-        data.nodes.forEach(node => {
-            const nodeId = node.id || (node.data && node.data.id);
-            const connections = data.edges.filter(edge => {
-                const sourceId = edge.source || (edge.data && edge.data.source);
-                const targetId = edge.target || (edge.data && edge.data.target);
-                return sourceId === nodeId || targetId === nodeId;
-            }).length;
-            nodeConnections.set(nodeId, connections);
-        });
+      // 创建节点
+      const nodes3D = new Map();
+      data.nodes.forEach((node, index) => {
+        const nodeData = node.data;
+        if (!nodeData || !nodeData.id || !nodeData.label) {
+          console.warn('Invalid node data:', node);
+          return;
+        }
+        const node3D = createNode3D(nodeData, index, data.nodes.length);
+        scene.add(node3D);
+        nodes3D.set(nodeData.id, node3D);
 
-        // 找出最大连接数
-        const maxConnections = Math.max(1, Math.max(...nodeConnections.values()));
-        console.log('Max connections:', maxConnections);
+        // 添加点击事件
+        if (node3D.children[0]) {
+          node3D.children[0].callback = () => handleNodeClick(node3D.children[0]);
+        }
+      });
 
-        // 创建节点
-        const nodes3D = new Map();
-        data.nodes.forEach((node, index) => {
-            const nodeData = node.data || node;
-            if (!nodeData || !nodeData.id) {
-                console.warn('Invalid node data:', node);
-                return;
-            }
-
-            // 使用预计算的连接数
-            const connections = nodeConnections.get(nodeData.id) || 0;
-            const baseSize = 3;
-            const maxSize = 15;
-            const nodeSize = connections === 0 ? baseSize : 
-                baseSize + (maxSize - baseSize) * Math.sqrt(connections / maxConnections);
-
-            console.log(`Node ${nodeData.id} size:`, nodeSize, 'connections:', connections);
-
-            const node3D = createNode3D(nodeData, index, data.nodes.length);
-            scene.add(node3D);
-            nodes3D.set(nodeData.id, node3D);
-        });
-
-        // 创建边
-        data.edges.forEach(edge => {
-            const edgeData = edge.data || edge;
-            const sourceId = edgeData.source || (edgeData.data && edgeData.data.source);
-            const targetId = edgeData.target || (edgeData.data && edgeData.data.target);
-            
-            const source = nodes3D.get(sourceId);
-            const target = nodes3D.get(targetId);
-            
-            if (source && target) {
-                const edge3D = createEdge3D(source, target, edgeData);
-                scene.add(edge3D);
-            }
-        });
+      // 创建边的映射以避免重复
+      const edgeMap = new Map();
+      
+      // 处理边数据
+      data.edges.forEach(edge => {
+        const edgeData = edge.data || edge;
+        
+        // 获取源节点和目标节点的ID
+        const sourceId = typeof edgeData.source === 'object' ? edgeData.source.id : edgeData.source;
+        const targetId = typeof edgeData.target === 'object' ? edgeData.target.id : edgeData.target;
+        
+        // 创建唯一的边标识符
+        const edgeKey = `${sourceId}-${targetId}`;
+        
+        if (!edgeMap.has(edgeKey)) {
+          const source = nodes3D.get(sourceId);
+          const target = nodes3D.get(targetId);
+          
+          if (source && target) {
+            const edge3D = createEdge3D(source, target, {
+              ...edgeData,
+              label: edgeData.label || edgeData.type || '关系'
+            });
+            edge3D.userData.isEdge = true;
+            scene.add(edge3D);
+            edgeMap.set(edgeKey, edge3D);
+          }
+        }
+      });
 
     } catch (error) {
-        console.error('Error creating 3D objects:', error);
+      console.error('Error creating 3D objects:', error);
     }
 
     // 动画循环
