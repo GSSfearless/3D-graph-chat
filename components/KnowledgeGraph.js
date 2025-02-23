@@ -141,25 +141,40 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
 
   const calculateNodeSize = (nodeData) => {
     // 计算节点的连接数
-    const connections = data.edges.filter(edge => 
-      edge.data.source === nodeData.id || edge.data.target === nodeData.id
-    ).length;
+    const connections = data.edges.filter(edge => {
+      const sourceId = edge.data?.source || edge.source;
+      const targetId = edge.data?.target || edge.target;
+      return sourceId === nodeData.id || targetId === nodeData.id;
+    }).length;
+
+    console.log(`Node ${nodeData.label} has ${connections} connections`); // 添加调试日志
 
     if (connections === 0) {
       return theme.node.minSize;
     }
 
     // 找出最大连接数
-    const maxConnections = Math.max(...data.nodes.map(node => 
-      data.edges.filter(edge => 
-        edge.data.source === node.data.id || edge.data.target === node.data.id
-      ).length
-    ));
+    const maxConnections = Math.max(...data.nodes.map(node => {
+      const nodeId = node.data?.id || node.id;
+      return data.edges.filter(edge => {
+        const sourceId = edge.data?.source || edge.source;
+        const targetId = edge.data?.target || edge.target;
+        return sourceId === nodeId || targetId === nodeId;
+      }).length;
+    }));
 
-    // 使用对数比例计算大小
+    console.log(`Max connections in graph: ${maxConnections}`); // 添加调试日志
+
+    // 调整大小范围
+    theme.node.minSize = 5;    // 增加最小尺寸
+    theme.node.maxSize = 25;   // 增加最大尺寸
+
+    // 使用对数比例计算大小，增加基数以放大差异
     const size = theme.node.minSize + 
       (theme.node.maxSize - theme.node.minSize) * 
       Math.log1p(connections) / Math.log1p(maxConnections);
+
+    console.log(`Calculated size for node ${nodeData.label}: ${size}`); // 添加调试日志
 
     return size;
   };
