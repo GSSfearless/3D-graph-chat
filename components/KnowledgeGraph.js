@@ -191,6 +191,16 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
     const sphere = new THREE.Mesh(geometry, material);
     sphere.castShadow = true;
     sphere.receiveShadow = true;
+    
+    // 添加悬浮效果所需的属性
+    sphere.userData = {
+      ...nodeData,
+      originalScale: new THREE.Vector3(1, 1, 1),
+      originalColor: theme.node.color,
+      hoverScale: new THREE.Vector3(1.3, 1.3, 1.3),
+      isHovered: false
+    };
+    
     group.add(sphere);
 
     // 添加发光效果
@@ -601,6 +611,67 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
       element.removeEventListener('touchend', handleTouchEnd);
     };
   }, []);
+
+  useEffect(() => {
+    if (!sceneRef.current || !data) return;
+
+    const { scene, camera, renderer } = sceneRef.current;
+
+    // 添加鼠标事件处理
+    const raycaster = new THREE.Raycaster();
+    const mouse = new THREE.Vector2();
+    let hoveredNode = null;
+
+    const onMouseMove = (event) => {
+      const rect = renderer.domElement.getBoundingClientRect();
+      mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+      mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+
+      raycaster.setFromCamera(mouse, camera);
+      const intersects = raycaster.intersectObjects(scene.children, true);
+
+      // 找到第一个是球体的相交对象
+      const nodeIntersect = intersects.find(intersect => 
+        intersect.object.type === 'Mesh' && 
+        intersect.object.geometry.type === 'SphereGeometry'
+      );
+
+      // 如果之前有悬浮的节点，恢复其状态
+      if (hoveredNode && (!nodeIntersect || nodeIntersect.object !== hoveredNode)) {
+        const material = hoveredNode.material;
+        material.color.set(hoveredNode.userData.originalColor);
+        hoveredNode.scale.copy(hoveredNode.userData.originalScale);
+        hoveredNode.userData.isHovered = false;
+        
+        // 更新发光效果
+        const glowSphere = hoveredNode.parent.children[1];
+        glowSphere.material.uniforms.c.value = 0.5;
+        glowSphere.material.uniforms.p.value = 1.4;
+        hoveredNode = null;
+      }
+
+      // 如果找到新的节点，应用悬浮效果
+      if (nodeIntersect && nodeIntersect.object !== hoveredNode) {
+        const node = nodeIntersect.object;
+        const material = node.material;
+        material.color.set(theme.node.highlightColor);
+        node.scale.copy(node.userData.hoverScale);
+        node.userData.isHovered = true;
+        
+        // 增强发光效果
+        const glowSphere = node.parent.children[1];
+        glowSphere.material.uniforms.c.value = 0.8;
+        glowSphere.material.uniforms.p.value = 2.0;
+        hoveredNode = node;
+      }
+    };
+
+    renderer.domElement.addEventListener('mousemove', onMouseMove);
+
+    return () => {
+      renderer.domElement.removeEventListener('mousemove', onMouseMove);
+    };
+  }, [data]);
 
   return (
     <div className="knowledge-graph-container" style={{ width: '100%', height: '100%', ...style }}>
