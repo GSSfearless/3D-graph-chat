@@ -140,21 +140,38 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
   };
 
   const calculateNodeSize = (nodeData) => {
+    console.log('计算节点大小 - 节点数据:', nodeData);
+    
     // 计算节点的连接数
-    const connections = data.edges.filter(edge => 
-      edge.data.source === nodeData.id || edge.data.target === nodeData.id
-    ).length;
+    const connections = data.edges.filter(edge => {
+      console.log('检查边:', edge);
+      console.log('当前节点ID:', nodeData.id);
+      console.log('边的source:', edge.data.source);
+      console.log('边的target:', edge.data.target);
+      
+      const isConnected = edge.data.source === nodeData.id || edge.data.target === nodeData.id;
+      console.log('是否连接:', isConnected);
+      return isConnected;
+    }).length;
+
+    console.log('节点连接数:', connections);
 
     if (connections === 0) {
+      console.log('节点无连接，使用最小尺寸:', theme.node.minSize);
       return theme.node.minSize;
     }
 
     // 找出最大连接数
-    const maxConnections = Math.max(...data.nodes.map(node => 
-      data.edges.filter(edge => 
+    const allConnectionCounts = data.nodes.map(node => {
+      const count = data.edges.filter(edge => 
         edge.data.source === node.data.id || edge.data.target === node.data.id
-      ).length
-    ));
+      ).length;
+      console.log('节点', node.data.id, '的连接数:', count);
+      return count;
+    });
+    
+    const maxConnections = Math.max(...allConnectionCounts);
+    console.log('最大连接数:', maxConnections);
 
     // 使用指数函数计算大小
     const base = 1.5; // 指数基数
@@ -163,6 +180,7 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
       (theme.node.maxSize - theme.node.minSize) * 
       (Math.pow(base, normalizedConnections) - 1) / (base - 1);
 
+    console.log('最终计算的节点大小:', size);
     return size;
   };
 
