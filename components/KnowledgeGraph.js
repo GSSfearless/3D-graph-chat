@@ -501,9 +501,22 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
           console.warn('Invalid node data:', node);
           return;
         }
+        
+        // 规范化节点ID
+        const normalizedId = nodeData.id.replace(/[^a-zA-Z0-9]/g, '_').replace(/_+/g, '_').replace(/^_|_$/g, '');
+        nodeData.id = `node-${normalizedId}`;
+        
+        console.log('处理节点:', {
+          原始ID: node.data.id,
+          规范化ID: nodeData.id,
+          标签: nodeData.label
+        });
+        
         const node3D = createNode3D(nodeData, index, data.nodes.length);
         scene.add(node3D);
         nodes3D.set(nodeData.id, node3D);
+        // 同时用原始ID作为备用键
+        nodes3D.set(node.data.id, node3D);
 
         // 添加点击事件
         if (node3D.children[0]) {
@@ -519,12 +532,19 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
         console.log('处理边:', edge);
         const edgeData = edge.data || edge;
         
-        // 获取源节点和目标节点的ID
-        const sourceId = edgeData.source.id || edgeData.source;
-        const targetId = edgeData.target.id || edgeData.target;
+        // 获取并规范化源节点和目标节点的ID
+        const rawSourceId = edgeData.source.id || edgeData.source;
+        const rawTargetId = edgeData.target.id || edgeData.target;
         
-        console.log('边的源节点ID:', sourceId);
-        console.log('边的目标节点ID:', targetId);
+        const sourceId = rawSourceId.startsWith('node-') ? rawSourceId : `node-${rawSourceId.replace(/[^a-zA-Z0-9]/g, '_').replace(/_+/g, '_').replace(/^_|_$/g, '')}`;
+        const targetId = rawTargetId.startsWith('node-') ? rawTargetId : `node-${rawTargetId.replace(/[^a-zA-Z0-9]/g, '_').replace(/_+/g, '_').replace(/^_|_$/g, '')}`;
+        
+        console.log('边的处理:', {
+          原始源节点: rawSourceId,
+          原始目标节点: rawTargetId,
+          规范化源节点: sourceId,
+          规范化目标节点: targetId
+        });
         
         // 创建双向的边标识符，确保 A->B 和 B->A 被视为相同的边
         const edgeKey1 = `${sourceId}-${targetId}`;
@@ -532,11 +552,23 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
         
         // 如果这条边还没有被创建过
         if (!edgeMap.has(edgeKey1) && !edgeMap.has(edgeKey2)) {
-          const source = nodes3D.get(sourceId);
-          const target = nodes3D.get(targetId);
+          // 尝试多种方式获取节点
+          const source = nodes3D.get(sourceId) || nodes3D.get(rawSourceId);
+          const target = nodes3D.get(targetId) || nodes3D.get(rawTargetId);
           
-          console.log('找到的源节点:', source ? '存在' : '不存在');
-          console.log('找到的目标节点:', target ? '存在' : '不存在');
+          if (!source) {
+            console.warn('找不到源节点:', {
+              尝试的ID: [sourceId, rawSourceId],
+              可用的节点ID: Array.from(nodes3D.keys())
+            });
+          }
+          
+          if (!target) {
+            console.warn('找不到目标节点:', {
+              尝试的ID: [targetId, rawTargetId],
+              可用的节点ID: Array.from(nodes3D.keys())
+            });
+          }
           
           if (source && target) {
             const edge3D = createEdge3D(source, target, {
@@ -547,8 +579,6 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
             scene.add(edge3D);
             edgeMap.set(edgeKey1, edge3D);
             console.log('成功创建边:', edgeKey1);
-          } else {
-            console.warn('无法创建边，节点不存在:', edgeKey1);
           }
         } else {
           console.log('边已存在，跳过创建:', edgeKey1);
