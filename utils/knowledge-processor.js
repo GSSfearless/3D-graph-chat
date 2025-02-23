@@ -113,6 +113,33 @@ export class KnowledgeGraphProcessor {
   }
 
   buildNodes(entities, embeddings) {
+    // 首先计算每个实体的入度和出度
+    const inDegreeMap = new Map();
+    const outDegreeMap = new Map();
+    
+    // 初始化度数映射
+    entities.forEach(entity => {
+      const nodeId = `node-${entity.text?.replace(/[^a-zA-Z0-9]/g, '_')}`;
+      inDegreeMap.set(nodeId, 0);
+      outDegreeMap.set(nodeId, 0);
+    });
+
+    // 计算入度和出度
+    entities.forEach(entity => {
+      if (entity.edges) {
+        const sourceId = `node-${entity.text?.replace(/[^a-zA-Z0-9]/g, '_')}`;
+        entity.edges.forEach(edge => {
+          const targetId = `node-${edge.target?.replace(/[^a-zA-Z0-9]/g, '_')}`;
+          if (inDegreeMap.has(targetId)) {
+            inDegreeMap.set(targetId, inDegreeMap.get(targetId) + 1);
+          }
+          if (outDegreeMap.has(sourceId)) {
+            outDegreeMap.set(sourceId, outDegreeMap.get(sourceId) + 1);
+          }
+        });
+      }
+    });
+
     return entities.map((entity, index) => {
       // 确保 entity.text 存在，如果不存在则使用一个默认值
       const label = entity.text || entity.label || `Entity ${index + 1}`;
@@ -123,6 +150,8 @@ export class KnowledgeGraphProcessor {
         label: label,
         text: entity.text || label,
         type: this.getNodeType(entity),
+        inDegree: inDegreeMap.get(nodeId) || 0,
+        outDegree: outDegreeMap.get(nodeId) || 0,
         size: this.calculateNodeSize(entity),
         color: this.colorScheme[this.getNodeType(entity)],
         embedding: embeddings[index],
@@ -178,10 +207,36 @@ export class KnowledgeGraphProcessor {
   }
 
   calculateNodeSize(entity) {
-    // 基于实体重要性计算节点大小
     const baseSize = 10;
+    const minSize = baseSize * 0.5;
+    const maxSize = baseSize * 2.5;
+
+    // 计算连接度权重 (0-1)
+    const connectivityWeight = 0.4;
+    const connectivity = (entity.inDegree || 0) + (entity.outDegree || 0);
+    const normalizedConnectivity = Math.min(connectivity / 10, 1); // 假设最大连接数为10
+
+    // 计算重要性权重 (0-1)
+    const importanceWeight = 0.4;
     const importance = entity.importance || 1;
-    return baseSize * Math.sqrt(importance);
+    const normalizedImportance = Math.min(importance / 5, 1); // 假设最大重要性为5
+
+    // 计算层级权重 (0-1)
+    const levelWeight = 0.2;
+    const level = entity.level || 1;
+    const normalizedLevel = 1 - Math.min((level - 1) / 3, 1); // 层级越深，节点越小
+
+    // 计算综合得分 (0-1)
+    const score = (
+      connectivityWeight * normalizedConnectivity +
+      importanceWeight * normalizedImportance +
+      levelWeight * normalizedLevel
+    );
+
+    // 使用对数比例映射到节点大小范围
+    const size = minSize + (maxSize - minSize) * Math.log1p(score * Math.E - 1);
+
+    return size;
   }
 
   applyLayout({ nodes, edges, type }) {
