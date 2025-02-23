@@ -24,15 +24,6 @@ export class KnowledgeGraphProcessor {
       attribute: '#B8E986',  // 绿色
       relation: '#BD10E0'    // 紫色
     };
-
-    // 添加节点类型权重配置
-    this.typeWeights = {
-      concept: 1.5,    // 概念节点更大
-      entity: 1.0,     // 实体节点标准大小
-      event: 1.2,      // 事件节点稍大
-      attribute: 0.8,  // 属性节点较小
-      relation: 0.9    // 关系节点较小
-    };
   }
 
   async processText(text) {
@@ -216,46 +207,36 @@ export class KnowledgeGraphProcessor {
   }
 
   calculateNodeSize(entity) {
-    const baseSize = 15; // 增加基础大小
-    const minSize = baseSize * 0.6;
-    const maxSize = baseSize * 3; // 增加最大值以扩大差异
+    const baseSize = 10;
+    const minSize = baseSize * 0.5;
+    const maxSize = baseSize * 2.5;
 
-    // 调整权重分配
-    const connectivityWeight = 0.3;
-    const importanceWeight = 0.5; // 增加重要性权重
-    const levelWeight = 0.2;
-
-    // 提高连接度的影响
+    // 计算连接度权重 (0-1)
+    const connectivityWeight = 0.4;
     const connectivity = (entity.inDegree || 0) + (entity.outDegree || 0);
-    const normalizedConnectivity = Math.min(connectivity / 8, 1); // 降低最大连接数阈值
+    const normalizedConnectivity = Math.min(connectivity / 10, 1); // 假设最大连接数为10
 
-    // 增加重要性的影响
+    // 计算重要性权重 (0-1)
+    const importanceWeight = 0.4;
     const importance = entity.importance || 1;
-    const normalizedImportance = Math.min(importance / 3, 1); // 降低最大重要性阈值
+    const normalizedImportance = Math.min(importance / 5, 1); // 假设最大重要性为5
 
-    // 保持层级权重不变
+    // 计算层级权重 (0-1)
+    const levelWeight = 0.2;
     const level = entity.level || 1;
-    const normalizedLevel = 1 - Math.min((level - 1) / 3, 1);
+    const normalizedLevel = 1 - Math.min((level - 1) / 3, 1); // 层级越深，节点越小
 
-    // 使用指数函数增加差异
-    const score = Math.pow(
-        connectivityWeight * normalizedConnectivity +
-        importanceWeight * normalizedImportance +
-        levelWeight * normalizedLevel,
-        1.5 // 使用指数增加差异
+    // 计算综合得分 (0-1)
+    const score = (
+      connectivityWeight * normalizedConnectivity +
+      importanceWeight * normalizedImportance +
+      levelWeight * normalizedLevel
     );
 
-    // 考虑节点类型权重
-    const nodeType = this.getNodeType(entity);
-    const typeWeight = this.typeWeights[nodeType] || 1;
+    // 使用对数比例映射到节点大小范围
+    const size = minSize + (maxSize - minSize) * Math.log1p(score * Math.E - 1);
 
-    // 使用非线性映射计算最终大小
-    const baseNodeSize = minSize + (maxSize - minSize) * score;
-    
-    // 应用类型权重并确保结果在合理范围内
-    const finalSize = Math.min(Math.max(baseNodeSize * typeWeight, minSize), maxSize * 1.2);
-
-    return finalSize;
+    return size;
   }
 
   applyLayout({ nodes, edges, type }) {
