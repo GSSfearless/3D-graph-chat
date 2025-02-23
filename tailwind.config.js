@@ -1,29 +1,14 @@
-/** @type {import('tailwindcss').Config} */
+// tailwind.config.js
 module.exports = {
   content: [
-    './pages/**/*.{js,ts,jsx,tsx,mdx}',
-    './components/**/*.{js,ts,jsx,tsx,mdx}',
-    './app/**/*.{js,ts,jsx,tsx,mdx}',
+    "./pages/**/*.{js,ts,jsx,tsx}",
+    "./components/**/*.{js,ts,jsx,tsx}",
   ],
   theme: {
-    extend: {
-      typography: {
-        DEFAULT: {
-          css: {
-            maxWidth: '65ch',
-            color: 'inherit',
-            a: {
-              color: '#3182ce',
-              '&:hover': {
-                color: '#2c5282',
-              },
-            },
-          },
-        },
-      },
-    },
+    extend: {},
   },
   plugins: [
-    require('@tailwindcss/typography'),
+    require("@tailwindcss/typography"),
+    require("daisyui"),
   ],
 };
