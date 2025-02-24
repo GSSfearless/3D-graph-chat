@@ -502,9 +502,48 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
       data.edges.forEach(edge => {
         const edgeData = edge.data || edge;
         
+        // 详细记录边的数据结构
+        console.log('边的原始数据:', {
+          原始数据: edge,
+          处理后数据: edgeData,
+          数据类型: {
+            source类型: typeof edgeData.source,
+            source是否对象: typeof edgeData.source === 'object',
+            target类型: typeof edgeData.target,
+            target是否对象: typeof edgeData.target === 'object'
+          }
+        });
+        
         // 获取源节点和目标节点的ID
-        const sourceId = edgeData.source.id || edgeData.source;
-        const targetId = edgeData.target.id || edgeData.target;
+        let sourceId, targetId;
+        
+        try {
+          sourceId = edgeData.source?.id || edgeData.source;
+          targetId = edgeData.target?.id || edgeData.target;
+          
+          // 确保ID是字符串类型
+          sourceId = String(sourceId);
+          targetId = String(targetId);
+          
+          // 如果ID不包含'node-'前缀，添加它
+          if (!sourceId.startsWith('node-')) {
+            sourceId = `node-${sourceId.replace(/[^a-zA-Z0-9]/g, '_')}`;
+          }
+          if (!targetId.startsWith('node-')) {
+            targetId = `node-${targetId.replace(/[^a-zA-Z0-9]/g, '_')}`;
+          }
+          
+          console.log('处理后的节点ID:', {
+            原始源节点: edgeData.source?.id || edgeData.source,
+            原始目标节点: edgeData.target?.id || edgeData.target,
+            处理后源节点: sourceId,
+            处理后目标节点: targetId
+          });
+          
+        } catch (error) {
+          console.error('解析边的节点ID时出错:', error);
+          return;
+        }
         
         // 创建双向的边标识符
         const edgeKey1 = `${sourceId}-${targetId}`;
@@ -519,8 +558,9 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
             console.warn(`边创建失败: ${sourceId} -> ${targetId}`, {
               源节点存在: !!source,
               目标节点存在: !!target,
-              源节点ID: sourceId,
-              目标节点ID: targetId
+              可用的节点ID列表: Array.from(nodes3D.keys()),
+              源节点ID匹配: nodes3D.has(sourceId),
+              目标节点ID匹配: nodes3D.has(targetId)
             });
           } else {
             const edge3D = createEdge3D(source, target, {
