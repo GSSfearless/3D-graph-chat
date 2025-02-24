@@ -59,15 +59,149 @@ export default function Search() {
     }
     
     setLoading(true);
+    setStreamedAnswer('');
+    setGraphData(null);
+    
     try {
-      // 这里是您的搜索逻辑
-      // ...
+      const response = await fetch('/api/chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          query: searchQuery,
+          useWebSearch,
+          useDeepThinking,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('搜索请求失败');
+      }
+
+      const reader = response.body?.getReader();
+      if (!reader) {
+        throw new Error('无法读取响应流');
+      }
+
+      const decoder = new TextDecoder();
+      let answer = '';
+
+      try {
+        while (true) {
+          const { value, done } = await reader.read();
+          if (done) break;
+
+          const chunk = decoder.decode(value);
+          const lines = chunk.split('\n');
+
+          for (const line of lines) {
+            if (line.startsWith('data: ')) {
+              const data = line.slice(6);
+              if (data === '[DONE]') continue;
+
+              try {
+                const parsed = JSON.parse(data);
+                if (!parsed) continue;
+
+                switch (parsed.type) {
+                  case 'reasoning':
+                    if (parsed.content) {
+                      const decodedContent = decodeURIComponent(parsed.content);
+                      setReasoningProcess(prev => prev + '\n' + decodedContent);
+                    }
+                    break;
+                  case 'delta':
+                    if (parsed.content) {
+                      const decodedContent = decodeURIComponent(parsed.content);
+                      answer += decodedContent;
+                      setStreamedAnswer(answer);
+                      
+                      try {
+                        const graphData = await knowledgeProcessor.current.processText(answer);
+                        if (graphData && Array.isArray(graphData.nodes) && Array.isArray(graphData.edges)) {
+                          setGraphData({
+                            nodes: graphData.nodes.map(node => ({
+                              data: {
+                                id: node.id,
+                                label: node.label || node.text,
+                                type: node.type,
+                                size: node.size,
+                                color: node.color,
+                                properties: node.properties || {}
+                              }
+                            })),
+                            edges: graphData.edges.map(edge => ({
+                              data: {
+                                id: edge.id,
+                                source: edge.source,
+                                target: edge.target,
+                                label: edge.label,
+                                type: edge.type,
+                                weight: edge.weight
+                              }
+                            }))
+                          });
+                        }
+                      } catch (error) {
+                        console.error('生成知识图谱失败:', error);
+                      }
+                    }
+                    break;
+                  case 'complete':
+                    if (parsed.content) {
+                      const completeAnswer = decodeURIComponent(parsed.content);
+                      setStreamedAnswer(completeAnswer);
+                      
+                      try {
+                        const finalGraphData = await knowledgeProcessor.current.processText(completeAnswer);
+                        if (finalGraphData && Array.isArray(finalGraphData.nodes) && Array.isArray(finalGraphData.edges)) {
+                          setGraphData({
+                            nodes: finalGraphData.nodes.map(node => ({
+                              data: {
+                                id: node.id,
+                                label: node.label || node.text,
+                                type: node.type,
+                                size: node.size,
+                                color: node.color,
+                                properties: node.properties || {}
+                              }
+                            })),
+                            edges: finalGraphData.edges.map(edge => ({
+                              data: {
+                                id: edge.id,
+                                source: edge.source,
+                                target: edge.target,
+                                label: edge.label,
+                                type: edge.type,
+                                weight: edge.weight
+                              }
+                            }))
+                          });
+                        }
+                      } catch (error) {
+                        console.error('生成最终知识图谱失败:', error);
+                      }
+                    }
+                    break;
+                }
+              } catch (error) {
+                console.error('解析响应数据失败:', error);
+                continue;
+              }
+            }
+          }
+        }
+      } finally {
+        reader.releaseLock();
+      }
     } catch (error) {
-      console.error('Search error:', error);
+      console.error('搜索错误:', error);
+      setStreamedAnswer('搜索过程中出错，请重试');
     } finally {
       setLoading(false);
     }
-  }, [user]);
+  }, [user, useWebSearch, useDeepThinking]);
 
   const handleAddToFavorites = async () => {
     if (!user || !streamedAnswer) return;
