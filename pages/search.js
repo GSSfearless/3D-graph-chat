@@ -10,6 +10,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { KnowledgeGraphProcessor } from '../utils/knowledge-processor';
 import Link from 'next/link';
+import SelectedNodes from '../components/SelectedNodes';
 
 const KnowledgeGraph = dynamic(() => import('../components/KnowledgeGraph'), {
   ssr: false,
@@ -31,6 +32,7 @@ export default function Search() {
   const [reasoningProcess, setReasoningProcess] = useState('');
   const searchInputRef = useRef(null);
   const knowledgeProcessor = useRef(new KnowledgeGraphProcessor());
+  const [selectedNodes, setSelectedNodes] = useState([]);
 
   const defaultQuery = "What is the answer to life, the universe, and everything?";
 
@@ -239,6 +241,23 @@ export default function Search() {
 
   const handleNodeClick = (node) => {
     setSelectedNode(node);
+    // 更新选中节点列表
+    setSelectedNodes(prevNodes => {
+      const isSelected = prevNodes.some(n => n.id === node.id);
+      if (isSelected) {
+        return prevNodes.filter(n => n.id !== node.id);
+      } else {
+        return [...prevNodes, node];
+      }
+    });
+  };
+
+  const handleRemoveNode = (node) => {
+    setSelectedNodes(prevNodes => prevNodes.filter(n => n.id !== node.id));
+  };
+
+  const handleMultiNodeSearch = (nodes) => {
+    setSelectedNodes(nodes);
   };
 
   return (
@@ -314,6 +333,15 @@ export default function Search() {
                   </ReactMarkdown>
                 </div>
               )}
+            </div>
+            
+            {/* 选中节点显示区域 */}
+            <div className="mt-4">
+              <SelectedNodes 
+                nodes={selectedNodes}
+                onRemoveNode={handleRemoveNode}
+                onSearch={handleMultiNodeSearch}
+              />
             </div>
           </div>
         </div>
