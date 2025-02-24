@@ -10,7 +10,7 @@ import { db, type SearchHistoryItem, type FavoriteItem } from '../utils/supabase
 import { AuthModal } from './Auth/AuthModal';
 import { useRouter } from 'next/router';
 
-export default function LeftSidebar() {
+const LeftSidebar = () => {
   const router = useRouter();
   const { user } = useAuth();
   const [searchHistory, setSearchHistory] = useState<SearchHistoryItem[]>([]);
@@ -250,4 +250,6 @@ export default function LeftSidebar() {
       </Collapsible.Root>
     </div>
   );
-} 
+};
+
+export default LeftSidebar; 

@@ -5,7 +5,7 @@ import { Star } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { db } from '../utils/supabase';
 import { Navbar } from '../components/Navbar';
-import LeftSidebar from '../components/LeftSidebar';
+import { LeftSidebar } from '../components/LeftSidebar';
 import { Button } from '../components/ui/button';
 import { KnowledgeGraphProcessor } from '../utils/knowledge-processor';
 import dynamic from 'next/dynamic';
@@ -110,6 +110,7 @@ export default function Search() {
                         data={graphData}
                         onNodeClick={setSelectedNode}
                         style={{ height: '100%' }}
+                        defaultMode="3d"
                       />
                       {user && streamedAnswer && (
                         <button
@@ -174,7 +175,7 @@ export default function Search() {
         className="fixed inset-0 z-50 overflow-y-auto"
       >
         <div className="flex min-h-screen items-center justify-center">
-          <div className="fixed inset-0 bg-black/30" aria-hidden="true" />
+          <Dialog.Overlay className="fixed inset-0 bg-black/30" />
 
           <div className="relative bg-white rounded-lg w-full max-w-md p-6 shadow-xl">
             <Dialog.Title className="text-lg font-semibold mb-4">
