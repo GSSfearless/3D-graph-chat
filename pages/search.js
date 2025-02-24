@@ -26,17 +26,18 @@ export default function Search() {
   const [initialLoad, setInitialLoad] = useState(true);
   const [streamedAnswer, setStreamedAnswer] = useState('');
   const [graphData, setGraphData] = useState(null);
-  const [selectedNodes, setSelectedNodes] = useState([]);
+  const [selectedNode, setSelectedNode] = useState(null);
   const [useWebSearch, setUseWebSearch] = useState(false);
   const [useDeepThinking, setUseDeepThinking] = useState(false);
   const [reasoningProcess, setReasoningProcess] = useState('');
   const searchInputRef = useRef(null);
   const knowledgeProcessor = useRef(new KnowledgeGraphProcessor());
+  const [selectedNodes, setSelectedNodes] = useState([]);
 
   const defaultQuery = "What is the answer to life, the universe, and everything?";
 
   const handleSearch = useCallback(async (searchQuery) => {
-    if (!searchQuery?.trim()) return;
+    if (!searchQuery.trim()) return;
     
     console.log('=== 搜索开始 ===');
     console.log('查询内容:', searchQuery);
@@ -46,6 +47,7 @@ export default function Search() {
     setLoading(true);
     setStreamedAnswer('');
     setGraphData(null);
+    setSelectedNode(null);
     setReasoningProcess('');
 
     try {
@@ -67,8 +69,7 @@ export default function Search() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
           query: searchQuery,
-          useDeepThinking,
-          selectedNodes // 将选中的节点信息传递给后端
+          useDeepThinking
         })
       });
 
@@ -211,7 +212,7 @@ export default function Search() {
     } finally {
       setLoading(false);
     }
-  }, [useWebSearch, useDeepThinking, selectedNodes]);
+  }, [useWebSearch, useDeepThinking]);
 
   useEffect(() => {
     if (q && initialLoad) {
@@ -238,8 +239,9 @@ export default function Search() {
     }
   };
 
-  const handleNodeClick = useCallback((node) => {
-    console.log('节点被点击:', node);
+  const handleNodeClick = (node) => {
+    setSelectedNode(node);
+    // 更新选中节点列表
     setSelectedNodes(prevNodes => {
       const isSelected = prevNodes.some(n => n.id === node.id);
       if (isSelected) {
@@ -248,21 +250,15 @@ export default function Search() {
         return [...prevNodes, node];
       }
     });
-  }, []);
+  };
 
-  const handleRemoveNode = useCallback((node) => {
+  const handleRemoveNode = (node) => {
     setSelectedNodes(prevNodes => prevNodes.filter(n => n.id !== node.id));
-  }, []);
+  };
 
-  const handleMultiNodeSearch = useCallback(async (nodes) => {
-    if (!nodes || nodes.length === 0) return;
-    
-    const searchQuery = nodes.map(node => node.label).join(' ');
-    setQuery(searchQuery);
-    
-    console.log('执行多节点搜索:', searchQuery);
-    await handleSearch(searchQuery);
-  }, []);
+  const handleMultiNodeSearch = (nodes) => {
+    setSelectedNodes(nodes);
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 overflow-hidden">
@@ -318,13 +314,6 @@ export default function Search() {
           {/* 文本显示区域 - 可滚动 */}
           <div className="col-span-3 h-[calc(100vh-4rem)] overflow-y-auto custom-scrollbar">
             <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
-              {/* 选中节点显示区域 */}
-              <SelectedNodes 
-                nodes={selectedNodes}
-                onRemoveNode={handleRemoveNode}
-                onSearch={handleMultiNodeSearch}
-              />
-              
               {useDeepThinking && reasoningProcess && (
                 <div className="mb-4 p-3 bg-purple-50 rounded-lg border border-purple-200">
                   <div className="flex items-center space-x-2 mb-2">
@@ -337,7 +326,6 @@ export default function Search() {
                   </div>
                 </div>
               )}
-              
               {streamedAnswer && (
                 <div className={useDeepThinking && reasoningProcess ? "mt-4" : ""}>
                   <ReactMarkdown remarkPlugins={[remarkGfm]} className="prose prose-sm max-w-none">
@@ -345,6 +333,15 @@ export default function Search() {
                   </ReactMarkdown>
                 </div>
               )}
+            </div>
+            
+            {/* 选中节点显示区域 */}
+            <div className="mt-4">
+              <SelectedNodes 
+                nodes={selectedNodes}
+                onRemoveNode={handleRemoveNode}
+                onSearch={handleMultiNodeSearch}
+              />
             </div>
           </div>
         </div>
@@ -373,9 +370,9 @@ export default function Search() {
                   ref={searchInputRef}
                   type="text"
                   value={query}
-                  onChange={(e) => setQuery(e.target.value)}
+                  onChange={handleInputChange}
                   onKeyPress={(e) => e.key === 'Enter' && handleSubmit(e)}
-                  placeholder="输入问题开始探索..."
+                  placeholder={defaultQuery}
                   className="w-full px-4 py-2.5 bg-white/50 border border-gray-200 rounded-xl 
                            text-sm transition-all duration-300
                            focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent
