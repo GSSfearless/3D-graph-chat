@@ -108,38 +108,55 @@ export class KnowledgeGraphProcessor {
       // 6. 构建边（只保留存在对应节点的边）
       const validRelations = relations.filter(relation => {
         if (!relation || typeof relation !== 'object') {
-          console.warn('无效的关系数据:', relation);
+          console.warn('无效的关系数据:', JSON.stringify(relation));
           return false;
         }
 
         // 检查源节点和目标节点的完整性
         if (!relation.source?.id || !relation.target?.id) {
-          console.warn('关系缺少源节点或目标节点ID:', relation);
+          console.warn('关系缺少源节点或目标节点ID:', JSON.stringify(relation));
           return false;
         }
 
         const sourceId = relation.source.id;
         const targetId = relation.target.id;
         
-        const hasSource = availableNodeIds.has(sourceId);
-        const hasTarget = availableNodeIds.has(targetId);
+        // 确保ID是字符串类型
+        const normalizedSourceId = String(sourceId).trim();
+        const normalizedTargetId = String(targetId).trim();
+        
+        const hasSource = availableNodeIds.has(normalizedSourceId);
+        const hasTarget = availableNodeIds.has(normalizedTargetId);
         
         if (!hasSource || !hasTarget) {
-          console.warn('节点匹配失败:', {
+          console.warn('节点匹配失败:', JSON.stringify({
             源节点: {
-              ID: sourceId,
-              文本: relation.source.text,
+              ID: normalizedSourceId,
+              原始ID: sourceId,
+              文本: relation.source.text || '未知',
               是否存在: hasSource
             },
             目标节点: {
-              ID: targetId,
-              文本: relation.target.text,
+              ID: normalizedTargetId,
+              原始ID: targetId,
+              文本: relation.target.text || '未知',
               是否存在: hasTarget
             }
-          });
+          }, null, 2));
 
-          // 输出可用的节点ID列表以便调试
-          console.log('当前可用的节点ID:', Array.from(availableNodeIds));
+          // 输出更详细的调试信息
+          console.log('关系详情:', JSON.stringify(relation, null, 2));
+          console.log('可用节点ID列表:', JSON.stringify(Array.from(availableNodeIds), null, 2));
+          
+          // 检查ID格式
+          console.log('ID格式检查:', {
+            源节点ID类型: typeof sourceId,
+            源节点ID值: sourceId,
+            规范化源节点ID: normalizedSourceId,
+            目标节点ID类型: typeof targetId,
+            目标节点ID值: targetId,
+            规范化目标节点ID: normalizedTargetId
+          });
         }
         
         return hasSource && hasTarget;
@@ -187,7 +204,7 @@ export class KnowledgeGraphProcessor {
     return entities
       .filter(entity => {
         if (!entity || typeof entity !== 'object') {
-          console.warn('跳过无效实体:', entity);
+          console.warn('跳过无效实体:', JSON.stringify(entity));
           return false;
         }
         return true;
@@ -195,11 +212,23 @@ export class KnowledgeGraphProcessor {
       .map((entity, index) => {
         const text = entity.text || entity.label;
         if (!text) {
-          console.warn('实体缺少文本或标签:', entity);
+          console.warn('实体缺少文本或标签:', JSON.stringify(entity));
           return null;
         }
 
+        // 确保ID是规范化的
+        const originalId = entity.id || '';
         const nodeId = normalizeId(text);
+
+        // 如果原始ID和规范化ID不匹配，记录警告
+        if (originalId && originalId !== nodeId) {
+          console.warn('实体ID不一致:', {
+            原始ID: originalId,
+            规范化ID: nodeId,
+            文本: text
+          });
+        }
+
         const node = {
           id: nodeId,
           label: text,
@@ -208,17 +237,21 @@ export class KnowledgeGraphProcessor {
           size: 1,
           color: this.colorScheme[this.getNodeType(entity)],
           embedding: embeddings[index],
-          properties: entity.properties || {},
+          properties: {
+            ...entity.properties,
+            originalId: originalId // 保存原始ID以便追踪
+          },
           cluster: entity.cluster || 0,
           x: 0,
           y: 0
         };
 
-        console.log('构建节点:', {
+        console.log('构建节点:', JSON.stringify({
           ID: nodeId,
           标签: text,
-          类型: node.type
-        });
+          类型: node.type,
+          原始ID: originalId
+        }, null, 2));
 
         return node;
       })
