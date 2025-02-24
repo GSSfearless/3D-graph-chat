@@ -141,12 +141,23 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
     labelRenderer.setSize(newWidth, newHeight);
   };
 
+  // 添加一个工具函数来统一处理ID
+  const normalizeId = (id) => {
+    if (!id) return '';
+    const stringId = String(id).trim();
+    // 移除已存在的 'node-' 前缀，避免重复添加
+    const baseId = stringId.startsWith('node-') ? stringId.slice(5) : stringId;
+    // 统一处理特殊字符
+    return `node-${baseId.replace(/[^a-zA-Z0-9]/g, '_')}`;
+  };
+
   const calculateNodeSize = (nodeData) => {
     // 计算节点的连接数
     const connections = data.edges.filter(edge => {
-      const sourceId = edge.data.source.id || edge.data.source;
-      const targetId = edge.data.target.id || edge.data.target;
-      const isConnected = sourceId === nodeData.id || targetId === nodeData.id;
+      const sourceId = normalizeId(edge.data?.source?.id || edge.data?.source);
+      const targetId = normalizeId(edge.data?.target?.id || edge.data?.target);
+      const nodeId = normalizeId(nodeData.id);
+      const isConnected = sourceId === nodeId || targetId === nodeId;
       return isConnected;
     }).length;
 
@@ -158,10 +169,10 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
 
     // 找出最大连接数
     const allConnectionCounts = data.nodes.map(node => {
-      const nodeId = node.data.id;
+      const nodeId = normalizeId(node.data.id);
       return data.edges.filter(edge => {
-        const sourceId = edge.data.source.id || edge.data.source;
-        const targetId = edge.data.target.id || edge.data.target;
+        const sourceId = normalizeId(edge.data?.source?.id || edge.data?.source);
+        const targetId = normalizeId(edge.data?.target?.id || edge.data?.target);
         return sourceId === nodeId || targetId === nodeId;
       }).length;
     });
@@ -534,9 +545,23 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
           console.warn('Invalid node data:', node);
           return;
         }
+        
+        // 规范化节点ID
+        nodeData.id = normalizeId(nodeData.id);
+        console.log('创建节点:', {
+          原始ID: node.data.id,
+          规范化ID: nodeData.id,
+          标签: nodeData.label
+        });
+        
         const node3D = createNode3D(nodeData, index, data.nodes.length);
         scene.add(node3D);
         nodes3D.set(nodeData.id, node3D);
+        // 同时存储原始ID的映射，以防边使用原始ID
+        const originalId = String(node.data.id).trim();
+        if (originalId !== nodeData.id) {
+          nodes3D.set(originalId, node3D);
+        }
 
         // 添加点击事件
         if (node3D.children[0]) {
@@ -551,42 +576,23 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
       data.edges.forEach(edge => {
         const edgeData = edge.data || edge;
         
-        // 详细记录边的数据结构
-        console.log('边的原始数据:', {
-          原始数据: edge,
-          处理后数据: edgeData,
-          数据类型: {
-            source类型: typeof edgeData.source,
-            source是否对象: typeof edgeData.source === 'object',
-            target类型: typeof edgeData.target,
-            target是否对象: typeof edgeData.target === 'object'
-          }
-        });
-        
         // 获取源节点和目标节点的ID
         let sourceId, targetId;
         
         try {
-          sourceId = edgeData.source?.id || edgeData.source;
-          targetId = edgeData.target?.id || edgeData.target;
+          // 获取原始ID
+          const rawSourceId = edgeData.source?.id || edgeData.source;
+          const rawTargetId = edgeData.target?.id || edgeData.target;
           
-          // 确保ID是字符串类型
-          sourceId = String(sourceId);
-          targetId = String(targetId);
+          // 规范化ID
+          sourceId = normalizeId(rawSourceId);
+          targetId = normalizeId(rawTargetId);
           
-          // 如果ID不包含'node-'前缀，添加它
-          if (!sourceId.startsWith('node-')) {
-            sourceId = `node-${sourceId.replace(/[^a-zA-Z0-9]/g, '_')}`;
-          }
-          if (!targetId.startsWith('node-')) {
-            targetId = `node-${targetId.replace(/[^a-zA-Z0-9]/g, '_')}`;
-          }
-          
-          console.log('处理后的节点ID:', {
-            原始源节点: edgeData.source?.id || edgeData.source,
-            原始目标节点: edgeData.target?.id || edgeData.target,
-            处理后源节点: sourceId,
-            处理后目标节点: targetId
+          console.log('处理边:', {
+            原始源节点ID: rawSourceId,
+            原始目标节点ID: rawTargetId,
+            规范化源节点ID: sourceId,
+            规范化目标节点ID: targetId
           });
           
         } catch (error) {
@@ -600,16 +606,17 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
         
         // 如果这条边还没有被创建过
         if (!edgeMap.has(edgeKey1) && !edgeMap.has(edgeKey2)) {
-          const source = nodes3D.get(sourceId);
-          const target = nodes3D.get(targetId);
+          // 尝试多种方式获取节点
+          const source = nodes3D.get(sourceId) || nodes3D.get(edgeData.source?.id) || nodes3D.get(edgeData.source);
+          const target = nodes3D.get(targetId) || nodes3D.get(edgeData.target?.id) || nodes3D.get(edgeData.target);
           
           if (!source || !target) {
             console.warn(`边创建失败: ${sourceId} -> ${targetId}`, {
               源节点存在: !!source,
               目标节点存在: !!target,
-              可用的节点ID列表: Array.from(nodes3D.keys()),
-              源节点ID匹配: nodes3D.has(sourceId),
-              目标节点ID匹配: nodes3D.has(targetId)
+              源节点ID: sourceId,
+              目标节点ID: targetId,
+              可用的节点ID列表: Array.from(nodes3D.keys())
             });
           } else {
             const edge3D = createEdge3D(source, target, {
