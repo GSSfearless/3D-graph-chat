@@ -50,6 +50,8 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
     );
 
   const initScene = () => {
+    if (!containerRef.current) return;
+    
     const container = containerRef.current;
     const width = container.clientWidth;
     const height = container.clientHeight;
@@ -125,9 +127,9 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
   };
 
   const handleResize = () => {
-    if (!sceneRef.current) return;
+    if (!sceneRef.current || !containerRef.current) return;
 
-    const { camera, renderer, labelRenderer, width, height } = sceneRef.current;
+    const { camera, renderer, labelRenderer } = sceneRef.current;
     const container = containerRef.current;
     const newWidth = container.clientWidth;
     const newHeight = container.clientHeight;
@@ -446,7 +448,54 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
   };
 
   useEffect(() => {
+    if (!containerRef.current) return;
     initScene();
+
+    // 清理函数
+    return () => {
+      if (sceneRef.current) {
+        const { renderer, labelRenderer, controls } = sceneRef.current;
+        
+        // 停止动画循环
+        cancelAnimationFrame(sceneRef.current.animationFrameId);
+        
+        // 清理渲染器
+        if (renderer) {
+          renderer.dispose();
+          renderer.forceContextLoss();
+          renderer.domElement?.remove();
+        }
+        
+        // 清理标签渲染器
+        if (labelRenderer) {
+          labelRenderer.domElement?.remove();
+        }
+        
+        // 清理控制器
+        if (controls) {
+          controls.dispose();
+        }
+        
+        // 清理场景
+        if (sceneRef.current.scene) {
+          sceneRef.current.scene.traverse((object) => {
+            if (object.geometry) {
+              object.geometry.dispose();
+            }
+            if (object.material) {
+              if (Array.isArray(object.material)) {
+                object.material.forEach(material => material.dispose());
+              } else {
+                object.material.dispose();
+              }
+            }
+          });
+        }
+        
+        // 重置引用
+        sceneRef.current = null;
+      }
+    };
   }, []);
 
   useEffect(() => {
@@ -581,7 +630,7 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
 
     // 动画循环
     const animate = () => {
-      if (!sceneRef.current) return;
+      if (!sceneRef.current || !containerRef.current) return;
       
       const { scene, camera, renderer, labelRenderer, controls } = sceneRef.current;
       
@@ -606,8 +655,8 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
       renderer.render(scene, camera);
       labelRenderer.render(scene, camera);
 
-      // 继续动画循环
-      requestAnimationFrame(animate);
+      // 存储动画帧ID以便清理
+      sceneRef.current.animationFrameId = requestAnimationFrame(animate);
     };
     animate();
   }, [data]);
