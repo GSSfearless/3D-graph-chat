@@ -303,40 +303,10 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
 
     // 创建边的线条
     const points = [];
-    
-    // 计算控制点
-    const start = source.position;
-    const end = target.position;
-    
-    // 计算中点
-    const mid = new THREE.Vector3().addVectors(start, end).multiplyScalar(0.5);
-    
-    // 添加一个垂直偏移，使曲线更自然
-    const direction = new THREE.Vector3().subVectors(end, start);
-    const perpendicular = new THREE.Vector3(-direction.y, direction.x, 0).normalize();
-    
-    // 根据边的ID计算偏移方向
-    const edgeId = `${source.userData.id}-${target.userData.id}`;
-    const hashCode = [...edgeId].reduce((acc, char) => char.charCodeAt(0) + ((acc << 5) - acc), 0);
-    const offsetSign = hashCode % 2 === 0 ? 1 : -1;
-    
-    // 计算偏移距离（基于边的长度）
-    const distance = start.distanceTo(end);
-    const offsetDistance = Math.min(distance * 0.2, 20) * offsetSign;
-    
-    // 设置控制点
-    const controlPoint = mid.clone().add(perpendicular.multiplyScalar(offsetDistance));
-    
-    // 创建曲线
-    const curve = new THREE.QuadraticBezierCurve3(
-      start,
-      controlPoint,
-      end
-    );
-    
-    // 生成曲线上的点
-    const curvePoints = curve.getPoints(50);
-    const geometry = new THREE.BufferGeometry().setFromPoints(curvePoints);
+    points.push(source.position);
+    points.push(target.position);
+
+    const geometry = new THREE.BufferGeometry().setFromPoints(points);
     
     // 根据边的类型设置不同的颜色
     let edgeColor;
@@ -457,33 +427,11 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
 
     // 更新边的位置的方法
     group.updatePosition = () => {
-      const start = source.position;
-      const end = target.position;
-      
-      // 重新计算中点和控制点
-      const mid = new THREE.Vector3().addVectors(start, end).multiplyScalar(0.5);
-      const direction = new THREE.Vector3().subVectors(end, start);
-      const perpendicular = new THREE.Vector3(-direction.y, direction.x, 0).normalize();
-      const distance = start.distanceTo(end);
-      const offsetDistance = Math.min(distance * 0.2, 20) * offsetSign;
-      const controlPoint = mid.clone().add(perpendicular.multiplyScalar(offsetDistance));
-      
-      // 更新曲线
-      const curve = new THREE.QuadraticBezierCurve3(
-        start,
-        controlPoint,
-        end
-      );
-      
-      // 更新几何体
-      const curvePoints = curve.getPoints(50);
-      const positions = new Float32Array(curvePoints.length * 3);
-      curvePoints.forEach((point, i) => {
-        positions[i * 3] = point.x;
-        positions[i * 3 + 1] = point.y;
-        positions[i * 3 + 2] = point.z;
-      });
-      
+      // 更新线条几何体
+      const positions = new Float32Array([
+        source.position.x, source.position.y, source.position.z,
+        target.position.x, target.position.y, target.position.z
+      ]);
       geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
       geometry.computeBoundingSphere();
     };
