@@ -116,14 +116,20 @@ export class KnowledgeGraphProcessor {
     return entities.map((entity, index) => {
       // 确保 entity.text 存在，如果不存在则使用一个默认值
       const label = entity.text || entity.label || `Entity ${index + 1}`;
+      
+      // 修改ID生成逻辑，确保与边处理时的格式一致
       const nodeId = `node-${label.replace(/[^a-zA-Z0-9]/g, '_')}`;
+      console.log('创建节点:', {
+        原始标签: label,
+        生成的ID: nodeId
+      });
       
       return {
         id: nodeId,
         label: label,
         text: entity.text || label,
         type: this.getNodeType(entity),
-        size: 1, // 使用默认大小，实际大小将由KnowledgeGraph组件计算
+        size: 1,
         color: this.colorScheme[this.getNodeType(entity)],
         embedding: embeddings[index],
         properties: entity.properties || {},
@@ -140,25 +146,32 @@ export class KnowledgeGraphProcessor {
   }
 
   buildEdges(relations) {
-    // 添加调试日志
-    console.log('Building edges from relations:', relations);
+    console.log('构建边之前的关系数据:', relations);
 
     return relations
       .filter(relation => relation && typeof relation.source === 'string' && typeof relation.target === 'string')
       .map((relation, index) => {
-        // 确保边的属性都存在
+        // 规范化源节点和目标节点的ID
+        const sourceId = `node-${relation.source.replace(/[^a-zA-Z0-9]/g, '_')}`;
+        const targetId = `node-${relation.target.replace(/[^a-zA-Z0-9]/g, '_')}`;
+        
+        console.log('处理关系:', {
+          原始源节点: relation.source,
+          原始目标节点: relation.target,
+          规范化源节点ID: sourceId,
+          规范化目标节点ID: targetId
+        });
+
         const edge = {
           id: relation.id || `edge-${index}`,
-          source: relation.source,
-          target: relation.target,
+          source: sourceId,
+          target: targetId,
           type: relation.type || 'default',
           label: relation.label || '关联',
           weight: relation.weight || 1,
           properties: relation.properties || {}
         };
 
-        // 添加调试日志
-        console.log('Created edge:', edge);
         return edge;
       })
       .filter(edge => 

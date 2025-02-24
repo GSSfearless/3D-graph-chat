@@ -502,25 +502,69 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
       data.edges.forEach(edge => {
         const edgeData = edge.data || edge;
         
+        // 详细记录边的数据结构
+        console.log('边的原始数据结构:', {
+          完整边对象: edge,
+          数据部分: edgeData,
+          源节点: {
+            原始值: edgeData.source,
+            ID类型: typeof edgeData.source,
+            是否为对象: typeof edgeData.source === 'object',
+            ID值: edgeData.source.id || edgeData.source
+          },
+          目标节点: {
+            原始值: edgeData.target,
+            ID类型: typeof edgeData.target,
+            是否为对象: typeof edgeData.target === 'object',
+            ID值: edgeData.target.id || edgeData.target
+          }
+        });
+        
         // 获取源节点和目标节点的ID
         const sourceId = edgeData.source.id || edgeData.source;
         const targetId = edgeData.target.id || edgeData.target;
         
+        // 规范化ID
+        const normalizedSourceId = sourceId.replace(/[^a-zA-Z0-9]/g, '_');
+        const normalizedTargetId = targetId.replace(/[^a-zA-Z0-9]/g, '_');
+        
+        // 检查节点ID的格式
+        console.log('处理边的节点ID:', {
+          原始源节点ID: sourceId,
+          原始目标节点ID: targetId,
+          规范化源节点ID: `node-${normalizedSourceId}`,
+          规范化目标节点ID: `node-${normalizedTargetId}`
+        });
+        
         // 创建双向的边标识符
-        const edgeKey1 = `${sourceId}-${targetId}`;
-        const edgeKey2 = `${targetId}-${sourceId}`;
+        const edgeKey1 = `${normalizedSourceId}-${normalizedTargetId}`;
+        const edgeKey2 = `${normalizedTargetId}-${normalizedSourceId}`;
         
         // 如果这条边还没有被创建过
         if (!edgeMap.has(edgeKey1) && !edgeMap.has(edgeKey2)) {
-          const source = nodes3D.get(sourceId);
-          const target = nodes3D.get(targetId);
+          // 尝试多种ID格式
+          const source = nodes3D.get(`node-${normalizedSourceId}`) || 
+                        nodes3D.get(normalizedSourceId) || 
+                        nodes3D.get(sourceId);
+          const target = nodes3D.get(`node-${normalizedTargetId}`) || 
+                        nodes3D.get(normalizedTargetId) || 
+                        nodes3D.get(targetId);
           
           if (!source || !target) {
             console.warn(`边创建失败: ${sourceId} -> ${targetId}`, {
               源节点存在: !!source,
               目标节点存在: !!target,
-              源节点ID: sourceId,
-              目标节点ID: targetId
+              尝试的源节点ID: [
+                `node-${normalizedSourceId}`,
+                normalizedSourceId,
+                sourceId
+              ],
+              尝试的目标节点ID: [
+                `node-${normalizedTargetId}`,
+                normalizedTargetId,
+                targetId
+              ],
+              可用的节点ID列表: Array.from(nodes3D.keys())
             });
           } else {
             const edge3D = createEdge3D(source, target, {
