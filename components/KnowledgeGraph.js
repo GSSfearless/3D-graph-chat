@@ -873,51 +873,39 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
           <p>暂无可视化数据</p>
         </div>
       )}
-      
-      {/* 底部控制面板 */}
-      <div className="bottom-control-panel">
-        <div className="control-panel-content">
-          {/* 搜索框组 */}
-          <div className="control-group search-group">
-            <input
-              type="text"
-              placeholder="搜索节点..."
-              className="search-input"
-            />
-          </div>
-
-          {/* 视图控制组 */}
-          <div className="control-group view-controls">
-            <button onClick={() => sceneRef.current.controls.zoomIn()} className="control-button" title="放大">
-              <FontAwesomeIcon icon={faSearch} className="icon-plus" />
-            </button>
-            <button onClick={() => sceneRef.current.controls.zoomOut()} className="control-button" title="缩小">
-              <FontAwesomeIcon icon={faSearch} className="icon-minus" />
-            </button>
-            <button onClick={handleResetView} className="control-button" title="重置视角">
-              <FontAwesomeIcon icon={faRefresh} />
-            </button>
-          </div>
-
-          {/* 工具组 */}
-          <div className="control-group tools-group">
-            <button onClick={handleFullscreen} className="control-button" title="全屏">
-              <FontAwesomeIcon icon={isFullscreen ? faCompress : faExpand} />
-            </button>
-            <button
-              onClick={() => {
-                const dataUrl = sceneRef.current.renderer.domElement.toDataURL('image/png');
-                const link = document.createElement('a');
-                link.href = dataUrl;
-                link.download = 'knowledge-graph.png';
-                link.click();
-              }}
-              className="control-button"
-              title="导出图片"
-            >
-              <FontAwesomeIcon icon={faDownload} />
-            </button>
-          </div>
+      <div className="toolbar" style={{ 
+        flexDirection: isMobile ? 'column' : 'row',
+        right: isMobile ? '8px' : '16px',
+        top: isMobile ? '8px' : '16px'
+      }}>
+        <div className="toolbar-group">
+          <button onClick={() => sceneRef.current.controls.zoomIn()} className="toolbar-button" title="放大">
+            <FontAwesomeIcon icon={faSearch} className="mr-1" />+
+          </button>
+          <button onClick={() => sceneRef.current.controls.zoomOut()} className="toolbar-button" title="缩小">
+            <FontAwesomeIcon icon={faSearch} className="mr-1" />-
+          </button>
+          <button onClick={handleResetView} className="toolbar-button" title="重置视角">
+            <FontAwesomeIcon icon={faRefresh} />
+          </button>
+        </div>
+        <div className="toolbar-group">
+          <button onClick={handleFullscreen} className="toolbar-button" title="全屏">
+            <FontAwesomeIcon icon={isFullscreen ? faCompress : faExpand} />
+          </button>
+          <button
+            onClick={() => {
+              const dataUrl = sceneRef.current.renderer.domElement.toDataURL('image/png');
+              const link = document.createElement('a');
+              link.href = dataUrl;
+              link.download = 'knowledge-graph.png';
+              link.click();
+            }}
+            className="toolbar-button"
+            title="导出图片"
+          >
+            <FontAwesomeIcon icon={faDownload} />
+          </button>
         </div>
       </div>
       
@@ -930,73 +918,55 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
           border-radius: 12px;
           overflow: hidden;
           isolation: isolate;
-          touch-action: none;
-          -webkit-overflow-scrolling: touch;
+          touch-action: none; /* 防止移动端浏览器默认行为 */
+          -webkit-overflow-scrolling: touch; /* iOS平滑滚动 */
         }
         
-        .bottom-control-panel {
+        .toolbar {
           position: absolute;
-          bottom: 20px;
-          left: 50%;
-          transform: translateX(-50%);
-          z-index: 1000;
-          width: auto;
-          min-width: 480px;
-          max-width: 90%;
-        }
-
-        .control-panel-content {
-          background: rgba(255, 255, 255, 0.9);
-          backdrop-filter: blur(10px);
-          border-radius: 16px;
-          padding: 12px;
-          display: flex;
-          gap: 16px;
-          align-items: center;
-          justify-content: center;
-          box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-        }
-
-        .control-group {
           display: flex;
           gap: 8px;
-          align-items: center;
-          padding: 0 12px;
+          padding: 8px;
+          background: rgba(255, 255, 255, 0.9);
+          backdrop-filter: blur(10px);
+          border-radius: 12px;
+          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+          z-index: 1000;
+        }
+
+        @media (max-width: 768px) {
+          .toolbar-button {
+            width: 28px;
+            height: 28px;
+          }
+
+          :global(.node-label) {
+            font-size: 10px;
+            padding: 1px 2px;
+          }
+
+          :global(.edge-label) {
+            font-size: 10px;
+          }
+        }
+
+        .toolbar-group {
+          display: flex;
+          gap: 8px;
+          padding: 0 8px;
           border-right: 1px solid rgba(0, 0, 0, 0.1);
         }
 
-        .control-group:last-child {
+        .toolbar-group:last-child {
           border-right: none;
         }
 
-        .search-group {
-          flex: 1;
-          min-width: 200px;
-        }
-
-        .search-input {
-          width: 100%;
-          padding: 8px 12px;
-          border: 1px solid rgba(0, 0, 0, 0.1);
-          border-radius: 8px;
-          background: rgba(255, 255, 255, 0.8);
-          font-size: 14px;
-          transition: all 0.2s ease;
-        }
-
-        .search-input:focus {
-          outline: none;
-          border-color: var(--neutral-400);
-          background: white;
-          box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.1);
-        }
-
-        .control-button {
+        .toolbar-button {
           display: flex;
           align-items: center;
           justify-content: center;
-          width: 36px;
-          height: 36px;
+          width: 32px;
+          height: 32px;
           border: none;
           border-radius: 8px;
           background: transparent;
@@ -1005,50 +975,9 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
           transition: all 0.2s ease;
         }
 
-        .control-button:hover {
+        .toolbar-button:hover {
           background: rgba(0, 0, 0, 0.05);
           color: var(--neutral-900);
-        }
-
-        .empty-state {
-          position: absolute;
-          top: 50%;
-          left: 50%;
-          transform: translate(-50%, -50%);
-          text-align: center;
-          color: #666;
-          z-index: 1;
-        }
-
-        @media (max-width: 768px) {
-          .bottom-control-panel {
-            min-width: unset;
-            width: 90%;
-          }
-
-          .control-panel-content {
-            flex-wrap: wrap;
-            gap: 8px;
-            padding: 8px;
-          }
-
-          .control-group {
-            padding: 4px 8px;
-          }
-
-          .search-group {
-            width: 100%;
-            order: -1;
-            border-right: none;
-            border-bottom: 1px solid rgba(0, 0, 0, 0.1);
-            padding-bottom: 8px;
-            margin-bottom: 4px;
-          }
-
-          .control-button {
-            width: 32px;
-            height: 32px;
-          }
         }
 
         :global(.node-label) {
@@ -1061,6 +990,16 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
           white-space: nowrap;
         }
 
+        .empty-state {
+          position: absolute;
+          top: 50%;
+          left: 50%;
+          transform: translate(-50%, -50%);
+          text-align: center;
+          color: #666;
+          z-index: 1;
+        }
+
         :global(.edge-label) {
           color: #1a1a1a;
           font-size: 12px;
@@ -1070,18 +1009,6 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
           white-space: nowrap;
           text-align: center;
           text-shadow: 0 0 3px rgba(255,255,255,0.8);
-        }
-
-        .icon-plus::after {
-          content: '+';
-          margin-left: 2px;
-          font-size: 12px;
-        }
-
-        .icon-minus::after {
-          content: '-';
-          margin-left: 2px;
-          font-size: 12px;
         }
       `}</style>
     </div>
