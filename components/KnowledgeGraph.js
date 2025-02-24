@@ -140,55 +140,39 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
   };
 
   const calculateNodeSize = (nodeData) => {
-    console.log('计算节点大小 - 节点数据:', nodeData);
-    
     // 计算节点的连接数
     const connections = data.edges.filter(edge => {
-      console.log('检查边:', edge);
-      console.log('当前节点ID:', nodeData.id);
-      
-      // 获取边的源节点和目标节点ID
       const sourceId = edge.data.source.id || edge.data.source;
       const targetId = edge.data.target.id || edge.data.target;
-      
-      console.log('边的source:', sourceId);
-      console.log('边的target:', targetId);
-      
       const isConnected = sourceId === nodeData.id || targetId === nodeData.id;
-      console.log('是否连接:', isConnected);
       return isConnected;
     }).length;
 
-    console.log('节点连接数:', connections);
+    console.log(`节点 [${nodeData.label}] (ID: ${nodeData.id}) 的连接数: ${connections}`);
 
     if (connections === 0) {
-      console.log('节点无连接，使用最小尺寸:', theme.node.minSize);
       return theme.node.minSize;
     }
 
     // 找出最大连接数
     const allConnectionCounts = data.nodes.map(node => {
       const nodeId = node.data.id;
-      const count = data.edges.filter(edge => {
+      return data.edges.filter(edge => {
         const sourceId = edge.data.source.id || edge.data.source;
         const targetId = edge.data.target.id || edge.data.target;
         return sourceId === nodeId || targetId === nodeId;
       }).length;
-      console.log('节点', nodeId, '的连接数:', count);
-      return count;
     });
     
     const maxConnections = Math.max(...allConnectionCounts);
-    console.log('最大连接数:', maxConnections);
 
     // 使用指数函数计算大小
-    const base = 1.5; // 指数基数
+    const base = 2.0; // 增大基数以使差异更明显
     const normalizedConnections = connections / maxConnections;
     const size = theme.node.minSize + 
       (theme.node.maxSize - theme.node.minSize) * 
       (Math.pow(base, normalizedConnections) - 1) / (base - 1);
 
-    console.log('最终计算的节点大小:', size);
     return size;
   };
 
@@ -516,17 +500,13 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
       
       // 处理边数据
       data.edges.forEach(edge => {
-        console.log('处理边:', edge);
         const edgeData = edge.data || edge;
         
         // 获取源节点和目标节点的ID
         const sourceId = edgeData.source.id || edgeData.source;
         const targetId = edgeData.target.id || edgeData.target;
         
-        console.log('边的源节点ID:', sourceId);
-        console.log('边的目标节点ID:', targetId);
-        
-        // 创建双向的边标识符，确保 A->B 和 B->A 被视为相同的边
+        // 创建双向的边标识符
         const edgeKey1 = `${sourceId}-${targetId}`;
         const edgeKey2 = `${targetId}-${sourceId}`;
         
@@ -535,10 +515,14 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
           const source = nodes3D.get(sourceId);
           const target = nodes3D.get(targetId);
           
-          console.log('找到的源节点:', source ? '存在' : '不存在');
-          console.log('找到的目标节点:', target ? '存在' : '不存在');
-          
-          if (source && target) {
+          if (!source || !target) {
+            console.warn(`边创建失败: ${sourceId} -> ${targetId}`, {
+              源节点存在: !!source,
+              目标节点存在: !!target,
+              源节点ID: sourceId,
+              目标节点ID: targetId
+            });
+          } else {
             const edge3D = createEdge3D(source, target, {
               ...edgeData,
               label: edgeData.label || edgeData.type || '关系'
@@ -546,12 +530,8 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
             edge3D.userData.isEdge = true;
             scene.add(edge3D);
             edgeMap.set(edgeKey1, edge3D);
-            console.log('成功创建边:', edgeKey1);
-          } else {
-            console.warn('无法创建边，节点不存在:', edgeKey1);
+            console.log(`成功创建边: ${sourceId} -> ${targetId}`);
           }
-        } else {
-          console.log('边已存在，跳过创建:', edgeKey1);
         }
       });
 
