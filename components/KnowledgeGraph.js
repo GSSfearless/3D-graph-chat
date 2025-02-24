@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState, useCallback } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 import { CSS2DRenderer, CSS2DObject } from 'three/examples/jsm/renderers/CSS2DRenderer';
@@ -50,7 +50,7 @@ const KnowledgeGraph = ({ data, onNodeClick, onSearch, style = {} }) => {
       typeof node.data.label === 'string'
     );
 
-  const initScene = useCallback(() => {
+  const initScene = () => {
     if (!containerRef.current) return;
     
     const container = containerRef.current;
@@ -133,7 +133,7 @@ const KnowledgeGraph = ({ data, onNodeClick, onSearch, style = {} }) => {
       renderer.dispose();
       controls.dispose();
     };
-  }, []);
+  };
 
   const handleResize = () => {
     if (!sceneRef.current || !containerRef.current) return;
@@ -198,7 +198,7 @@ const KnowledgeGraph = ({ data, onNodeClick, onSearch, style = {} }) => {
     return size;
   };
 
-  const createNode3D = useCallback((nodeData, index, total) => {
+  const createNode3D = (nodeData, index, total) => {
     const group = new THREE.Group();
 
     // 计算节点大小
@@ -305,9 +305,9 @@ const KnowledgeGraph = ({ data, onNodeClick, onSearch, style = {} }) => {
     group.userData = nodeData;
 
     return group;
-  }, [theme.node.color, theme.node.segments, theme.node.opacity, theme.node.glowColor, theme.label.color, theme.label.size, theme.label.font]);
+  };
 
-  const createEdge3D = useCallback((source, target, edgeData) => {
+  const createEdge3D = (source, target, edgeData) => {
     const group = new THREE.Group();
 
     // 计算球心（在原点）
@@ -484,7 +484,7 @@ const KnowledgeGraph = ({ data, onNodeClick, onSearch, style = {} }) => {
     };
 
     return group;
-  }, [theme.edge.color, theme.edge.opacity, theme.edge.width]);
+  };
 
   const handleFullscreen = () => {
     if (!document.fullscreenElement) {
@@ -496,20 +496,22 @@ const KnowledgeGraph = ({ data, onNodeClick, onSearch, style = {} }) => {
     }
   };
 
-  const handleNodeClick = useCallback((node) => {
+  const handleNodeClick = (node) => {
     const nodeData = node.userData;
     const isSelected = selectedNodes.some(n => n.id === nodeData.id);
     
     if (isSelected) {
+      // 如果已经选中，则取消选中
       setSelectedNodes(selectedNodes.filter(n => n.id !== nodeData.id));
       node.material.color.setHex(parseInt(theme.node.color.replace('#', '0x')));
     } else {
+      // 如果未选中，则添加到选中列表
       setSelectedNodes([...selectedNodes, nodeData]);
       node.material.color.setHex(parseInt(theme.node.highlightColor.replace('#', '0x')));
     }
     
     onNodeClick && onNodeClick(nodeData);
-  }, [selectedNodes, theme.node.color, theme.node.highlightColor, onNodeClick]);
+  };
 
   const handleRemoveNode = (node) => {
     setSelectedNodes(selectedNodes.filter(n => n.id !== node.id));
@@ -547,11 +549,54 @@ const KnowledgeGraph = ({ data, onNodeClick, onSearch, style = {} }) => {
 
   useEffect(() => {
     if (!containerRef.current) return;
-    const cleanup = initScene();
+    initScene();
+
+    // 清理函数
     return () => {
-      cleanup && cleanup();
+      if (sceneRef.current) {
+        const { renderer, labelRenderer, controls } = sceneRef.current;
+        
+        // 停止动画循环
+        cancelAnimationFrame(sceneRef.current.animationFrameId);
+        
+        // 清理渲染器
+        if (renderer) {
+          renderer.dispose();
+          renderer.forceContextLoss();
+          renderer.domElement?.remove();
+        }
+        
+        // 清理标签渲染器
+        if (labelRenderer) {
+          labelRenderer.domElement?.remove();
+        }
+        
+        // 清理控制器
+        if (controls) {
+          controls.dispose();
+        }
+        
+        // 清理场景
+        if (sceneRef.current.scene) {
+          sceneRef.current.scene.traverse((object) => {
+            if (object.geometry) {
+              object.geometry.dispose();
+            }
+            if (object.material) {
+              if (Array.isArray(object.material)) {
+                object.material.forEach(material => material.dispose());
+              } else {
+                object.material.dispose();
+              }
+            }
+          });
+        }
+        
+        // 重置引用
+        sceneRef.current = null;
+      }
     };
-  }, [initScene]);
+  }, []);
 
   useEffect(() => {
     if (!sceneRef.current || !data) return;
@@ -710,7 +755,7 @@ const KnowledgeGraph = ({ data, onNodeClick, onSearch, style = {} }) => {
       sceneRef.current.animationFrameId = requestAnimationFrame(animate);
     };
     animate();
-  }, [data, isValidData, createEdge3D, createNode3D, handleNodeClick]);
+  }, [data]);
 
   useEffect(() => {
     if (isValidData && sceneRef.current) {
@@ -846,7 +891,7 @@ const KnowledgeGraph = ({ data, onNodeClick, onSearch, style = {} }) => {
     return () => {
       renderer.domElement.removeEventListener('mousemove', onMouseMove);
     };
-  }, [data, theme.node.highlightColor]);
+  }, [data]);
 
   return (
     <div className="knowledge-graph-container" style={{ width: '100%', height: '100%', ...style }}>

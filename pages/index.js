@@ -3,7 +3,6 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { useRouter } from 'next/router';
 import { useState } from 'react';
 import 'tailwindcss/tailwind.css';
-import KnowledgeGraph from '../components/KnowledgeGraph';
 
 export default function Home() {
   const router = useRouter();
