@@ -232,10 +232,7 @@ export class KnowledgeGraphProcessor {
           return false;
         }
         
-        const source = relation.source?.text || relation.source;
-        const target = relation.target?.text || relation.target;
-        
-        if (!source || !target) {
+        if (!relation.source || !relation.target) {
           console.warn('关系缺少源节点或目标节点:', relation);
           return false;
         }
@@ -243,11 +240,8 @@ export class KnowledgeGraphProcessor {
         return true;
       })
       .map((relation, index) => {
-        const source = relation.source?.text || relation.source;
-        const target = relation.target?.text || relation.target;
-        
-        const sourceId = normalizeId(source);
-        const targetId = normalizeId(target);
+        const sourceId = relation.source.id;
+        const targetId = relation.target.id;
         
         const edge = {
           id: relation.id || `edge-${index}`,
@@ -256,18 +250,22 @@ export class KnowledgeGraphProcessor {
           type: relation.type || 'default',
           label: relation.label || '关联',
           weight: relation.weight || 1,
-          properties: relation.properties || {}
+          properties: {
+            ...relation.properties,
+            sourceText: relation.source.text,
+            targetText: relation.target.text
+          }
         };
 
         console.log('构建边:', {
           ID: edge.id,
           源节点: {
-            原始值: source,
-            规范化ID: sourceId
+            ID: sourceId,
+            文本: relation.source.text
           },
           目标节点: {
-            原始值: target,
-            规范化ID: targetId
+            ID: targetId,
+            文本: relation.target.text
           }
         });
 

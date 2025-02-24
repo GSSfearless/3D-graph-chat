@@ -104,6 +104,16 @@ export const extractRelations = async (text) => {
     const sentences = text.split(/[，。！？.!?;；]/);
     let relationId = 0;
 
+    // 规范化ID的辅助函数
+    const normalizeId = (text) => {
+      if (!text) return '';
+      const cleanText = text.replace(/[*]/g, '').trim();
+      // 移除已存在的 'node-' 前缀，避免重复添加
+      const baseId = cleanText.startsWith('node-') ? cleanText.slice(5) : cleanText;
+      // 统一处理特殊字符
+      return `node-${baseId.replace(/[^a-zA-Z0-9]/g, '_')}`;
+    };
+
     // 扩展关系模式
     const patterns = [
       // 基础关系
@@ -150,15 +160,21 @@ export const extractRelations = async (text) => {
             const cleanTarget = target.replace(/[*]/g, '').trim();
             
             if (isValidEntity(cleanSource) && isValidEntity(cleanTarget)) {
-              const sourceId = `node-${cleanSource.replace(/[^a-zA-Z0-9]/g, '_')}`;
-              const targetId = `node-${cleanTarget.replace(/[^a-zA-Z0-9]/g, '_')}`;
+              const sourceId = normalizeId(cleanSource);
+              const targetId = normalizeId(cleanTarget);
               
               const weight = calculateRelationWeight(cleanSource, cleanTarget, text);
               
               relations.push({
                 id: `edge-${relationId++}`,
-                source: sourceId,
-                target: targetId,
+                source: {
+                  id: sourceId,
+                  text: cleanSource
+                },
+                target: {
+                  id: targetId,
+                  text: cleanTarget
+                },
                 type: pattern.type,
                 label: pattern.label,
                 weight: weight,
@@ -180,8 +196,14 @@ export const extractRelations = async (text) => {
             if (prev.id !== curr.id) {
               relations.push({
                 id: `edge-${relationId++}`,
-                source: prev.id,
-                target: curr.id,
+                source: {
+                  id: prev.id,
+                  text: prev.text
+                },
+                target: {
+                  id: curr.id,
+                  text: curr.text
+                },
                 type: 'context',
                 label: '上下文关联',
                 weight: 0.3,
@@ -199,8 +221,14 @@ export const extractRelations = async (text) => {
       for (let i = 0; i < currentEntities.length - 1; i++) {
         relations.push({
           id: `edge-${relationId++}`,
-          source: currentEntities[i].id,
-          target: currentEntities[i + 1].id,
+          source: {
+            id: currentEntities[i].id,
+            text: currentEntities[i].text
+          },
+          target: {
+            id: currentEntities[i + 1].id,
+            text: currentEntities[i + 1].text
+          },
           type: 'sequence',
           label: '顺序关联',
           weight: 0.5,
@@ -220,10 +248,18 @@ export const extractRelations = async (text) => {
       for (let j = i + 1; j < keywords.length; j++) {
         const similarity = calculateSimilarity(keywords[i].text, keywords[j].text);
         if (similarity > 0.5) {
+          const sourceId = normalizeId(keywords[i].text);
+          const targetId = normalizeId(keywords[j].text);
           relations.push({
             id: `edge-${relationId++}`,
-            source: `node-${keywords[i].text.replace(/[^a-zA-Z0-9]/g, '_')}`,
-            target: `node-${keywords[j].text.replace(/[^a-zA-Z0-9]/g, '_')}`,
+            source: {
+              id: sourceId,
+              text: keywords[i].text
+            },
+            target: {
+              id: targetId,
+              text: keywords[j].text
+            },
             type: 'similar',
             label: '相似',
             weight: similarity
@@ -345,7 +381,7 @@ const calculateSimilarity = (text1, text2) => {
 const removeDuplicateRelations = (relations) => {
   const seen = new Set();
   return relations.filter(relation => {
-    const key = `${relation.source}-${relation.type}-${relation.target}`;
+    const key = `${relation.source.id}-${relation.type}-${relation.target.id}`;
     if (seen.has(key)) return false;
     seen.add(key);
     return true;
