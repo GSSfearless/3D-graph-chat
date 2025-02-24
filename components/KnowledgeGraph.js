@@ -5,7 +5,14 @@ import { CSS2DRenderer, CSS2DObject } from 'three/examples/jsm/renderers/CSS2DRe
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faExpand, faCompress, faSearch, faRefresh, faSave, faDownload } from '@fortawesome/free-solid-svg-icons';
 
-const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
+const KnowledgeGraph = ({ 
+  data, 
+  onNodeClick, 
+  onNodeSelect, 
+  selectedNodes = [], 
+  maxSelectedNodes = 5,
+  style = {} 
+}) => {
   const containerRef = useRef(null);
   const sceneRef = useRef(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
@@ -212,7 +219,7 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
 
     // 创建发光材质
     const material = new THREE.MeshPhongMaterial({
-      color: theme.node.color,
+      color: selectedNodes.some(n => n.id === nodeData.id) ? theme.node.highlightColor : theme.node.color,
       specular: 0x666666,
       shininess: 50,
       transparent: true,
@@ -496,13 +503,30 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
   };
 
   const handleNodeClick = (node) => {
-    if (selectedNode) {
-      selectedNode.material.color.setHex(parseInt(theme.node.color.replace('#', '0x')));
-    }
+    if (!node) return;
     
-    node.material.color.setHex(parseInt(theme.node.highlightColor.replace('#', '0x')));
+    // 调用原有的点击回调
+    if (onNodeClick) {
+      onNodeClick(node);
+    }
+
+    // 处理节点选择
+    if (onNodeSelect) {
+      const isSelected = selectedNodes.some(n => n.id === node.data.id);
+      if (isSelected) {
+        // 如果已选中，则取消选中
+        onNodeSelect(selectedNodes.filter(n => n.id !== node.data.id));
+      } else if (selectedNodes.length < maxSelectedNodes) {
+        // 如果未达到最大选择数量，则添加到选中列表
+        onNodeSelect([...selectedNodes, {
+          id: node.data.id,
+          name: node.data.label,
+          description: node.data.description
+        }]);
+      }
+    }
+
     setSelectedNode(node);
-    onNodeClick && onNodeClick(node.userData);
   };
 
   const handleResetView = () => {
