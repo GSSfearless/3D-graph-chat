@@ -3,61 +3,95 @@
 import React, { useState, useEffect } from 'react';
 import * as ScrollArea from '@radix-ui/react-scroll-area';
 import * as Collapsible from '@radix-ui/react-collapsible';
-import { Clock, Star, ChevronDown, ChevronUp, X, Trash2 } from 'lucide-react';
+import { Clock, Star, ChevronDown, ChevronUp, X, Trash2, LogIn } from 'lucide-react';
 import { Button } from './ui/button';
-import { HistoryManager, SearchHistoryItem, FavoriteItem } from '../utils/history-manager';
+import { useAuth } from '../contexts/AuthContext';
+import { db, type SearchHistoryItem, type FavoriteItem } from '../utils/supabase';
+import { AuthModal } from './Auth/AuthModal';
 import { useRouter } from 'next/router';
 
 const LeftSidebar = () => {
   const router = useRouter();
+  const { user } = useAuth();
   const [searchHistory, setSearchHistory] = useState<SearchHistoryItem[]>([]);
   const [favorites, setFavorites] = useState<FavoriteItem[]>([]);
   const [isHistoryOpen, setIsHistoryOpen] = useState(true);
   const [isFavoritesOpen, setIsFavoritesOpen] = useState(true);
+  const [showAuthModal, setShowAuthModal] = useState(false);
 
   useEffect(() => {
-    // 加载初始数据
-    setSearchHistory(HistoryManager.getSearchHistory());
-    setFavorites(HistoryManager.getFavorites());
+    if (user) {
+      loadUserData();
+    } else {
+      setSearchHistory([]);
+      setFavorites([]);
+    }
+  }, [user]);
 
-    // 添加存储事件监听器
-    const handleStorageChange = (e: StorageEvent) => {
-      if (e.key === 'searchHistory') {
-        setSearchHistory(HistoryManager.getSearchHistory());
-      } else if (e.key === 'favorites') {
-        setFavorites(HistoryManager.getFavorites());
-      }
-    };
-
-    window.addEventListener('storage', handleStorageChange);
-    return () => window.removeEventListener('storage', handleStorageChange);
-  }, []);
+  const loadUserData = async () => {
+    if (!user) return;
+    
+    try {
+      const [historyData, favoritesData] = await Promise.all([
+        db.searchHistory.getAll(user.id),
+        db.favorites.getAll(user.id)
+      ]);
+      setSearchHistory(historyData || []);
+      setFavorites(favoritesData || []);
+    } catch (error) {
+      console.error('Failed to load user data:', error);
+    }
+  };
 
   const handleHistoryClick = (query: string) => {
     router.push(`/search?q=${encodeURIComponent(query)}`);
   };
 
-  const handleHistoryDelete = (id: string) => {
-    const newHistory = HistoryManager.removeSearchHistory(id);
-    setSearchHistory(newHistory);
+  const handleHistoryDelete = async (id: string) => {
+    if (!user) return;
+    
+    try {
+      await db.searchHistory.remove(id, user.id);
+      setSearchHistory(prev => prev.filter(item => item.id !== id));
+    } catch (error) {
+      console.error('Failed to delete history item:', error);
+    }
   };
 
-  const handleFavoriteDelete = (id: string) => {
-    const newFavorites = HistoryManager.removeFavorite(id);
-    setFavorites(newFavorites);
+  const handleFavoriteDelete = async (id: string) => {
+    if (!user) return;
+    
+    try {
+      await db.favorites.remove(id, user.id);
+      setFavorites(prev => prev.filter(item => item.id !== id));
+    } catch (error) {
+      console.error('Failed to delete favorite item:', error);
+    }
   };
 
-  const clearAllHistory = () => {
-    const newHistory = HistoryManager.clearSearchHistory();
-    setSearchHistory(newHistory);
+  const clearAllHistory = async () => {
+    if (!user) return;
+    
+    try {
+      await db.searchHistory.clear(user.id);
+      setSearchHistory([]);
+    } catch (error) {
+      console.error('Failed to clear history:', error);
+    }
   };
 
-  const clearAllFavorites = () => {
-    const newFavorites = HistoryManager.clearFavorites();
-    setFavorites(newFavorites);
+  const clearAllFavorites = async () => {
+    if (!user) return;
+    
+    try {
+      await db.favorites.clear(user.id);
+      setFavorites([]);
+    } catch (error) {
+      console.error('Failed to clear favorites:', error);
+    }
   };
 
-  const formatDate = (timestamp: number) => {
+  const formatDate = (timestamp: string) => {
     return new Date(timestamp).toLocaleDateString('zh-CN', {
       month: 'short',
       day: 'numeric',
@@ -65,6 +99,28 @@ const LeftSidebar = () => {
       minute: '2-digit'
     });
   };
+
+  if (!user) {
+    return (
+      <div className="w-64 bg-white border-r border-gray-200 h-screen p-4 flex flex-col items-center justify-center">
+        <div className="text-center space-y-4">
+          <LogIn className="w-8 h-8 text-gray-400 mx-auto" />
+          <p className="text-gray-500">登录以使用更多功能</p>
+          <Button
+            onClick={() => setShowAuthModal(true)}
+            variant="outline"
+            className="w-full"
+          >
+            登录 / 注册
+          </Button>
+        </div>
+        <AuthModal
+          isOpen={showAuthModal}
+          onClose={() => setShowAuthModal(false)}
+        />
+      </div>
+    );
+  }
 
   return (
     <div className="w-64 bg-white border-r border-gray-200 h-screen p-4 flex flex-col">
@@ -105,7 +161,7 @@ const LeftSidebar = () => {
                       {item.query}
                     </span>
                     <span className="text-xs text-gray-400">
-                      {formatDate(item.timestamp)}
+                      {formatDate(item.created_at)}
                     </span>
                     <button
                       onClick={(e) => {
@@ -177,7 +233,7 @@ const LeftSidebar = () => {
                       {item.description}
                     </p>
                     <span className="text-xs text-gray-400">
-                      {formatDate(item.timestamp)}
+                      {formatDate(item.created_at)}
                     </span>
                   </div>
                 ))}
