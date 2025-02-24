@@ -501,30 +501,12 @@ const KnowledgeGraph = ({ data, onNodeClick, onSearch, style = {} }) => {
     const isSelected = selectedNodes.some(n => n.id === nodeData.id);
     
     if (isSelected) {
-      // 如果已经选中，则取消选中
-      setSelectedNodes(prevNodes => prevNodes.filter(n => n.id !== nodeData.id));
+      setSelectedNodes(selectedNodes.filter(n => n.id !== nodeData.id));
       node.material.color.setHex(parseInt(theme.node.color.replace('#', '0x')));
-      // 更新发光效果
-      const glowSphere = node.parent?.children?.[1];
-      if (glowSphere?.material?.uniforms) {
-        glowSphere.material.uniforms.c.value = 0.5;
-        glowSphere.material.uniforms.p.value = 1.4;
-      }
     } else {
-      // 如果未选中，则添加到选中列表
-      setSelectedNodes(prevNodes => [...prevNodes, nodeData]);
+      setSelectedNodes([...selectedNodes, nodeData]);
       node.material.color.setHex(parseInt(theme.node.highlightColor.replace('#', '0x')));
-      // 增强发光效果
-      const glowSphere = node.parent?.children?.[1];
-      if (glowSphere?.material?.uniforms) {
-        glowSphere.material.uniforms.c.value = 0.8;
-        glowSphere.material.uniforms.p.value = 2.0;
-      }
     }
-    
-    // 添加动画效果
-    const scale = isSelected ? 1.0 : 1.3;
-    node.scale.set(scale, scale, scale);
     
     onNodeClick && onNodeClick(nodeData);
   }, [selectedNodes, theme.node.color, theme.node.highlightColor, onNodeClick]);
