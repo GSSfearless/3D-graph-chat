@@ -1,38 +1,42 @@
 import React from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faSearch, faTimes, faLightbulb } from '@fortawesome/free-solid-svg-icons';
 
 const SelectedNodes = ({ nodes, onRemoveNode, onSearch }) => {
   if (!nodes || nodes.length === 0) {
     return (
-      <div className="selected-nodes-container">
-        <div className="selected-nodes-header">
-          <h3>已选择的节点</h3>
-        </div>
-        <div className="empty-state">
-          点击知识图谱中的节点来添加到探索路径
+      <div className="selected-nodes-empty">
+        <div className="empty-content">
+          <FontAwesomeIcon icon={faLightbulb} className="empty-icon" />
+          <p>点击知识图谱中的节点来添加到探索路径</p>
         </div>
         <style jsx>{`
-          .selected-nodes-container {
-            background: white;
-            border-radius: 8px;
-            padding: 16px;
-            margin-top: 16px;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-          }
-          .selected-nodes-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 12px;
-          }
-          .selected-nodes-header h3 {
-            margin: 0;
-            font-size: 16px;
-            color: #1a1a1a;
-          }
-          .empty-state {
-            color: #666;
+          .selected-nodes-empty {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(229, 231, 235, 0.5);
+            border-radius: 16px;
+            padding: 24px;
             text-align: center;
-            padding: 20px 0;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1),
+                        0 2px 4px -1px rgba(0, 0, 0, 0.06);
+          }
+          .empty-content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 12px;
+            color: #6B7280;
+          }
+          .empty-icon {
+            font-size: 24px;
+            color: #9CA3AF;
+          }
+          p {
+            margin: 0;
+            font-size: 14px;
+            line-height: 1.5;
           }
         `}</style>
       </div>
@@ -40,110 +44,173 @@ const SelectedNodes = ({ nodes, onRemoveNode, onSearch }) => {
   }
 
   return (
-    <div className="selected-nodes-container">
-      <div className="selected-nodes-header">
-        <h3>已选择的节点 ({nodes.length})</h3>
+    <div className="selected-nodes">
+      <div className="header">
+        <h3>探索路径 <span className="count">({nodes.length})</span></h3>
         <button 
           className="search-button"
           onClick={() => onSearch(nodes)}
           disabled={nodes.length === 0}
         >
+          <FontAwesomeIcon icon={faSearch} className="search-icon" />
           开始探索
         </button>
       </div>
-      <div className="nodes-list">
-        {nodes.map((node, index) => (
-          <div key={node.id} className="node-item">
-            <span className="node-index">{index + 1}</span>
-            <span className="node-label">{node.label}</span>
-            <button 
-              className="remove-button"
-              onClick={() => onRemoveNode(node)}
+      
+      <AnimatePresence>
+        <div className="nodes-list">
+          {nodes.map((node, index) => (
+            <motion.div
+              key={node.id}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, x: -100 }}
+              transition={{ duration: 0.2 }}
+              className="node-item"
             >
-              ×
-            </button>
-          </div>
-        ))}
-      </div>
+              <div className="node-content">
+                <span className="node-index">{index + 1}</span>
+                <span className="node-label">{node.label}</span>
+              </div>
+              <button 
+                className="remove-button"
+                onClick={() => onRemoveNode(node)}
+                aria-label="移除节点"
+              >
+                <FontAwesomeIcon icon={faTimes} />
+              </button>
+            </motion.div>
+          ))}
+        </div>
+      </AnimatePresence>
+
       <style jsx>{`
-        .selected-nodes-container {
-          background: white;
-          border-radius: 8px;
-          padding: 16px;
-          margin-top: 16px;
-          box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        .selected-nodes {
+          background: rgba(255, 255, 255, 0.8);
+          backdrop-filter: blur(10px);
+          border: 1px solid rgba(229, 231, 235, 0.5);
+          border-radius: 16px;
+          padding: 20px;
+          box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1),
+                      0 2px 4px -1px rgba(0, 0, 0, 0.06);
         }
-        .selected-nodes-header {
+
+        .header {
           display: flex;
           justify-content: space-between;
           align-items: center;
-          margin-bottom: 12px;
+          margin-bottom: 16px;
         }
-        .selected-nodes-header h3 {
+
+        h3 {
           margin: 0;
           font-size: 16px;
-          color: #1a1a1a;
+          font-weight: 600;
+          color: #111827;
+          display: flex;
+          align-items: center;
+          gap: 8px;
         }
+
+        .count {
+          color: #6B7280;
+          font-weight: normal;
+        }
+
         .search-button {
-          background: #4f46e5;
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          padding: 8px 16px;
+          background: linear-gradient(135deg, #4F46E5 0%, #7C3AED 100%);
           color: white;
           border: none;
-          padding: 6px 12px;
-          border-radius: 6px;
-          cursor: pointer;
+          border-radius: 8px;
           font-size: 14px;
-          transition: all 0.2s;
+          font-weight: 500;
+          cursor: pointer;
+          transition: all 0.2s ease;
         }
+
         .search-button:hover {
-          background: #4338ca;
+          transform: translateY(-1px);
+          box-shadow: 0 4px 12px rgba(79, 70, 229, 0.2);
         }
+
         .search-button:disabled {
-          background: #c7c7c7;
+          background: #E5E7EB;
           cursor: not-allowed;
+          transform: none;
+          box-shadow: none;
         }
+
         .nodes-list {
           display: flex;
           flex-direction: column;
           gap: 8px;
         }
+
         .node-item {
           display: flex;
           align-items: center;
-          padding: 8px;
-          background: #f8fafc;
-          border-radius: 6px;
-          gap: 8px;
+          justify-content: space-between;
+          padding: 12px;
+          background: rgba(255, 255, 255, 0.9);
+          border: 1px solid rgba(229, 231, 235, 0.8);
+          border-radius: 12px;
+          transition: all 0.2s ease;
         }
+
+        .node-item:hover {
+          transform: translateX(4px);
+          background: white;
+          border-color: #E5E7EB;
+          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+
+        .node-content {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          flex: 1;
+        }
+
         .node-index {
-          background: #e2e8f0;
-          color: #475569;
+          display: flex;
+          align-items: center;
+          justify-content: center;
           width: 24px;
           height: 24px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          border-radius: 12px;
+          background: #F3F4F6;
+          color: #4B5563;
+          border-radius: 6px;
           font-size: 12px;
+          font-weight: 500;
         }
+
         .node-label {
-          flex: 1;
           font-size: 14px;
-          color: #1a1a1a;
+          color: #1F2937;
+          font-weight: 500;
         }
+
         .remove-button {
-          background: none;
-          border: none;
-          color: #94a3b8;
-          font-size: 18px;
-          cursor: pointer;
-          padding: 0 4px;
           display: flex;
           align-items: center;
           justify-content: center;
-          transition: all 0.2s;
+          width: 28px;
+          height: 28px;
+          border: none;
+          background: transparent;
+          color: #9CA3AF;
+          border-radius: 6px;
+          cursor: pointer;
+          transition: all 0.2s ease;
         }
+
         .remove-button:hover {
-          color: #ef4444;
+          background: #FEE2E2;
+          color: #EF4444;
         }
       `}</style>
     </div>
