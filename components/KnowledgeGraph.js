@@ -58,19 +58,14 @@ const KnowledgeGraph = ({ data, onNodeClick, settings = {} }) => {
     const height = containerRef.current.clientHeight;
 
     const scene = new THREE.Scene();
-    const camera = new THREE.PerspectiveCamera(60, width / height, 0.1, 1000);
-    const renderer = new THREE.WebGLRenderer({ 
-      antialias: true,
-      alpha: true 
-    });
+    const camera = new THREE.PerspectiveCamera(75, width / height, 0.1, 1000);
+    const renderer = new THREE.WebGLRenderer({ antialias: true });
 
     renderer.setSize(width, height);
     renderer.setClearColor(0xffffff, 0);
     containerRef.current.appendChild(renderer.domElement);
 
-    // 调整相机位置以获得更好的视角
-    camera.position.set(0, 0, 15);
-    camera.lookAt(0, 0, 0);
+    camera.position.z = 5;
 
     const nodes = new THREE.Group();
     const edges = new THREE.Group();
@@ -92,9 +87,7 @@ const KnowledgeGraph = ({ data, onNodeClick, settings = {} }) => {
         settings.lineWidth || 2,
         currentTheme.edge
       );
-      if (edgeObj) {
-        edges.add(edgeObj);
-      }
+      edges.add(edgeObj);
     });
 
     // 创建标签渲染器
@@ -115,17 +108,18 @@ const KnowledgeGraph = ({ data, onNodeClick, settings = {} }) => {
 
     // 优化控制器设置
     const controls = new OrbitControls(camera, renderer.domElement);
-    controls.enableDamping = true;
-    controls.dampingFactor = 0.05;
-    controls.rotateSpeed = 0.5;
-    controls.panSpeed = 0.5;
-    controls.zoomSpeed = 0.8;
-    controls.minDistance = 5;
-    controls.maxDistance = 50;
-    controls.enablePan = true;
-    controls.enableZoom = true;
-    controls.autoRotate = false;
-    controls.screenSpacePanning = true;
+    controls.enableDamping = true; // 启用阻尼效果
+    controls.dampingFactor = 0.1; // 阻尼系数
+    controls.rotateSpeed = 0.8; // 降低旋转速度
+    controls.panSpeed = 0.8; // 平移速度
+    controls.zoomSpeed = 1.2; // 缩放速度
+    controls.minDistance = 300; // 最小距离，防止过于靠近
+    controls.maxDistance = 1000; // 最大距离
+    controls.target.set(0, 0, 0); // 设置旋转中心为原点（球心）
+    controls.enablePan = true; // 允许平移
+    controls.enableZoom = true; // 允许缩放
+    controls.autoRotate = false; // 禁用自动旋转
+    controls.screenSpacePanning = true; // 使平移始终平行于屏幕
 
     // 清除原有内容并添加新的渲染器
     containerRef.current.innerHTML = '';
@@ -218,24 +212,22 @@ const KnowledgeGraph = ({ data, onNodeClick, settings = {} }) => {
   };
 
   const createNode3D = useCallback((node, size = 10, opacity = 0.9) => {
-    const geometry = new THREE.SphereGeometry(size / 10, 32, 32);
+    const geometry = new THREE.SphereGeometry(size / 20, 32, 32);
     const material = new THREE.MeshPhongMaterial({
       color: currentTheme.node,
       transparent: true,
-      opacity: opacity,
-      shininess: 50,
-      specular: 0x444444
+      opacity: opacity
     });
     const sphere = new THREE.Mesh(geometry, material);
 
-    // 调整节点的初始位置分布范围
     sphere.position.set(
-      (Math.random() - 0.5) * 10,
-      (Math.random() - 0.5) * 10,
-      (Math.random() - 0.5) * 10
+      (Math.random() - 0.5) * 5,
+      (Math.random() - 0.5) * 5,
+      (Math.random() - 0.5) * 5
     );
 
     sphere.userData = { ...node };
+
     return sphere;
   }, [currentTheme]);
 
@@ -247,14 +239,12 @@ const KnowledgeGraph = ({ data, onNodeClick, settings = {} }) => {
 
     let points;
     if (isCurved) {
+      // 创建曲线
       const midPoint = new THREE.Vector3().addVectors(
         startNode.position,
         endNode.position
       ).multiplyScalar(0.5);
-      
-      // 调整曲线的弧度
-      const distance = startNode.position.distanceTo(endNode.position);
-      midPoint.y += distance * 0.2;
+      midPoint.y += 1; // 添加一些弧度
 
       const curve = new THREE.QuadraticBezierCurve3(
         startNode.position,
@@ -263,15 +253,14 @@ const KnowledgeGraph = ({ data, onNodeClick, settings = {} }) => {
       );
       points = curve.getPoints(50);
     } else {
+      // 创建直线
       points = [startNode.position, endNode.position];
     }
 
     const geometry = new THREE.BufferGeometry().setFromPoints(points);
     const material = new THREE.LineBasicMaterial({
       color: color,
-      linewidth: width,
-      transparent: true,
-      opacity: 0.8
+      linewidth: width
     });
 
     return new THREE.Line(geometry, material);
