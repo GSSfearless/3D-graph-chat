@@ -291,69 +291,69 @@ export default function Search() {
           {/* 左侧区域：搜索历史和控制面板 */}
           <div className="col-span-2 h-[calc(100vh-4rem)] overflow-y-auto custom-scrollbar">
             {/* 搜索历史 */}
-            <div className="bg-white/95 rounded-xl shadow-sm border border-gray-100/80 p-4 mb-4 control-panel">
-              <h3 className="text-sm font-semibold text-gray-700 mb-4 flex items-center">
-                <FontAwesomeIcon icon={faHistory} className="w-4 h-4 mr-2 text-gray-500" />
+            <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 mb-4 control-panel">
+              <h3 className="text-sm font-semibold text-gray-700 mb-3 flex items-center">
+                <FontAwesomeIcon icon={faHistory} className="w-4 h-4 mr-2" />
                 搜索历史
               </h3>
-              <div className="space-y-2.5">
-                <div className="history-item p-2.5 rounded-lg cursor-pointer border border-transparent hover:border-gray-100">
+              <div className="space-y-2">
+                <div className="history-item p-2 rounded-lg cursor-pointer">
                   <p className="text-sm text-gray-600 truncate">示例搜索记录1</p>
-                  <p className="text-xs text-gray-400 mt-1.5">2024-01-01 12:00</p>
+                  <p className="text-xs text-gray-400 mt-1">2024-01-01 12:00</p>
                 </div>
-                <div className="history-item p-2.5 rounded-lg cursor-pointer border border-transparent hover:border-gray-100">
+                <div className="history-item p-2 rounded-lg cursor-pointer">
                   <p className="text-sm text-gray-600 truncate">示例搜索记录2</p>
-                  <p className="text-xs text-gray-400 mt-1.5">2024-01-01 11:00</p>
+                  <p className="text-xs text-gray-400 mt-1">2024-01-01 11:00</p>
                 </div>
               </div>
             </div>
 
             {/* 交互控制面板 */}
-            <div className="bg-white/95 rounded-xl shadow-sm border border-gray-100/80 p-4 control-panel">
-              <h3 className="text-sm font-semibold text-gray-700 mb-4 flex items-center">
-                <FontAwesomeIcon icon={faSliders} className="w-4 h-4 mr-2 text-gray-500" />
+            <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 control-panel">
+              <h3 className="text-sm font-semibold text-gray-700 mb-3 flex items-center">
+                <FontAwesomeIcon icon={faSliders} className="w-4 h-4 mr-2" />
                 显示控制
               </h3>
               
               {/* 线条样式 */}
-              <div className="mb-6">
-                <label className="text-xs font-medium text-gray-500 block mb-2">线条样式</label>
+              <div className="mb-4">
+                <label className="text-xs font-medium text-gray-600 block mb-2">线条样式</label>
                 <div className="flex items-center space-x-2">
-                  <button className="px-3 py-1.5 text-xs rounded-lg border border-blue-100 bg-blue-50/50 text-blue-600 hover:bg-blue-50 transition-colors">
+                  <button className="px-3 py-1.5 text-xs rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-100 transition-colors">
                     曲线
                   </button>
-                  <button className="px-3 py-1.5 text-xs rounded-lg border border-gray-100 bg-gray-50/50 text-gray-600 hover:bg-gray-50 transition-colors">
+                  <button className="px-3 py-1.5 text-xs rounded-lg bg-gray-50 text-gray-600 hover:bg-gray-100 transition-colors">
                     直线
                   </button>
                 </div>
               </div>
 
               {/* 主题切换 */}
-              <div className="mb-6">
-                <label className="text-xs font-medium text-gray-500 block mb-2">主题风格</label>
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="theme-button aspect-square rounded-lg bg-gradient-to-br from-blue-100 to-indigo-200 border border-blue-200/50 cursor-pointer"></div>
-                  <div className="theme-button aspect-square rounded-lg bg-gradient-to-br from-emerald-100 to-teal-200 border border-emerald-200/50 cursor-pointer"></div>
-                  <div className="theme-button aspect-square rounded-lg bg-gradient-to-br from-rose-100 to-pink-200 border border-rose-200/50 cursor-pointer"></div>
-                  <div className="theme-button aspect-square rounded-lg bg-gradient-to-br from-amber-100 to-orange-200 border border-amber-200/50 cursor-pointer"></div>
+              <div className="mb-4">
+                <label className="text-xs font-medium text-gray-600 block mb-2">主题风格</label>
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="theme-button aspect-square rounded-lg bg-gradient-to-br from-blue-500 to-purple-600 cursor-pointer"></div>
+                  <div className="theme-button aspect-square rounded-lg bg-gradient-to-br from-emerald-500 to-teal-600 cursor-pointer"></div>
+                  <div className="theme-button aspect-square rounded-lg bg-gradient-to-br from-rose-500 to-pink-600 cursor-pointer"></div>
+                  <div className="theme-button aspect-square rounded-lg bg-gradient-to-br from-amber-500 to-orange-600 cursor-pointer"></div>
                 </div>
               </div>
 
               {/* 显示设置 */}
               <div>
-                <label className="text-xs font-medium text-gray-500 block mb-3">显示设置</label>
-                <div className="space-y-3">
-                  <label className="flex items-center space-x-3 cursor-pointer group">
-                    <input type="checkbox" className="rounded text-blue-500/80 border-gray-200 focus:ring-blue-200" defaultChecked />
-                    <span className="text-xs text-gray-600 group-hover:text-gray-900 transition-colors">显示节点标签</span>
+                <label className="text-xs font-medium text-gray-600 block mb-2">显示设置</label>
+                <div className="space-y-2">
+                  <label className="flex items-center space-x-2 cursor-pointer">
+                    <input type="checkbox" className="rounded text-blue-600 focus:ring-blue-500" defaultChecked />
+                    <span className="text-xs text-gray-600">显示节点标签</span>
                   </label>
-                  <label className="flex items-center space-x-3 cursor-pointer group">
-                    <input type="checkbox" className="rounded text-blue-500/80 border-gray-200 focus:ring-blue-200" defaultChecked />
-                    <span className="text-xs text-gray-600 group-hover:text-gray-900 transition-colors">显示关系标签</span>
+                  <label className="flex items-center space-x-2 cursor-pointer">
+                    <input type="checkbox" className="rounded text-blue-600 focus:ring-blue-500" defaultChecked />
+                    <span className="text-xs text-gray-600">显示关系标签</span>
                   </label>
-                  <label className="flex items-center space-x-3 cursor-pointer group">
-                    <input type="checkbox" className="rounded text-blue-500/80 border-gray-200 focus:ring-blue-200" defaultChecked />
-                    <span className="text-xs text-gray-600 group-hover:text-gray-900 transition-colors">节点发光效果</span>
+                  <label className="flex items-center space-x-2 cursor-pointer">
+                    <input type="checkbox" className="rounded text-blue-600 focus:ring-blue-500" defaultChecked />
+                    <span className="text-xs text-gray-600">节点发光效果</span>
                   </label>
                 </div>
               </div>
@@ -471,7 +471,7 @@ export default function Search() {
       {/* 全局样式 */}
       <style jsx global>{`
         .custom-scrollbar::-webkit-scrollbar {
-          width: 4px;
+          width: 6px;
         }
 
         .custom-scrollbar::-webkit-scrollbar-track {
@@ -479,22 +479,21 @@ export default function Search() {
         }
 
         .custom-scrollbar::-webkit-scrollbar-thumb {
-          background-color: rgba(156, 163, 175, 0.3);
-          border-radius: 2px;
+          background-color: rgba(156, 163, 175, 0.5);
+          border-radius: 3px;
         }
 
         .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-          background-color: rgba(107, 114, 128, 0.4);
+          background-color: rgba(107, 114, 128, 0.5);
         }
 
         /* 主题切换按钮动画 */
         .theme-button {
-          transition: all 0.2s ease;
+          transition: transform 0.2s ease;
         }
 
         .theme-button:hover {
-          transform: scale(1.02);
-          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+          transform: scale(1.05);
         }
 
         /* 控制面板卡片悬浮效果 */
@@ -503,7 +502,7 @@ export default function Search() {
         }
 
         .control-panel:hover {
-          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
         }
 
         /* 搜索历史项动画 */
@@ -512,8 +511,8 @@ export default function Search() {
         }
 
         .history-item:hover {
-          background-color: rgba(249, 250, 251, 0.8);
-          transform: translateX(2px);
+          background-color: rgba(243, 244, 246, 0.8);
+          transform: translateX(4px);
         }
       `}</style>
     </div>
