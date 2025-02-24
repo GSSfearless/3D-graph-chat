@@ -55,74 +55,263 @@ export const analyzeSentiment = (content) => {
 };
 
 // 实体抽取函数
-export async function extractEntities(text) {
+export const extractEntities = async (text) => {
   try {
-    const response = await fetch('/api/extract-entities', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ text }),
-    });
-
-    if (!response.ok) {
-      throw new Error('实体抽取请求失败');
+    // 确保输入文本有效
+    if (!text || typeof text !== 'string') {
+      console.warn('Invalid input text in extractEntities');
+      return [];
     }
 
-    const data = await response.json();
-    return data.entities;
+    // 规范化ID的辅助函数
+    const normalizeId = (text) => {
+      if (!text) return '';
+      const cleanText = text.replace(/[*]/g, '').trim();
+      // 移除已存在的 'node-' 前缀，避免重复添加
+      const baseId = cleanText.startsWith('node-') ? cleanText.slice(5) : cleanText;
+      // 统一处理特殊字符
+      return `node-${baseId.replace(/[^a-zA-Z0-9]/g, '_')}`;
+    };
+
+    const sentences = text.split(/[。！？.!?]/);
+    const entities = new Map(); // 使用 Map 来去重
+    let entityId = 0;
+
+    sentences.forEach(sentence => {
+      // 提取可能的实体（2个或更多连续的非标点字符）
+      const matches = sentence.match(/[一-龥A-Za-z][一-龥A-Za-z\d]*[一-龥A-Za-z]+/g) || [];
+      
+      matches.forEach(match => {
+        const cleanMatch = match.replace(/[*]/g, '').trim();
+        if (isValidEntity(cleanMatch) && !entities.has(cleanMatch)) {
+          const nodeId = normalizeId(cleanMatch);
+          const entity = {
+            id: nodeId,
+            text: cleanMatch,
+            label: cleanMatch,
+            isEvent: hasEventIndicators(cleanMatch),
+            isAttribute: hasAttributeIndicators(cleanMatch),
+            importance: calculateImportance(cleanMatch, text),
+            properties: {}
+          };
+
+          console.log('创建实体:', {
+            ID: nodeId,
+            文本: cleanMatch,
+            类型: entity.isEvent ? 'event' : (entity.isAttribute ? 'attribute' : 'entity')
+          });
+
+          entities.set(cleanMatch, entity);
+          // 同时用规范化ID作为键存储，以便后续查找
+          entities.set(nodeId, entity);
+        }
+      });
+    });
+
+    const result = Array.from(entities.values());
+    // 去重，确保每个ID只出现一次
+    const seen = new Set();
+    const uniqueResult = result.filter(entity => {
+      if (seen.has(entity.id)) return false;
+      seen.add(entity.id);
+      return true;
+    });
+
+    return uniqueResult;
   } catch (error) {
-    console.error('实体抽取错误:', error);
+    console.error('Error in extractEntities:', error);
     return [];
   }
-}
+};
 
 // 关系抽取函数
-export async function extractRelations(text) {
+export const extractRelations = async (text) => {
   try {
-    const response = await fetch('/api/extract-relations', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ text }),
+    const relations = [];
+    // 使用更细粒度的句子切分
+    const sentences = text.split(/[，。！？.!?;；]/);
+    let relationId = 0;
+
+    // 规范化ID的辅助函数
+    const normalizeId = (text) => {
+      if (!text) return '';
+      const cleanText = text.replace(/[*]/g, '').trim();
+      // 移除已存在的 'node-' 前缀，避免重复添加
+      const baseId = cleanText.startsWith('node-') ? cleanText.slice(5) : cleanText;
+      // 统一处理特殊字符
+      return `node-${baseId.replace(/[^a-zA-Z0-9]/g, '_')}`;
+    };
+
+    // 扩展关系模式
+    const patterns = [
+      // 基础关系
+      { regex: /([^，。！？]+?)是([^，。！？]+)/g, type: 'is-a', label: '是' },
+      { regex: /([^，。！？]+?)包含([^，。！？]+)/g, type: 'contains', label: '包含' },
+      { regex: /([^，。！？]+?)属于([^，。！？]+)/g, type: 'belongs-to', label: '属于' },
+      { regex: /([^，。！？]+?)需要([^，。！？]+)/g, type: 'requires', label: '需要' },
+      // 动作关系
+      { regex: /([^，。！？]+?)进行([^，。！？]+)/g, type: 'performs', label: '进行' },
+      { regex: /([^，。！？]+?)使用([^，。！？]+)/g, type: 'uses', label: '使用' },
+      { regex: /([^，。！？]+?)提供([^，。！？]+)/g, type: 'provides', label: '提供' },
+      { regex: /([^，。！？]+?)获得([^，。！？]+)/g, type: 'obtains', label: '获得' },
+      // 方向关系
+      { regex: /([^，。！？]+?)到([^，。！？]+)/g, type: 'to', label: '到' },
+      { regex: /([^，。！？]+?)从([^，。！？]+)/g, type: 'from', label: '从' },
+      { regex: /([^，。！？]+?)对([^，。！？]+)/g, type: 'towards', label: '对' },
+      // 时间关系
+      { regex: /([^，。！？]+?)之前([^，。！？]+)/g, type: 'before', label: '之前' },
+      { regex: /([^，。！？]+?)之后([^，。！？]+)/g, type: 'after', label: '之后' },
+      { regex: /([^，。！？]+?)期间([^，。！？]+)/g, type: 'during', label: '期间' },
+      // 条件关系
+      { regex: /如果([^，。！？]+?)那么([^，。！？]+)/g, type: 'if-then', label: '如果-那么' },
+      { regex: /([^，。！？]+?)因此([^，。！？]+)/g, type: 'therefore', label: '因此' },
+      // 修饰关系
+      { regex: /([^，。！？]+?)的([^，。！？]+)/g, type: 'of', label: '的' },
+      { regex: /([^，。！？]+?)(很|非常|特别)([^，。！？]+)/g, type: 'degree', label: '程度' },
+      // 并列关系
+      { regex: /([^，。！？]+?)(和|与|以及|并且|而且)([^，。！？]+)/g, type: 'and', label: '并列' }
+    ];
+
+    // 处理每个句子
+    let previousEntities = [];
+    sentences.forEach(sentence => {
+      // 提取当前句子中的实体
+      const currentEntities = extractEntitiesFromSentence(sentence);
+      
+      // 处理模式匹配的关系
+      patterns.forEach(pattern => {
+        let matches;
+        while ((matches = pattern.regex.exec(sentence)) !== null) {
+          if (matches && matches.length >= 3) {
+            const [, source, target] = matches;
+            const cleanSource = source.replace(/[*]/g, '').trim();
+            const cleanTarget = target.replace(/[*]/g, '').trim();
+            
+            if (isValidEntity(cleanSource) && isValidEntity(cleanTarget)) {
+              const sourceId = normalizeId(cleanSource);
+              const targetId = normalizeId(cleanTarget);
+              
+              const weight = calculateRelationWeight(cleanSource, cleanTarget, text);
+              
+              relations.push({
+                id: `edge-${relationId++}`,
+                source: {
+                  id: sourceId,
+                  text: cleanSource
+                },
+                target: {
+                  id: targetId,
+                  text: cleanTarget
+                },
+                type: pattern.type,
+                label: pattern.label,
+                weight: weight,
+                properties: {
+                  sourceText: cleanSource,
+                  targetText: cleanTarget,
+                  context: sentence
+                }
+              });
+            }
+          }
+        }
+      });
+
+      // 添加上下文关系
+      if (previousEntities.length > 0 && currentEntities.length > 0) {
+        previousEntities.forEach(prev => {
+          currentEntities.forEach(curr => {
+            if (prev.id !== curr.id) {
+              relations.push({
+                id: `edge-${relationId++}`,
+                source: {
+                  id: prev.id,
+                  text: prev.text
+                },
+                target: {
+                  id: curr.id,
+                  text: curr.text
+                },
+                type: 'context',
+                label: '上下文关联',
+                weight: 0.3,
+                properties: {
+                  sourceText: prev.text,
+                  targetText: curr.text
+                }
+              });
+            }
+          });
+        });
+      }
+
+      // 处理句子内实体间的顺序关系
+      for (let i = 0; i < currentEntities.length - 1; i++) {
+        relations.push({
+          id: `edge-${relationId++}`,
+          source: {
+            id: currentEntities[i].id,
+            text: currentEntities[i].text
+          },
+          target: {
+            id: currentEntities[i + 1].id,
+            text: currentEntities[i + 1].text
+          },
+          type: 'sequence',
+          label: '顺序关联',
+          weight: 0.5,
+          properties: {
+            sourceText: currentEntities[i].text,
+            targetText: currentEntities[i + 1].text
+          }
+        });
+      }
+
+      previousEntities = currentEntities;
     });
 
-    if (!response.ok) {
-      throw new Error('关系抽取请求失败');
+    // 添加语义相似度关系
+    const keywords = extractKeywords(text);
+    for (let i = 0; i < keywords.length - 1; i++) {
+      for (let j = i + 1; j < keywords.length; j++) {
+        const similarity = calculateSimilarity(keywords[i].text, keywords[j].text);
+        if (similarity > 0.5) {
+          const sourceId = normalizeId(keywords[i].text);
+          const targetId = normalizeId(keywords[j].text);
+          relations.push({
+            id: `edge-${relationId++}`,
+            source: {
+              id: sourceId,
+              text: keywords[i].text
+            },
+            target: {
+              id: targetId,
+              text: keywords[j].text
+            },
+            type: 'similar',
+            label: '相似',
+            weight: similarity
+          });
+        }
+      }
     }
 
-    const data = await response.json();
-    return data.relations;
+    // 去重并返回关系
+    return removeDuplicateRelations(relations);
   } catch (error) {
-    console.error('关系抽取错误:', error);
+    console.error('Error in extractRelations:', error);
     return [];
   }
-}
+};
 
-// 计算向量嵌入函数
-export async function computeEmbeddings(entities) {
-  try {
-    const response = await fetch('/api/compute-embeddings', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ entities }),
-    });
-
-    if (!response.ok) {
-      throw new Error('向量嵌入计算请求失败');
-    }
-
-    const data = await response.json();
-    return data.embeddings;
-  } catch (error) {
-    console.error('向量嵌入计算错误:', error);
-    // 返回空向量数组，长度与实体数量相同
-    return entities.map(() => new Array(768).fill(0));
-  }
-}
+// 计算向量嵌入
+export const computeEmbeddings = async (entities) => {
+  // 简单的向量嵌入实现
+  return entities.map(entity => {
+    // 生成一个简单的 5 维向量作为嵌入
+    return Array.from({ length: 5 }, () => Math.random());
+  });
+};
 
 // 辅助函数
 
