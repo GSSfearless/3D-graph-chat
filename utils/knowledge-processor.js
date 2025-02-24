@@ -1,6 +1,16 @@
 import * as d3 from 'd3';
 import { extractEntities, extractRelations, computeEmbeddings } from './nlp-utils';
 
+// 添加ID规范化函数
+const normalizeId = (id) => {
+  if (!id) return '';
+  const stringId = String(id).trim();
+  // 移除已存在的 'node-' 前缀，避免重复添加
+  const baseId = stringId.startsWith('node-') ? stringId.slice(5) : stringId;
+  // 统一处理特殊字符
+  return `node-${baseId.replace(/[^a-zA-Z0-9]/g, '_')}`;
+};
+
 export class KnowledgeGraphProcessor {
   constructor() {
     this.nodeTypes = {
@@ -42,7 +52,7 @@ export class KnowledgeGraphProcessor {
       
       // 2. 关系抽取
       const relations = await extractRelations(text);
-      console.log('Extracted relations before filtering:', relations);
+      console.log('提取的关系数据:', relations);
       if (!Array.isArray(relations)) {
         console.warn('Invalid relations result:', relations);
         return { nodes: [], edges: [] };
@@ -54,14 +64,17 @@ export class KnowledgeGraphProcessor {
       // 4. 构建节点和边的映射
       const nodeMap = new Map();
       entities.forEach(entity => {
-        const nodeId = `node-${entity.text.replace(/[^a-zA-Z0-9]/g, '_')}`;
-        nodeMap.set(nodeId, { ...entity, id: nodeId });
+        const nodeId = normalizeId(entity.text);
+        const nodeData = { ...entity, id: nodeId };
+        nodeMap.set(nodeId, nodeData);
         // 同时用文本作为键存储
-        nodeMap.set(entity.text, { ...entity, id: nodeId });
+        nodeMap.set(entity.text, nodeData);
+        console.log('创建节点映射:', {
+          文本: entity.text,
+          ID: nodeId
+        });
       });
 
-      console.log('Node map:', Array.from(nodeMap.entries()));
-      
       // 5. 构建节点
       const nodes = this.buildNodes(entities, embeddings);
       if (!nodes.length) {
@@ -71,25 +84,34 @@ export class KnowledgeGraphProcessor {
       
       // 6. 构建边（只保留存在对应节点的边）
       const validRelations = relations.filter(relation => {
-        console.log('Checking relation:', relation);
-        // 检查源节点和目标节点是否存在
-        const hasSource = nodeMap.has(relation.source);
-        const hasTarget = nodeMap.has(relation.target);
+        const sourceId = normalizeId(relation.source);
+        const targetId = normalizeId(relation.target);
+        
+        const hasSource = nodeMap.has(sourceId) || nodeMap.has(relation.source);
+        const hasTarget = nodeMap.has(targetId) || nodeMap.has(relation.target);
         
         if (!hasSource) {
-          console.warn('Source node not found:', relation.source);
+          console.warn('找不到源节点:', {
+            原始ID: relation.source,
+            规范化ID: sourceId,
+            可用节点: Array.from(nodeMap.keys())
+          });
         }
         if (!hasTarget) {
-          console.warn('Target node not found:', relation.target);
+          console.warn('找不到目标节点:', {
+            原始ID: relation.target,
+            规范化ID: targetId,
+            可用节点: Array.from(nodeMap.keys())
+          });
         }
         
         return hasSource && hasTarget;
       });
 
-      console.log('Valid relations after filtering:', validRelations);
+      console.log('有效的关系数据:', validRelations);
       
       const edges = this.buildEdges(validRelations);
-      console.log('Built edges:', edges);
+      console.log('构建的边:', edges);
       
       // 7. 应用布局
       const graphData = this.applyLayout({
@@ -104,7 +126,10 @@ export class KnowledgeGraphProcessor {
         return { nodes: [], edges: [] };
       }
 
-      console.log('Final graph data:', graphData);
+      console.log('最终图数据:', {
+        节点数量: graphData.nodes.length,
+        边数量: graphData.edges.length
+      });
       return graphData;
     } catch (error) {
       console.error('Error processing text:', error);
@@ -116,9 +141,9 @@ export class KnowledgeGraphProcessor {
     return entities.map((entity, index) => {
       // 确保 entity.text 存在，如果不存在则使用一个默认值
       const label = entity.text || entity.label || `Entity ${index + 1}`;
-      const nodeId = `node-${label.replace(/[^a-zA-Z0-9]/g, '_')}`;
+      const nodeId = normalizeId(label);
       
-      return {
+      const node = {
         id: nodeId,
         label: label,
         text: entity.text || label,
@@ -131,6 +156,13 @@ export class KnowledgeGraphProcessor {
         x: 0,
         y: 0
       };
+
+      console.log('构建节点:', {
+        标签: label,
+        ID: nodeId
+      });
+
+      return node;
     }).filter(node => 
       node && 
       typeof node.id === 'string' && 
@@ -140,25 +172,28 @@ export class KnowledgeGraphProcessor {
   }
 
   buildEdges(relations) {
-    // 添加调试日志
-    console.log('Building edges from relations:', relations);
-
     return relations
       .filter(relation => relation && typeof relation.source === 'string' && typeof relation.target === 'string')
       .map((relation, index) => {
-        // 确保边的属性都存在
+        const sourceId = normalizeId(relation.source);
+        const targetId = normalizeId(relation.target);
+        
         const edge = {
           id: relation.id || `edge-${index}`,
-          source: relation.source,
-          target: relation.target,
+          source: sourceId,
+          target: targetId,
           type: relation.type || 'default',
           label: relation.label || '关联',
           weight: relation.weight || 1,
           properties: relation.properties || {}
         };
 
-        // 添加调试日志
-        console.log('Created edge:', edge);
+        console.log('构建边:', {
+          ID: edge.id,
+          源节点: sourceId,
+          目标节点: targetId
+        });
+
         return edge;
       })
       .filter(edge => 
