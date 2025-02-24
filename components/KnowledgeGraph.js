@@ -324,6 +324,7 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
       const labelDiv = document.createElement('div');
       labelDiv.className = 'edge-label';
       labelDiv.textContent = edgeData.label;
+      labelDiv.style.display = 'none';
       labelDiv.style.color = theme.label.color;
       labelDiv.style.fontSize = '12px';
       labelDiv.style.fontFamily = theme.label.font;
@@ -811,6 +812,11 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
           <p>暂无可视化数据</p>
         </div>
       )}
+      {isValidData && data.nodes.length > 0 && (
+        <div className="info-tooltip">
+          <p>提示：图谱显示了主要的实体和关系，部分复杂或模糊的关系可能未显示</p>
+        </div>
+      )}
       <div className="toolbar" style={{ 
         flexDirection: isMobile ? 'column' : 'row',
         right: isMobile ? '8px' : '16px',
@@ -947,6 +953,35 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
           white-space: nowrap;
           text-align: center;
           text-shadow: 0 0 3px rgba(255,255,255,0.8);
+        }
+
+        .info-tooltip {
+          position: absolute;
+          left: 16px;
+          bottom: 16px;
+          background: rgba(255, 255, 255, 0.9);
+          backdrop-filter: blur(10px);
+          padding: 8px 16px;
+          border-radius: 8px;
+          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+          z-index: 1000;
+          max-width: 300px;
+          font-size: 12px;
+          color: var(--neutral-600);
+        }
+        
+        .info-tooltip p {
+          margin: 0;
+          line-height: 1.4;
+        }
+
+        @media (max-width: 768px) {
+          .info-tooltip {
+            left: 8px;
+            bottom: 8px;
+            padding: 6px 12px;
+            font-size: 10px;
+          }
         }
       `}</style>
     </div>
