@@ -61,9 +61,11 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
     scene.background = new THREE.Color(0xf8fafc);
     scene.fog = new THREE.Fog(0xf8fafc, 100, 1000);
 
-    // 创建相机
-    const camera = new THREE.PerspectiveCamera(60, width / height, 1, 10000);
-    camera.position.z = 500;
+    // 创建相机并设置到合适的观察位置
+    const camera = new THREE.PerspectiveCamera(45, width / height, 1, 2000);
+    // 将相机位置设置为球体半径的2.5倍，确保能看到整个球体
+    camera.position.set(0, 0, 500);
+    camera.lookAt(0, 0, 0);
 
     // 创建渲染器
     const renderer = new THREE.WebGLRenderer({ 
@@ -92,14 +94,20 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
     pointLight.castShadow = true;
     scene.add(pointLight);
 
-    // 添加控制器
+    // 优化控制器设置
     const controls = new OrbitControls(camera, renderer.domElement);
-    controls.enableDamping = true;
-    controls.dampingFactor = 0.05;
-    controls.rotateSpeed = 0.5;
-    controls.zoomSpeed = 0.8;
-    controls.minDistance = 100;
-    controls.maxDistance = 1000;
+    controls.enableDamping = true; // 启用阻尼效果
+    controls.dampingFactor = 0.1; // 阻尼系数
+    controls.rotateSpeed = 0.8; // 降低旋转速度
+    controls.panSpeed = 0.8; // 平移速度
+    controls.zoomSpeed = 1.2; // 缩放速度
+    controls.minDistance = 300; // 最小距离，防止过于靠近
+    controls.maxDistance = 1000; // 最大距离
+    controls.target.set(0, 0, 0); // 设置旋转中心为原点（球心）
+    controls.enablePan = true; // 允许平移
+    controls.enableZoom = true; // 允许缩放
+    controls.autoRotate = false; // 禁用自动旋转
+    controls.screenSpacePanning = true; // 使平移始终平行于屏幕
 
     // 清除原有内容并添加新的渲染器
     container.innerHTML = '';
@@ -502,7 +510,7 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
     
     const { camera, controls } = sceneRef.current;
     
-    // 重置相机位置
+    // 重置到初始视角
     camera.position.set(0, 0, 500);
     camera.lookAt(0, 0, 0);
     
