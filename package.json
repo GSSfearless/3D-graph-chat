@@ -21,6 +21,7 @@
     "@react-three/drei": "^9.102.3",
     "@react-three/fiber": "^8.15.19",
     "@tailwindcss/forms": "^0.5.7",
+    "@tailwindcss/typography": "^0.5.15",
     "@types/node": "^20",
     "@types/react": "^18",
     "@types/react-dom": "^18",
@@ -56,7 +57,6 @@
     "zrender": "^5.4.4"
   },
   "devDependencies": {
-    "@tailwindcss/typography": "^0.5.16",
     "eslint": "^8",
     "eslint-config-next": "14.2.5",
     "postcss": "^8.4.41",
