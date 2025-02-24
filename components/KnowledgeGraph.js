@@ -17,8 +17,8 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
     node: {
       color: '#6366F1',
       highlightColor: '#F43F5E',
-      minSize: 3,        // 最小节点大小
-      maxSize: 15,       // 最大节点大小
+      minSize: data?.nodes?.[0]?.data?.size || 3,  // 使用传入的节点大小
+      maxSize: data?.nodes?.[0]?.data?.size || 15,  // 使用传入的节点大小
       segments: 32,
       opacity: 0.9,
       glowColor: '#818CF8'
@@ -27,7 +27,8 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
       color: '#94A3B8',
       highlightColor: '#64748B',
       opacity: 0.6,
-      width: 2
+      width: data?.edges?.[0]?.data?.width || 2,  // 使用传入的边宽度
+      animated: data?.edges?.[0]?.data?.animated || false  // 使用传入的动画设置
     },
     label: {
       color: '#1E293B',
@@ -865,6 +866,62 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
       renderer.domElement.removeEventListener('mousemove', onMouseMove);
     };
   }, [data]);
+
+  // 更新渲染边的函数
+  const renderEdge = (edge, source, target) => {
+    const material = new THREE.LineBasicMaterial({
+      color: theme.edge.color,
+      opacity: theme.edge.opacity,
+      transparent: true,
+      linewidth: edge.data.width || theme.edge.width
+    });
+
+    const points = [];
+    points.push(new THREE.Vector3(source.x, source.y, source.z));
+    points.push(new THREE.Vector3(target.x, target.y, target.z));
+
+    const geometry = new THREE.BufferGeometry().setFromPoints(points);
+    const line = new THREE.Line(geometry, material);
+
+    if (edge.data.animated) {
+      const dashSize = 3;
+      const gapSize = 1;
+      material.dashSize = dashSize;
+      material.gapSize = gapSize;
+      material.onBeforeCompile = (shader) => {
+        shader.uniforms.time = { value: 0 };
+        shader.vertexShader = `
+          uniform float time;
+          ${shader.vertexShader}
+        `;
+        shader.fragmentShader = `
+          uniform float time;
+          ${shader.fragmentShader}
+        `.replace(
+          '#include <fog_fragment>',
+          `
+          float totalSize = ${dashSize.toFixed(1)} + ${gapSize.toFixed(1)};
+          float modulo = mod(vLineDistance + time, totalSize);
+          if (modulo > ${dashSize.toFixed(1)}) {
+            discard;
+          }
+          #include <fog_fragment>
+          `
+        );
+      };
+      
+      // 添加动画
+      const animate = () => {
+        if (material.uniforms) {
+          material.uniforms.time.value = (material.uniforms.time.value + 0.1) % (dashSize + gapSize);
+        }
+        requestAnimationFrame(animate);
+      };
+      animate();
+    }
+
+    return line;
+  };
 
   return (
     <div className="knowledge-graph-container" style={{ width: '100%', height: '100%', ...style }}>
