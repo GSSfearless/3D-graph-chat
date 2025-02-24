@@ -11,7 +11,6 @@ import remarkGfm from 'remark-gfm';
 import { KnowledgeGraphProcessor } from '../utils/knowledge-processor';
 import Link from 'next/link';
 import SelectedNodes from '../components/SelectedNodes';
-import LeftPanel from '../components/LeftPanel';
 
 const KnowledgeGraph = dynamic(() => import('../components/KnowledgeGraph'), {
   ssr: false,
@@ -34,22 +33,11 @@ export default function Search() {
   const searchInputRef = useRef(null);
   const knowledgeProcessor = useRef(new KnowledgeGraphProcessor());
   const [selectedNodes, setSelectedNodes] = useState([]);
-  const [searchHistory, setSearchHistory] = useState([]);
-  const [graphSettings, setGraphSettings] = useState({
-    nodeSize: 10,
-    nodeOpacity: 0.9,
-    lineStyle: 'curve',
-    lineWidth: 2,
-    theme: 'default'
-  });
 
   const defaultQuery = "What is the answer to life, the universe, and everything?";
 
   const handleSearch = useCallback(async (searchQuery) => {
-    if (!searchQuery?.trim()) return;
-    
-    // 添加到搜索历史
-    addToHistory(searchQuery);
+    if (!searchQuery.trim()) return;
     
     console.log('=== 搜索开始 ===');
     console.log('查询内容:', searchQuery);
@@ -272,35 +260,6 @@ export default function Search() {
     setSelectedNodes(nodes);
   };
 
-  // 处理搜索历史
-  const addToHistory = (query) => {
-    const newHistoryItem = {
-      id: Date.now(),
-      query,
-      time: new Date().toLocaleString()
-    };
-    setSearchHistory(prev => [newHistoryItem, ...prev.slice(0, 9)]); // 保留最近10条记录
-  };
-
-  // 处理历史记录点击
-  const handleHistoryItemClick = (historyItem) => {
-    setQuery(historyItem.query);
-    handleSearch(historyItem.query);
-  };
-
-  // 清空历史记录
-  const handleClearHistory = () => {
-    setSearchHistory([]);
-  };
-
-  // 处理图谱设置变更
-  const handleSettingChange = (setting, value) => {
-    setGraphSettings(prev => ({
-      ...prev,
-      [setting]: value
-    }));
-  };
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 overflow-hidden">
       {/* 顶部导航栏 - 减小高度 */}
@@ -330,19 +289,8 @@ export default function Search() {
       {/* 主要内容区域 - 扩大高度 */}
       <main className="w-full px-4 py-2">
         <div className="grid grid-cols-12 gap-4 h-[calc(100vh-4rem)]">
-          {/* 左侧面板 */}
-          <div className="col-span-2">
-            <LeftPanel
-              searchHistory={searchHistory}
-              onHistoryItemClick={handleHistoryItemClick}
-              onClearHistory={handleClearHistory}
-              graphSettings={graphSettings}
-              onSettingChange={handleSettingChange}
-            />
-          </div>
-
           {/* 3D知识图谱显示区域 - 固定位置 */}
-          <div className="col-span-7 relative">
+          <div className="col-span-9 relative">
             <div className="bg-white rounded-xl shadow-sm border border-gray-100 h-full sticky top-0">
               {loading ? (
                 <div className="flex items-center justify-center h-full">
@@ -354,7 +302,6 @@ export default function Search() {
                   onNodeClick={handleNodeClick}
                   style={{ height: '100%' }}
                   defaultMode="3d"
-                  settings={graphSettings}
                 />
               ) : (
                 <div className="flex items-center justify-center h-full">
