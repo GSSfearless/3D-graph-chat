@@ -3,7 +3,7 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 import { CSS2DRenderer, CSS2DObject } from 'three/examples/jsm/renderers/CSS2DRenderer';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faExpand, faCompress, faSearch, faRefresh, faSave, faDownload, faTag } from '@fortawesome/free-solid-svg-icons';
+import { faExpand, faCompress, faSearch, faRefresh, faSave, faDownload } from '@fortawesome/free-solid-svg-icons';
 
 const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
   const containerRef = useRef(null);
@@ -11,8 +11,6 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [selectedNode, setSelectedNode] = useState(null);
   const [isMobile, setIsMobile] = useState(false);
-  const [showEdgeLabels, setShowEdgeLabels] = useState(false);
-  const [hoveredEdge, setHoveredEdge] = useState(null);
   
   // 主题配置
   const theme = {
@@ -29,12 +27,7 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
       color: '#94A3B8',
       highlightColor: '#64748B',
       opacity: 0.6,
-      width: 2,
-      labelBackground: 'rgba(255, 255, 255, 0.8)',
-      labelColor: '#1E293B',
-      labelPadding: '4px 8px',
-      labelBorderRadius: '4px',
-      labelFontSize: '12px'
+      width: 2
     },
     label: {
       color: '#1E293B',
@@ -306,47 +299,128 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
   };
 
   const createEdge3D = (source, target, edgeData) => {
-    const sourcePos = new THREE.Vector3(source.x, source.y, source.z);
-    const targetPos = new THREE.Vector3(target.x, target.y, target.z);
+    const group = new THREE.Group();
+
+    // 创建边的线条
+    const points = [];
+    points.push(source.position);
+    points.push(target.position);
+
+    const geometry = new THREE.BufferGeometry().setFromPoints(points);
     
-    // 创建边的几何体
-    const edgeGeometry = new THREE.BufferGeometry().setFromPoints([sourcePos, targetPos]);
-    const edgeMaterial = new THREE.LineBasicMaterial({
+    // 创建发光材质
+    const material = new THREE.LineBasicMaterial({
       color: theme.edge.color,
       transparent: true,
       opacity: theme.edge.opacity,
       linewidth: theme.edge.width
     });
-    
-    const edge = new THREE.Line(edgeGeometry, edgeMaterial);
-    edge.userData = {
-      ...edgeData,
-      sourcePos,
-      targetPos,
-      isEdge: true
-    };
 
-    // 创建边标签
+    const line = new THREE.Line(geometry, material);
+    group.add(line);
+
+    // 添加边标签
     if (edgeData.label) {
       const labelDiv = document.createElement('div');
       labelDiv.className = 'edge-label';
       labelDiv.textContent = edgeData.label;
-      labelDiv.style.backgroundColor = theme.edge.labelBackground;
-      labelDiv.style.color = theme.edge.labelColor;
-      labelDiv.style.padding = theme.edge.labelPadding;
-      labelDiv.style.borderRadius = theme.edge.labelBorderRadius;
-      labelDiv.style.fontSize = theme.edge.labelFontSize;
-      labelDiv.style.display = showEdgeLabels || hoveredEdge === edgeData.id ? 'block' : 'none';
+      labelDiv.style.color = theme.label.color;
+      labelDiv.style.fontSize = '12px';
+      labelDiv.style.fontFamily = theme.label.font;
+      labelDiv.style.background = 'transparent';
+      labelDiv.style.padding = '2px 4px';
+      labelDiv.style.whiteSpace = 'nowrap';
+      labelDiv.style.pointerEvents = 'none';
+      labelDiv.style.userSelect = 'none';
+      labelDiv.style.textShadow = '0 0 3px rgba(255,255,255,0.8)';
       
-      const labelObject = new CSS2DObject(labelDiv);
-      const midPoint = sourcePos.clone().add(targetPos).multiplyScalar(0.5);
-      labelObject.position.copy(midPoint);
+      const label = new CSS2DObject(labelDiv);
       
-      edge.userData.label = labelObject;
-      sceneRef.current.scene.add(labelObject);
+      // 计算边的方向向量
+      const direction = new THREE.Vector3()
+        .subVectors(target.position, source.position)
+        .normalize();
+      
+      // 计算边的中点
+      const midPoint = new THREE.Vector3()
+        .addVectors(source.position, target.position)
+        .multiplyScalar(0.5);
+      
+      // 使用边的方向计算更智能的偏移
+      const up = new THREE.Vector3(0, 1, 0);
+      const right = new THREE.Vector3().crossVectors(direction, up).normalize();
+      
+      // 减小偏移距离
+      const offsetDistance = 8 + Math.abs(Math.sin(Math.atan2(direction.y, direction.x)) * 4);
+      
+      // 根据边的ID计算不同的偏移方向
+      const edgeId = `${source.userData.id}-${target.userData.id}`;
+      const hashCode = [...edgeId].reduce((acc, char) => char.charCodeAt(0) + ((acc << 5) - acc), 0);
+      const offsetSign = hashCode % 2 === 0 ? 1 : -1;
+      
+      const offset = right.multiplyScalar(offsetDistance * offsetSign);
+      
+      // 应用偏移
+      midPoint.add(offset);
+      
+      // 设置标签位置
+      label.position.copy(midPoint);
+      
+      // 存储计算数据用于更新
+      label.userData = {
+        offset,
+        direction,
+        offsetDistance,
+        offsetSign
+      };
+      
+      group.add(label);
     }
 
-    return edge;
+    // 添加用户数据
+    group.userData = {
+      ...edgeData,
+      isEdge: true,
+      source: source,
+      target: target
+    };
+
+    // 更新边的位置和标签的方法
+    group.updatePosition = () => {
+      // 更新线条几何体
+      const positions = new Float32Array([
+        source.position.x, source.position.y, source.position.z,
+        target.position.x, target.position.y, target.position.z
+      ]);
+      geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+      geometry.computeBoundingSphere();
+      
+      // 更新标签位置
+      if (group.children[1]) {
+        const label = group.children[1];
+        
+        // 重新计算边的中点
+        const midPoint = new THREE.Vector3()
+          .addVectors(source.position, target.position)
+          .multiplyScalar(0.5);
+        
+        // 重新计算方向向量
+        const direction = new THREE.Vector3()
+          .subVectors(target.position, source.position)
+          .normalize();
+        
+        // 使用存储的偏移
+        const offset = label.userData.offset;
+        
+        // 应用偏移
+        midPoint.add(offset);
+        
+        // 更新标签位置
+        label.position.copy(midPoint);
+      }
+    };
+
+    return group;
   };
 
   const handleFullscreen = () => {
@@ -730,10 +804,18 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
     };
   }, [data]);
 
-  // 添加工具栏按钮
-  const renderToolbar = () => {
-    return (
-      <div className="toolbar">
+  return (
+    <div className="knowledge-graph-container" style={{ width: '100%', height: '100%', ...style }}>
+      {!isValidData && (
+        <div className="empty-state">
+          <p>暂无可视化数据</p>
+        </div>
+      )}
+      <div className="toolbar" style={{ 
+        flexDirection: isMobile ? 'column' : 'row',
+        right: isMobile ? '8px' : '16px',
+        top: isMobile ? '8px' : '16px'
+      }}>
         <div className="toolbar-group">
           <button onClick={() => sceneRef.current.controls.zoomIn()} className="toolbar-button" title="放大">
             <FontAwesomeIcon icon={faSearch} className="mr-1" />+
@@ -763,64 +845,7 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
             <FontAwesomeIcon icon={faDownload} />
           </button>
         </div>
-        <div className="toolbar-group">
-          <button
-            className={`toolbar-button ${showEdgeLabels ? 'active' : ''}`}
-            onClick={() => setShowEdgeLabels(!showEdgeLabels)}
-            title={showEdgeLabels ? "隐藏关系标签" : "显示关系标签"}
-          >
-            <FontAwesomeIcon icon={faTag} />
-          </button>
-        </div>
       </div>
-    );
-  };
-
-  // 更新鼠标移动事件处理
-  const onMouseMove = (event) => {
-    if (!sceneRef.current) return;
-
-    const { scene, camera } = sceneRef.current;
-    const rect = event.target.getBoundingClientRect();
-    const x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
-    const y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
-
-    const raycaster = new THREE.Raycaster();
-    raycaster.setFromCamera(new THREE.Vector2(x, y), camera);
-
-    const edges = scene.children.filter(obj => obj.userData && obj.userData.isEdge);
-    let hoveredEdgeId = null;
-
-    edges.forEach(edge => {
-      const distance = raycaster.ray.distanceToPoint(edge.userData.sourcePos) +
-                      raycaster.ray.distanceToPoint(edge.userData.targetPos);
-      
-      if (distance < 5) {
-        hoveredEdgeId = edge.userData.id;
-      }
-
-      if (edge.userData.label) {
-        edge.userData.label.element.style.display = 
-          showEdgeLabels || hoveredEdgeId === edge.userData.id ? 'block' : 'none';
-      }
-    });
-
-    setHoveredEdge(hoveredEdgeId);
-  };
-
-  return (
-    <div className="knowledge-graph-container" style={{ width: '100%', height: '100%', ...style }}>
-      {!isValidData && (
-        <div className="empty-state">
-          <p>暂无可视化数据</p>
-        </div>
-      )}
-      {isValidData && data.nodes.length > 0 && (
-        <div className="info-tooltip">
-          <p>提示：图谱显示了主要的实体和关系，部分复杂或模糊的关系可能未显示</p>
-        </div>
-      )}
-      {renderToolbar()}
       
       <div ref={containerRef} style={{ width: '100%', height: '100%' }} onWheel={e => e.stopPropagation()} />
       
@@ -922,35 +947,6 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
           white-space: nowrap;
           text-align: center;
           text-shadow: 0 0 3px rgba(255,255,255,0.8);
-        }
-
-        .info-tooltip {
-          position: absolute;
-          left: 16px;
-          bottom: 16px;
-          background: rgba(255, 255, 255, 0.9);
-          backdrop-filter: blur(10px);
-          padding: 8px 16px;
-          border-radius: 8px;
-          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-          z-index: 1000;
-          max-width: 300px;
-          font-size: 12px;
-          color: var(--neutral-600);
-        }
-        
-        .info-tooltip p {
-          margin: 0;
-          line-height: 1.4;
-        }
-
-        @media (max-width: 768px) {
-          .info-tooltip {
-            left: 8px;
-            bottom: 8px;
-            padding: 6px 12px;
-            font-size: 10px;
-          }
         }
       `}</style>
     </div>
