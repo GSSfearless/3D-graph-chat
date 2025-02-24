@@ -301,11 +301,34 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
   const createEdge3D = (source, target, edgeData) => {
     const group = new THREE.Group();
 
-    // 创建边的线条
-    const points = [];
-    points.push(source.position);
-    points.push(target.position);
+    // 计算球心（在原点）
+    const center = new THREE.Vector3(0, 0, 0);
+    
+    // 计算源点和目标点的中点
+    const midPoint = new THREE.Vector3().addVectors(source.position, target.position).multiplyScalar(0.5);
+    
+    // 计算从中点到球心的向量
+    const centerToMid = new THREE.Vector3().subVectors(center, midPoint);
+    
+    // 计算控制点
+    // 控制点会受到球心的影响，距离球心越远，弯曲程度越大
+    const distance = midPoint.length(); // 到球心的距离
+    const curveFactor = Math.min(distance * 0.5, 100); // 限制最大弯曲程度
+    
+    // 将控制点向球心方向移动
+    const controlPoint = midPoint.clone().add(
+      centerToMid.normalize().multiplyScalar(curveFactor)
+    );
 
+    // 创建二次贝塞尔曲线的点
+    const curve = new THREE.QuadraticBezierCurve3(
+      source.position,
+      controlPoint,
+      target.position
+    );
+
+    // 生成曲线上的点
+    const points = curve.getPoints(50); // 50个点以确保曲线平滑
     const geometry = new THREE.BufferGeometry().setFromPoints(points);
     
     // 根据边的类型设置不同的颜色
@@ -422,17 +445,32 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
       ...edgeData,
       isEdge: true,
       source: source,
-      target: target
+      target: target,
+      controlPoint: controlPoint // 存储控制点以便后续更新
     };
 
     // 更新边的位置的方法
     group.updatePosition = () => {
-      // 更新线条几何体
-      const positions = new Float32Array([
-        source.position.x, source.position.y, source.position.z,
-        target.position.x, target.position.y, target.position.z
-      ]);
-      geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+      // 更新中点和控制点
+      const newMidPoint = new THREE.Vector3().addVectors(source.position, target.position).multiplyScalar(0.5);
+      const newCenterToMid = new THREE.Vector3().subVectors(center, newMidPoint);
+      const newDistance = newMidPoint.length();
+      const newCurveFactor = Math.min(newDistance * 0.5, 100);
+      
+      const newControlPoint = newMidPoint.clone().add(
+        newCenterToMid.normalize().multiplyScalar(newCurveFactor)
+      );
+
+      // 更新曲线
+      const newCurve = new THREE.QuadraticBezierCurve3(
+        source.position,
+        newControlPoint,
+        target.position
+      );
+
+      // 更新几何体
+      const newPoints = newCurve.getPoints(50);
+      geometry.setFromPoints(newPoints);
       geometry.computeBoundingSphere();
     };
 
