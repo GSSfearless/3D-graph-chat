@@ -308,9 +308,28 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
 
     const geometry = new THREE.BufferGeometry().setFromPoints(points);
     
+    // 根据边的类型设置不同的颜色
+    let edgeColor;
+    switch(edgeData.type) {
+      case 'contains':
+        edgeColor = '#FF6B6B'; // 红色
+        break;
+      case 'related':
+        edgeColor = '#4ECDC4'; // 青色
+        break;
+      case 'depends':
+        edgeColor = '#45B7D1'; // 蓝色
+        break;
+      case 'implements':
+        edgeColor = '#96CEB4'; // 绿色
+        break;
+      default:
+        edgeColor = theme.edge.color; // 默认颜色
+    }
+    
     // 创建发光材质
     const material = new THREE.LineBasicMaterial({
-      color: theme.edge.color,
+      color: edgeColor,
       transparent: true,
       opacity: theme.edge.opacity,
       linewidth: theme.edge.width
@@ -318,64 +337,6 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
 
     const line = new THREE.Line(geometry, material);
     group.add(line);
-
-    // 添加边标签
-    if (edgeData.label) {
-      const labelDiv = document.createElement('div');
-      labelDiv.className = 'edge-label';
-      labelDiv.textContent = edgeData.label;
-      labelDiv.style.color = theme.label.color;
-      labelDiv.style.fontSize = '12px';
-      labelDiv.style.fontFamily = theme.label.font;
-      labelDiv.style.background = 'transparent';
-      labelDiv.style.padding = '2px 4px';
-      labelDiv.style.whiteSpace = 'nowrap';
-      labelDiv.style.pointerEvents = 'none';
-      labelDiv.style.userSelect = 'none';
-      labelDiv.style.textShadow = '0 0 3px rgba(255,255,255,0.8)';
-      
-      const label = new CSS2DObject(labelDiv);
-      
-      // 计算边的方向向量
-      const direction = new THREE.Vector3()
-        .subVectors(target.position, source.position)
-        .normalize();
-      
-      // 计算边的中点
-      const midPoint = new THREE.Vector3()
-        .addVectors(source.position, target.position)
-        .multiplyScalar(0.5);
-      
-      // 使用边的方向计算更智能的偏移
-      const up = new THREE.Vector3(0, 1, 0);
-      const right = new THREE.Vector3().crossVectors(direction, up).normalize();
-      
-      // 减小偏移距离
-      const offsetDistance = 8 + Math.abs(Math.sin(Math.atan2(direction.y, direction.x)) * 4);
-      
-      // 根据边的ID计算不同的偏移方向
-      const edgeId = `${source.userData.id}-${target.userData.id}`;
-      const hashCode = [...edgeId].reduce((acc, char) => char.charCodeAt(0) + ((acc << 5) - acc), 0);
-      const offsetSign = hashCode % 2 === 0 ? 1 : -1;
-      
-      const offset = right.multiplyScalar(offsetDistance * offsetSign);
-      
-      // 应用偏移
-      midPoint.add(offset);
-      
-      // 设置标签位置
-      label.position.copy(midPoint);
-      
-      // 存储计算数据用于更新
-      label.userData = {
-        offset,
-        direction,
-        offsetDistance,
-        offsetSign
-      };
-      
-      group.add(label);
-    }
 
     // 添加用户数据
     group.userData = {
@@ -385,7 +346,7 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
       target: target
     };
 
-    // 更新边的位置和标签的方法
+    // 更新边的位置的方法
     group.updatePosition = () => {
       // 更新线条几何体
       const positions = new Float32Array([
@@ -394,30 +355,6 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
       ]);
       geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
       geometry.computeBoundingSphere();
-      
-      // 更新标签位置
-      if (group.children[1]) {
-        const label = group.children[1];
-        
-        // 重新计算边的中点
-        const midPoint = new THREE.Vector3()
-          .addVectors(source.position, target.position)
-          .multiplyScalar(0.5);
-        
-        // 重新计算方向向量
-        const direction = new THREE.Vector3()
-          .subVectors(target.position, source.position)
-          .normalize();
-        
-        // 使用存储的偏移
-        const offset = label.userData.offset;
-        
-        // 应用偏移
-        midPoint.add(offset);
-        
-        // 更新标签位置
-        label.position.copy(midPoint);
-      }
     };
 
     return group;
