@@ -4,12 +4,13 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 import { CSS2DRenderer, CSS2DObject } from 'three/examples/jsm/renderers/CSS2DRenderer';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faExpand, faCompress, faSearch, faRefresh, faSave, faDownload } from '@fortawesome/free-solid-svg-icons';
+import SelectedNodes from './SelectedNodes';
 
-const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
+const KnowledgeGraph = ({ data, onNodeClick, onSearch, style = {} }) => {
   const containerRef = useRef(null);
   const sceneRef = useRef(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
-  const [selectedNode, setSelectedNode] = useState(null);
+  const [selectedNodes, setSelectedNodes] = useState([]);
   const [isMobile, setIsMobile] = useState(false);
   
   // 主题配置
@@ -496,13 +497,39 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
   };
 
   const handleNodeClick = (node) => {
-    if (selectedNode) {
-      selectedNode.material.color.setHex(parseInt(theme.node.color.replace('#', '0x')));
+    const nodeData = node.userData;
+    const isSelected = selectedNodes.some(n => n.id === nodeData.id);
+    
+    if (isSelected) {
+      // 如果已经选中，则取消选中
+      setSelectedNodes(selectedNodes.filter(n => n.id !== nodeData.id));
+      node.material.color.setHex(parseInt(theme.node.color.replace('#', '0x')));
+    } else {
+      // 如果未选中，则添加到选中列表
+      setSelectedNodes([...selectedNodes, nodeData]);
+      node.material.color.setHex(parseInt(theme.node.highlightColor.replace('#', '0x')));
     }
     
-    node.material.color.setHex(parseInt(theme.node.highlightColor.replace('#', '0x')));
-    setSelectedNode(node);
-    onNodeClick && onNodeClick(node.userData);
+    onNodeClick && onNodeClick(nodeData);
+  };
+
+  const handleRemoveNode = (node) => {
+    setSelectedNodes(selectedNodes.filter(n => n.id !== node.id));
+    // 找到对应的3D节点并恢复颜色
+    const scene = sceneRef.current?.scene;
+    if (scene) {
+      scene.traverse((object) => {
+        if (object.userData && object.userData.id === node.id) {
+          object.material.color.setHex(parseInt(theme.node.color.replace('#', '0x')));
+        }
+      });
+    }
+  };
+
+  const handleSearch = async (nodes) => {
+    if (onSearch) {
+      await onSearch(nodes);
+    }
   };
 
   const handleResetView = () => {
@@ -909,6 +936,14 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
         </div>
       </div>
       
+      <div className="selected-nodes-wrapper">
+        <SelectedNodes 
+          nodes={selectedNodes}
+          onRemoveNode={handleRemoveNode}
+          onSearch={handleSearch}
+        />
+      </div>
+      
       <div ref={containerRef} style={{ width: '100%', height: '100%' }} onWheel={e => e.stopPropagation()} />
       
       <style jsx>{`
@@ -1009,6 +1044,20 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
           white-space: nowrap;
           text-align: center;
           text-shadow: 0 0 3px rgba(255,255,255,0.8);
+        }
+
+        .selected-nodes-wrapper {
+          position: absolute;
+          top: 16px;
+          right: 16px;
+          width: 300px;
+          z-index: 100;
+        }
+        
+        @media (max-width: 768px) {
+          .selected-nodes-wrapper {
+            width: calc(100% - 32px);
+          }
         }
       `}</style>
     </div>
