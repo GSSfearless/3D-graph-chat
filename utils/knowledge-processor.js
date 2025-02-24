@@ -52,11 +52,18 @@ export class KnowledgeGraphProcessor {
       
       // 2. 关系抽取
       const relations = await extractRelations(text);
-      console.log('提取的关系数据:', relations);
       if (!Array.isArray(relations)) {
         console.warn('Invalid relations result:', relations);
         return { nodes: [], edges: [] };
       }
+
+      // 打印原始数据以便调试
+      console.log('原始数据:', {
+        实体数量: entities.length,
+        关系数量: relations.length,
+        实体示例: entities.slice(0, 2),
+        关系示例: relations.slice(0, 2)
+      });
       
       // 3. 计算实体向量嵌入
       const embeddings = await computeEmbeddings(entities);
@@ -64,14 +71,26 @@ export class KnowledgeGraphProcessor {
       // 4. 构建节点和边的映射
       const nodeMap = new Map();
       entities.forEach(entity => {
-        const nodeId = normalizeId(entity.text);
+        if (!entity || typeof entity !== 'object') {
+          console.warn('无效的实体数据:', entity);
+          return;
+        }
+
+        const text = entity.text || entity.label;
+        if (!text) {
+          console.warn('实体缺少文本或标签:', entity);
+          return;
+        }
+
+        const nodeId = normalizeId(text);
         const nodeData = { ...entity, id: nodeId };
         nodeMap.set(nodeId, nodeData);
-        // 同时用文本作为键存储
-        nodeMap.set(entity.text, nodeData);
+        nodeMap.set(text, nodeData);
+        
         console.log('创建节点映射:', {
-          文本: entity.text,
-          ID: nodeId
+          文本: text,
+          规范化ID: nodeId,
+          原始数据: JSON.stringify(entity)
         });
       });
 
@@ -81,37 +100,60 @@ export class KnowledgeGraphProcessor {
         console.warn('No valid nodes generated');
         return { nodes: [], edges: [] };
       }
+
+      // 记录所有可用的节点ID
+      const availableNodeIds = new Set(nodes.map(node => node.id));
+      console.log('可用的节点ID:', Array.from(availableNodeIds));
       
       // 6. 构建边（只保留存在对应节点的边）
       const validRelations = relations.filter(relation => {
-        const sourceId = normalizeId(relation.source);
-        const targetId = normalizeId(relation.target);
-        
-        const hasSource = nodeMap.has(sourceId) || nodeMap.has(relation.source);
-        const hasTarget = nodeMap.has(targetId) || nodeMap.has(relation.target);
-        
-        if (!hasSource) {
-          console.warn('找不到源节点:', {
-            原始ID: relation.source,
-            规范化ID: sourceId,
-            可用节点: Array.from(nodeMap.keys())
-          });
+        if (!relation || typeof relation !== 'object') {
+          console.warn('无效的关系数据:', relation);
+          return false;
         }
-        if (!hasTarget) {
-          console.warn('找不到目标节点:', {
-            原始ID: relation.target,
-            规范化ID: targetId,
-            可用节点: Array.from(nodeMap.keys())
+
+        const source = relation.source?.text || relation.source;
+        const target = relation.target?.text || relation.target;
+
+        if (!source || !target) {
+          console.warn('关系缺少源节点或目标节点:', relation);
+          return false;
+        }
+
+        const sourceId = normalizeId(source);
+        const targetId = normalizeId(target);
+        
+        const hasSource = availableNodeIds.has(sourceId);
+        const hasTarget = availableNodeIds.has(targetId);
+        
+        if (!hasSource || !hasTarget) {
+          console.warn('节点匹配失败:', {
+            源节点: {
+              原始值: source,
+              规范化ID: sourceId,
+              是否存在: hasSource
+            },
+            目标节点: {
+              原始值: target,
+              规范化ID: targetId,
+              是否存在: hasTarget
+            }
           });
         }
         
         return hasSource && hasTarget;
       });
 
-      console.log('有效的关系数据:', validRelations);
+      console.log('有效的关系数据:', {
+        总数: validRelations.length,
+        示例: validRelations.slice(0, 2)
+      });
       
       const edges = this.buildEdges(validRelations);
-      console.log('构建的边:', edges);
+      console.log('构建的边:', {
+        总数: edges.length,
+        示例: edges.slice(0, 2)
+      });
       
       // 7. 应用布局
       const graphData = this.applyLayout({
@@ -128,8 +170,11 @@ export class KnowledgeGraphProcessor {
 
       console.log('最终图数据:', {
         节点数量: graphData.nodes.length,
-        边数量: graphData.edges.length
+        边数量: graphData.edges.length,
+        节点示例: graphData.nodes.slice(0, 2),
+        边示例: graphData.edges.slice(0, 2)
       });
+      
       return graphData;
     } catch (error) {
       console.error('Error processing text:', error);
@@ -138,45 +183,71 @@ export class KnowledgeGraphProcessor {
   }
 
   buildNodes(entities, embeddings) {
-    return entities.map((entity, index) => {
-      // 确保 entity.text 存在，如果不存在则使用一个默认值
-      const label = entity.text || entity.label || `Entity ${index + 1}`;
-      const nodeId = normalizeId(label);
-      
-      const node = {
-        id: nodeId,
-        label: label,
-        text: entity.text || label,
-        type: this.getNodeType(entity),
-        size: 1, // 使用默认大小，实际大小将由KnowledgeGraph组件计算
-        color: this.colorScheme[this.getNodeType(entity)],
-        embedding: embeddings[index],
-        properties: entity.properties || {},
-        cluster: entity.cluster || 0,
-        x: 0,
-        y: 0
-      };
+    return entities
+      .filter(entity => {
+        if (!entity || typeof entity !== 'object') {
+          console.warn('跳过无效实体:', entity);
+          return false;
+        }
+        return true;
+      })
+      .map((entity, index) => {
+        const text = entity.text || entity.label;
+        if (!text) {
+          console.warn('实体缺少文本或标签:', entity);
+          return null;
+        }
 
-      console.log('构建节点:', {
-        标签: label,
-        ID: nodeId
-      });
+        const nodeId = normalizeId(text);
+        const node = {
+          id: nodeId,
+          label: text,
+          text: text,
+          type: this.getNodeType(entity),
+          size: 1,
+          color: this.colorScheme[this.getNodeType(entity)],
+          embedding: embeddings[index],
+          properties: entity.properties || {},
+          cluster: entity.cluster || 0,
+          x: 0,
+          y: 0
+        };
 
-      return node;
-    }).filter(node => 
-      node && 
-      typeof node.id === 'string' && 
-      typeof node.label === 'string' && 
-      node.label.length > 0
-    );
+        console.log('构建节点:', {
+          ID: nodeId,
+          标签: text,
+          类型: node.type
+        });
+
+        return node;
+      })
+      .filter(node => node !== null);
   }
 
   buildEdges(relations) {
     return relations
-      .filter(relation => relation && typeof relation.source === 'string' && typeof relation.target === 'string')
+      .filter(relation => {
+        if (!relation || typeof relation !== 'object') {
+          console.warn('跳过无效关系:', relation);
+          return false;
+        }
+        
+        const source = relation.source?.text || relation.source;
+        const target = relation.target?.text || relation.target;
+        
+        if (!source || !target) {
+          console.warn('关系缺少源节点或目标节点:', relation);
+          return false;
+        }
+        
+        return true;
+      })
       .map((relation, index) => {
-        const sourceId = normalizeId(relation.source);
-        const targetId = normalizeId(relation.target);
+        const source = relation.source?.text || relation.source;
+        const target = relation.target?.text || relation.target;
+        
+        const sourceId = normalizeId(source);
+        const targetId = normalizeId(target);
         
         const edge = {
           id: relation.id || `edge-${index}`,
@@ -190,16 +261,20 @@ export class KnowledgeGraphProcessor {
 
         console.log('构建边:', {
           ID: edge.id,
-          源节点: sourceId,
-          目标节点: targetId
+          源节点: {
+            原始值: source,
+            规范化ID: sourceId
+          },
+          目标节点: {
+            原始值: target,
+            规范化ID: targetId
+          }
         });
 
         return edge;
       })
       .filter(edge => 
         edge && 
-        typeof edge.source === 'string' && 
-        typeof edge.target === 'string' &&
         edge.source !== edge.target // 过滤掉自环
       );
   }
