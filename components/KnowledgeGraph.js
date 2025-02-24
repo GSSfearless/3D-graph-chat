@@ -909,6 +909,14 @@ const KnowledgeGraph = ({ data, onNodeClick, onSearch, style = {} }) => {
         </div>
       </div>
       
+      <div className="selected-nodes-wrapper">
+        <SelectedNodes 
+          nodes={selectedNodes}
+          onRemoveNode={handleRemoveNode}
+          onSearch={handleSearch}
+        />
+      </div>
+      
       <div ref={containerRef} style={{ width: '100%', height: '100%' }} onWheel={e => e.stopPropagation()} />
       
       <style jsx>{`
@@ -1009,6 +1017,20 @@ const KnowledgeGraph = ({ data, onNodeClick, onSearch, style = {} }) => {
           white-space: nowrap;
           text-align: center;
           text-shadow: 0 0 3px rgba(255,255,255,0.8);
+        }
+
+        .selected-nodes-wrapper {
+          position: absolute;
+          top: 16px;
+          right: 16px;
+          width: 300px;
+          z-index: 100;
+        }
+        
+        @media (max-width: 768px) {
+          .selected-nodes-wrapper {
+            width: calc(100% - 32px);
+          }
         }
       `}</style>
     </div>
