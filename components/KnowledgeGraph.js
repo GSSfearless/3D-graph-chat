@@ -311,18 +311,97 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
     // 根据边的类型设置不同的颜色
     let edgeColor;
     switch(edgeData.type) {
+      // 层次关系 - 暖色调
+      case 'is-a':
+        edgeColor = '#FF7676'; // 鲜红色
+        break;
       case 'contains':
-        edgeColor = '#FF6B6B'; // 红色
+        edgeColor = '#FF9F45'; // 橙色
         break;
-      case 'related':
-        edgeColor = '#4ECDC4'; // 青色
+      case 'belongs-to':
+        edgeColor = '#FFC436'; // 金色
         break;
-      case 'depends':
+
+      // 依赖关系 - 冷色调
+      case 'requires':
         edgeColor = '#45B7D1'; // 蓝色
         break;
-      case 'implements':
-        edgeColor = '#96CEB4'; // 绿色
+      case 'depends':
+        edgeColor = '#4477CE'; // 深蓝色
         break;
+      case 'implements':
+        edgeColor = '#3876BF'; // 靛蓝色
+        break;
+
+      // 动作关系 - 绿色系
+      case 'performs':
+        edgeColor = '#96CEB4'; // 薄荷绿
+        break;
+      case 'uses':
+        edgeColor = '#7AB800'; // 草绿色
+        break;
+      case 'provides':
+        edgeColor = '#4CAF50'; // 翠绿色
+        break;
+      case 'obtains':
+        edgeColor = '#88B04B'; // 橄榄绿
+        break;
+
+      // 时序关系 - 紫色系
+      case 'before':
+        edgeColor = '#9B6B9E'; // 浅紫色
+        break;
+      case 'after':
+        edgeColor = '#845EC2'; // 深紫色
+        break;
+      case 'during':
+        edgeColor = '#BE93D4'; // 淡紫色
+        break;
+      case 'sequence':
+        edgeColor = '#A084E8'; // 亮紫色
+        break;
+
+      // 关联关系 - 靛蓝色系（与节点颜色一致）
+      case 'context':
+        edgeColor = '#6366F1'; // 主色调
+        break;
+      case 'similar':
+        edgeColor = '#818CF8'; // 浅靛蓝
+        break;
+      case 'related':
+        edgeColor = '#4F46E5'; // 深靛蓝
+        break;
+      case 'and':
+        edgeColor = '#5B5EF4'; // 中靛蓝
+        break;
+
+      // 方向关系 - 粉色系
+      case 'to':
+        edgeColor = '#FF8FB1'; // 粉红色
+        break;
+      case 'from':
+        edgeColor = '#FC7FB6'; // 深粉色
+        break;
+      case 'towards':
+        edgeColor = '#FDA4BA'; // 浅粉色
+        break;
+
+      // 逻辑关系 - 灰色系
+      case 'if-then':
+        edgeColor = '#7D7C7C'; // 深灰色
+        break;
+      case 'therefore':
+        edgeColor = '#9DB2BF'; // 蓝灰色
+        break;
+
+      // 修饰关系 - 棕色系
+      case 'of':
+        edgeColor = '#C4A484'; // 棕色
+        break;
+      case 'degree':
+        edgeColor = '#B4846C'; // 深棕色
+        break;
+
       default:
         edgeColor = theme.edge.color; // 默认颜色
     }
