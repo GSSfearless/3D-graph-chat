@@ -42,7 +42,7 @@ export const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
       className="fixed inset-0 z-50 overflow-y-auto"
     >
       <div className="flex min-h-screen items-center justify-center">
-        <Dialog.Overlay className="fixed inset-0 bg-black/30" />
+        <div className="fixed inset-0 bg-black/30" aria-hidden="true" />
 
         <div className="relative bg-white rounded-lg w-full max-w-md p-6 shadow-xl">
           <button
