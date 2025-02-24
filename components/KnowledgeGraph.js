@@ -319,64 +319,6 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
     const line = new THREE.Line(geometry, material);
     group.add(line);
 
-    // 添加边标签
-    if (edgeData.label) {
-      const labelDiv = document.createElement('div');
-      labelDiv.className = 'edge-label';
-      labelDiv.textContent = edgeData.label;
-      labelDiv.style.color = theme.label.color;
-      labelDiv.style.fontSize = '12px';
-      labelDiv.style.fontFamily = theme.label.font;
-      labelDiv.style.background = 'transparent';
-      labelDiv.style.padding = '2px 4px';
-      labelDiv.style.whiteSpace = 'nowrap';
-      labelDiv.style.pointerEvents = 'none';
-      labelDiv.style.userSelect = 'none';
-      labelDiv.style.textShadow = '0 0 3px rgba(255,255,255,0.8)';
-      
-      const label = new CSS2DObject(labelDiv);
-      
-      // 计算边的方向向量
-      const direction = new THREE.Vector3()
-        .subVectors(target.position, source.position)
-        .normalize();
-      
-      // 计算边的中点
-      const midPoint = new THREE.Vector3()
-        .addVectors(source.position, target.position)
-        .multiplyScalar(0.5);
-      
-      // 使用边的方向计算更智能的偏移
-      const up = new THREE.Vector3(0, 1, 0);
-      const right = new THREE.Vector3().crossVectors(direction, up).normalize();
-      
-      // 减小偏移距离
-      const offsetDistance = 8 + Math.abs(Math.sin(Math.atan2(direction.y, direction.x)) * 4);
-      
-      // 根据边的ID计算不同的偏移方向
-      const edgeId = `${source.userData.id}-${target.userData.id}`;
-      const hashCode = [...edgeId].reduce((acc, char) => char.charCodeAt(0) + ((acc << 5) - acc), 0);
-      const offsetSign = hashCode % 2 === 0 ? 1 : -1;
-      
-      const offset = right.multiplyScalar(offsetDistance * offsetSign);
-      
-      // 应用偏移
-      midPoint.add(offset);
-      
-      // 设置标签位置
-      label.position.copy(midPoint);
-      
-      // 存储计算数据用于更新
-      label.userData = {
-        offset,
-        direction,
-        offsetDistance,
-        offsetSign
-      };
-      
-      group.add(label);
-    }
-
     // 添加用户数据
     group.userData = {
       ...edgeData,
@@ -385,7 +327,7 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
       target: target
     };
 
-    // 更新边的位置和标签的方法
+    // 更新边的位置的方法
     group.updatePosition = () => {
       // 更新线条几何体
       const positions = new Float32Array([
@@ -394,30 +336,6 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
       ]);
       geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
       geometry.computeBoundingSphere();
-      
-      // 更新标签位置
-      if (group.children[1]) {
-        const label = group.children[1];
-        
-        // 重新计算边的中点
-        const midPoint = new THREE.Vector3()
-          .addVectors(source.position, target.position)
-          .multiplyScalar(0.5);
-        
-        // 重新计算方向向量
-        const direction = new THREE.Vector3()
-          .subVectors(target.position, source.position)
-          .normalize();
-        
-        // 使用存储的偏移
-        const offset = label.userData.offset;
-        
-        // 应用偏移
-        midPoint.add(offset);
-        
-        // 更新标签位置
-        label.position.copy(midPoint);
-      }
     };
 
     return group;
@@ -811,6 +729,11 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
           <p>暂无可视化数据</p>
         </div>
       )}
+      {isValidData && data.nodes.length > 0 && (
+        <div className="info-tooltip">
+          <p>提示：图谱显示了主要的实体和关系，部分复杂或模糊的关系可能未显示</p>
+        </div>
+      )}
       <div className="toolbar" style={{ 
         flexDirection: isMobile ? 'column' : 'row',
         right: isMobile ? '8px' : '16px',
@@ -947,6 +870,35 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
           white-space: nowrap;
           text-align: center;
           text-shadow: 0 0 3px rgba(255,255,255,0.8);
+        }
+
+        .info-tooltip {
+          position: absolute;
+          left: 16px;
+          bottom: 16px;
+          background: rgba(255, 255, 255, 0.9);
+          backdrop-filter: blur(10px);
+          padding: 8px 16px;
+          border-radius: 8px;
+          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+          z-index: 1000;
+          max-width: 300px;
+          font-size: 12px;
+          color: var(--neutral-600);
+        }
+        
+        .info-tooltip p {
+          margin: 0;
+          line-height: 1.4;
+        }
+
+        @media (max-width: 768px) {
+          .info-tooltip {
+            left: 8px;
+            bottom: 8px;
+            padding: 6px 12px;
+            font-size: 10px;
+          }
         }
       `}</style>
     </div>
