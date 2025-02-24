@@ -63,6 +63,16 @@ export const extractEntities = async (text) => {
       return [];
     }
 
+    // 规范化ID的辅助函数
+    const normalizeId = (text) => {
+      if (!text) return '';
+      const cleanText = text.replace(/[*]/g, '').trim();
+      // 移除已存在的 'node-' 前缀，避免重复添加
+      const baseId = cleanText.startsWith('node-') ? cleanText.slice(5) : cleanText;
+      // 统一处理特殊字符
+      return `node-${baseId.replace(/[^a-zA-Z0-9]/g, '_')}`;
+    };
+
     const sentences = text.split(/[。！？.!?]/);
     const entities = new Map(); // 使用 Map 来去重
     let entityId = 0;
@@ -74,8 +84,9 @@ export const extractEntities = async (text) => {
       matches.forEach(match => {
         const cleanMatch = match.replace(/[*]/g, '').trim();
         if (isValidEntity(cleanMatch) && !entities.has(cleanMatch)) {
+          const nodeId = normalizeId(cleanMatch);
           const entity = {
-            id: `node-${cleanMatch.replace(/[^a-zA-Z0-9]/g, '_')}`,
+            id: nodeId,
             text: cleanMatch,
             label: cleanMatch,
             isEvent: hasEventIndicators(cleanMatch),
@@ -83,13 +94,30 @@ export const extractEntities = async (text) => {
             importance: calculateImportance(cleanMatch, text),
             properties: {}
           };
+
+          console.log('创建实体:', {
+            ID: nodeId,
+            文本: cleanMatch,
+            类型: entity.isEvent ? 'event' : (entity.isAttribute ? 'attribute' : 'entity')
+          });
+
           entities.set(cleanMatch, entity);
+          // 同时用规范化ID作为键存储，以便后续查找
+          entities.set(nodeId, entity);
         }
       });
     });
 
     const result = Array.from(entities.values());
-    return result;
+    // 去重，确保每个ID只出现一次
+    const seen = new Set();
+    const uniqueResult = result.filter(entity => {
+      if (seen.has(entity.id)) return false;
+      seen.add(entity.id);
+      return true;
+    });
+
+    return uniqueResult;
   } catch (error) {
     console.error('Error in extractEntities:', error);
     return [];

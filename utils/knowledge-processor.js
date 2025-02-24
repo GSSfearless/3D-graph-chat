@@ -112,16 +112,14 @@ export class KnowledgeGraphProcessor {
           return false;
         }
 
-        const source = relation.source?.text || relation.source;
-        const target = relation.target?.text || relation.target;
-
-        if (!source || !target) {
-          console.warn('关系缺少源节点或目标节点:', relation);
+        // 检查源节点和目标节点的完整性
+        if (!relation.source?.id || !relation.target?.id) {
+          console.warn('关系缺少源节点或目标节点ID:', relation);
           return false;
         }
 
-        const sourceId = normalizeId(source);
-        const targetId = normalizeId(target);
+        const sourceId = relation.source.id;
+        const targetId = relation.target.id;
         
         const hasSource = availableNodeIds.has(sourceId);
         const hasTarget = availableNodeIds.has(targetId);
@@ -129,16 +127,19 @@ export class KnowledgeGraphProcessor {
         if (!hasSource || !hasTarget) {
           console.warn('节点匹配失败:', {
             源节点: {
-              原始值: source,
-              规范化ID: sourceId,
+              ID: sourceId,
+              文本: relation.source.text,
               是否存在: hasSource
             },
             目标节点: {
-              原始值: target,
-              规范化ID: targetId,
+              ID: targetId,
+              文本: relation.target.text,
               是否存在: hasTarget
             }
           });
+
+          // 输出可用的节点ID列表以便调试
+          console.log('当前可用的节点ID:', Array.from(availableNodeIds));
         }
         
         return hasSource && hasTarget;
