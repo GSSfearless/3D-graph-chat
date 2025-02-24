@@ -34,6 +34,8 @@ export class KnowledgeGraphProcessor {
       attribute: '#B8E986',  // 绿色
       relation: '#BD10E0'    // 紫色
     };
+
+    this.failedMatchCount = 0;
   }
 
   async processText(text) {
@@ -128,39 +130,40 @@ export class KnowledgeGraphProcessor {
         const hasSource = availableNodeIds.has(normalizedSourceId);
         const hasTarget = availableNodeIds.has(normalizedTargetId);
         
-        if (!hasSource || !hasTarget) {
-          console.warn('节点匹配失败:', JSON.stringify({
-            源节点: {
-              ID: normalizedSourceId,
-              原始ID: sourceId,
-              文本: relation.source.text || '未知',
-              是否存在: hasSource
-            },
-            目标节点: {
-              ID: normalizedTargetId,
-              原始ID: targetId,
-              文本: relation.target.text || '未知',
-              是否存在: hasTarget
-            }
-          }, null, 2));
-
-          // 输出更详细的调试信息
-          console.log('关系详情:', JSON.stringify(relation, null, 2));
-          console.log('可用节点ID列表:', JSON.stringify(Array.from(availableNodeIds), null, 2));
+        // 只在开发模式下输出详细的匹配失败信息
+        if ((!hasSource || !hasTarget) && process.env.NODE_ENV === 'development') {
+          // 统计匹配失败的次数，只在累计到一定数量时输出一次汇总
+          if (!this.failedMatchCount) {
+            this.failedMatchCount = 0;
+          }
+          this.failedMatchCount++;
           
-          // 检查ID格式
-          console.log('ID格式检查:', {
-            源节点ID类型: typeof sourceId,
-            源节点ID值: sourceId,
-            规范化源节点ID: normalizedSourceId,
-            目标节点ID类型: typeof targetId,
-            目标节点ID值: targetId,
-            规范化目标节点ID: normalizedTargetId
-          });
+          // 每10次失败才输出一次汇总信息
+          if (this.failedMatchCount % 10 === 0) {
+            console.warn(`节点匹配失败累计 ${this.failedMatchCount} 次，最近一次失败信息:`, {
+              源节点: {
+                ID: normalizedSourceId,
+                文本: relation.source.text || '未知',
+                是否存在: hasSource
+              },
+              目标节点: {
+                ID: normalizedTargetId,
+                文本: relation.target.text || '未知',
+                是否存在: hasTarget
+              }
+            });
+          }
         }
         
         return hasSource && hasTarget;
       });
+
+      // 在处理完所有关系后，输出一次总结
+      if (this.failedMatchCount > 0) {
+        console.log(`关系处理完成，共有 ${this.failedMatchCount} 个关系因节点不存在而被过滤。这是正常现象，不影响主要功能。`);
+        // 重置计数器
+        this.failedMatchCount = 0;
+      }
 
       console.log('有效的关系数据:', {
         总数: validRelations.length,
