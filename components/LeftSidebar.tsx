@@ -7,6 +7,8 @@ import { Clock, Star, ChevronDown, ChevronUp, X, Trash2 } from 'lucide-react';
 import { Button } from './ui/button';
 import { HistoryManager, SearchHistoryItem, FavoriteItem } from '../utils/history-manager';
 import { useRouter } from 'next/router';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faDiscord } from '@fortawesome/free-brands-svg-icons';
 
 const LeftSidebar = () => {
   const router = useRouter();
@@ -72,18 +74,6 @@ const LeftSidebar = () => {
       <div className="p-4 border-b border-gray-200">
         <a href="/" className="flex items-center space-x-2">
           <span className="text-xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 text-transparent bg-clip-text">Think Graph</span>
-        </a>
-      </div>
-
-      {/* Discord链接 */}
-      <div className="px-4 py-2 border-b border-gray-200">
-        <a href="https://discord.gg/your-discord" 
-           target="_blank" 
-           rel="noopener noreferrer"
-           className="flex items-center space-x-2 text-gray-500 hover:text-[#5865F2] transition-colors duration-200"
-        >
-          <Clock className="w-4 h-4" />
-          <span>加入社区</span>
         </a>
       </div>
 
@@ -212,6 +202,19 @@ const LeftSidebar = () => {
             </ScrollArea.Root>
           </Collapsible.Content>
         </Collapsible.Root>
+      </div>
+
+      {/* Discord链接 - 移到底部 */}
+      <div className="p-4 border-t border-gray-200">
+        <a
+          href="https://discord.gg/your-discord"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-center justify-center space-x-2 text-gray-500 hover:text-[#5865F2] transition-colors duration-200 p-2 rounded-lg hover:bg-gray-50"
+        >
+          <FontAwesomeIcon icon={faDiscord} className="w-5 h-5" />
+          <span>加入 Discord 社区</span>
+        </a>
       </div>
     </div>
   );
