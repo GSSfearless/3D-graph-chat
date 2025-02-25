@@ -11,6 +11,7 @@ import remarkGfm from 'remark-gfm';
 import { KnowledgeGraphProcessor } from '../utils/knowledge-processor';
 import LeftSidebar from '../components/LeftSidebar';
 import { HistoryManager } from '../utils/history-manager';
+import { useAuth } from '../contexts/AuthContext';
 
 const KnowledgeGraph = dynamic(() => import('../components/KnowledgeGraph'), {
   ssr: false,
@@ -31,21 +32,26 @@ export default function Search() {
   const [reasoningProcess, setReasoningProcess] = useState('');
   const searchInputRef = useRef(null);
   const knowledgeProcessor = useRef(new KnowledgeGraphProcessor());
+  const { user } = useAuth();
 
   const defaultQuery = "What is the answer to life, the universe, and everything?";
 
   useEffect(() => {
-    if (initialQuery) {
+    if (initialQuery && user) {
+      console.log('添加搜索历史:', initialQuery, '用户ID:', user.id);
       // 添加到搜索历史
       HistoryManager.addSearchHistory(initialQuery.toString());
     }
-  }, [initialQuery]);
+  }, [initialQuery, user]);
 
   const handleSearch = useCallback(async (searchQuery) => {
     if (!searchQuery.trim()) return;
     
-    // 添加到搜索历史
-    HistoryManager.addSearchHistory(searchQuery);
+    if (user) {
+      console.log('添加搜索历史:', searchQuery, '用户ID:', user.id);
+      // 添加到搜索历史
+      await HistoryManager.addSearchHistory(searchQuery);
+    }
     
     console.log('=== 搜索开始 ===');
     console.log('查询内容:', searchQuery);
@@ -220,7 +226,7 @@ export default function Search() {
     } finally {
       setLoading(false);
     }
-  }, [useWebSearch, useDeepThinking]);
+  }, [useWebSearch, useDeepThinking, user]);
 
   useEffect(() => {
     if (initialQuery && initialLoad) {

@@ -24,11 +24,13 @@ const LeftSidebar = () => {
   useEffect(() => {
     const loadData = async () => {
       if (user) {
+        HistoryManager.setCurrentUserId(user.id);
         const history = await HistoryManager.getSearchHistory();
         setSearchHistory(history);
         const favs = await HistoryManager.getFavorites();
         setFavorites(favs);
       } else {
+        HistoryManager.setCurrentUserId(null);
         setSearchHistory([]);
         setFavorites([]);
       }
