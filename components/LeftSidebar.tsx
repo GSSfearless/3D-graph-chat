@@ -3,59 +3,60 @@
 import React, { useState, useEffect } from 'react';
 import * as ScrollArea from '@radix-ui/react-scroll-area';
 import * as Collapsible from '@radix-ui/react-collapsible';
-import { Clock, Star, ChevronDown, ChevronUp, X, Trash2 } from 'lucide-react';
+import { Clock, Star, ChevronDown, ChevronUp, X, Trash2, LogOut, User } from 'lucide-react';
 import { Button } from './ui/button';
 import { HistoryManager, SearchHistoryItem, FavoriteItem } from '../utils/history-manager';
 import { useRouter } from 'next/router';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faDiscord } from '@fortawesome/free-brands-svg-icons';
+import { useAuth } from '../contexts/AuthContext';
+import { AuthForm } from './auth/AuthForm';
 
 const LeftSidebar = () => {
   const router = useRouter();
+  const { user, signOut, loading } = useAuth();
   const [searchHistory, setSearchHistory] = useState<SearchHistoryItem[]>([]);
   const [favorites, setFavorites] = useState<FavoriteItem[]>([]);
   const [isHistoryOpen, setIsHistoryOpen] = useState(true);
   const [isFavoritesOpen, setIsFavoritesOpen] = useState(true);
+  const [authMode, setAuthMode] = useState<'login' | 'register' | 'reset'>('login');
 
   useEffect(() => {
-    // 加载初始数据
-    setSearchHistory(HistoryManager.getSearchHistory());
-    setFavorites(HistoryManager.getFavorites());
-
-    // 添加存储事件监听器
-    const handleStorageChange = (e: StorageEvent) => {
-      if (e.key === 'searchHistory') {
-        setSearchHistory(HistoryManager.getSearchHistory());
-      } else if (e.key === 'favorites') {
-        setFavorites(HistoryManager.getFavorites());
+    const loadData = async () => {
+      if (user) {
+        const history = await HistoryManager.getSearchHistory();
+        setSearchHistory(history);
+        const favs = await HistoryManager.getFavorites();
+        setFavorites(favs);
+      } else {
+        setSearchHistory([]);
+        setFavorites([]);
       }
     };
-
-    window.addEventListener('storage', handleStorageChange);
-    return () => window.removeEventListener('storage', handleStorageChange);
-  }, []);
+    loadData();
+  }, [user]);
 
   const handleHistoryClick = (query: string) => {
     router.push(`/search?q=${encodeURIComponent(query)}`);
   };
 
-  const handleHistoryDelete = (id: string) => {
-    const newHistory = HistoryManager.removeSearchHistory(id);
+  const handleHistoryDelete = async (id: string) => {
+    const newHistory = await HistoryManager.removeSearchHistory(id);
     setSearchHistory(newHistory);
   };
 
-  const handleFavoriteDelete = (id: string) => {
-    const newFavorites = HistoryManager.removeFavorite(id);
+  const handleFavoriteDelete = async (id: string) => {
+    const newFavorites = await HistoryManager.removeFavorite(id);
     setFavorites(newFavorites);
   };
 
-  const clearAllHistory = () => {
-    const newHistory = HistoryManager.clearSearchHistory();
+  const clearAllHistory = async () => {
+    const newHistory = await HistoryManager.clearSearchHistory();
     setSearchHistory(newHistory);
   };
 
-  const clearAllFavorites = () => {
-    const newFavorites = HistoryManager.clearFavorites();
+  const clearAllFavorites = async () => {
+    const newFavorites = await HistoryManager.clearFavorites();
     setFavorites(newFavorites);
   };
 
@@ -77,131 +78,193 @@ const LeftSidebar = () => {
         </a>
       </div>
 
+      {/* 用户认证部分 */}
+      <div className="p-4 border-b border-gray-200">
+        {loading ? (
+          <div className="flex items-center justify-center">
+            <div className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+          </div>
+        ) : user ? (
+          <div className="space-y-2">
+            <div className="flex items-center space-x-2">
+              <User className="w-4 h-4 text-gray-500" />
+              <span className="text-sm text-gray-700 truncate">{user.email}</span>
+            </div>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => signOut()}
+              className="w-full justify-start text-red-500 hover:text-red-600 hover:bg-red-50"
+            >
+              <LogOut className="w-4 h-4 mr-2" />
+              退出登录
+            </Button>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            <AuthForm mode={authMode} />
+            <div className="flex justify-between text-sm">
+              {authMode === 'login' ? (
+                <>
+                  <button
+                    onClick={() => setAuthMode('register')}
+                    className="text-blue-600 hover:text-blue-700"
+                  >
+                    注册账号
+                  </button>
+                  <button
+                    onClick={() => setAuthMode('reset')}
+                    className="text-blue-600 hover:text-blue-700"
+                  >
+                    忘记密码？
+                  </button>
+                </>
+              ) : (
+                <button
+                  onClick={() => setAuthMode('login')}
+                  className="text-blue-600 hover:text-blue-700"
+                >
+                  返回登录
+                </button>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+
       {/* 搜索历史部分 */}
       <div className="flex-1 overflow-auto p-4">
-        <Collapsible.Root open={isHistoryOpen} onOpenChange={setIsHistoryOpen}>
-          <div className="flex items-center justify-between mb-2">
-            <Collapsible.Trigger className="flex items-center gap-2 p-2 hover:bg-gray-50 rounded-lg">
-              <Clock className="w-4 h-4 text-gray-500" />
-              <span className="font-medium text-gray-700">搜索历史</span>
-              {isHistoryOpen ? (
-                <ChevronUp className="w-4 h-4 text-gray-500" />
-              ) : (
-                <ChevronDown className="w-4 h-4 text-gray-500" />
-              )}
-            </Collapsible.Trigger>
-            {searchHistory.length > 0 && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={clearAllHistory}
-                className="hover:bg-red-50 hover:text-red-600"
-              >
-                <Trash2 className="w-4 h-4" />
-              </Button>
-            )}
-          </div>
-          <Collapsible.Content>
-            <ScrollArea.Root className="h-48 overflow-hidden">
-              <ScrollArea.Viewport className="h-full w-full">
-                <div className="space-y-2">
-                  {searchHistory.map((item) => (
-                    <div
-                      key={item.id}
-                      className="group relative flex flex-col p-2 hover:bg-gray-50 rounded-lg cursor-pointer"
-                      onClick={() => handleHistoryClick(item.query)}
-                    >
-                      <span className="text-sm text-gray-600 truncate pr-6">
-                        {item.query}
-                      </span>
-                      <span className="text-xs text-gray-400">
-                        {formatDate(item.timestamp)}
-                      </span>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleHistoryDelete(item.id);
-                        }}
-                        className="absolute right-2 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity"
-                      >
-                        <X className="w-4 h-4 text-gray-400 hover:text-gray-600" />
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              </ScrollArea.Viewport>
-              <ScrollArea.Scrollbar
-                className="flex select-none touch-none p-0.5 bg-gray-100 transition-colors duration-150 ease-out hover:bg-gray-200 rounded-full"
-                orientation="vertical"
-              >
-                <ScrollArea.Thumb className="flex-1 bg-gray-300 rounded-full relative" />
-              </ScrollArea.Scrollbar>
-            </ScrollArea.Root>
-          </Collapsible.Content>
-        </Collapsible.Root>
-
-        {/* 收藏部分 */}
-        <Collapsible.Root open={isFavoritesOpen} onOpenChange={setIsFavoritesOpen} className="mt-4">
-          <div className="flex items-center justify-between mb-2">
-            <Collapsible.Trigger className="flex items-center gap-2 p-2 hover:bg-gray-50 rounded-lg">
-              <Star className="w-4 h-4 text-yellow-400" />
-              <span className="font-medium text-gray-700">收藏</span>
-              {isFavoritesOpen ? (
-                <ChevronUp className="w-4 h-4 text-gray-500" />
-              ) : (
-                <ChevronDown className="w-4 h-4 text-gray-500" />
-              )}
-            </Collapsible.Trigger>
-            {favorites.length > 0 && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={clearAllFavorites}
-                className="hover:bg-red-50 hover:text-red-600"
-              >
-                <Trash2 className="w-4 h-4" />
-              </Button>
-            )}
-          </div>
-          <Collapsible.Content>
-            <ScrollArea.Root className="h-48 overflow-hidden">
-              <ScrollArea.Viewport className="h-full w-full">
-                <div className="space-y-2">
-                  {favorites.map((item) => (
-                    <div
-                      key={item.id}
-                      className="p-2 hover:bg-gray-50 rounded-lg space-y-1 group"
-                    >
-                      <div className="flex items-center justify-between">
-                        <span className="font-medium text-sm text-gray-700">
-                          {item.title}
-                        </span>
-                        <button
-                          onClick={() => handleFavoriteDelete(item.id)}
-                          className="opacity-0 group-hover:opacity-100 transition-opacity"
+        {user ? (
+          <>
+            <Collapsible.Root open={isHistoryOpen} onOpenChange={setIsHistoryOpen}>
+              <div className="flex items-center justify-between mb-2">
+                <Collapsible.Trigger className="flex items-center gap-2 p-2 hover:bg-gray-50 rounded-lg">
+                  <Clock className="w-4 h-4 text-gray-500" />
+                  <span className="font-medium text-gray-700">搜索历史</span>
+                  {isHistoryOpen ? (
+                    <ChevronUp className="w-4 h-4 text-gray-500" />
+                  ) : (
+                    <ChevronDown className="w-4 h-4 text-gray-500" />
+                  )}
+                </Collapsible.Trigger>
+                {searchHistory.length > 0 && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={clearAllHistory}
+                    className="hover:bg-red-50 hover:text-red-600"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
+                )}
+              </div>
+              <Collapsible.Content>
+                <ScrollArea.Root className="h-48 overflow-hidden">
+                  <ScrollArea.Viewport className="h-full w-full">
+                    <div className="space-y-2">
+                      {searchHistory.map((item) => (
+                        <div
+                          key={item.id}
+                          className="group relative flex flex-col p-2 hover:bg-gray-50 rounded-lg cursor-pointer"
+                          onClick={() => handleHistoryClick(item.query)}
                         >
-                          <X className="w-4 h-4 text-gray-400 hover:text-gray-600" />
-                        </button>
-                      </div>
-                      <p className="text-xs text-gray-500 line-clamp-2">
-                        {item.description}
-                      </p>
-                      <span className="text-xs text-gray-400">
-                        {formatDate(item.timestamp)}
-                      </span>
+                          <span className="text-sm text-gray-600 truncate pr-6">
+                            {item.query}
+                          </span>
+                          <span className="text-xs text-gray-400">
+                            {formatDate(item.timestamp)}
+                          </span>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleHistoryDelete(item.id);
+                            }}
+                            className="absolute right-2 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity"
+                          >
+                            <X className="w-4 h-4 text-gray-400 hover:text-gray-600" />
+                          </button>
+                        </div>
+                      ))}
                     </div>
-                  ))}
-                </div>
-              </ScrollArea.Viewport>
-              <ScrollArea.Scrollbar
-                className="flex select-none touch-none p-0.5 bg-gray-100 transition-colors duration-150 ease-out hover:bg-gray-200 rounded-full"
-                orientation="vertical"
-              >
-                <ScrollArea.Thumb className="flex-1 bg-gray-300 rounded-full relative" />
-              </ScrollArea.Scrollbar>
-            </ScrollArea.Root>
-          </Collapsible.Content>
-        </Collapsible.Root>
+                  </ScrollArea.Viewport>
+                  <ScrollArea.Scrollbar
+                    className="flex select-none touch-none p-0.5 bg-gray-100 transition-colors duration-150 ease-out hover:bg-gray-200 rounded-full"
+                    orientation="vertical"
+                  >
+                    <ScrollArea.Thumb className="flex-1 bg-gray-300 rounded-full relative" />
+                  </ScrollArea.Scrollbar>
+                </ScrollArea.Root>
+              </Collapsible.Content>
+            </Collapsible.Root>
+
+            <Collapsible.Root open={isFavoritesOpen} onOpenChange={setIsFavoritesOpen} className="mt-4">
+              <div className="flex items-center justify-between mb-2">
+                <Collapsible.Trigger className="flex items-center gap-2 p-2 hover:bg-gray-50 rounded-lg">
+                  <Star className="w-4 h-4 text-yellow-400" />
+                  <span className="font-medium text-gray-700">收藏</span>
+                  {isFavoritesOpen ? (
+                    <ChevronUp className="w-4 h-4 text-gray-500" />
+                  ) : (
+                    <ChevronDown className="w-4 h-4 text-gray-500" />
+                  )}
+                </Collapsible.Trigger>
+                {favorites.length > 0 && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={clearAllFavorites}
+                    className="hover:bg-red-50 hover:text-red-600"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
+                )}
+              </div>
+              <Collapsible.Content>
+                <ScrollArea.Root className="h-48 overflow-hidden">
+                  <ScrollArea.Viewport className="h-full w-full">
+                    <div className="space-y-2">
+                      {favorites.map((item) => (
+                        <div
+                          key={item.id}
+                          className="p-2 hover:bg-gray-50 rounded-lg space-y-1 group"
+                        >
+                          <div className="flex items-center justify-between">
+                            <span className="font-medium text-sm text-gray-700">
+                              {item.title}
+                            </span>
+                            <button
+                              onClick={() => handleFavoriteDelete(item.id)}
+                              className="opacity-0 group-hover:opacity-100 transition-opacity"
+                            >
+                              <X className="w-4 h-4 text-gray-400 hover:text-gray-600" />
+                            </button>
+                          </div>
+                          <p className="text-xs text-gray-500 line-clamp-2">
+                            {item.description}
+                          </p>
+                          <span className="text-xs text-gray-400">
+                            {formatDate(item.timestamp)}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </ScrollArea.Viewport>
+                  <ScrollArea.Scrollbar
+                    className="flex select-none touch-none p-0.5 bg-gray-100 transition-colors duration-150 ease-out hover:bg-gray-200 rounded-full"
+                    orientation="vertical"
+                  >
+                    <ScrollArea.Thumb className="flex-1 bg-gray-300 rounded-full relative" />
+                  </ScrollArea.Scrollbar>
+                </ScrollArea.Root>
+              </Collapsible.Content>
+            </Collapsible.Root>
+          </>
+        ) : (
+          <div className="flex flex-col items-center justify-center h-full text-gray-500">
+            <User className="w-8 h-8 mb-2" />
+            <p className="text-sm text-center">登录后查看历史记录和收藏</p>
+          </div>
+        )}
       </div>
 
       {/* Discord链接 - 移到底部 */}
