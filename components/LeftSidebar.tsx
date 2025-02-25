@@ -310,7 +310,7 @@ const LeftSidebar = () => {
       </div>
 
       {/* Discord链接 - 移到底部 */}
-      <div className="p-4 border-t border-gray-200">
+      <div className="p-4">
         <a
           href="https://discord.gg/your-discord"
           target="_blank"
