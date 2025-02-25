@@ -20,8 +20,6 @@ const LeftSidebar = () => {
   const [isHistoryOpen, setIsHistoryOpen] = useState(true);
   const [isFavoritesOpen, setIsFavoritesOpen] = useState(true);
   const [authMode, setAuthMode] = useState<'login' | 'register' | 'reset'>('login');
-  const [deletingIds, setDeletingIds] = useState<string[]>([]);
-  const [isClearing, setIsClearing] = useState(false);
 
   useEffect(() => {
     const loadData = async () => {
@@ -44,26 +42,9 @@ const LeftSidebar = () => {
     router.push(`/search?q=${encodeURIComponent(query)}`);
   };
 
-  const handleHistoryDelete = async (id: string, e?: React.MouseEvent) => {
-    e?.stopPropagation();
-    
-    // 立即更新UI
-    setSearchHistory(prev => prev.filter(item => item.id !== id));
-    
-    // 标记正在删除
-    setDeletingIds(prev => [...prev, id]);
-    
-    try {
-      // 异步执行删除操作
-      await HistoryManager.removeSearchHistory(id);
-    } catch (error) {
-      // 删除失败时恢复显示
-      const history = await HistoryManager.getSearchHistory();
-      setSearchHistory(history);
-    } finally {
-      // 移除删除状态
-      setDeletingIds(prev => prev.filter(itemId => itemId !== id));
-    }
+  const handleHistoryDelete = async (id: string) => {
+    const newHistory = await HistoryManager.removeSearchHistory(id);
+    setSearchHistory(newHistory);
   };
 
   const handleFavoriteDelete = async (id: string) => {
@@ -72,22 +53,8 @@ const LeftSidebar = () => {
   };
 
   const clearAllHistory = async () => {
-    if (isClearing) return;
-    
-    // 立即更新UI
-    setSearchHistory([]);
-    setIsClearing(true);
-    
-    try {
-      // 异步执行清空操作
-      await HistoryManager.clearSearchHistory();
-    } catch (error) {
-      // 清空失败时恢复显示
-      const history = await HistoryManager.getSearchHistory();
-      setSearchHistory(history);
-    } finally {
-      setIsClearing(false);
-    }
+    const newHistory = await HistoryManager.clearSearchHistory();
+    setSearchHistory(newHistory);
   };
 
   const clearAllFavorites = async () => {
@@ -187,14 +154,9 @@ const LeftSidebar = () => {
                     variant="ghost"
                     size="sm"
                     onClick={clearAllHistory}
-                    disabled={isClearing}
-                    className="hover:bg-red-50 hover:text-red-600 disabled:opacity-50"
+                    className="hover:bg-red-50 hover:text-red-600"
                   >
-                    {isClearing ? (
-                      <div className="w-4 h-4 border-2 border-red-500 border-t-transparent rounded-full animate-spin" />
-                    ) : (
-                      <Trash2 className="w-4 h-4" />
-                    )}
+                    <Trash2 className="w-4 h-4" />
                   </Button>
                 )}
               </div>
@@ -215,15 +177,13 @@ const LeftSidebar = () => {
                             {formatDate(item.timestamp)}
                           </span>
                           <button
-                            onClick={(e) => handleHistoryDelete(item.id, e)}
-                            disabled={deletingIds.includes(item.id)}
-                            className="absolute right-2 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity disabled:opacity-50"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleHistoryDelete(item.id);
+                            }}
+                            className="absolute right-2 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity"
                           >
-                            {deletingIds.includes(item.id) ? (
-                              <div className="w-4 h-4 border-2 border-gray-400 border-t-transparent rounded-full animate-spin" />
-                            ) : (
-                              <X className="w-4 h-4 text-gray-400 hover:text-gray-600" />
-                            )}
+                            <X className="w-4 h-4 text-gray-400 hover:text-gray-600" />
                           </button>
                         </div>
                       ))}
@@ -315,9 +275,10 @@ const LeftSidebar = () => {
           href="https://discord.gg/your-discord"
           target="_blank"
           rel="noopener noreferrer"
-          className="flex items-center justify-center w-8 h-8 mx-auto text-gray-500 hover:text-[#5865F2] transition-colors duration-200"
+          className="flex items-center justify-center space-x-2 text-gray-500 hover:text-[#5865F2] transition-colors duration-200 p-2 rounded-lg hover:bg-gray-50"
         >
           <FontAwesomeIcon icon={faDiscord} className="w-5 h-5" />
+          <span>加入 Discord 社区</span>
         </a>
       </div>
     </div>
