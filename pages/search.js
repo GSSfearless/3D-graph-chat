@@ -12,7 +12,6 @@ import { KnowledgeGraphProcessor } from '../utils/knowledge-processor';
 import LeftSidebar from '../components/LeftSidebar';
 import { HistoryManager } from '../utils/history-manager';
 import { useAuth } from '../contexts/AuthContext';
-import { Star } from 'lucide-react';
 
 const KnowledgeGraph = dynamic(() => import('../components/KnowledgeGraph'), {
   ssr: false,
@@ -31,8 +30,6 @@ export default function Search() {
   const [useWebSearch, setUseWebSearch] = useState(false);
   const [useDeepThinking, setUseDeepThinking] = useState(false);
   const [reasoningProcess, setReasoningProcess] = useState('');
-  const [isFavorited, setIsFavorited] = useState(false);
-  const [showFavoriteToast, setShowFavoriteToast] = useState(false);
   const searchInputRef = useRef(null);
   const knowledgeProcessor = useRef(new KnowledgeGraphProcessor());
   const { user } = useAuth();
@@ -244,37 +241,6 @@ export default function Search() {
     setSelectedNode(node);
   };
 
-  const handleAddFavorite = async () => {
-    if (!user || !streamedAnswer) return;
-
-    try {
-      if (isFavorited) {
-        // 如果已经收藏，则取消收藏
-        // 这里需要先获取当前收藏的ID，然后删除
-        // 由于目前的数据结构限制，这个功能暂时不实现
-        return;
-      }
-
-      await HistoryManager.addFavorite({
-        title: query,
-        description: streamedAnswer.slice(0, 200) + (streamedAnswer.length > 200 ? '...' : ''),
-        graph_data: graphData
-      });
-
-      setIsFavorited(true);
-      setShowFavoriteToast(true);
-      setTimeout(() => setShowFavoriteToast(false), 2000);
-    } catch (error) {
-      console.error('Add favorite error:', error);
-      alert('收藏失败，请重试');
-    }
-  };
-
-  // 在每次搜索时重置收藏状态
-  useEffect(() => {
-    setIsFavorited(false);
-  }, [query]);
-
   return (
     <div className="flex h-screen overflow-hidden">
       <LeftSidebar />
@@ -331,91 +297,54 @@ export default function Search() {
           </div>
 
           {/* 底部搜索区域 */}
-          <div className="fixed bottom-4 left-1/2 transform -translate-x-1/2 w-full max-w-4xl px-4">
+          <div className="fixed bottom-4 left-1/2 transform -translate-x-1/2 w-full max-w-2xl px-4">
             <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-gray-100 p-4 transition-all duration-300 hover:shadow-xl hover:bg-white/90">
-              <div className="flex flex-col space-y-3">
-                {/* 工具栏 */}
-                <div className="flex items-center justify-between px-2">
-                  <div className="flex items-center space-x-4">
-                    <button
-                      onClick={() => setUseDeepThinking(!useDeepThinking)}
-                      className="flex items-center space-x-2 text-sm"
-                    >
-                      <div className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors duration-300 focus:outline-none ${
-                        useDeepThinking ? 'bg-purple-500' : 'bg-gray-200'
-                      }`}>
-                        <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-lg transition-transform duration-300 ease-in-out ${
-                          useDeepThinking ? 'translate-x-5' : 'translate-x-1'
-                        }`} />
-                      </div>
-                      <span className="text-gray-600">深度思考</span>
-                    </button>
-                    <button
-                      onClick={() => setUseWebSearch(!useWebSearch)}
-                      className="flex items-center space-x-2 text-sm"
-                    >
-                      <div className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors duration-300 focus:outline-none ${
-                        useWebSearch ? 'bg-blue-500' : 'bg-gray-200'
-                      }`}>
-                        <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-lg transition-transform duration-300 ease-in-out ${
-                          useWebSearch ? 'translate-x-5' : 'translate-x-1'
-                        }`} />
-                      </div>
-                      <span className="text-gray-600">联网搜索</span>
-                    </button>
-                  </div>
-                  {user && streamedAnswer && (
-                    <button
-                      onClick={handleAddFavorite}
-                      disabled={loading}
-                      className="flex items-center space-x-1 text-sm text-yellow-500 hover:text-yellow-600 transition-colors duration-200"
-                    >
-                      <Star className={`w-4 h-4 ${isFavorited ? 'fill-current' : ''}`} />
-                      <span>{isFavorited ? '已收藏' : '收藏'}</span>
-                    </button>
-                  )}
-                </div>
-
-                {/* 搜索框 */}
-                <div className="flex items-center space-x-4">
-                  <div className="relative flex-1">
-                    <input
-                      ref={searchInputRef}
-                      type="text"
-                      value={query}
-                      onChange={handleInputChange}
-                      onKeyPress={(e) => e.key === 'Enter' && handleSubmit(e)}
-                      placeholder={defaultQuery}
-                      className="w-full px-4 py-2.5 bg-white/50 border border-gray-200 rounded-xl 
-                               text-sm transition-all duration-300
-                               focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent
-                               hover:border-blue-300 hover:shadow-sm"
-                    />
-                  </div>
+              <div className="flex items-center space-x-4">
+                <div className="flex items-center space-x-3">
+                  <span className="text-sm font-medium bg-gradient-to-r from-purple-600 to-pink-600 text-transparent bg-clip-text">Deepseek</span>
                   <button
-                    onClick={handleSubmit}
-                    disabled={loading}
-                    className="flex items-center justify-center w-10 h-10 rounded-xl 
-                             bg-gradient-to-r from-blue-500 to-blue-600 
-                             text-white shadow-md transition-all duration-300
-                             hover:from-blue-600 hover:to-blue-700 hover:shadow-lg
-                             focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2
-                             disabled:opacity-50 disabled:cursor-not-allowed
-                             disabled:hover:shadow-none"
+                    onClick={() => setUseDeepThinking(!useDeepThinking)}
+                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 ${
+                      useDeepThinking ? 'bg-purple-500' : 'bg-gray-200'
+                    }`}
                   >
-                    <FontAwesomeIcon icon={faArrowRight} className="w-4 h-4" />
+                    <span
+                      className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-lg transition-transform duration-300 ease-in-out ${
+                        useDeepThinking ? 'translate-x-6' : 'translate-x-1'
+                      }`}
+                    />
                   </button>
                 </div>
+                <div className="relative flex-1">
+                  <input
+                    ref={searchInputRef}
+                    type="text"
+                    value={query}
+                    onChange={handleInputChange}
+                    onKeyPress={(e) => e.key === 'Enter' && handleSubmit(e)}
+                    placeholder={defaultQuery}
+                    className="w-full px-4 py-2.5 bg-white/50 border border-gray-200 rounded-xl 
+                             text-sm transition-all duration-300
+                             focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent
+                             hover:border-blue-300 hover:shadow-sm"
+                  />
+                </div>
+                <button
+                  onClick={handleSubmit}
+                  disabled={loading}
+                  className="flex items-center justify-center w-10 h-10 rounded-xl 
+                           bg-gradient-to-r from-blue-500 to-blue-600 
+                           text-white shadow-md transition-all duration-300
+                           hover:from-blue-600 hover:to-blue-700 hover:shadow-lg
+                           focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2
+                           disabled:opacity-50 disabled:cursor-not-allowed
+                           disabled:hover:shadow-none"
+                >
+                  <FontAwesomeIcon icon={faArrowRight} className="w-4 h-4" />
+                </button>
               </div>
             </div>
           </div>
-
-          {/* 收藏成功提示 */}
-          {showFavoriteToast && (
-            <div className="fixed bottom-32 left-1/2 transform -translate-x-1/2 bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg animate-fade-in-out">
-              收藏成功
-            </div>
-          )}
         </div>
       </div>
 
