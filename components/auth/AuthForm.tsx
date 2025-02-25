@@ -6,7 +6,7 @@ interface AuthFormProps {
 }
 
 export const AuthForm: React.FC<AuthFormProps> = ({ mode }) => {
-  const { signInWithEmail, signUpWithEmail, resetPassword } = useAuth();
+  const { signInWithEmail, signUpWithEmail, resetPasswordForEmail } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -27,7 +27,7 @@ export const AuthForm: React.FC<AuthFormProps> = ({ mode }) => {
       }
 
       if (mode === 'reset') {
-        const { error } = await resetPassword(email);
+        const { error } = await resetPasswordForEmail(email);
         if (error) throw error;
         setMessage('重置密码链接已发送到您的邮箱');
       } else {
