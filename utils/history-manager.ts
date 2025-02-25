@@ -17,20 +17,17 @@ export interface FavoriteItem {
 
 export class HistoryManager {
   private static currentUserId: string | null = null;
+  private static lastQuery: string | null = null;
+  private static lastQueryTime: number = 0;
 
   static setCurrentUserId(userId: string | null) {
-    console.log('设置当前用户ID:', userId);
     this.currentUserId = userId;
   }
 
   static async getSearchHistory(): Promise<SearchHistoryItem[]> {
-    try {
-      if (!this.currentUserId) {
-        console.log('未找到用户ID，返回空历史记录');
-        return [];
-      }
+    if (!this.currentUserId) return [];
 
-      console.log('获取用户搜索历史:', this.currentUserId);
+    try {
       const history = await searchHistory.getByUserId(this.currentUserId);
       return history.map(item => ({
         id: item.id,
@@ -38,19 +35,24 @@ export class HistoryManager {
         timestamp: new Date(item.created_at).getTime()
       }));
     } catch (error) {
-      console.error('获取搜索历史失败:', error);
+      console.error('History error:', error);
       return [];
     }
   }
 
   static async addSearchHistory(query: string): Promise<SearchHistoryItem[]> {
+    if (!this.currentUserId) return [];
+
     try {
-      if (!this.currentUserId) {
-        console.log('未找到用户ID，无法添加搜索历史');
-        return [];
+      // 防止短时间内重复添加相同查询
+      const now = Date.now();
+      if (this.lastQuery === query && now - this.lastQueryTime < 5000) {
+        return this.getSearchHistory();
       }
 
-      console.log('添加搜索历史:', query, '用户ID:', this.currentUserId);
+      this.lastQuery = query;
+      this.lastQueryTime = now;
+
       await searchHistory.add({
         query,
         user_id: this.currentUserId
@@ -58,51 +60,39 @@ export class HistoryManager {
 
       return this.getSearchHistory();
     } catch (error) {
-      console.error('添加搜索历史失败:', error);
+      console.error('Add history error:', error);
       return [];
     }
   }
 
   static async removeSearchHistory(id: string): Promise<SearchHistoryItem[]> {
-    try {
-      if (!this.currentUserId) {
-        console.log('未找到用户ID，无法删除搜索历史');
-        return [];
-      }
+    if (!this.currentUserId) return [];
 
-      console.log('删除搜索历史:', id);
+    try {
       await searchHistory.delete(id);
       return this.getSearchHistory();
     } catch (error) {
-      console.error('删除搜索历史失败:', error);
+      console.error('Remove history error:', error);
       return [];
     }
   }
 
   static async clearSearchHistory(): Promise<SearchHistoryItem[]> {
-    try {
-      if (!this.currentUserId) {
-        console.log('未找到用户ID，无法清空搜索历史');
-        return [];
-      }
+    if (!this.currentUserId) return [];
 
-      console.log('清空用户搜索历史:', this.currentUserId);
+    try {
       await searchHistory.clearByUserId(this.currentUserId);
       return [];
     } catch (error) {
-      console.error('清空搜索历史失败:', error);
+      console.error('Clear history error:', error);
       return [];
     }
   }
 
   static async getFavorites(): Promise<FavoriteItem[]> {
-    try {
-      if (!this.currentUserId) {
-        console.log('未找到用户ID，返回空收藏列表');
-        return [];
-      }
+    if (!this.currentUserId) return [];
 
-      console.log('获取用户收藏:', this.currentUserId);
+    try {
       const favs = await favorites.getByUserId(this.currentUserId);
       return favs.map(item => ({
         id: item.id,
@@ -112,19 +102,15 @@ export class HistoryManager {
         graph_data: item.graph_data
       }));
     } catch (error) {
-      console.error('获取收藏失败:', error);
+      console.error('Favorites error:', error);
       return [];
     }
   }
 
   static async addFavorite(item: Omit<FavoriteItem, 'id' | 'timestamp'>): Promise<FavoriteItem[]> {
-    try {
-      if (!this.currentUserId) {
-        console.log('未找到用户ID，无法添加收藏');
-        return [];
-      }
+    if (!this.currentUserId) return [];
 
-      console.log('添加收藏:', item.title, '用户ID:', this.currentUserId);
+    try {
       await favorites.add({
         ...item,
         user_id: this.currentUserId
@@ -132,39 +118,31 @@ export class HistoryManager {
 
       return this.getFavorites();
     } catch (error) {
-      console.error('添加收藏失败:', error);
+      console.error('Add favorite error:', error);
       return [];
     }
   }
 
   static async removeFavorite(id: string): Promise<FavoriteItem[]> {
-    try {
-      if (!this.currentUserId) {
-        console.log('未找到用户ID，无法删除收藏');
-        return [];
-      }
+    if (!this.currentUserId) return [];
 
-      console.log('删除收藏:', id);
+    try {
       await favorites.delete(id);
       return this.getFavorites();
     } catch (error) {
-      console.error('删除收藏失败:', error);
+      console.error('Remove favorite error:', error);
       return [];
     }
   }
 
   static async clearFavorites(): Promise<FavoriteItem[]> {
-    try {
-      if (!this.currentUserId) {
-        console.log('未找到用户ID，无法清空收藏');
-        return [];
-      }
+    if (!this.currentUserId) return [];
 
-      console.log('清空用户收藏:', this.currentUserId);
+    try {
       await favorites.clearByUserId(this.currentUserId);
       return [];
     } catch (error) {
-      console.error('清空收藏失败:', error);
+      console.error('Clear favorites error:', error);
       return [];
     }
   }

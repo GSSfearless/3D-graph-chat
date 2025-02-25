@@ -38,25 +38,13 @@ export default function Search() {
 
   useEffect(() => {
     if (initialQuery && user) {
-      console.log('添加搜索历史:', initialQuery, '用户ID:', user.id);
-      // 添加到搜索历史
+      // 初始查询时添加到搜索历史
       HistoryManager.addSearchHistory(initialQuery.toString());
     }
   }, [initialQuery, user]);
 
   const handleSearch = useCallback(async (searchQuery) => {
     if (!searchQuery.trim()) return;
-    
-    if (user) {
-      console.log('添加搜索历史:', searchQuery, '用户ID:', user.id);
-      // 添加到搜索历史
-      await HistoryManager.addSearchHistory(searchQuery);
-    }
-    
-    console.log('=== 搜索开始 ===');
-    console.log('查询内容:', searchQuery);
-    console.log('深度思考模式:', useDeepThinking ? '开启' : '关闭');
-    console.log('联网搜索:', useWebSearch ? '开启' : '关闭');
     
     setLoading(true);
     setStreamedAnswer('');
@@ -67,17 +55,13 @@ export default function Search() {
     try {
       // 只在启用联网搜索时执行 RAG 搜索
       if (useWebSearch) {
-        console.log('执行联网搜索...');
         const searchResponse = await fetch(`/api/rag-search?query=${encodeURIComponent(searchQuery)}`);
         if (!searchResponse.ok) {
           throw new Error('搜索请求失败');
         }
-        const searchResults = await searchResponse.json();
-        console.log('搜索结果:', searchResults);
       }
 
       // 发送聊天请求
-      console.log('生成AI回答...');
       const chatResponse = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
