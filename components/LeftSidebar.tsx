@@ -113,31 +113,45 @@ const LeftSidebar = () => {
         </a>
       </div>
 
-      {/* Authentication section */}
-      <div className="p-4 border-b border-gray-200">
+      {/* Main content area */}
+      <div className="flex-1 overflow-auto p-4">
         {loading ? (
-          <div className="flex items-center justify-center">
+          <div className="flex items-center justify-center h-full">
             <div className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
           </div>
         ) : user ? (
-          <div className="space-y-2">
-            <div className="flex items-center space-x-2">
-              <User className="w-4 h-4 text-gray-500" />
-              <span className="text-sm text-gray-700 truncate">{user.email}</span>
+          <div className="space-y-4">
+            {/* User info */}
+            <div className="p-4 bg-gray-50 rounded-lg">
+              <div className="flex items-center space-x-2 mb-3">
+                <User className="w-4 h-4 text-gray-500" />
+                <span className="text-sm text-gray-700 truncate">{user.email}</span>
+              </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => signOut()}
+                className="w-full justify-start text-red-500 hover:text-red-600 hover:bg-red-50"
+              >
+                <LogOut className="w-4 h-4 mr-2" />
+                Sign Out
+              </Button>
             </div>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => signOut()}
-              className="w-full justify-start text-red-500 hover:text-red-600 hover:bg-red-50"
-            >
-              <LogOut className="w-4 h-4 mr-2" />
-              Sign Out
-            </Button>
+            
+            {/* Future features placeholder */}
+            <div className="text-center text-sm text-gray-500 mt-8">
+              <p>More features coming soon!</p>
+            </div>
           </div>
         ) : (
-          <div className="space-y-4">
+          <div className="space-y-6">
+            <div className="text-center">
+              <h2 className="text-xl font-semibold text-gray-800 mb-2">Welcome to Think Graph</h2>
+              <p className="text-sm text-gray-600">Create beautiful knowledge graphs with AI</p>
+            </div>
+            
             <AuthForm mode={authMode} />
+            
             <div className="flex justify-between text-sm">
               {authMode === 'login' ? (
                 <>
@@ -167,43 +181,16 @@ const LeftSidebar = () => {
         )}
       </div>
 
-      {/* Search history section */}
-      <div className="flex-1 overflow-auto p-4">
-        {user ? (
-          <div className="flex flex-col items-center justify-center h-full text-gray-500">
-            <div className="space-y-2">
-              <div className="flex items-center space-x-2">
-                <User className="w-4 h-4 text-gray-500" />
-                <span className="text-sm text-gray-700 truncate">{user.email}</span>
-              </div>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => signOut()}
-                className="w-full justify-start text-red-500 hover:text-red-600 hover:bg-red-50"
-              >
-                <LogOut className="w-4 h-4 mr-2" />
-                Sign Out
-              </Button>
-            </div>
-          </div>
-        ) : (
-          <div className="flex flex-col items-center justify-center h-full text-gray-500">
-            <User className="w-8 h-8 mb-2" />
-            <p className="text-sm text-center">Please login to access your account</p>
-          </div>
-        )}
-      </div>
-
       {/* Discord link */}
       <div className="p-4 border-t border-gray-200">
         <a
           href="https://discord.gg/your-discord"
           target="_blank"
           rel="noopener noreferrer"
-          className="flex items-center justify-center w-8 h-8 mx-auto text-gray-500 hover:text-[#5865F2] transition-colors duration-200"
+          className="flex items-center justify-center gap-2 w-full text-gray-500 hover:text-[#5865F2] transition-colors duration-200"
         >
           <FontAwesomeIcon icon={faDiscord} className="w-5 h-5" />
+          <span className="text-sm">Join our Community</span>
         </a>
       </div>
     </div>
