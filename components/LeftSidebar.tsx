@@ -96,7 +96,7 @@ const LeftSidebar = () => {
   };
 
   const formatDate = (timestamp: number) => {
-    return new Date(timestamp).toLocaleDateString('en-US', {
+    return new Date(timestamp).toLocaleDateString('zh-CN', {
       month: 'short',
       day: 'numeric',
       hour: '2-digit',
@@ -106,14 +106,14 @@ const LeftSidebar = () => {
 
   return (
     <div className="w-64 bg-white border-r border-gray-200 h-screen flex flex-col">
-      {/* Logo section */}
+      {/* Logo部分 */}
       <div className="p-4 border-b border-gray-200">
         <a href="/" className="flex items-center space-x-2">
           <span className="text-xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 text-transparent bg-clip-text">Think Graph</span>
         </a>
       </div>
 
-      {/* Authentication section */}
+      {/* 用户认证部分 */}
       <div className="p-4 border-b border-gray-200">
         {loading ? (
           <div className="flex items-center justify-center">
@@ -132,7 +132,7 @@ const LeftSidebar = () => {
               className="w-full justify-start text-red-500 hover:text-red-600 hover:bg-red-50"
             >
               <LogOut className="w-4 h-4 mr-2" />
-              Sign Out
+              退出登录
             </Button>
           </div>
         ) : (
@@ -145,13 +145,13 @@ const LeftSidebar = () => {
                     onClick={() => setAuthMode('register')}
                     className="text-blue-600 hover:text-blue-700"
                   >
-                    Register
+                    注册账号
                   </button>
                   <button
                     onClick={() => setAuthMode('reset')}
                     className="text-blue-600 hover:text-blue-700"
                   >
-                    Forgot Password?
+                    忘记密码？
                   </button>
                 </>
               ) : (
@@ -159,7 +159,7 @@ const LeftSidebar = () => {
                   onClick={() => setAuthMode('login')}
                   className="text-blue-600 hover:text-blue-700"
                 >
-                  Back to Login
+                  返回登录
                 </button>
               )}
             </div>
@@ -167,7 +167,7 @@ const LeftSidebar = () => {
         )}
       </div>
 
-      {/* Search history section */}
+      {/* 搜索历史部分 */}
       <div className="flex-1 overflow-auto p-4">
         {user ? (
           <>
@@ -175,7 +175,7 @@ const LeftSidebar = () => {
               <div className="flex items-center justify-between mb-2">
                 <Collapsible.Trigger className="flex items-center gap-2 p-2 hover:bg-gray-50 rounded-lg">
                   <Clock className="w-4 h-4 text-gray-500" />
-                  <span className="font-medium text-gray-700">Search History</span>
+                  <span className="font-medium text-gray-700">搜索历史</span>
                   {isHistoryOpen ? (
                     <ChevronUp className="w-4 h-4 text-gray-500" />
                   ) : (
@@ -243,7 +243,7 @@ const LeftSidebar = () => {
               <div className="flex items-center justify-between mb-2">
                 <Collapsible.Trigger className="flex items-center gap-2 p-2 hover:bg-gray-50 rounded-lg">
                   <Star className="w-4 h-4 text-yellow-400" />
-                  <span className="font-medium text-gray-700">Favorites</span>
+                  <span className="font-medium text-gray-700">收藏</span>
                   {isFavoritesOpen ? (
                     <ChevronUp className="w-4 h-4 text-gray-500" />
                   ) : (
@@ -268,24 +268,25 @@ const LeftSidebar = () => {
                       {favorites.map((item) => (
                         <div
                           key={item.id}
-                          className="group relative flex flex-col p-2 hover:bg-gray-50 rounded-lg cursor-pointer"
-                          onClick={() => handleHistoryClick(item.title)}
+                          className="p-2 hover:bg-gray-50 rounded-lg space-y-1 group"
                         >
-                          <span className="text-sm text-gray-600 truncate pr-6">
-                            {item.title}
-                          </span>
+                          <div className="flex items-center justify-between">
+                            <span className="font-medium text-sm text-gray-700">
+                              {item.title}
+                            </span>
+                            <button
+                              onClick={() => handleFavoriteDelete(item.id)}
+                              className="opacity-0 group-hover:opacity-100 transition-opacity"
+                            >
+                              <X className="w-4 h-4 text-gray-400 hover:text-gray-600" />
+                            </button>
+                          </div>
+                          <p className="text-xs text-gray-500 line-clamp-2">
+                            {item.description}
+                          </p>
                           <span className="text-xs text-gray-400">
                             {formatDate(item.timestamp)}
                           </span>
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleFavoriteDelete(item.id);
-                            }}
-                            className="absolute right-2 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity"
-                          >
-                            <X className="w-4 h-4 text-gray-400 hover:text-gray-600" />
-                          </button>
                         </div>
                       ))}
                     </div>
@@ -301,13 +302,14 @@ const LeftSidebar = () => {
             </Collapsible.Root>
           </>
         ) : (
-          <div className="text-center text-gray-500 text-sm">
-            <p>Please sign in to view history</p>
+          <div className="flex flex-col items-center justify-center h-full text-gray-500">
+            <User className="w-8 h-8 mb-2" />
+            <p className="text-sm text-center">登录后查看历史记录和收藏</p>
           </div>
         )}
       </div>
 
-      {/* Discord link - move to bottom */}
+      {/* Discord链接 - 移到底部 */}
       <div className="p-4">
         <a
           href="https://discord.gg/your-discord"

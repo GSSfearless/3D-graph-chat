@@ -1,78 +1,23 @@
-// Language detection and constants
-const SUPPORTED_LANGUAGES = {
-  EN: 'en',
-  ZH: 'zh'
-};
-
-const detectLanguage = (text) => {
-  // Simple language detection based on character set
-  const zhCount = (text.match(/[\u4e00-\u9fa5]/g) || []).length;
-  const enCount = (text.match(/[a-zA-Z]/g) || []).length;
-  return zhCount > enCount ? SUPPORTED_LANGUAGES.ZH : SUPPORTED_LANGUAGES.EN;
-};
-
-// Multilingual dictionaries
-const SENTIMENT_DICTIONARY = {
-  [SUPPORTED_LANGUAGES.EN]: {
-    positive: ['good', 'excellent', 'great', 'strong', 'high', 'fast', 'better', 'best', 'superior', 'amazing'],
-    negative: ['bad', 'poor', 'weak', 'low', 'slow', 'worse', 'worst', 'inferior', 'terrible', 'awful']
-  },
-  [SUPPORTED_LANGUAGES.ZH]: {
-    positive: ['好', '优秀', '棒', '强', '高', '快', '优质', '卓越', '出色', '完美'],
-    negative: ['差', '糟', '弱', '低', '慢', '坏', '劣质', '糟糕', '失败', '不佳']
-  }
-};
-
-const EVENT_PATTERNS = {
-  [SUPPORTED_LANGUAGES.EN]: [
-    /ed$/, // past tense
-    /ing$/, // continuous tense
-    /^(start|end|begin|finish|complete|launch)/,
-    /(and|or|but|then|while)/
-  ],
-  [SUPPORTED_LANGUAGES.ZH]: [
-    /[了过着]$/,
-    /^(开始|结束|发生|完成|启动)/,
-    /(并|或|而|但|然后)/
-  ]
-};
-
-const ATTRIBUTE_PATTERNS = {
-  [SUPPORTED_LANGUAGES.EN]: [
-    /^(size|length|width|height|depth|weight|color|shape)/,
-    /(ness|ity|tion|sion|ance|ence)$/,
-    /^(can|could|should|must|may|might)/
-  ],
-  [SUPPORTED_LANGUAGES.ZH]: [
-    /^(大小|长度|宽度|高度|深度|重量|颜色|形状)/,
-    /(性|度|率|量|值|数|比)$/,
-    /^(可以|能够|应该|必须|不能|不可以)/
-  ]
-};
-
 // 提取关键词
 export const extractKeywords = (content) => {
-  const lang = detectLanguage(content);
+  // 简单的分词和权重计算
   const words = content.split(/\s+/);
   const wordFreq = {};
   
-  // Calculate word frequency
+  // 计算词频
   words.forEach(word => {
-    word = word.toLowerCase().replace(
-      lang === SUPPORTED_LANGUAGES.EN ? /[^\w\s]/ : /[^\w\u4e00-\u9fa5]/g, 
-      ''
-    );
+    word = word.toLowerCase().replace(/[^\w\u4e00-\u9fa5]/g, '');
     if (word && word.length > 1) {
       wordFreq[word] = (wordFreq[word] || 0) + 1;
     }
   });
 
-  // Convert to keywords array
+  // 转换为关键词数组
   const keywords = Object.entries(wordFreq)
     .map(([text, freq]) => ({
       text,
       weight: freq / words.length,
-      sentiment: analyzeSentimentForWord(text, lang)
+      sentiment: analyzeSentimentForWord(text)
     }))
     .sort((a, b) => b.weight - a.weight)
     .slice(0, 20);
@@ -82,28 +27,29 @@ export const extractKeywords = (content) => {
 
 // 情感分析
 export const analyzeSentiment = (content) => {
-  const lang = detectLanguage(content);
-  const { positive: positiveWords, negative: negativeWords } = SENTIMENT_DICTIONARY[lang];
+  // 简单的情感分析
+  const positiveWords = ['好', '优秀', '棒', '强', '高', '快'];
+  const negativeWords = ['差', '糟', '弱', '低', '慢', '坏'];
 
   let positiveCount = 0;
   let negativeCount = 0;
 
   positiveWords.forEach(word => {
-    positiveCount += (content.toLowerCase().match(new RegExp(word.toLowerCase(), 'g')) || []).length;
+    positiveCount += (content.match(new RegExp(word, 'g')) || []).length;
   });
 
   negativeWords.forEach(word => {
-    negativeCount += (content.toLowerCase().match(new RegExp(word.toLowerCase(), 'g')) || []).length;
+    negativeCount += (content.match(new RegExp(word, 'g')) || []).length;
   });
 
   const total = positiveCount + negativeCount || 1;
 
   return {
-    relevance: Math.random() * 0.3 + 0.7,
-    importance: Math.random() * 0.3 + 0.7,
-    novelty: Math.random() * 0.3 + 0.7,
-    credibility: Math.random() * 0.3 + 0.7,
-    completeness: Math.random() * 0.3 + 0.7,
+    relevance: Math.random() * 0.3 + 0.7, // 模拟相关性分数
+    importance: Math.random() * 0.3 + 0.7, // 模拟重要性分数
+    novelty: Math.random() * 0.3 + 0.7, // 模拟新颖性分数
+    credibility: Math.random() * 0.3 + 0.7, // 模拟可信度分数
+    completeness: Math.random() * 0.3 + 0.7, // 模拟完整性分数
     timeline: generateSentimentTimeline(content)
   };
 };
@@ -111,62 +57,59 @@ export const analyzeSentiment = (content) => {
 // 实体抽取函数
 export const extractEntities = async (text) => {
   try {
-    const lang = detectLanguage(text);
-    
-    // Language-specific entity patterns
-    const entityPatterns = {
-      [SUPPORTED_LANGUAGES.EN]: /\b[A-Z][a-z]+(?:\s+[A-Z][a-z]+)*\b|\b[A-Z]+\b/g,
-      [SUPPORTED_LANGUAGES.ZH]: /[一-龥][一-龥\d]*[一-龥]+/g
-    };
-
+    // 确保输入文本有效
     if (!text || typeof text !== 'string') {
       console.warn('Invalid input text in extractEntities');
       return [];
     }
 
+    // 规范化ID的辅助函数
     const normalizeId = (text) => {
       if (!text) return '';
       const cleanText = text.replace(/[*]/g, '').trim();
+      // 移除已存在的 'node-' 前缀，避免重复添加
       const baseId = cleanText.startsWith('node-') ? cleanText.slice(5) : cleanText;
+      // 统一处理特殊字符
       return `node-${baseId.replace(/[^a-zA-Z0-9]/g, '_')}`;
     };
 
-    const sentences = lang === SUPPORTED_LANGUAGES.EN ? 
-      text.split(/[.!?]+/) :
-      text.split(/[。！？.!?]/);
+    const sentences = text.split(/[。！？.!?]/);
+    const entities = new Map(); // 使用 Map 来去重
+    let entityId = 0;
 
-    const entities = new Map();
-    
     sentences.forEach(sentence => {
-      const matches = sentence.match(entityPatterns[lang]) || [];
+      // 提取可能的实体（2个或更多连续的非标点字符）
+      const matches = sentence.match(/[一-龥A-Za-z][一-龥A-Za-z\d]*[一-龥A-Za-z]+/g) || [];
       
       matches.forEach(match => {
         const cleanMatch = match.replace(/[*]/g, '').trim();
-        if (isValidEntity(cleanMatch, lang)) {
+        if (isValidEntity(cleanMatch) && !entities.has(cleanMatch)) {
           const nodeId = normalizeId(cleanMatch);
           const entity = {
             id: nodeId,
             text: cleanMatch,
             label: cleanMatch,
-            isEvent: hasEventIndicators(cleanMatch, lang),
-            isAttribute: hasAttributeIndicators(cleanMatch, lang),
+            isEvent: hasEventIndicators(cleanMatch),
+            isAttribute: hasAttributeIndicators(cleanMatch),
             importance: calculateImportance(cleanMatch, text),
             properties: {}
           };
 
-          console.log('Creating entity:', {
+          console.log('创建实体:', {
             ID: nodeId,
-            Text: cleanMatch,
-            Type: entity.isEvent ? 'event' : (entity.isAttribute ? 'attribute' : 'entity')
+            文本: cleanMatch,
+            类型: entity.isEvent ? 'event' : (entity.isAttribute ? 'attribute' : 'entity')
           });
 
           entities.set(cleanMatch, entity);
+          // 同时用规范化ID作为键存储，以便后续查找
           entities.set(nodeId, entity);
         }
       });
     });
 
     const result = Array.from(entities.values());
+    // 去重，确保每个ID只出现一次
     const seen = new Set();
     const uniqueResult = result.filter(entity => {
       if (seen.has(entity.id)) return false;
@@ -181,54 +124,62 @@ export const extractEntities = async (text) => {
   }
 };
 
-// Relation patterns for different languages
-const RELATION_PATTERNS = {
-  [SUPPORTED_LANGUAGES.EN]: [
-    { regex: /([^,.!?]+?)\s+is\s+([^,.!?]+)/g, type: 'is-a', label: 'is' },
-    { regex: /([^,.!?]+?)\s+contains\s+([^,.!?]+)/g, type: 'contains', label: 'contains' },
-    { regex: /([^,.!?]+?)\s+belongs\s+to\s+([^,.!?]+)/g, type: 'belongs-to', label: 'belongs to' },
-    { regex: /([^,.!?]+?)\s+requires\s+([^,.!?]+)/g, type: 'requires', label: 'requires' },
-    { regex: /([^,.!?]+?)\s+performs\s+([^,.!?]+)/g, type: 'performs', label: 'performs' },
-    { regex: /([^,.!?]+?)\s+uses\s+([^,.!?]+)/g, type: 'uses', label: 'uses' },
-    { regex: /([^,.!?]+?)\s+provides\s+([^,.!?]+)/g, type: 'provides', label: 'provides' },
-    { regex: /([^,.!?]+?)\s+obtains\s+([^,.!?]+)/g, type: 'obtains', label: 'obtains' }
-  ],
-  [SUPPORTED_LANGUAGES.ZH]: [
-    { regex: /([^，。！？]+?)是([^，。！？]+)/g, type: 'is-a', label: '是' },
-    { regex: /([^，。！？]+?)包含([^，。！？]+)/g, type: 'contains', label: '包含' },
-    { regex: /([^，。！？]+?)属于([^，。！？]+)/g, type: 'belongs-to', label: '属于' },
-    { regex: /([^，。！？]+?)需要([^，。！？]+)/g, type: 'requires', label: '需要' },
-    { regex: /([^，。！？]+?)进行([^，。！？]+)/g, type: 'performs', label: '进行' },
-    { regex: /([^，。！？]+?)使用([^，。！？]+)/g, type: 'uses', label: '使用' },
-    { regex: /([^，。！？]+?)提供([^，。！？]+)/g, type: 'provides', label: '提供' },
-    { regex: /([^，。！？]+?)获得([^，。！？]+)/g, type: 'obtains', label: '获得' }
-  ]
-};
-
-// Extract relations function
+// 关系抽取函数
 export const extractRelations = async (text) => {
   try {
-    const lang = detectLanguage(text);
     const relations = [];
-    const sentences = lang === SUPPORTED_LANGUAGES.EN ? 
-      text.split(/[.!?]+/) : 
-      text.split(/[，。！？.!?;；]/);
+    // 使用更细粒度的句子切分
+    const sentences = text.split(/[，。！？.!?;；]/);
     let relationId = 0;
 
+    // 规范化ID的辅助函数
     const normalizeId = (text) => {
       if (!text) return '';
       const cleanText = text.replace(/[*]/g, '').trim();
+      // 移除已存在的 'node-' 前缀，避免重复添加
       const baseId = cleanText.startsWith('node-') ? cleanText.slice(5) : cleanText;
+      // 统一处理特殊字符
       return `node-${baseId.replace(/[^a-zA-Z0-9]/g, '_')}`;
     };
 
-    // Process each sentence
+    // 扩展关系模式
+    const patterns = [
+      // 基础关系
+      { regex: /([^，。！？]+?)是([^，。！？]+)/g, type: 'is-a', label: '是' },
+      { regex: /([^，。！？]+?)包含([^，。！？]+)/g, type: 'contains', label: '包含' },
+      { regex: /([^，。！？]+?)属于([^，。！？]+)/g, type: 'belongs-to', label: '属于' },
+      { regex: /([^，。！？]+?)需要([^，。！？]+)/g, type: 'requires', label: '需要' },
+      // 动作关系
+      { regex: /([^，。！？]+?)进行([^，。！？]+)/g, type: 'performs', label: '进行' },
+      { regex: /([^，。！？]+?)使用([^，。！？]+)/g, type: 'uses', label: '使用' },
+      { regex: /([^，。！？]+?)提供([^，。！？]+)/g, type: 'provides', label: '提供' },
+      { regex: /([^，。！？]+?)获得([^，。！？]+)/g, type: 'obtains', label: '获得' },
+      // 方向关系
+      { regex: /([^，。！？]+?)到([^，。！？]+)/g, type: 'to', label: '到' },
+      { regex: /([^，。！？]+?)从([^，。！？]+)/g, type: 'from', label: '从' },
+      { regex: /([^，。！？]+?)对([^，。！？]+)/g, type: 'towards', label: '对' },
+      // 时间关系
+      { regex: /([^，。！？]+?)之前([^，。！？]+)/g, type: 'before', label: '之前' },
+      { regex: /([^，。！？]+?)之后([^，。！？]+)/g, type: 'after', label: '之后' },
+      { regex: /([^，。！？]+?)期间([^，。！？]+)/g, type: 'during', label: '期间' },
+      // 条件关系
+      { regex: /如果([^，。！？]+?)那么([^，。！？]+)/g, type: 'if-then', label: '如果-那么' },
+      { regex: /([^，。！？]+?)因此([^，。！？]+)/g, type: 'therefore', label: '因此' },
+      // 修饰关系
+      { regex: /([^，。！？]+?)的([^，。！？]+)/g, type: 'of', label: '的' },
+      { regex: /([^，。！？]+?)(很|非常|特别)([^，。！？]+)/g, type: 'degree', label: '程度' },
+      // 并列关系
+      { regex: /([^，。！？]+?)(和|与|以及|并且|而且)([^，。！？]+)/g, type: 'and', label: '并列' }
+    ];
+
+    // 处理每个句子
     let previousEntities = [];
     sentences.forEach(sentence => {
-      const currentEntities = extractEntitiesFromSentence(sentence, lang);
+      // 提取当前句子中的实体
+      const currentEntities = extractEntitiesFromSentence(sentence);
       
-      // Process pattern matching relations
-      RELATION_PATTERNS[lang].forEach(pattern => {
+      // 处理模式匹配的关系
+      patterns.forEach(pattern => {
         let matches;
         while ((matches = pattern.regex.exec(sentence)) !== null) {
           if (matches && matches.length >= 3) {
@@ -236,7 +187,7 @@ export const extractRelations = async (text) => {
             const cleanSource = source.replace(/[*]/g, '').trim();
             const cleanTarget = target.replace(/[*]/g, '').trim();
             
-            if (isValidEntity(cleanSource, lang) && isValidEntity(cleanTarget, lang)) {
+            if (isValidEntity(cleanSource) && isValidEntity(cleanTarget)) {
               const sourceId = normalizeId(cleanSource);
               const targetId = normalizeId(cleanTarget);
               
@@ -266,7 +217,7 @@ export const extractRelations = async (text) => {
         }
       });
 
-      // Add contextual relations
+      // 添加上下文关系
       if (previousEntities.length > 0 && currentEntities.length > 0) {
         previousEntities.forEach(prev => {
           currentEntities.forEach(curr => {
@@ -282,7 +233,7 @@ export const extractRelations = async (text) => {
                   text: curr.text
                 },
                 type: 'context',
-                label: lang === SUPPORTED_LANGUAGES.EN ? 'contextual relation' : '上下文关联',
+                label: '上下文关联',
                 weight: 0.3,
                 properties: {
                   sourceText: prev.text,
@@ -294,10 +245,32 @@ export const extractRelations = async (text) => {
         });
       }
 
+      // 处理句子内实体间的顺序关系
+      for (let i = 0; i < currentEntities.length - 1; i++) {
+        relations.push({
+          id: `edge-${relationId++}`,
+          source: {
+            id: currentEntities[i].id,
+            text: currentEntities[i].text
+          },
+          target: {
+            id: currentEntities[i + 1].id,
+            text: currentEntities[i + 1].text
+          },
+          type: 'sequence',
+          label: '顺序关联',
+          weight: 0.5,
+          properties: {
+            sourceText: currentEntities[i].text,
+            targetText: currentEntities[i + 1].text
+          }
+        });
+      }
+
       previousEntities = currentEntities;
     });
 
-    // Add semantic similarity relations
+    // 添加语义相似度关系
     const keywords = extractKeywords(text);
     for (let i = 0; i < keywords.length - 1; i++) {
       for (let j = i + 1; j < keywords.length; j++) {
@@ -316,13 +289,14 @@ export const extractRelations = async (text) => {
               text: keywords[j].text
             },
             type: 'similar',
-            label: lang === SUPPORTED_LANGUAGES.EN ? 'similar' : '相似',
+            label: '相似',
             weight: similarity
           });
         }
       }
     }
 
+    // 去重并返回关系
     return removeDuplicateRelations(relations);
   } catch (error) {
     console.error('Error in extractRelations:', error);
@@ -330,39 +304,24 @@ export const extractRelations = async (text) => {
   }
 };
 
-// Compute embeddings
+// 计算向量嵌入
 export const computeEmbeddings = async (entities) => {
-  // Simple vector embedding implementation
+  // 简单的向量嵌入实现
   return entities.map(entity => {
-    // Generate a simple 5-dimensional vector as embedding
+    // 生成一个简单的 5 维向量作为嵌入
     return Array.from({ length: 5 }, () => Math.random());
   });
 };
 
-// Helper functions with language support
-const isValidEntity = (text, lang) => {
-  if (lang === SUPPORTED_LANGUAGES.EN) {
-    return text.length >= 2 && !/^\d+$/.test(text);
-  }
-  return text.length >= 2 && !/^\d+$/.test(text);
-};
+// 辅助函数
 
-const hasEventIndicators = (text, lang) => {
-  const patterns = EVENT_PATTERNS[lang];
-  return patterns.some(pattern => pattern.test(text));
-};
+const analyzeSentimentForWord = (word) => {
+  const positiveWords = ['好', '优秀', '棒', '强', '高', '快'];
+  const negativeWords = ['差', '糟', '弱', '低', '慢', '坏'];
 
-const hasAttributeIndicators = (text, lang) => {
-  const patterns = ATTRIBUTE_PATTERNS[lang];
-  return patterns.some(pattern => pattern.test(text));
-};
-
-const analyzeSentimentForWord = (word, lang) => {
-  const { positive, negative } = SENTIMENT_DICTIONARY[lang];
-  
-  if (positive.some(w => word.toLowerCase().includes(w.toLowerCase()))) {
+  if (positiveWords.some(w => word.includes(w))) {
     return 'positive';
-  } else if (negative.some(w => word.toLowerCase().includes(w.toLowerCase()))) {
+  } else if (negativeWords.some(w => word.includes(w))) {
     return 'negative';
   }
   return 'neutral';
@@ -374,6 +333,28 @@ const generateSentimentTimeline = (content) => {
     time: i,
     value: Math.sin(i * 0.1) * 0.5 + 0.5 + Math.random() * 0.1
   }));
+};
+
+const isValidEntity = (text) => {
+  return text.length >= 2 && !/^\d+$/.test(text);
+};
+
+const hasEventIndicators = (text) => {
+  const eventPatterns = [
+    /[了过着]$/,
+    /^(开始|结束|发生|完成|启动)/,
+    /(并|或|而|但|然后)/
+  ];
+  return eventPatterns.some(pattern => pattern.test(text));
+};
+
+const hasAttributeIndicators = (text) => {
+  const attributePatterns = [
+    /^(大小|长度|宽度|高度|深度|重量|颜色|形状)/,
+    /(性|度|率|量|值|数|比)$/,
+    /^(可以|能够|应该|必须|不能|不可以)/
+  ];
+  return attributePatterns.some(pattern => pattern.test(text));
 };
 
 const calculateImportance = (entity, fullText) => {
@@ -388,17 +369,12 @@ const calculateImportance = (entity, fullText) => {
   }
 };
 
-const extractEntitiesFromSentence = (sentence, lang) => {
-  const entityPatterns = {
-    [SUPPORTED_LANGUAGES.EN]: /\b[A-Z][a-z]+(?:\s+[A-Z][a-z]+)*\b|\b[A-Z]+\b/g,
-    [SUPPORTED_LANGUAGES.ZH]: /[一-龥][一-龥\d]*[一-龥]+/g
-  };
-
-  const matches = sentence.match(entityPatterns[lang]) || [];
+const extractEntitiesFromSentence = (sentence) => {
+  const matches = sentence.match(/[一-龥A-Za-z][一-龥A-Za-z\d]*[一-龥A-Za-z]+/g) || [];
   return matches
     .map(match => {
       const cleanMatch = match.replace(/[*]/g, '').trim();
-      if (isValidEntity(cleanMatch, lang)) {
+      if (isValidEntity(cleanMatch)) {
         return {
           id: `node-${cleanMatch.replace(/[^a-zA-Z0-9]/g, '_')}`,
           text: cleanMatch
