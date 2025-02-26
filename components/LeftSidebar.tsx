@@ -106,14 +106,14 @@ const LeftSidebar = () => {
 
   return (
     <div className="w-64 bg-white border-r border-gray-200 h-screen flex flex-col">
-      {/* Logo部分 */}
+      {/* Logo section */}
       <div className="p-4 border-b border-gray-200">
         <a href="/" className="flex items-center space-x-2">
           <span className="text-xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 text-transparent bg-clip-text">Think Graph</span>
         </a>
       </div>
 
-      {/* 用户认证部分 */}
+      {/* Authentication section */}
       <div className="p-4 border-b border-gray-200">
         {loading ? (
           <div className="flex items-center justify-center">
@@ -132,7 +132,7 @@ const LeftSidebar = () => {
               className="w-full justify-start text-red-500 hover:text-red-600 hover:bg-red-50"
             >
               <LogOut className="w-4 h-4 mr-2" />
-              退出登录
+              Sign Out
             </Button>
           </div>
         ) : (
@@ -145,13 +145,13 @@ const LeftSidebar = () => {
                     onClick={() => setAuthMode('register')}
                     className="text-blue-600 hover:text-blue-700"
                   >
-                    注册账号
+                    Register
                   </button>
                   <button
                     onClick={() => setAuthMode('reset')}
                     className="text-blue-600 hover:text-blue-700"
                   >
-                    忘记密码？
+                    Forgot Password?
                   </button>
                 </>
               ) : (
@@ -159,7 +159,7 @@ const LeftSidebar = () => {
                   onClick={() => setAuthMode('login')}
                   className="text-blue-600 hover:text-blue-700"
                 >
-                  返回登录
+                  Back to Login
                 </button>
               )}
             </div>
@@ -167,7 +167,7 @@ const LeftSidebar = () => {
         )}
       </div>
 
-      {/* 搜索历史部分 */}
+      {/* Search history section */}
       <div className="flex-1 overflow-auto p-4">
         {user ? (
           <>
@@ -175,7 +175,7 @@ const LeftSidebar = () => {
               <div className="flex items-center justify-between mb-2">
                 <Collapsible.Trigger className="flex items-center gap-2 p-2 hover:bg-gray-50 rounded-lg">
                   <Clock className="w-4 h-4 text-gray-500" />
-                  <span className="font-medium text-gray-700">搜索历史</span>
+                  <span className="font-medium text-gray-700">Search History</span>
                   {isHistoryOpen ? (
                     <ChevronUp className="w-4 h-4 text-gray-500" />
                   ) : (

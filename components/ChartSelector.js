@@ -3,43 +3,43 @@ import React from 'react';
 const chartTypes = [
   {
     id: 'tagSphere',
-    name: '3D标签云',
-    description: '动态旋转的3D标签展示',
+    name: '3D Tag Cloud',
+    description: 'Dynamic rotating 3D tag display',
     icon: '🌐',
     animationClass: 'preview-tag-sphere'
   },
   {
     id: 'fluid',
-    name: '流体动画',
-    description: '动态流动的粒子效果',
+    name: 'Fluid Animation',
+    description: 'Dynamic flowing particle effects',
     icon: '💫',
     animationClass: 'preview-fluid'
   },
   {
     id: 'radar',
-    name: '高级雷达图',
-    description: '多维数据分析与对比',
+    name: 'Advanced Radar',
+    description: 'Multi-dimensional data analysis',
     icon: '📊',
     animationClass: 'preview-radar'
   },
   {
     id: 'geoBubble',
-    name: '地理气泡图',
-    description: '全球数据分布可视化',
+    name: 'Geo Bubble',
+    description: 'Global data distribution visualization',
     icon: '🌍',
     animationClass: 'preview-geo'
   },
   {
     id: 'network',
-    name: '动态网络图',
-    description: '关系网络动态展示',
+    name: 'Dynamic Network',
+    description: 'Dynamic relationship network display',
     icon: '🕸️',
     animationClass: 'preview-network'
   },
   {
     id: 'waveform',
-    name: '声波图',
-    description: '动态波形数据展示',
+    name: 'Waveform',
+    description: 'Dynamic wave data display',
     icon: '〰️',
     animationClass: 'preview-wave'
   }
@@ -48,7 +48,7 @@ const chartTypes = [
 const ChartSelector = ({ onSelect, currentType }) => {
   return (
     <div className="chart-selector">
-      <h3 className="chart-selector-title">选择可视化类型</h3>
+      <h3 className="chart-selector-title">Select Visualization Type</h3>
       <div className="chart-grid">
         {chartTypes.map(chart => (
           <div

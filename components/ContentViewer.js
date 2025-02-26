@@ -101,25 +101,25 @@ const ContentViewer = ({ content, type }) => {
     const renderMermaid = async () => {
       if (type === 'mermaid' && mermaidRef.current) {
         setIsLoading(true);
-        console.log('开始渲染Mermaid图表...');
-        console.log('图表类型:', type);
-        console.log('图表内容:', content);
+        console.log('Starting to render Mermaid chart...');
+        console.log('Chart type:', type);
+        console.log('Chart content:', content);
         
         if (!content) {
-          console.log('没有图表内容，显示空状态');
+          console.log('No chart content, showing empty state');
           setIsLoading(false);
           return;
         }
 
         try {
-          // 清除之前的内容
+          // Clear previous content
           mermaidRef.current.innerHTML = '';
           
-          // 生成唯一ID
+          // Generate unique ID
           const id = `mermaid-${Math.random().toString(36).substr(2, 9)}`;
-          console.log('图表ID:', id);
+          console.log('Chart ID:', id);
           
-          // 创建一个临时容器
+          // Create a temporary container
           const tempContainer = document.createElement('div');
           tempContainer.id = id;
           tempContainer.className = 'mermaid';
@@ -127,8 +127,8 @@ const ContentViewer = ({ content, type }) => {
           mermaidRef.current.appendChild(tempContainer);
 
           try {
-            // 尝试渲染
-            console.log('调用mermaid.render，内容:', content);
+            // Try rendering
+            console.log('Calling mermaid.render, content:', content);
             await mermaid.initialize({
               startOnLoad: true,
               theme: 'default',
@@ -159,25 +159,25 @@ const ContentViewer = ({ content, type }) => {
             });
             
             const { svg } = await mermaid.render(id, content);
-            console.log('Mermaid渲染成功，SVG长度:', svg.length);
+            console.log('Mermaid rendering successful, SVG length:', svg.length);
             setMermaidSvg(svg);
-            console.log('✅ Mermaid 图表渲染成功');
+            console.log('✅ Mermaid chart rendering successful');
           } catch (error) {
-            console.error('Mermaid渲染错误:', error);
-            console.error('问题内容:', content);
+            console.error('Mermaid rendering error:', error);
+            console.error('Problem content:', content);
             mermaidRef.current.innerHTML = `
               <div class="p-4 text-red-500 bg-red-50 rounded-lg">
-                <p class="font-bold">图表渲染失败</p>
+                <p class="font-bold">Chart rendering failed</p>
                 <p class="text-sm mt-2">${error.message}</p>
                 <pre class="text-xs mt-2 p-2 bg-red-100 rounded overflow-auto">${content}</pre>
               </div>
             `;
           }
         } catch (error) {
-          console.error('Mermaid初始化错误:', error);
+          console.error('Mermaid initialization error:', error);
           mermaidRef.current.innerHTML = `
             <div class="p-4 text-red-500 bg-red-50 rounded-lg">
-              <p class="font-bold">图表初始化失败</p>
+              <p class="font-bold">Chart initialization failed</p>
               <p class="text-sm mt-2">${error.message}</p>
             </div>
           `;
@@ -185,7 +185,7 @@ const ContentViewer = ({ content, type }) => {
           setIsLoading(false);
         }
       } else {
-        console.log('跳过Mermaid渲染:', {
+        console.log('Skipping Mermaid render:', {
           type,
           hasContent: !!content,
           contentLength: content?.length,
@@ -214,7 +214,7 @@ const ContentViewer = ({ content, type }) => {
             <div className="flex items-center justify-center h-64">
               <div className="text-center">
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
-                <p className="text-gray-500">正在生成图表...</p>
+                <p className="text-gray-500">Generating chart...</p>
               </div>
             </div>
           );
@@ -223,8 +223,8 @@ const ContentViewer = ({ content, type }) => {
           return (
             <div className="flex items-center justify-center h-64">
               <div className="text-center">
-                <p className="text-gray-400 mb-2">暂无图表数据</p>
-                <p className="text-sm text-gray-400">请确保AI回答中包含了图表信息</p>
+                <p className="text-gray-400 mb-2">No chart data available</p>
+                <p className="text-sm text-gray-400">Please ensure AI response includes chart information</p>
               </div>
             </div>
           );
@@ -251,7 +251,7 @@ const ContentViewer = ({ content, type }) => {
           </div>
         );
       default:
-        return <div>不支持的内容类型</div>;
+        return <div>Unsupported content type</div>;
     }
   };
 

@@ -167,7 +167,7 @@ const EnhancedChart = ({ chartData = defaultData, initialType = 'tagSphere', onN
       <ChartSelector onSelect={handleChartTypeChange} currentType={chartType} />
       <div className="chart-toolbar">
         <button onClick={handleFullscreen} disabled={isLoading}>
-          全屏显示
+          Fullscreen
         </button>
       </div>
       <div className="chart-container" ref={containerRef}>

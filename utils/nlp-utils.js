@@ -27,19 +27,31 @@ export const extractKeywords = (content) => {
 
 // 情感分析
 export const analyzeSentiment = (content) => {
-  // 简单的情感分析
-  const positiveWords = ['好', '优秀', '棒', '强', '高', '快'];
-  const negativeWords = ['差', '糟', '弱', '低', '慢', '坏'];
+  // 双语情感词典
+  const sentimentDictionaries = {
+    zh: {
+      positive: ['好', '优秀', '棒', '强', '高', '快'],
+      negative: ['差', '糟', '弱', '低', '慢', '坏']
+    },
+    en: {
+      positive: ['good', 'great', 'excellent', 'strong', 'high', 'fast'],
+      negative: ['bad', 'poor', 'weak', 'low', 'slow', 'terrible']
+    }
+  };
 
   let positiveCount = 0;
   let negativeCount = 0;
 
-  positiveWords.forEach(word => {
-    positiveCount += (content.match(new RegExp(word, 'g')) || []).length;
+  // 检测语言
+  const hasChineseChars = /[\u4e00-\u9fa5]/.test(content);
+  const dict = hasChineseChars ? sentimentDictionaries.zh : sentimentDictionaries.en;
+
+  dict.positive.forEach(word => {
+    positiveCount += (content.match(new RegExp(word, 'gi')) || []).length;
   });
 
-  negativeWords.forEach(word => {
-    negativeCount += (content.match(new RegExp(word, 'g')) || []).length;
+  dict.negative.forEach(word => {
+    negativeCount += (content.match(new RegExp(word, 'gi')) || []).length;
   });
 
   const total = positiveCount + negativeCount || 1;
@@ -57,11 +69,20 @@ export const analyzeSentiment = (content) => {
 // 实体抽取函数
 export const extractEntities = async (text) => {
   try {
-    // 确保输入文本有效
     if (!text || typeof text !== 'string') {
       console.warn('Invalid input text in extractEntities');
       return [];
     }
+
+    // 支持中英文实体识别
+    const patterns = {
+      zh: /[一-龥][一-龥\d]*[一-龥]+/g,
+      en: /[A-Z][a-z]+(?:\s+[A-Z][a-z]+)*/g
+    };
+
+    // 检测语言
+    const hasChineseChars = /[\u4e00-\u9fa5]/.test(text);
+    const matches = text.match(hasChineseChars ? patterns.zh : patterns.en) || [];
 
     // 规范化ID的辅助函数
     const normalizeId = (text) => {
@@ -73,39 +94,33 @@ export const extractEntities = async (text) => {
       return `node-${baseId.replace(/[^a-zA-Z0-9]/g, '_')}`;
     };
 
-    const sentences = text.split(/[。！？.!?]/);
     const entities = new Map(); // 使用 Map 来去重
     let entityId = 0;
 
-    sentences.forEach(sentence => {
-      // 提取可能的实体（2个或更多连续的非标点字符）
-      const matches = sentence.match(/[一-龥A-Za-z][一-龥A-Za-z\d]*[一-龥A-Za-z]+/g) || [];
-      
-      matches.forEach(match => {
-        const cleanMatch = match.replace(/[*]/g, '').trim();
-        if (isValidEntity(cleanMatch) && !entities.has(cleanMatch)) {
-          const nodeId = normalizeId(cleanMatch);
-          const entity = {
-            id: nodeId,
-            text: cleanMatch,
-            label: cleanMatch,
-            isEvent: hasEventIndicators(cleanMatch),
-            isAttribute: hasAttributeIndicators(cleanMatch),
-            importance: calculateImportance(cleanMatch, text),
-            properties: {}
-          };
+    matches.forEach(match => {
+      const cleanMatch = match.replace(/[*]/g, '').trim();
+      if (isValidEntity(cleanMatch) && !entities.has(cleanMatch)) {
+        const nodeId = normalizeId(cleanMatch);
+        const entity = {
+          id: nodeId,
+          text: cleanMatch,
+          label: cleanMatch,
+          isEvent: hasEventIndicators(cleanMatch),
+          isAttribute: hasAttributeIndicators(cleanMatch),
+          importance: calculateImportance(cleanMatch, text),
+          properties: {}
+        };
 
-          console.log('创建实体:', {
-            ID: nodeId,
-            文本: cleanMatch,
-            类型: entity.isEvent ? 'event' : (entity.isAttribute ? 'attribute' : 'entity')
-          });
+        console.log('创建实体:', {
+          ID: nodeId,
+          文本: cleanMatch,
+          类型: entity.isEvent ? 'event' : (entity.isAttribute ? 'attribute' : 'entity')
+        });
 
-          entities.set(cleanMatch, entity);
-          // 同时用规范化ID作为键存储，以便后续查找
-          entities.set(nodeId, entity);
-        }
-      });
+        entities.set(cleanMatch, entity);
+        // 同时用规范化ID作为键存储，以便后续查找
+        entities.set(nodeId, entity);
+      }
     });
 
     const result = Array.from(entities.values());
