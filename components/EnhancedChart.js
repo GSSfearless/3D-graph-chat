@@ -12,29 +12,7 @@ const defaultData = {
       { text: "Node.js", size: 90, color: "#3c873a" },
       { text: "TypeScript", size: 85, color: "#007acc" },
       { text: "Python", size: 75, color: "#3776ab" }
-    ],
-    options: {
-      radius: 300,
-      maxSpeed: 20,
-      initSpeed: 40,
-      direction: 135,
-      keep: true,
-      useContainerInlineStyles: true,
-      containerClass: '3d-tag-cloud-container',
-      itemClass: '3d-tag-cloud-item',
-      textSizeRatio: {
-        en: 1,
-        zh: 0.8
-      },
-      spacing: {
-        en: 20,
-        zh: 25
-      },
-      fontFamily: {
-        en: 'system-ui, -apple-system, sans-serif',
-        zh: 'PingFang SC, Microsoft YaHei, sans-serif'
-      }
-    }
+    ]
   },
   fluid: {
     points: Array.from({ length: 50 }, (_, i) => ({
@@ -140,45 +118,7 @@ const EnhancedChart = ({ chartData = defaultData, initialType = 'tagSphere', onN
       // 根据类型渲染不同图表
       switch (chartType) {
         case 'tagSphere':
-          const processedTags = data.tags.map(tag => {
-            const isChineseText = /[\u4e00-\u9fa5]/.test(tag.text);
-            return {
-              ...tag,
-              displaySize: tag.size * (isChineseText ? 0.8 : 1),
-              fontFamily: isChineseText ? 
-                data.options.fontFamily.zh : 
-                data.options.fontFamily.en,
-              spacing: isChineseText ?
-                data.options.spacing.zh :
-                data.options.spacing.en
-            };
-          });
-
-          renderer.render3DTagSphere({
-            ...data,
-            tags: processedTags,
-            options: {
-              ...data.options,
-              onTagClick: (tag) => {
-                console.log('Tag clicked:', tag);
-                onNodeClick && onNodeClick(tag);
-              },
-              animation: {
-                duration: 800,
-                easing: 'easeInOutQuad'
-              },
-              layout: {
-                spiral: true,
-                randomStart: true,
-                maxTries: 200
-              },
-              performance: {
-                throttleRAF: true,
-                useRequestIdleCallback: true,
-                batchSize: 5
-              }
-            }
-          });
+          renderer.render3DTagSphere(data);
           break;
         case 'fluid':
           renderer.renderFluidChart(data);
