@@ -124,6 +124,38 @@ export const analyzeSentiment = (content) => {
   };
 };
 
+// 辅助函数
+const normalizeId = (text) => {
+  if (!text) return '';
+  const cleanText = text.replace(/[*]/g, '').trim();
+  // 移除已存在的 'node-' 前缀，避免重复添加
+  const baseId = cleanText.startsWith('node-') ? cleanText.slice(5) : cleanText;
+  // 统一处理特殊字符
+  return `node-${baseId.replace(/[^a-zA-Z0-9]/g, '_')}`;
+};
+
+// 实体验证函数
+const isValidEntity = (text) => {
+  if (!text || typeof text !== 'string') return false;
+  
+  // 移除空白字符
+  const cleanText = text.trim();
+  
+  // 检查长度
+  if (cleanText.length < 2) return false;
+  
+  // 检查是否只包含数字
+  if (/^\d+$/.test(cleanText)) return false;
+  
+  // 检查是否包含无效字符
+  if (/[<>{}[\]\\\/]/.test(cleanText)) return false;
+  
+  // 检查中英文字符
+  const hasValidChars = /[a-zA-Z\u4e00-\u9fa5]/.test(cleanText);
+  
+  return hasValidChars;
+};
+
 // 实体抽取函数
 export const extractEntities = async (text) => {
   try {
@@ -417,36 +449,62 @@ const generateSentimentTimeline = (content) => {
   }));
 };
 
-const isValidEntity = (text) => {
-  return text.length >= 2 && !/^\d+$/.test(text);
-};
-
+// 事件指示器检查
 const hasEventIndicators = (text) => {
-  const eventPatterns = [
-    /[了过着]$/,
-    /^(开始|结束|发生|完成|启动)/,
-    /(并|或|而|但|然后)/
-  ];
-  return eventPatterns.some(pattern => pattern.test(text));
+  const lang = detectLanguage(text);
+  const patterns = {
+    zh: {
+      suffixes: /(了|过|着)$/,
+      prefixes: /^(开始|结束|发生|完成|启动)/,
+      connectors: /(并|或|而|但|然后)/
+    },
+    en: {
+      suffixes: /(ed|ing)$/,
+      prefixes: /^(start|end|begin|finish|complete)/i,
+      connectors: /(and|or|but|then)/i
+    }
+  };
+
+  const pattern = patterns[lang];
+  return pattern.suffixes.test(text) || 
+         pattern.prefixes.test(text) || 
+         pattern.connectors.test(text);
 };
 
+// 属性指示器检查
 const hasAttributeIndicators = (text) => {
-  const attributePatterns = [
-    /^(大小|长度|宽度|高度|深度|重量|颜色|形状)/,
-    /(性|度|率|量|值|数|比)$/,
-    /^(可以|能够|应该|必须|不能|不可以)/
-  ];
-  return attributePatterns.some(pattern => pattern.test(text));
+  const lang = detectLanguage(text);
+  const patterns = {
+    zh: {
+      prefixes: /^(大小|长度|宽度|高度|深度|重量|颜色|形状)/,
+      suffixes: /(性|度|率|量|值|数|比)$/,
+      modals: /^(可以|能够|应该|必须|不能|不可以)/
+    },
+    en: {
+      prefixes: /^(size|length|width|height|depth|weight|color|shape)/i,
+      suffixes: /(ness|ity|tion|sion|ance|ence|ment|ship)$/,
+      modals: /^(can|could|should|must|may|might)/i
+    }
+  };
+
+  const pattern = patterns[lang];
+  return pattern.prefixes.test(text) || 
+         pattern.suffixes.test(text) || 
+         pattern.modals.test(text);
 };
 
-const calculateImportance = (entity, fullText) => {
+// 计算重要性分数
+const calculateImportance = (text, fullText) => {
   try {
-    const escapedEntity = entity.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
-    const regex = new RegExp(escapedEntity, 'g');
-    const frequency = (fullText.match(regex) || []).length;
-    return Math.min(1, 0.3 + (frequency * 0.1));
+    const lang = detectLanguage(text);
+    const frequency = (fullText.match(new RegExp(text, 'gi')) || []).length;
+    const lengthFactor = lang === 'zh' ? 
+      Math.min(1, text.length / 4) : // 中文按字符长度计算
+      Math.min(1, text.split(/\s+/).length / 3); // 英文按词数计算
+    
+    return Math.min(1, 0.3 + (frequency * 0.1) + (lengthFactor * 0.2));
   } catch (error) {
-    console.error('计算重要性时出错:', error);
+    console.error('Error calculating importance:', error);
     return 0.3; // 返回默认重要性
   }
 };
