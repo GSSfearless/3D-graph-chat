@@ -1,28 +1,86 @@
+// 语言检测函数
+const detectLanguage = (text) => {
+  const chineseChars = (text.match(/[\u4e00-\u9fa5]/g) || []).length;
+  const englishChars = (text.match(/[a-zA-Z]/g) || []).length;
+  return chineseChars > englishChars ? 'zh' : 'en';
+};
+
+// 分词函数
+const splitWords = (content) => {
+  const lang = detectLanguage(content);
+  if (lang === 'zh') {
+    // 中文分词：按字符分，后续可以集成结巴分词等工具
+    return content.match(/[\u4e00-\u9fa5]+/g) || [];
+  } else {
+    // 英文分词：考虑各种分隔符和特殊情况
+    return content
+      .split(/[\s,.!?;:()\[\]{}'"]+/)
+      .filter(word => word.length > 0)
+      .map(word => word.toLowerCase());
+  }
+};
+
 // 提取关键词
 export const extractKeywords = (content) => {
-  // 简单的分词和权重计算
-  const words = content.split(/\s+/);
+  const words = splitWords(content);
   const wordFreq = {};
+  const lang = detectLanguage(content);
   
   // 计算词频
   words.forEach(word => {
-    word = word.toLowerCase().replace(/[^\w\u4e00-\u9fa5]/g, '');
-    if (word && word.length > 1) {
-      wordFreq[word] = (wordFreq[word] || 0) + 1;
+    // 根据语言使用不同的清理规则
+    const cleanWord = lang === 'zh' 
+      ? word
+      : word.toLowerCase().replace(/[^\w\s-]/g, '');
+      
+    if (cleanWord && (
+      (lang === 'zh' && cleanWord.length >= 2) || 
+      (lang === 'en' && cleanWord.length >= 3)
+    )) {
+      wordFreq[cleanWord] = (wordFreq[cleanWord] || 0) + 1;
     }
   });
 
-  // 转换为关键词数组
+  // 计算TF-IDF分数
+  const totalWords = words.length;
   const keywords = Object.entries(wordFreq)
-    .map(([text, freq]) => ({
-      text,
-      weight: freq / words.length,
-      sentiment: analyzeSentimentForWord(text)
-    }))
+    .map(([text, freq]) => {
+      const tf = freq / totalWords;
+      const importance = calculateImportance(text, content);
+      return {
+        text,
+        weight: tf * importance,
+        size: calculateNodeSize(text),
+        color: generateNodeColor(text, lang),
+        sentiment: analyzeSentimentForWord(text)
+      };
+    })
     .sort((a, b) => b.weight - a.weight)
     .slice(0, 20);
 
   return keywords;
+};
+
+// 计算节点大小
+const calculateNodeSize = (text) => {
+  const hasChineseChars = /[\u4e00-\u9fa5]/.test(text);
+  const baseSize = hasChineseChars ? 70 : 100;
+  const lengthFactor = Math.max(0.6, 1 - (text.length - 4) * 0.1);
+  return baseSize * lengthFactor;
+};
+
+// 生成节点颜色
+const generateNodeColor = (text, lang) => {
+  const sentiment = analyzeSentimentForWord(text);
+  const colors = {
+    positive: ['#61dafb', '#42b883', '#3776ab'],
+    neutral: ['#666666', '#888888', '#999999'],
+    negative: ['#dd1b16', '#ff6b6b', '#ff8787']
+  };
+  
+  const colorSet = colors[sentiment];
+  const index = Math.floor(Math.random() * colorSet.length);
+  return colorSet[index];
 };
 
 // 情感分析
@@ -74,69 +132,78 @@ export const extractEntities = async (text) => {
       return [];
     }
 
-    // 支持中英文实体识别
+    // 改进的实体识别模式
     const patterns = {
-      zh: /[一-龥][一-龥\d]*[一-龥]+/g,
-      en: /[A-Z][a-z]+(?:\s+[A-Z][a-z]+)*/g
+      zh: {
+        word: /[一-龥][一-龥\d]*[一-龥]+/g,
+        phrase: /[一-龥]{2,}(?:的[一-龥]{2,})?/g
+      },
+      en: {
+        word: /[A-Za-z]+(?:'[A-Za-z]+)*(?:-[A-Za-z]+)*/g,
+        phrase: /[A-Z][a-z]+(?:\s+(?:[A-Z][a-z]+|and|or|of|in|on|at|to|for|with))*[a-z]*/g
+      }
     };
 
-    // 检测语言
-    const hasChineseChars = /[\u4e00-\u9fa5]/.test(text);
-    const matches = text.match(hasChineseChars ? patterns.zh : patterns.en) || [];
+    const lang = detectLanguage(text);
+    const matches = new Set([
+      ...(text.match(patterns[lang].word) || []),
+      ...(text.match(patterns[lang].phrase) || [])
+    ]);
 
-    // 规范化ID的辅助函数
-    const normalizeId = (text) => {
-      if (!text) return '';
-      const cleanText = text.replace(/[*]/g, '').trim();
-      // 移除已存在的 'node-' 前缀，避免重复添加
-      const baseId = cleanText.startsWith('node-') ? cleanText.slice(5) : cleanText;
-      // 统一处理特殊字符
-      return `node-${baseId.replace(/[^a-zA-Z0-9]/g, '_')}`;
-    };
-
-    const entities = new Map(); // 使用 Map 来去重
-    let entityId = 0;
-
-    matches.forEach(match => {
-      const cleanMatch = match.replace(/[*]/g, '').trim();
+    const entities = new Map();
+    for (const match of matches) {
+      const cleanMatch = match.trim();
       if (isValidEntity(cleanMatch) && !entities.has(cleanMatch)) {
         const nodeId = normalizeId(cleanMatch);
         const entity = {
           id: nodeId,
           text: cleanMatch,
           label: cleanMatch,
+          size: calculateNodeSize(cleanMatch),
+          color: generateNodeColor(cleanMatch, lang),
           isEvent: hasEventIndicators(cleanMatch),
           isAttribute: hasAttributeIndicators(cleanMatch),
           importance: calculateImportance(cleanMatch, text),
-          properties: {}
+          properties: {
+            language: lang,
+            length: cleanMatch.length,
+            type: getEntityType(cleanMatch)
+          }
         };
 
-        console.log('创建实体:', {
+        console.log('Creating entity:', {
           ID: nodeId,
-          文本: cleanMatch,
-          类型: entity.isEvent ? 'event' : (entity.isAttribute ? 'attribute' : 'entity')
+          Text: cleanMatch,
+          Type: entity.isEvent ? 'event' : (entity.isAttribute ? 'attribute' : 'entity'),
+          Size: entity.size,
+          Color: entity.color
         });
 
         entities.set(cleanMatch, entity);
-        // 同时用规范化ID作为键存储，以便后续查找
-        entities.set(nodeId, entity);
       }
-    });
+    }
 
-    const result = Array.from(entities.values());
-    // 去重，确保每个ID只出现一次
-    const seen = new Set();
-    const uniqueResult = result.filter(entity => {
-      if (seen.has(entity.id)) return false;
-      seen.add(entity.id);
-      return true;
-    });
-
-    return uniqueResult;
+    return Array.from(entities.values());
   } catch (error) {
     console.error('Error in extractEntities:', error);
     return [];
   }
+};
+
+// 获取实体类型
+const getEntityType = (text) => {
+  const patterns = {
+    person: /^(?:[A-Z][a-z]+ )*[A-Z][a-z]+$|^[\u4e00-\u9fa5]{2,3}$/,
+    organization: /(?:Inc\.|Corp\.|Ltd\.|LLC|Company|Group|公司|集团|企业)$/,
+    location: /(?:Street|Road|Avenue|City|State|Country|省|市|区|街|路)$/,
+    technology: /(?:API|SDK|Framework|Library|Platform|技术|框架|平台)$/,
+    concept: /(?:Theory|Method|Process|Strategy|理论|方法|过程|策略)$/
+  };
+
+  for (const [type, pattern] of Object.entries(patterns)) {
+    if (pattern.test(text)) return type;
+  }
+  return 'general';
 };
 
 // 关系抽取函数
