@@ -26,8 +26,8 @@ export default async function handler(req, res) {
       {
         role: 'system',
         content: useDeepThinking 
-          ? '你现在处于深度思考模式。请仔细分析问题，并提供详细的推理过程。'
-          : '你是一个知识助手。请简洁明了地回答问题。'
+          ? ''
+          : ''
       },
       {
         role: 'user',
