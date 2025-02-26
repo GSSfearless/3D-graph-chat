@@ -38,7 +38,7 @@ export default function Search() {
 
   useEffect(() => {
     if (initialQuery && user) {
-      // 初始查询时添加到搜索历史
+      // Add to search history on initial query
       HistoryManager.addSearchHistory(initialQuery.toString());
     }
   }, [initialQuery, user]);
@@ -53,15 +53,15 @@ export default function Search() {
     setReasoningProcess('');
 
     try {
-      // 只在启用联网搜索时执行 RAG 搜索
+      // Only perform RAG search when web search is enabled
       if (useWebSearch) {
         const searchResponse = await fetch(`/api/rag-search?query=${encodeURIComponent(searchQuery)}`);
         if (!searchResponse.ok) {
-          throw new Error('搜索请求失败');
+          throw new Error('Search request failed');
         }
       }
 
-      // 发送聊天请求
+      // Send chat request
       const chatResponse = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -75,7 +75,7 @@ export default function Search() {
         throw new Error(`HTTP error! status: ${chatResponse.status}`);
       }
 
-      // 处理流式响应
+      // Handle streaming response
       const reader = chatResponse.body.getReader();
       const decoder = new TextDecoder();
       let answer = '';
@@ -111,10 +111,10 @@ export default function Search() {
                       setStreamedAnswer(answer);
                       
                       try {
-                        // 实时更新知识图谱
+                        // Real-time knowledge graph update
                         const graphData = await knowledgeProcessor.current.processText(answer);
                         if (graphData && Array.isArray(graphData.nodes) && Array.isArray(graphData.edges)) {
-                          // 转换数据格式以适配 KnowledgeGraph 组件
+                          // Format data for KnowledgeGraph component
                           const formattedData = {
                             nodes: graphData.nodes.map(node => ({
                               data: {
@@ -144,7 +144,7 @@ export default function Search() {
                           setGraphData(null);
                         }
                       } catch (error) {
-                        console.error('生成知识图谱失败:', error);
+                        console.error('Failed to generate knowledge graph:', error);
                         setGraphData(null);
                       }
                     }
@@ -155,10 +155,10 @@ export default function Search() {
                       setStreamedAnswer(completeAnswer);
                       
                       try {
-                        // 处理完整回答，生成最终知识图谱
+                        // Process complete answer and generate final knowledge graph
                         const finalGraphData = await knowledgeProcessor.current.processText(completeAnswer);
                         if (finalGraphData && Array.isArray(finalGraphData.nodes) && Array.isArray(finalGraphData.edges)) {
-                          // 转换数据格式以适配 KnowledgeGraph 组件
+                          // Format data for KnowledgeGraph component
                           const formattedData = {
                             nodes: finalGraphData.nodes.map(node => ({
                               data: {
@@ -188,14 +188,14 @@ export default function Search() {
                           setGraphData(null);
                         }
                       } catch (error) {
-                        console.error('生成最终知识图谱失败:', error);
+                        console.error('Failed to generate final knowledge graph:', error);
                         setGraphData(null);
                       }
                     }
                     break;
                 }
               } catch (e) {
-                console.error('解析响应数据失败:', e);
+                console.error('Failed to parse response data:', e);
                 continue;
               }
             }
@@ -206,7 +206,7 @@ export default function Search() {
       }
     } catch (error) {
       console.error('Search process error:', error);
-      alert('搜索过程中出错，请重试');
+      alert('An error occurred during search. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -232,7 +232,7 @@ export default function Search() {
         query: { q: query }
       });
       handleSearch(query);
-      // 搜索完成后清空搜索框
+      // Clear search box after search
       setQuery('');
     }
   };
@@ -246,135 +246,98 @@ export default function Search() {
       <LeftSidebar />
       <div className="flex-1 flex flex-col overflow-hidden">
         <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 overflow-hidden">
-          {/* 主要内容区域 */}
+          {/* Main content area */}
           <div className="grid grid-cols-12 gap-4 h-screen">
-            {/* 3D知识图谱显示区域 - 固定位置 */}
-            <div className="col-span-9 relative">
-              <div className="bg-white rounded-xl shadow-sm border border-gray-100 h-full sticky top-0">
-                {loading ? (
-                  <div className="flex items-center justify-center h-full">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
-                  </div>
-                ) : graphData ? (
-                  <KnowledgeGraph
-                    data={graphData}
-                    onNodeClick={handleNodeClick}
-                    style={{ height: '100%' }}
-                    defaultMode="3d"
-                  />
-                ) : (
-                  <div className="flex items-center justify-center h-full">
-                    <p className="text-gray-400">在下方输入问题开始查询</p>
-                  </div>
-                )}
+            {/* Left panel - Knowledge Graph */}
+            <div className="col-span-6 p-4 overflow-hidden">
+              <div className="bg-white rounded-lg shadow-lg h-full flex flex-col">
+                <div className="p-4 border-b border-gray-200">
+                  <h2 className="text-xl font-semibold text-gray-800">Knowledge Graph</h2>
+                  <p className="text-sm text-gray-600">Visualizing connections and relationships</p>
+                </div>
+                <div className="flex-1 relative overflow-hidden">
+                  {graphData ? (
+                    <KnowledgeGraph data={graphData} onNodeClick={handleNodeClick} />
+                  ) : (
+                    <div className="flex items-center justify-center h-full">
+                      <p className="text-gray-500">Enter a query to generate a knowledge graph</p>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
 
-            {/* 文本显示区域 - 可滚动 */}
-            <div className="col-span-3 h-[calc(100vh-4rem)] overflow-y-auto custom-scrollbar">
-              <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
-                {useDeepThinking && reasoningProcess && (
-                  <div className="mb-4 p-3 bg-purple-50 rounded-lg border border-purple-200">
-                    <div className="flex items-center space-x-2 mb-2">
-                      <h3 className="text-sm font-semibold text-purple-700">💭 思考过程</h3>
+            {/* Right panel - AI Response */}
+            <div className="col-span-6 p-4 overflow-hidden">
+              <div className="bg-white rounded-lg shadow-lg h-full flex flex-col">
+                <div className="p-4 border-b border-gray-200">
+                  <h2 className="text-xl font-semibold text-gray-800">AI Analysis</h2>
+                  <p className="text-sm text-gray-600">Intelligent insights and explanations</p>
+                </div>
+                <div className="flex-1 overflow-y-auto p-4">
+                  {loading ? (
+                    <div className="flex items-center justify-center h-full">
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
                     </div>
-                    <div className="prose prose-sm prose-purple max-w-none">
-                      <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                        {reasoningProcess}
-                      </ReactMarkdown>
+                  ) : streamedAnswer ? (
+                    <div className="prose max-w-none">
+                      <ReactMarkdown remarkPlugins={[remarkGfm]}>{streamedAnswer}</ReactMarkdown>
                     </div>
-                  </div>
-                )}
-                {streamedAnswer && (
-                  <div className={useDeepThinking && reasoningProcess ? "mt-4" : ""}>
-                    <ReactMarkdown remarkPlugins={[remarkGfm]} className="prose prose-sm max-w-none">
-                      {streamedAnswer}
-                    </ReactMarkdown>
-                  </div>
-                )}
+                  ) : (
+                    <div className="flex items-center justify-center h-full">
+                      <p className="text-gray-500">Enter a query to start the analysis</p>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           </div>
 
-          {/* 底部搜索区域 */}
-          <div className="fixed bottom-4 left-1/2 transform -translate-x-1/2 w-full max-w-2xl px-4">
-            <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-gray-100 p-4 transition-all duration-300 hover:shadow-xl hover:bg-white/90">
-              <div className="flex items-center space-x-4">
-                <div className="flex items-center space-x-3">
-                  <span className="text-sm font-medium bg-gradient-to-r from-purple-600 to-pink-600 text-transparent bg-clip-text">Deepseek</span>
-                  <button
-                    onClick={() => setUseDeepThinking(!useDeepThinking)}
-                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 ${
-                      useDeepThinking ? 'bg-purple-500' : 'bg-gray-200'
-                    }`}
-                  >
-                    <span
-                      className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-lg transition-transform duration-300 ease-in-out ${
-                        useDeepThinking ? 'translate-x-6' : 'translate-x-1'
-                      }`}
-                    />
-                  </button>
-                </div>
-                <div className="relative flex-1">
+          {/* Search bar */}
+          <div className="fixed bottom-0 left-0 right-0 bg-white bg-opacity-95 shadow-lg p-4">
+            <form onSubmit={handleSubmit} className="max-w-4xl mx-auto flex items-center gap-4">
+              <div className="flex-1">
+                <input
+                  ref={searchInputRef}
+                  type="text"
+                  value={query}
+                  onChange={handleInputChange}
+                  placeholder="Ask anything or explore ideas..."
+                  className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all"
+                />
+              </div>
+              <div className="flex items-center gap-4">
+                <label className="flex items-center gap-2">
                   <input
-                    ref={searchInputRef}
-                    type="text"
-                    value={query}
-                    onChange={handleInputChange}
-                    onKeyPress={(e) => e.key === 'Enter' && handleSubmit(e)}
-                    placeholder={defaultQuery}
-                    className="w-full px-4 py-2.5 bg-white/50 border border-gray-200 rounded-xl 
-                             text-sm transition-all duration-300
-                             focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent
-                             hover:border-blue-300 hover:shadow-sm"
+                    type="checkbox"
+                    checked={useWebSearch}
+                    onChange={(e) => setUseWebSearch(e.target.checked)}
+                    className="form-checkbox h-4 w-4 text-blue-600"
                   />
-                </div>
+                  <span className="text-sm text-gray-700">Web Search</span>
+                </label>
+                <label className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    checked={useDeepThinking}
+                    onChange={(e) => setUseDeepThinking(e.target.checked)}
+                    className="form-checkbox h-4 w-4 text-blue-600"
+                  />
+                  <span className="text-sm text-gray-700">Deep Analysis</span>
+                </label>
                 <button
-                  onClick={handleSubmit}
+                  type="submit"
+                  className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg flex items-center gap-2 transition-colors"
                   disabled={loading}
-                  className="flex items-center justify-center w-10 h-10 rounded-xl 
-                           bg-gradient-to-r from-blue-500 to-blue-600 
-                           text-white shadow-md transition-all duration-300
-                           hover:from-blue-600 hover:to-blue-700 hover:shadow-lg
-                           focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2
-                           disabled:opacity-50 disabled:cursor-not-allowed
-                           disabled:hover:shadow-none"
                 >
-                  <FontAwesomeIcon icon={faArrowRight} className="w-4 h-4" />
+                  <span>Analyze</span>
+                  <FontAwesomeIcon icon={faArrowRight} />
                 </button>
               </div>
-            </div>
+            </form>
           </div>
         </div>
       </div>
-
-      <style jsx>{`
-        .hide-scrollbar {
-          -ms-overflow-style: none;
-          scrollbar-width: none;
-        }
-        .hide-scrollbar::-webkit-scrollbar {
-          display: none;
-        }
-        
-        .custom-scrollbar::-webkit-scrollbar {
-          width: 6px;
-        }
-        
-        .custom-scrollbar::-webkit-scrollbar-track {
-          background: #f1f1f1;
-          border-radius: 3px;
-        }
-        
-        .custom-scrollbar::-webkit-scrollbar-thumb {
-          background: #c1c1c1;
-          border-radius: 3px;
-        }
-        
-        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-          background: #a8a8a8;
-        }
-      `}</style>
     </div>
   );
 }

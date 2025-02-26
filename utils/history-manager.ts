@@ -24,7 +24,7 @@ export class HistoryManager {
 
   static setCurrentUserId(userId: string | null) {
     this.currentUserId = userId;
-    // 重置缓存
+    // Reset cache
     this.cachedHistory = [];
     this.cachedFavorites = [];
   }
@@ -124,7 +124,7 @@ export class HistoryManager {
     if (!this.currentUserId) return [];
 
     try {
-      // 如果没有缓存，则从服务器获取
+      // If no cache, fetch from server
       if (this.cachedFavorites.length === 0) {
         const favs = await favorites.getByUserId(this.currentUserId);
         this.cachedFavorites = favs.map(item => ({
@@ -146,13 +146,13 @@ export class HistoryManager {
     if (!this.currentUserId) return [];
 
     try {
-      // 先添加到服务器
+      // Add to server first
       const newItem = await favorites.add({
         ...item,
         user_id: this.currentUserId
       });
 
-      // 更新缓存
+      // Update cache
       const favoriteItem = {
         id: newItem.id,
         title: newItem.title,
