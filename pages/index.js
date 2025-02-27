@@ -50,22 +50,22 @@ function Home() {
         
         {/* Search Bar */}
         <div className={`max-w-2xl mx-auto relative group transform transition-all duration-1000 delay-300 ${isVisible ? 'translate-y-0 opacity-100' : 'translate-y-10 opacity-0'}`}>
-          <div className="absolute inset-0 bg-gradient-to-r from-blue-200 to-purple-200 opacity-20 blur-xl group-hover:opacity-30 transition-opacity rounded-full"></div>
-          <div className="relative flex items-center">
+          <div className="absolute inset-0 bg-gradient-to-r from-blue-200/50 to-purple-200/50 opacity-20 blur-2xl group-hover:opacity-30 transition-opacity rounded-full"></div>
+          <div className="relative flex items-center bg-white rounded-full shadow-[0_0_20px_rgba(0,0,0,0.05)] group-hover:shadow-[0_0_25px_rgba(0,0,0,0.1)] transition-all duration-300">
             <input
               type="text"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               onKeyPress={handleKeyPress}
               placeholder="输入任何主题，开始你的知识探索..."
-              className="w-full px-8 py-6 text-lg rounded-full border-2 border-blue-100 focus:border-blue-300 focus:ring-4 focus:ring-blue-100 transition-all shadow-lg hover:shadow-xl"
+              className="w-full px-8 py-5 text-lg rounded-full bg-transparent border-2 border-transparent focus:border-blue-100 focus:ring-2 focus:ring-blue-50 transition-all outline-none"
             />
             <button
               onClick={handleSearch}
-              className="absolute right-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-8 py-4 rounded-full flex items-center gap-3 transition-all transform hover:scale-105 hover:shadow-lg"
+              className="absolute right-2 bg-gradient-to-r from-blue-500 to-indigo-600 text-white px-6 py-3 rounded-full flex items-center gap-2 transition-all transform hover:translate-x-1 hover:shadow-lg group"
             >
-              <FontAwesomeIcon icon={faSearch} className="text-lg" />
               <span className="hidden md:inline font-medium">开始探索</span>
+              <FontAwesomeIcon icon={faSearch} className="text-lg transition-transform group-hover:scale-110" />
             </button>
           </div>
         </div>
