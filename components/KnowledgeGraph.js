@@ -347,11 +347,11 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
     // 创建自定义着色器材质
     const material = new THREE.ShaderMaterial({
       uniforms: {
-        color: { type: 'c', value: new THREE.Color(edgeData.type ? getEdgeColor(edgeData.type) : theme.edge.color) },
-        opacity: { type: 'f', value: theme.edge.opacity },
-        flowFactor: { type: 'f', value: 0.0 }, // 流动动画因子
-        dashSize: { type: 'f', value: 0.1 }, // 虚线大小
-        totalSize: { type: 'f', value: 1.0 } // 总长度
+        color: { value: new THREE.Color(edgeData.type ? getEdgeColor(edgeData.type) : theme.edge.color) },
+        opacity: { value: theme.edge.opacity },
+        flowFactor: { value: 0.0 }, // 流动动画因子
+        dashSize: { value: 0.1 }, // 虚线大小
+        totalSize: { value: 1.0 } // 总长度
       },
       vertexShader: `
         attribute float flowOffset;
@@ -378,12 +378,6 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
       transparent: true,
       depthWrite: false
     });
-
-    // 初始化材质的用户数据
-    material.userData = {
-      isFlowing: false,
-      flowDirection: 1
-    };
 
     const line = new THREE.Line(geometry, material);
     group.add(line);
@@ -740,19 +734,15 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
           }
           
           // 更新流动动画
-          const line = object.children?.[0];
-          if (line && line.material?.userData?.isFlowing && line.material?.uniforms?.flowFactor) {
+          const line = object.children[0];
+          if (line && line.material.userData?.isFlowing) {
             const flowSpeed = 0.5; // 控制流动速度
             const direction = line.material.userData.flowDirection || 1;
-            try {
-              line.material.uniforms.flowFactor.value += flowSpeed * direction * 0.01;
-              
-              // 重置流动因子以避免数值过大
-              if (Math.abs(line.material.uniforms.flowFactor.value) > 1.0) {
-                line.material.uniforms.flowFactor.value = 0.0;
-              }
-            } catch (error) {
-              console.warn('更新边的流动效果时出错:', error);
+            line.material.uniforms.flowFactor.value += flowSpeed * direction * 0.01;
+            
+            // 重置流动因子以避免数值过大
+            if (Math.abs(line.material.uniforms.flowFactor.value) > 1.0) {
+              line.material.uniforms.flowFactor.value = 0.0;
             }
           }
         }
@@ -760,12 +750,8 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
 
       // 更新节点发光效果
       scene.traverse((object) => {
-        if (object.material?.uniforms?.viewVector) {
-          try {
-            object.material.uniforms.viewVector.value = camera.position;
-          } catch (error) {
-            console.warn('更新节点发光效果时出错:', error);
-          }
+        if (object.material && object.material.uniforms) {
+          object.material.uniforms.viewVector.value = camera.position;
         }
       });
 
