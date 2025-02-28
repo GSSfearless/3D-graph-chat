@@ -49,23 +49,23 @@ function Home() {
         </div>
         
         {/* Search Bar */}
-        <div className="relative max-w-3xl mx-auto group px-4">
-          <div className="absolute inset-0 bg-gradient-to-r from-blue-200/30 to-purple-200/30 opacity-20 blur-3xl group-hover:opacity-30 transition-opacity rounded-[32px]"></div>
-          <div className="relative flex items-center bg-white/80 backdrop-blur-md rounded-[24px] shadow-[0_8px_32px_rgba(0,0,0,0.06)] group-hover:shadow-[0_16px_48px_rgba(0,0,0,0.1)] transition-all duration-500">
+        <div className={`max-w-2xl mx-auto relative group transform transition-all duration-1000 delay-300 ${isVisible ? 'translate-y-0 opacity-100' : 'translate-y-10 opacity-0'}`}>
+          <div className="absolute inset-0 bg-gradient-to-r from-blue-200/50 to-purple-200/50 opacity-20 blur-2xl group-hover:opacity-30 transition-opacity rounded-full"></div>
+          <div className="relative flex items-center bg-white rounded-full shadow-[0_0_20px_rgba(0,0,0,0.05)] group-hover:shadow-[0_0_25px_rgba(0,0,0,0.1)] transition-all duration-300">
             <input
               type="text"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               onKeyPress={handleKeyPress}
               placeholder="输入任何主题，开始你的知识探索..."
-              className="w-full px-8 py-6 text-lg rounded-[24px] bg-transparent border-2 border-transparent focus:border-blue-50/50 focus:ring-4 focus:ring-blue-50/30 transition-all duration-300 outline-none placeholder:text-gray-400"
+              className="w-full px-8 py-5 text-lg rounded-full bg-transparent border-2 border-transparent focus:border-blue-100 focus:ring-2 focus:ring-blue-50 transition-all outline-none"
             />
             <button
               onClick={handleSearch}
-              className="mr-3 bg-gradient-to-r from-blue-500 to-indigo-600 text-white px-6 py-3.5 rounded-[18px] flex items-center gap-2.5 transition-all duration-500 transform hover:translate-x-1 hover:shadow-lg hover:shadow-blue-500/25 group/btn"
+              className="absolute right-2 bg-gradient-to-r from-blue-500 to-indigo-600 text-white px-6 py-3 rounded-full flex items-center gap-2 transition-all transform hover:translate-x-1 hover:shadow-lg group"
             >
-              <span className="hidden md:inline font-medium">探索</span>
-              <FontAwesomeIcon icon={faSearch} className="text-base transition-transform duration-500 group-hover/btn:rotate-12" />
+              <span className="hidden md:inline font-medium">开始探索</span>
+              <FontAwesomeIcon icon={faSearch} className="text-lg transition-transform group-hover:scale-110" />
             </button>
           </div>
         </div>
