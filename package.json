@@ -38,6 +38,7 @@
     "echarts": "^5.4.3",
     "echarts-gl": "^2.0.9",
     "echarts-wordcloud": "^2.1.0",
+    "framer-motion": "^12.4.7",
     "github-markdown-css": "^5.8.1",
     "lodash.debounce": "^4.0.8",
     "lucide-react": "^0.441.0",
