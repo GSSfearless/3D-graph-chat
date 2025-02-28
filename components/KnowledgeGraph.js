@@ -228,7 +228,6 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
       ...nodeData,
       originalScale: new THREE.Vector3(1, 1, 1),
       originalColor: theme.node.color,
-      hoverScale: new THREE.Vector3(1.3, 1.3, 1.3),
       isHovered: false
     };
     
@@ -821,9 +820,6 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
           if (material.color && material.color.set && hoveredNode.userData.originalColor) {
             material.color.set(hoveredNode.userData.originalColor);
           }
-          if (hoveredNode.scale && hoveredNode.scale.copy && hoveredNode.userData.originalScale) {
-            hoveredNode.scale.copy(hoveredNode.userData.originalScale);
-          }
           hoveredNode.userData.isHovered = false;
           
           // 更新发光效果
@@ -841,9 +837,6 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
         const node = nodeIntersect.object;
         if (node.material && node.material.color && node.material.color.set) {
           node.material.color.set(theme.node.highlightColor);
-        }
-        if (node.scale && node.scale.copy && node.userData?.hoverScale) {
-          node.scale.copy(node.userData.hoverScale);
         }
         if (node.userData) {
           node.userData.isHovered = true;
