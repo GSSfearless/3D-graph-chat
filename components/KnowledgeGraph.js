@@ -495,11 +495,98 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
   };
 
   const handleNodeClick = (node) => {
-    if (selectedNode) {
-      selectedNode.material.color.setHex(parseInt(theme.node.color.replace('#', '0x')));
-    }
+    if (!sceneRef.current) return;
+    const { scene } = sceneRef.current;
     
-    node.material.color.setHex(parseInt(theme.node.highlightColor.replace('#', '0x')));
+    // 重置所有节点和边的状态
+    scene.traverse((object) => {
+      if (object.type === 'Mesh') {
+        if (object.material) {
+          // 将所有物体设置为低亮度状态
+          object.material.opacity = 0.3;
+          if (object.material.color) {
+            object.material.color.set(theme.node.color);
+          }
+          // 重置发光效果
+          const glowSphere = object.parent?.children?.[1];
+          if (glowSphere?.material?.uniforms) {
+            glowSphere.material.uniforms.c.value = 0.3;
+            glowSphere.material.uniforms.p.value = 1.0;
+          }
+        }
+      }
+      // 降低所有边的可见度
+      if (object.userData?.isEdge) {
+        object.children.forEach(child => {
+          if (child.material) {
+            child.material.opacity = 0.3;
+            child.material.linewidth = 2;
+          }
+        });
+      }
+    });
+
+    // 获取选中节点相关的边和节点
+    const connectedElements = new Set();
+    scene.children.forEach(child => {
+      if (child.userData?.isEdge) {
+        const edge = child;
+        if (edge.userData.source === node.parent || edge.userData.target === node.parent) {
+          connectedElements.add(edge);
+          connectedElements.add(edge.userData.source);
+          connectedElements.add(edge.userData.target);
+        }
+      }
+    });
+
+    // 高亮选中的节点
+    if (node.material) {
+      node.material.opacity = 1.0;
+      node.material.color.set(theme.node.highlightColor);
+      // 增强发光效果
+      const glowSphere = node.parent?.children?.[1];
+      if (glowSphere?.material?.uniforms) {
+        glowSphere.material.uniforms.c.value = 1.2;
+        glowSphere.material.uniforms.p.value = 2.0;
+      }
+    }
+
+    // 高亮相关边和节点
+    connectedElements.forEach(element => {
+      if (element.userData?.isEdge) {
+        // 高亮边
+        element.children.forEach(child => {
+          if (child.material) {
+            child.material.opacity = 0.9;
+            child.material.linewidth = 3;
+          }
+        });
+        // 高亮边的标签
+        const label = element.children.find(child => child instanceof CSS2DObject);
+        if (label) {
+          const div = label.element;
+          div.style.backgroundColor = 'rgba(255, 255, 255, 0.8)';
+          div.style.fontWeight = 'bold';
+          div.style.padding = '4px 8px';
+        }
+      } else if (element !== node.parent) {
+        // 高亮相连节点
+        element.children.forEach(child => {
+          if (child.material) {
+            child.material.opacity = 0.8;
+            if (child.material.color) {
+              child.material.color.set(theme.node.color);
+            }
+            // 设置次级发光效果
+            if (child.material.uniforms) {
+              child.material.uniforms.c.value = 0.8;
+              child.material.uniforms.p.value = 1.6;
+            }
+          }
+        });
+      }
+    });
+
     setSelectedNode(node);
     onNodeClick && onNodeClick(node.userData);
   };
