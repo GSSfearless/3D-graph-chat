@@ -21,19 +21,13 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
       maxSize: 15,       // 最大节点大小
       segments: 32,
       opacity: 0.9,
-      glowColor: '#818CF8',
-      hoverTransitionDuration: 0.3,
-      dimOpacity: 0.4,
-      relatedNodeHighlightColor: '#818CF8'
+      glowColor: '#818CF8'
     },
     edge: {
       color: '#94A3B8',
       highlightColor: '#64748B',
       opacity: 0.6,
-      width: 2,
-      highlightWidth: 3,
-      dimOpacity: 0.2,
-      transitionDuration: 0.3
+      width: 2
     },
     label: {
       color: '#1E293B',
@@ -806,54 +800,6 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
     const mouse = new THREE.Vector2();
     let hoveredNode = null;
 
-    // 辅助函数：获取与节点相连的所有边和节点
-    const getConnectedElements = (node) => {
-      const connectedEdges = [];
-      const connectedNodes = new Set();
-      
-      scene.children.forEach(child => {
-        if (child.userData?.isEdge) {
-          const sourceId = child.userData.source?.userData?.id;
-          const targetId = child.userData.target?.userData?.id;
-          const nodeId = node.userData?.id;
-          
-          if (sourceId === nodeId || targetId === nodeId) {
-            connectedEdges.push(child);
-            if (sourceId === nodeId) {
-              connectedNodes.add(child.userData.target);
-            } else {
-              connectedNodes.add(child.userData.source);
-            }
-          }
-        }
-      });
-      
-      return { edges: connectedEdges, nodes: Array.from(connectedNodes) };
-    };
-
-    // 辅助函数：重置所有元素的视觉效果
-    const resetAllElements = () => {
-      scene.traverse((object) => {
-        if (object.material) {
-          if (object.userData?.isEdge) {
-            object.material.opacity = theme.edge.opacity;
-            object.material.linewidth = theme.edge.width;
-          } else if (object.type === 'Mesh' && object.geometry?.type === 'SphereGeometry') {
-            object.material.opacity = theme.node.opacity;
-            if (object.material.color && object.userData?.originalColor) {
-              object.material.color.set(object.userData.originalColor);
-            }
-            // 重置发光效果
-            const glowSphere = object.parent?.children?.[1];
-            if (glowSphere?.material?.uniforms) {
-              glowSphere.material.uniforms.c.value = 0.5;
-              glowSphere.material.uniforms.p.value = 1.4;
-            }
-          }
-        }
-      });
-    };
-
     const onMouseMove = (event) => {
       const rect = renderer.domElement.getBoundingClientRect();
       mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
@@ -862,35 +808,45 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
       raycaster.setFromCamera(mouse, camera);
       const intersects = raycaster.intersectObjects(scene.children, true);
 
+      // 找到第一个是球体的相交对象
       const nodeIntersect = intersects.find(intersect => 
         intersect.object?.type === 'Mesh' && 
         intersect.object?.geometry?.type === 'SphereGeometry'
       );
 
+      // 如果之前有悬浮的节点，恢复其状态
       if (hoveredNode && (!nodeIntersect || nodeIntersect.object !== hoveredNode)) {
-        resetAllElements();
+        if (hoveredNode.material && hoveredNode.userData) {
+          const material = hoveredNode.material;
+          if (material.color && material.color.set && hoveredNode.userData.originalColor) {
+            material.color.set(hoveredNode.userData.originalColor);
+          }
+          if (hoveredNode.scale && hoveredNode.scale.copy && hoveredNode.userData.originalScale) {
+            hoveredNode.scale.copy(hoveredNode.userData.originalScale);
+          }
+          hoveredNode.userData.isHovered = false;
+          
+          // 更新发光效果
+          const glowSphere = hoveredNode.parent?.children?.[1];
+          if (glowSphere?.material?.uniforms) {
+            glowSphere.material.uniforms.c.value = 0.5;
+            glowSphere.material.uniforms.p.value = 1.4;
+          }
+        }
         hoveredNode = null;
       }
 
+      // 如果找到新的节点，应用悬浮效果
       if (nodeIntersect && nodeIntersect.object && nodeIntersect.object !== hoveredNode) {
         const node = nodeIntersect.object;
-        const { edges: connectedEdges, nodes: connectedNodes } = getConnectedElements(node);
-        
-        // 淡化所有元素
-        scene.traverse((object) => {
-          if (object.material) {
-            if (object.userData?.isEdge) {
-              object.material.opacity = theme.edge.dimOpacity;
-            } else if (object.type === 'Mesh' && object.geometry?.type === 'SphereGeometry') {
-              object.material.opacity = theme.node.dimOpacity;
-            }
-          }
-        });
-
-        // 高亮当前节点
-        if (node.material && node.material.color) {
+        if (node.material && node.material.color && node.material.color.set) {
           node.material.color.set(theme.node.highlightColor);
-          node.material.opacity = theme.node.opacity;
+        }
+        if (node.scale && node.scale.copy && node.userData?.hoverScale) {
+          node.scale.copy(node.userData.hoverScale);
+        }
+        if (node.userData) {
+          node.userData.isHovered = true;
         }
         
         // 增强发光效果
@@ -899,30 +855,7 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
           glowSphere.material.uniforms.c.value = 0.8;
           glowSphere.material.uniforms.p.value = 2.0;
         }
-
-        // 高亮相连的边
-        connectedEdges.forEach(edge => {
-          edge.material.opacity = 1;
-          edge.material.linewidth = theme.edge.highlightWidth;
-        });
-
-        // 高亮相连的节点
-        connectedNodes.forEach(connectedNode => {
-          if (connectedNode.material) {
-            connectedNode.material.opacity = theme.node.opacity;
-            connectedNode.material.color.set(theme.node.relatedNodeHighlightColor);
-          }
-        });
-
         hoveredNode = node;
-
-        // 更新节点标签显示连接信息
-        const labelDiv = node.parent?.children?.[2]?.element;
-        if (labelDiv) {
-          const connectionsCount = connectedEdges.length;
-          const originalLabel = node.userData.label;
-          labelDiv.textContent = `${originalLabel} (${connectionsCount} 连接)`;
-        }
       }
     };
 
