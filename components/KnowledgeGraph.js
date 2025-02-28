@@ -210,7 +210,7 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
       theme.node.segments
     );
 
-    // 创建基础材质
+    // 创建发光材质
     const material = new THREE.MeshPhongMaterial({
       color: theme.node.color,
       specular: 0x666666,
@@ -223,13 +223,53 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
     sphere.castShadow = true;
     sphere.receiveShadow = true;
     
-    // 存储节点数据
+    // 添加悬浮效果所需的属性
     sphere.userData = {
       ...nodeData,
+      originalScale: new THREE.Vector3(1, 1, 1),
       originalColor: theme.node.color,
+      hoverScale: new THREE.Vector3(1.3, 1.3, 1.3),
+      isHovered: false
     };
     
     group.add(sphere);
+
+    // 添加发光效果
+    const glowMaterial = new THREE.ShaderMaterial({
+      uniforms: {
+        c: { type: 'f', value: 0.5 },
+        p: { type: 'f', value: 1.4 },
+        glowColor: { type: 'c', value: new THREE.Color(theme.node.glowColor) },
+        viewVector: { type: 'v3', value: sceneRef.current.camera.position }
+      },
+      vertexShader: `
+        uniform vec3 viewVector;
+        varying float intensity;
+        void main() {
+          vec3 vNormal = normalize(normalMatrix * normal);
+          vec3 vNormel = normalize(normalMatrix * viewVector);
+          intensity = pow(0.5 - dot(vNormal, vNormel), 2.0);
+          gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+        }
+      `,
+      fragmentShader: `
+        uniform vec3 glowColor;
+        varying float intensity;
+        void main() {
+          vec3 glow = glowColor * intensity;
+          gl_FragColor = vec4(glow, 1.0);
+        }
+      `,
+      side: THREE.BackSide,
+      blending: THREE.AdditiveBlending,
+      transparent: true
+    });
+
+    const glowSphere = new THREE.Mesh(
+      new THREE.SphereGeometry(nodeSize * 1.2, theme.node.segments, theme.node.segments),
+      glowMaterial
+    );
+    group.add(glowSphere);
 
     // 创建标签
     const labelDiv = document.createElement('div');
@@ -250,6 +290,18 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
     const label = new CSS2DObject(labelDiv);
     label.position.set(0, nodeSize + 5, 0);
     group.add(label);
+
+    // 计算节点位置
+    const phi = Math.acos(-1 + (2 * index) / total);
+    const theta = Math.sqrt(total * Math.PI) * phi;
+    const radius = 200;
+
+    group.position.x = radius * Math.cos(theta) * Math.sin(phi);
+    group.position.y = radius * Math.sin(theta) * Math.sin(phi);
+    group.position.z = radius * Math.cos(phi);
+
+    // 添加用户数据
+    group.userData = nodeData;
 
     return group;
   };
@@ -762,51 +814,55 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
         intersect.object?.geometry?.type === 'SphereGeometry'
       );
 
-      // 更新鼠标样式
-      renderer.domElement.style.cursor = nodeIntersect ? 'pointer' : 'default';
-
       // 如果之前有悬浮的节点，恢复其状态
       if (hoveredNode && (!nodeIntersect || nodeIntersect.object !== hoveredNode)) {
         if (hoveredNode.material && hoveredNode.userData) {
-          hoveredNode.material.color.set(hoveredNode.userData.originalColor);
+          const material = hoveredNode.material;
+          if (material.color && material.color.set && hoveredNode.userData.originalColor) {
+            material.color.set(hoveredNode.userData.originalColor);
+          }
+          if (hoveredNode.scale && hoveredNode.scale.copy && hoveredNode.userData.originalScale) {
+            hoveredNode.scale.copy(hoveredNode.userData.originalScale);
+          }
+          hoveredNode.userData.isHovered = false;
+          
+          // 更新发光效果
+          const glowSphere = hoveredNode.parent?.children?.[1];
+          if (glowSphere?.material?.uniforms) {
+            glowSphere.material.uniforms.c.value = 0.5;
+            glowSphere.material.uniforms.p.value = 1.4;
+          }
         }
         hoveredNode = null;
       }
 
-      // 如果找到新的节点，应用简单的悬浮效果
+      // 如果找到新的节点，应用悬浮效果
       if (nodeIntersect && nodeIntersect.object && nodeIntersect.object !== hoveredNode) {
         const node = nodeIntersect.object;
-        if (node.material && node.material.color) {
+        if (node.material && node.material.color && node.material.color.set) {
           node.material.color.set(theme.node.highlightColor);
+        }
+        if (node.scale && node.scale.copy && node.userData?.hoverScale) {
+          node.scale.copy(node.userData.hoverScale);
+        }
+        if (node.userData) {
+          node.userData.isHovered = true;
+        }
+        
+        // 增强发光效果
+        const glowSphere = node.parent?.children?.[1];
+        if (glowSphere?.material?.uniforms) {
+          glowSphere.material.uniforms.c.value = 0.8;
+          glowSphere.material.uniforms.p.value = 2.0;
         }
         hoveredNode = node;
       }
     };
 
-    const onClick = (event) => {
-      const rect = renderer.domElement.getBoundingClientRect();
-      mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
-      mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
-
-      raycaster.setFromCamera(mouse, camera);
-      const intersects = raycaster.intersectObjects(scene.children, true);
-
-      const nodeIntersect = intersects.find(intersect => 
-        intersect.object?.type === 'Mesh' && 
-        intersect.object?.geometry?.type === 'SphereGeometry'
-      );
-
-      if (nodeIntersect) {
-        handleNodeClick(nodeIntersect.object);
-      }
-    };
-
     renderer.domElement.addEventListener('mousemove', onMouseMove);
-    renderer.domElement.addEventListener('click', onClick);
 
     return () => {
       renderer.domElement.removeEventListener('mousemove', onMouseMove);
-      renderer.domElement.removeEventListener('click', onClick);
     };
   }, [data]);
 
