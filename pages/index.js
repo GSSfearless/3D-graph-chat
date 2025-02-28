@@ -49,28 +49,24 @@ function Home() {
         </div>
         
         {/* Search Bar */}
-        <div className={`max-w-3xl mx-auto relative group transform transition-all duration-1000 delay-300 ${isVisible ? 'translate-y-0 opacity-100' : 'translate-y-10 opacity-0'}`}>
-          <div className="absolute inset-0 bg-gradient-to-r from-blue-100/30 via-purple-100/30 to-pink-100/30 opacity-30 blur-xl group-hover:opacity-50 transition-all duration-500 rounded-2xl"></div>
-          <div className="relative flex items-center bg-white/80 backdrop-blur-md rounded-2xl shadow-[0_8px_30px_rgba(0,0,0,0.06)] group-hover:shadow-[0_8px_30px_rgba(0,0,0,0.08)] group-hover:bg-white/90 transition-all duration-300 border border-gray-100">
-            <div className="flex-1 relative">
-              <input
-                type="text"
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                onKeyPress={handleKeyPress}
-                placeholder="输入任何主题，开始你的知识探索..."
-                className="w-full pl-8 pr-4 py-6 text-lg rounded-2xl bg-transparent border-0 focus:ring-0 focus:outline-none placeholder:text-gray-400"
-              />
-              <div className="absolute right-4 top-1/2 -translate-y-1/2">
-                <button
-                  onClick={handleSearch}
-                  className="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white px-8 py-3 rounded-xl flex items-center gap-2 transition-all transform hover:translate-x-1 hover:shadow-lg group font-medium"
-                >
-                  <span>开始探索</span>
-                  <FontAwesomeIcon icon={faArrowRight} className="text-lg transition-transform group-hover:translate-x-1" />
-                </button>
-              </div>
-            </div>
+        <div className={`max-w-2xl mx-auto relative group transform transition-all duration-1000 delay-300 ${isVisible ? 'translate-y-0 opacity-100' : 'translate-y-10 opacity-0'}`}>
+          <div className="absolute inset-0 bg-gradient-to-r from-blue-200/50 to-purple-200/50 opacity-20 blur-2xl group-hover:opacity-30 transition-opacity rounded-full"></div>
+          <div className="relative flex items-center bg-white rounded-full shadow-[0_0_20px_rgba(0,0,0,0.05)] group-hover:shadow-[0_0_25px_rgba(0,0,0,0.1)] transition-all duration-300">
+            <input
+              type="text"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              onKeyPress={handleKeyPress}
+              placeholder="输入任何主题，开始你的知识探索..."
+              className="w-full px-8 py-5 text-lg rounded-full bg-transparent border-2 border-transparent focus:border-blue-100 focus:ring-2 focus:ring-blue-50 transition-all outline-none"
+            />
+            <button
+              onClick={handleSearch}
+              className="absolute right-2 bg-gradient-to-r from-blue-500 to-indigo-600 text-white px-6 py-3 rounded-full flex items-center gap-2 transition-all transform hover:translate-x-1 hover:shadow-lg group"
+            >
+              <span className="hidden md:inline font-medium">开始探索</span>
+              <FontAwesomeIcon icon={faSearch} className="text-lg transition-transform group-hover:scale-110" />
+            </button>
           </div>
         </div>
 
