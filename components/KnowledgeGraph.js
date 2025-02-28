@@ -500,107 +500,90 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
     
     // 重置所有节点和边的状态
     scene.traverse((object) => {
-      // 重置节点
-      if (object.type === 'Mesh' && object.geometry.type === 'SphereGeometry') {
+      if (object.type === 'Mesh') {
         if (object.material) {
+          // 将所有物体设置为低亮度状态
           object.material.opacity = 0.3;
-          object.material.color.set(theme.node.color);
-          object.material.needsUpdate = true;
-        }
-        // 重置发光效果
-        const parent = object.parent;
-        if (parent && parent.children.length > 1) {
-          const glowMesh = parent.children[1];
-          if (glowMesh && glowMesh.material && glowMesh.material.uniforms) {
-            glowMesh.material.uniforms.c.value = 0.3;
-            glowMesh.material.uniforms.p.value = 1.0;
-            glowMesh.material.needsUpdate = true;
+          if (object.material.color) {
+            object.material.color.set(theme.node.color);
+          }
+          // 重置发光效果
+          const glowSphere = object.parent?.children?.[1];
+          if (glowSphere?.material?.uniforms) {
+            glowSphere.material.uniforms.c.value = 0.3;
+            glowSphere.material.uniforms.p.value = 1.0;
           }
         }
       }
-    });
-
-    // 重置所有边的状态
-    scene.children.forEach(child => {
-      if (child.userData && child.userData.isEdge) {
-        const line = child.children[0];
-        if (line && line.material) {
-          line.material.opacity = 0.3;
-          line.material.needsUpdate = true;
-        }
+      // 降低所有边的可见度
+      if (object.userData?.isEdge) {
+        object.children.forEach(child => {
+          if (child.material) {
+            child.material.opacity = 0.3;
+            child.material.linewidth = 2;
+          }
+        });
       }
     });
 
     // 获取选中节点相关的边和节点
     const connectedElements = new Set();
     scene.children.forEach(child => {
-      if (child.userData && child.userData.isEdge) {
-        const sourceNode = child.userData.source;
-        const targetNode = child.userData.target;
-        if (sourceNode === node.parent || targetNode === node.parent) {
-          connectedElements.add(child); // 添加边
-          connectedElements.add(sourceNode); // 添加源节点
-          connectedElements.add(targetNode); // 添加目标节点
+      if (child.userData?.isEdge) {
+        const edge = child;
+        if (edge.userData.source === node.parent || edge.userData.target === node.parent) {
+          connectedElements.add(edge);
+          connectedElements.add(edge.userData.source);
+          connectedElements.add(edge.userData.target);
         }
       }
     });
 
     // 高亮选中的节点
-    const selectedMesh = node;
-    if (selectedMesh.material) {
-      selectedMesh.material.opacity = 1.0;
-      selectedMesh.material.color.set(theme.node.highlightColor);
-      selectedMesh.material.needsUpdate = true;
-
+    if (node.material) {
+      node.material.opacity = 1.0;
+      node.material.color.set(theme.node.highlightColor);
       // 增强发光效果
-      const parent = selectedMesh.parent;
-      if (parent && parent.children.length > 1) {
-        const glowMesh = parent.children[1];
-        if (glowMesh && glowMesh.material && glowMesh.material.uniforms) {
-          glowMesh.material.uniforms.c.value = 1.2;
-          glowMesh.material.uniforms.p.value = 2.0;
-          glowMesh.material.needsUpdate = true;
-        }
+      const glowSphere = node.parent?.children?.[1];
+      if (glowSphere?.material?.uniforms) {
+        glowSphere.material.uniforms.c.value = 1.2;
+        glowSphere.material.uniforms.p.value = 2.0;
       }
     }
 
     // 高亮相关边和节点
     connectedElements.forEach(element => {
-      if (element.userData && element.userData.isEdge) {
+      if (element.userData?.isEdge) {
         // 高亮边
-        const line = element.children[0];
-        if (line && line.material) {
-          line.material.opacity = 0.9;
-          line.material.needsUpdate = true;
-        }
-
+        element.children.forEach(child => {
+          if (child.material) {
+            child.material.opacity = 0.9;
+            child.material.linewidth = 3;
+          }
+        });
         // 高亮边的标签
-        const labelObject = element.children.find(child => child.type === 'CSS2DObject');
-        if (labelObject && labelObject.element) {
-          const labelDiv = labelObject.element;
-          labelDiv.style.backgroundColor = 'rgba(255, 255, 255, 0.8)';
-          labelDiv.style.fontWeight = 'bold';
-          labelDiv.style.padding = '4px 8px';
-          labelDiv.style.boxShadow = '0 2px 4px rgba(0,0,0,0.1)';
+        const label = element.children.find(child => child instanceof CSS2DObject);
+        if (label) {
+          const div = label.element;
+          div.style.backgroundColor = 'rgba(255, 255, 255, 0.8)';
+          div.style.fontWeight = 'bold';
+          div.style.padding = '4px 8px';
         }
       } else if (element !== node.parent) {
         // 高亮相连节点
-        const connectedMesh = element.children[0];
-        if (connectedMesh && connectedMesh.material) {
-          connectedMesh.material.opacity = 0.8;
-          connectedMesh.material.color.set(theme.node.color);
-          connectedMesh.material.needsUpdate = true;
-
-          // 设置次级发光效果
-          if (element.children.length > 1) {
-            const glowMesh = element.children[1];
-            if (glowMesh && glowMesh.material && glowMesh.material.uniforms) {
-              glowMesh.material.uniforms.c.value = 0.8;
-              glowMesh.material.uniforms.p.value = 1.6;
-              glowMesh.material.needsUpdate = true;
+        element.children.forEach(child => {
+          if (child.material) {
+            child.material.opacity = 0.8;
+            if (child.material.color) {
+              child.material.color.set(theme.node.color);
+            }
+            // 设置次级发光效果
+            if (child.material.uniforms) {
+              child.material.uniforms.c.value = 0.8;
+              child.material.uniforms.p.value = 1.6;
             }
           }
-        }
+        });
       }
     });
 
