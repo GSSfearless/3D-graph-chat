@@ -1,22 +1,8 @@
-import { motion } from 'framer-motion';
+import { faArrowRight, faBrain, faLightbulb, faSearch, faChartNetwork, faLock, faRocket, faMagicWandSparkles } from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { useRouter } from 'next/router';
 import { useState, useEffect } from 'react';
-import {
-  ChartBarIcon,
-  LightBulbIcon,
-  SparklesIcon,
-  BoltIcon,
-  ArrowRightIcon,
-  BeakerIcon,
-  CloudIcon,
-} from '@heroicons/react/24/outline';
 import 'tailwindcss/tailwind.css';
-
-const fadeInUp = {
-  initial: { y: 60, opacity: 0 },
-  animate: { y: 0, opacity: 1 },
-  transition: { duration: 0.6 }
-};
 
 function Home() {
   const router = useRouter();
@@ -40,175 +26,132 @@ function Home() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-purple-900 text-white overflow-hidden">
-      {/* 动态背景 */}
-      <div className="absolute inset-0">
-        <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-20"></div>
-        <div className="absolute top-0 -left-4 w-72 h-72 bg-purple-500 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-blob"></div>
-        <div className="absolute top-0 -right-4 w-72 h-72 bg-blue-500 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-blob animation-delay-2000"></div>
-        <div className="absolute -bottom-8 left-20 w-72 h-72 bg-indigo-500 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-blob animation-delay-4000"></div>
+    <div className="min-h-screen bg-gradient-to-b from-slate-50 via-white to-blue-50 overflow-hidden">
+      {/* Floating Background Elements */}
+      <div className="fixed inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute -top-1/2 -right-1/2 w-full h-full bg-gradient-to-b from-blue-100/20 to-purple-100/20 rounded-full blur-3xl transform rotate-12 animate-pulse"></div>
+        <div className="absolute -bottom-1/2 -left-1/2 w-full h-full bg-gradient-to-t from-indigo-100/20 to-pink-100/20 rounded-full blur-3xl transform -rotate-12 animate-pulse delay-1000"></div>
       </div>
 
       {/* Hero Section */}
-      <div className="container mx-auto px-4 pt-20 pb-32 relative">
-        <motion.div 
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8 }}
-          className="text-center"
-        >
-          <div className="inline-block mb-4 px-6 py-2 bg-white/10 backdrop-blur-lg rounded-full">
-            <span className="text-white/90">🚀 重新定义知识管理</span>
+      <div className="container mx-auto px-4 pt-12 lg:pt-20 pb-32 relative">
+        <div className={`text-center transform transition-all duration-1000 ${isVisible ? 'translate-y-0 opacity-100' : 'translate-y-10 opacity-0'}`}>
+          <div className="inline-block mb-4 px-6 py-2 bg-blue-50 rounded-full">
+            <span className="text-blue-600 font-medium">🎉 欢迎使用 Think Graph</span>
           </div>
-          <h1 className="text-5xl lg:text-7xl font-bold mb-8 bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 text-transparent bg-clip-text">
-            Think Graph
+          <h1 className="text-4xl lg:text-7xl font-bold mb-6 bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 text-transparent bg-clip-text leading-tight">
+            用AI重新定义<br />知识管理方式
           </h1>
-          <p className="text-xl lg:text-2xl text-white/80 mb-12 max-w-3xl mx-auto">
-            用AI和图谱技术，构建你的第二大脑
+          <p className="text-xl lg:text-2xl text-gray-600 mb-12 max-w-3xl mx-auto leading-relaxed">
+            将零散的知识点连接成完整的知识网络<br />
+            让思维可视化，让学习更高效
           </p>
-        </motion.div>
-
-        {/* 搜索框 */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.2 }}
-          className="max-w-2xl mx-auto relative"
-        >
-          <div className="relative flex items-center bg-white/10 backdrop-blur-lg rounded-full border border-white/20">
+        </div>
+        
+        {/* Search Bar */}
+        <div className={`max-w-2xl mx-auto relative group transform transition-all duration-1000 delay-300 ${isVisible ? 'translate-y-0 opacity-100' : 'translate-y-10 opacity-0'}`}>
+          <div className="absolute inset-0 bg-gradient-to-r from-blue-200/50 to-purple-200/50 opacity-20 blur-2xl group-hover:opacity-30 transition-opacity rounded-full"></div>
+          <div className="relative flex items-center bg-white rounded-full shadow-[0_0_20px_rgba(0,0,0,0.05)] group-hover:shadow-[0_0_25px_rgba(0,0,0,0.1)] transition-all duration-300">
             <input
               type="text"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               onKeyPress={handleKeyPress}
-              placeholder="开始你的知识探索之旅..."
-              className="w-full px-8 py-5 text-lg rounded-full bg-transparent text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-purple-400"
+              placeholder="输入任何主题，开始你的知识探索..."
+              className="w-full px-8 py-5 text-lg rounded-full bg-transparent border-2 border-transparent focus:border-blue-100 focus:ring-2 focus:ring-blue-50 transition-all outline-none"
             />
             <button
               onClick={handleSearch}
-              className="absolute right-2 bg-gradient-to-r from-purple-500 to-blue-500 text-white px-6 py-3 rounded-full flex items-center gap-2 hover:shadow-lg hover:shadow-purple-500/20 transition-all"
+              className="absolute right-2 bg-gradient-to-r from-blue-500 to-indigo-600 text-white px-6 py-3 rounded-full flex items-center gap-2 transition-all transform hover:translate-x-1 hover:shadow-lg group"
             >
-              探索
-              <ArrowRightIcon className="w-5 h-5" />
+              <span className="hidden md:inline font-medium">开始探索</span>
+              <FontAwesomeIcon icon={faSearch} className="text-lg transition-transform group-hover:scale-110" />
             </button>
           </div>
-        </motion.div>
+        </div>
 
-        {/* 特点展示 */}
-        <div className="grid md:grid-cols-3 gap-8 mt-32">
-          <motion.div
-            initial={{ opacity: 0, y: 40 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.3 }}
-            className="p-8 rounded-2xl bg-white/10 backdrop-blur-lg border border-white/20 hover:bg-white/20 transition-all"
-          >
-            <div className="w-14 h-14 rounded-full bg-purple-500/20 flex items-center justify-center mb-6">
-              <BoltIcon className="w-8 h-8 text-purple-400" />
+        {/* Quick Stats */}
+        <div className={`flex justify-center gap-8 mt-16 transform transition-all duration-1000 delay-500 ${isVisible ? 'translate-y-0 opacity-100' : 'translate-y-10 opacity-0'}`}>
+          <div className="text-center">
+            <div className="text-2xl font-bold text-blue-600">100,000+</div>
+            <div className="text-gray-600">知识节点</div>
+          </div>
+          <div className="text-center">
+            <div className="text-2xl font-bold text-indigo-600">50,000+</div>
+            <div className="text-gray-600">活跃用户</div>
+          </div>
+          <div className="text-center">
+            <div className="text-2xl font-bold text-purple-600">1,000,000+</div>
+            <div className="text-gray-600">知识连接</div>
+          </div>
+        </div>
+      </div>
+
+      {/* Features Section */}
+      <div className="container mx-auto px-4 py-20">
+        <h2 className="text-3xl lg:text-5xl font-bold text-center mb-20 bg-gradient-to-r from-gray-800 to-gray-600 text-transparent bg-clip-text">
+          为什么选择 Think Graph
+        </h2>
+        <div className="grid md:grid-cols-3 gap-8">
+          <div className="p-8 rounded-2xl bg-white hover:shadow-xl transition-all duration-500 transform hover:-translate-y-2 border border-gray-100">
+            <div className="w-14 h-14 rounded-full bg-blue-100 flex items-center justify-center mb-6">
+              <FontAwesomeIcon icon={faBrain} className="text-2xl text-blue-600" />
             </div>
-            <h3 className="text-2xl font-semibold mb-4">AI 驱动</h3>
-            <p className="text-white/70">
-              强大的AI引擎自动分析内容，提取关键概念，构建知识连接，让知识管理更智能高效
+            <h3 className="text-xl font-semibold mb-4">AI智能分析</h3>
+            <p className="text-gray-600 leading-relaxed">
+              强大的AI引擎自动分析文本内容，提取关键概念，构建知识连接，让知识管理更智能
             </p>
-          </motion.div>
-
-          <motion.div
-            initial={{ opacity: 0, y: 40 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.4 }}
-            className="p-8 rounded-2xl bg-white/10 backdrop-blur-lg border border-white/20 hover:bg-white/20 transition-all"
-          >
-            <div className="w-14 h-14 rounded-full bg-blue-500/20 flex items-center justify-center mb-6">
-              <SparklesIcon className="w-8 h-8 text-blue-400" />
+          </div>
+          <div className="p-8 rounded-2xl bg-white hover:shadow-xl transition-all duration-500 transform hover:-translate-y-2 border border-gray-100">
+            <div className="w-14 h-14 rounded-full bg-purple-100 flex items-center justify-center mb-6">
+              <FontAwesomeIcon icon={faChartNetwork} className="text-2xl text-purple-600" />
             </div>
-            <h3 className="text-2xl font-semibold mb-4">知识图谱</h3>
-            <p className="text-white/70">
-              直观的可视化展示，帮助你理解知识间的关联，发现新的见解和灵感
+            <h3 className="text-xl font-semibold mb-4">实时可视化</h3>
+            <p className="text-gray-600 leading-relaxed">
+              直观的知识图谱展示，实时互动，帮助你快速理解和记忆复杂的知识体系
             </p>
-          </motion.div>
-
-          <motion.div
-            initial={{ opacity: 0, y: 40 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.5 }}
-            className="p-8 rounded-2xl bg-white/10 backdrop-blur-lg border border-white/20 hover:bg-white/20 transition-all"
-          >
-            <div className="w-14 h-14 rounded-full bg-pink-500/20 flex items-center justify-center mb-6">
-              <BeakerIcon className="w-8 h-8 text-pink-400" />
+          </div>
+          <div className="p-8 rounded-2xl bg-white hover:shadow-xl transition-all duration-500 transform hover:-translate-y-2 border border-gray-100">
+            <div className="w-14 h-14 rounded-full bg-indigo-100 flex items-center justify-center mb-6">
+              <FontAwesomeIcon icon={faMagicWandSparkles} className="text-2xl text-indigo-600" />
             </div>
-            <h3 className="text-2xl font-semibold mb-4">智能推荐</h3>
-            <p className="text-white/70">
+            <h3 className="text-xl font-semibold mb-4">智能推荐</h3>
+            <p className="text-gray-600 leading-relaxed">
               基于你的学习历史和兴趣，智能推荐相关知识点，帮助你拓展知识边界
             </p>
-          </motion.div>
-        </div>
-
-        {/* 数据统计 */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mt-32">
-          <motion.div
-            initial={{ opacity: 0, scale: 0.5 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.6, delay: 0.6 }}
-            className="text-center p-6 rounded-2xl bg-white/10 backdrop-blur-lg border border-white/20"
-          >
-            <div className="text-4xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 text-transparent bg-clip-text">100K+</div>
-            <div className="text-white/70 mt-2">知识节点</div>
-          </motion.div>
-
-          <motion.div
-            initial={{ opacity: 0, scale: 0.5 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.6, delay: 0.7 }}
-            className="text-center p-6 rounded-2xl bg-white/10 backdrop-blur-lg border border-white/20"
-          >
-            <div className="text-4xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 text-transparent bg-clip-text">50K+</div>
-            <div className="text-white/70 mt-2">活跃用户</div>
-          </motion.div>
-
-          <motion.div
-            initial={{ opacity: 0, scale: 0.5 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.6, delay: 0.8 }}
-            className="text-center p-6 rounded-2xl bg-white/10 backdrop-blur-lg border border-white/20"
-          >
-            <div className="text-4xl font-bold bg-gradient-to-r from-pink-400 to-red-400 text-transparent bg-clip-text">1M+</div>
-            <div className="text-white/70 mt-2">知识连接</div>
-          </motion.div>
-
-          <motion.div
-            initial={{ opacity: 0, scale: 0.5 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.6, delay: 0.9 }}
-            className="text-center p-6 rounded-2xl bg-white/10 backdrop-blur-lg border border-white/20"
-          >
-            <div className="text-4xl font-bold bg-gradient-to-r from-red-400 to-orange-400 text-transparent bg-clip-text">98%</div>
-            <div className="text-white/70 mt-2">用户满意度</div>
-          </motion.div>
-        </div>
-
-        {/* CTA 部分 */}
-        <motion.div
-          initial={{ opacity: 0, y: 40 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 1 }}
-          className="mt-32 text-center"
-        >
-          <h2 className="text-4xl font-bold mb-8">准备好开始了吗？</h2>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <button
-              onClick={() => router.push('/signup')}
-              className="px-8 py-4 bg-gradient-to-r from-purple-500 to-blue-500 rounded-full text-lg font-semibold hover:shadow-lg hover:shadow-purple-500/20 transition-all flex items-center justify-center gap-2"
-            >
-              免费开始
-              <ArrowRightIcon className="w-5 h-5" />
-            </button>
-            <button
-              onClick={() => router.push('/demo')}
-              className="px-8 py-4 bg-white/10 backdrop-blur-lg border border-white/20 rounded-full text-lg font-semibold hover:bg-white/20 transition-all"
-            >
-              查看演示
-            </button>
           </div>
-        </motion.div>
+        </div>
+      </div>
+
+      {/* CTA Section */}
+      <div className="relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 opacity-90"></div>
+        <div className="container mx-auto px-4 py-20 relative">
+          <div className="max-w-4xl mx-auto text-center text-white">
+            <h2 className="text-3xl lg:text-5xl font-bold mb-8">
+              开启你的知识探索之旅
+            </h2>
+            <p className="text-xl mb-12 opacity-90">
+              加入thousands of learners已经开始使用 Think Graph 重新定义他们的学习方式
+            </p>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <button
+                onClick={() => router.push('/search')}
+                className="px-8 py-4 bg-white text-blue-600 rounded-full text-lg font-semibold hover:shadow-lg transform hover:scale-105 transition-all flex items-center justify-center gap-2"
+              >
+                <FontAwesomeIcon icon={faRocket} />
+                立即开始
+              </button>
+              <button
+                onClick={() => router.push('/demo')}
+                className="px-8 py-4 bg-transparent border-2 border-white text-white rounded-full text-lg font-semibold hover:bg-white hover:text-blue-600 transition-all flex items-center justify-center gap-2"
+              >
+                观看演示
+                <FontAwesomeIcon icon={faArrowRight} />
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );
