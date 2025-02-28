@@ -497,74 +497,10 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
   const handleNodeClick = (node) => {
     if (selectedNode) {
       selectedNode.material.color.setHex(parseInt(theme.node.color.replace('#', '0x')));
-      // 重置之前选中节点相关的边
-      sceneRef.current.scene.children.forEach(child => {
-        if (child.userData?.isEdge) {
-          const edge = child.children[0];
-          edge.material.color.setHex(parseInt(theme.edge.color.replace('#', '0x')));
-          edge.material.opacity = theme.edge.opacity;
-          // 移除流动效果
-          if (edge.material.uniforms?.dashOffset) {
-            edge.material.uniforms.dashOffset.value = 0;
-          }
-        }
-      });
     }
     
     node.material.color.setHex(parseInt(theme.node.highlightColor.replace('#', '0x')));
     setSelectedNode(node);
-    
-    // 高亮相关的边并添加流动效果
-    sceneRef.current.scene.children.forEach(child => {
-      if (child.userData?.isEdge) {
-        const sourceId = child.userData.source.userData.id;
-        const targetId = child.userData.target.userData.id;
-        const nodeId = node.parent.userData.id;
-        
-        if (sourceId === nodeId || targetId === nodeId) {
-          const edge = child.children[0];
-          edge.material.color.setHex(parseInt(theme.edge.highlightColor.replace('#', '0x')));
-          edge.material.opacity = 1;
-          
-          // 创建流动效果材质
-          const flowMaterial = new THREE.ShaderMaterial({
-            uniforms: {
-              color: { value: new THREE.Color(theme.edge.highlightColor) },
-              dashSize: { value: 3 },
-              totalSize: { value: 10 },
-              dashOffset: { value: 0 }
-            },
-            vertexShader: `
-              varying vec2 vUv;
-              void main() {
-                vUv = uv;
-                gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-              }
-            `,
-            fragmentShader: `
-              uniform vec3 color;
-              uniform float dashSize;
-              uniform float totalSize;
-              uniform float dashOffset;
-              varying vec2 vUv;
-              void main() {
-                float position = vUv.x * totalSize - dashOffset;
-                float modulo = mod(position, totalSize);
-                float alpha = step(modulo, dashSize);
-                gl_FragColor = vec4(color, alpha);
-              }
-            `,
-            transparent: true
-          });
-          
-          edge.material = flowMaterial;
-          
-          // 添加动画更新
-          edge.userData.animate = true;
-        }
-      }
-    });
-    
     onNodeClick && onNodeClick(node.userData);
   };
 
@@ -771,18 +707,8 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
 
       // 更新所有边的位置和标签
       scene.children.forEach(child => {
-        if (child.userData?.isEdge) {
-          if (child.updatePosition) {
-            child.updatePosition();
-          }
-          // 更新流动动画
-          const edge = child.children[0];
-          if (edge.userData.animate && edge.material.uniforms?.dashOffset) {
-            edge.material.uniforms.dashOffset.value += 0.1;
-            if (edge.material.uniforms.dashOffset.value >= 10) {
-              edge.material.uniforms.dashOffset.value = 0;
-            }
-          }
+        if (child.userData?.isEdge && child.updatePosition) {
+          child.updatePosition();
         }
       });
 
