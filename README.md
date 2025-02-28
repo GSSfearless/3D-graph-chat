@@ -1,36 +1,90 @@
-This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+# Think Graph - AI驱动的知识图谱工具
 
-## Getting Started
+Think Graph 是一个革新性的知识管理和学习工具，它利用人工智能技术将零散的知识点连接成完整的知识网络，帮助用户更好地理解和记忆复杂的知识体系。
 
-First, run the development server:
+## ✨ 核心特性
 
+- 🤖 **AI智能分析** - 强大的AI引擎自动分析文本内容，提取关键概念，构建知识连接
+- 📊 **实时可视化** - 直观的知识图谱展示，帮助快速理解知识结构
+- 🎯 **智能推荐** - 基于学习历史和兴趣，智能推荐相关知识点
+- 🔍 **语义搜索** - 深度理解搜索意图，返回最相关的知识内容
+- 🌐 **知识连接** - 自动发现知识点之间的关联，构建完整知识网络
+- 💡 **深度思考** - 支持深度思考模式，提供更全面的知识分析
+
+## 🚀 快速开始
+
+### 环境要求
+
+- Node.js 18.0.0 或更高版本
+- npm 或 yarn 包管理器
+- 现代浏览器（推荐 Chrome, Firefox, Safari 最新版本）
+
+### 安装步骤
+
+1. 克隆项目代码
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+git clone https://github.com/yourusername/think-graph.git
+cd think-graph
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+2. 安装依赖
+```bash
+npm install
+# 或
+yarn install
+```
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+3. 配置环境变量
+复制 `.env.example` 文件为 `.env.local` 并填写必要的配置信息：
+```bash
+cp .env.example .env.local
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/basic-features/font-optimization) to automatically optimize and load Inter, a custom Google Font.
+4. 启动开发服务器
+```bash
+npm run dev
+# 或
+yarn dev
+```
 
-## Learn More
+访问 http://localhost:3000 开始使用
 
-To learn more about Next.js, take a look at the following resources:
+## 📖 使用指南
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+### 基础搜索
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js/) - your feedback and contributions are welcome!
+1. 在首页搜索框输入任意主题或问题
+2. 系统将自动分析内容并生成知识图谱
+3. 点击图谱中的节点可查看详细信息
 
-## Deploy on Vercel
+### 高级功能
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+- **深度思考模式**: 开启后将提供更详细的推理过程
+- **联网搜索**: 启用后可获取实时网络信息
+- **知识导出**: 支持导出知识图谱为多种格式
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/deployment) for more details.
+## 🛠 技术栈
+
+- **前端框架**: Next.js
+- **UI组件**: Tailwind CSS
+- **图形渲染**: Cytoscape.js, Three.js
+- **AI模型**: OpenAI GPT
+- **数据存储**: Supabase
+
+## 🤝 贡献指南
+
+我们欢迎任何形式的贡献，无论是新功能、bug修复还是文档改进。请查看我们的贡献指南了解详情。
+
+## 📄 许可证
+
+本项目采用 MIT 许可证 - 查看 [LICENSE](LICENSE) 文件了解详情
+
+## 🙋‍♂️ 获取帮助
+
+- 查看我们的 [常见问题解答](FAQ.md)
+- 加入我们的 [Discord 社区](https://discord.gg/thinkgraph)
+- 发送邮件至 support@thinkgraph.ai
+
+## 🌟 致谢
+
+感谢所有为这个项目做出贡献的开发者和用户。
