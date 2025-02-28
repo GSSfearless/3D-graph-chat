@@ -318,15 +318,16 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
     const centerToMid = new THREE.Vector3().subVectors(center, midPoint);
     
     // 计算控制点
-    const distance = midPoint.length();
-    const curveFactor = Math.min(distance * 0.5, 100);
+    // 控制点会受到球心的影响，距离球心越远，弯曲程度越大
+    const distance = midPoint.length(); // 到球心的距离
+    const curveFactor = Math.min(distance * 0.5, 100); // 限制最大弯曲程度
     
     // 将控制点向球心方向移动
     const controlPoint = midPoint.clone().add(
       centerToMid.normalize().multiplyScalar(curveFactor)
     );
 
-    // 创建二次贝塞尔曲线
+    // 创建二次贝塞尔曲线的点
     const curve = new THREE.QuadraticBezierCurve3(
       source.position,
       controlPoint,
@@ -334,49 +335,113 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
     );
 
     // 生成曲线上的点
-    const points = curve.getPoints(50);
+    const points = curve.getPoints(50); // 50个点以确保曲线平滑
     const geometry = new THREE.BufferGeometry().setFromPoints(points);
     
-    // 创建流动纹理的顶点属性
-    const flowOffsets = new Float32Array(points.length);
-    for (let i = 0; i < points.length; i++) {
-      flowOffsets[i] = i / (points.length - 1);
+    // 根据边的类型设置不同的颜色
+    let edgeColor;
+    switch(edgeData.type) {
+      // 层次关系 - 暖色调
+      case 'is-a':
+        edgeColor = '#FF7676'; // 鲜红色
+        break;
+      case 'contains':
+        edgeColor = '#FF9F45'; // 橙色
+        break;
+      case 'belongs-to':
+        edgeColor = '#FFC436'; // 金色
+        break;
+
+      // 依赖关系 - 冷色调
+      case 'requires':
+        edgeColor = '#45B7D1'; // 蓝色
+        break;
+      case 'depends':
+        edgeColor = '#4477CE'; // 深蓝色
+        break;
+      case 'implements':
+        edgeColor = '#3876BF'; // 靛蓝色
+        break;
+
+      // 动作关系 - 绿色系
+      case 'performs':
+        edgeColor = '#96CEB4'; // 薄荷绿
+        break;
+      case 'uses':
+        edgeColor = '#7AB800'; // 草绿色
+        break;
+      case 'provides':
+        edgeColor = '#4CAF50'; // 翠绿色
+        break;
+      case 'obtains':
+        edgeColor = '#88B04B'; // 橄榄绿
+        break;
+
+      // 时序关系 - 紫色系
+      case 'before':
+        edgeColor = '#9B6B9E'; // 浅紫色
+        break;
+      case 'after':
+        edgeColor = '#845EC2'; // 深紫色
+        break;
+      case 'during':
+        edgeColor = '#BE93D4'; // 淡紫色
+        break;
+      case 'sequence':
+        edgeColor = '#A084E8'; // 亮紫色
+        break;
+
+      // 关联关系 - 靛蓝色系（与节点颜色一致）
+      case 'context':
+        edgeColor = '#6366F1'; // 主色调
+        break;
+      case 'similar':
+        edgeColor = '#818CF8'; // 浅靛蓝
+        break;
+      case 'related':
+        edgeColor = '#4F46E5'; // 深靛蓝
+        break;
+      case 'and':
+        edgeColor = '#5B5EF4'; // 中靛蓝
+        break;
+
+      // 方向关系 - 粉色系
+      case 'to':
+        edgeColor = '#FF8FB1'; // 粉红色
+        break;
+      case 'from':
+        edgeColor = '#FC7FB6'; // 深粉色
+        break;
+      case 'towards':
+        edgeColor = '#FDA4BA'; // 浅粉色
+        break;
+
+      // 逻辑关系 - 灰色系
+      case 'if-then':
+        edgeColor = '#7D7C7C'; // 深灰色
+        break;
+      case 'therefore':
+        edgeColor = '#9DB2BF'; // 蓝灰色
+        break;
+
+      // 修饰关系 - 棕色系
+      case 'of':
+        edgeColor = '#C4A484'; // 棕色
+        break;
+      case 'degree':
+        edgeColor = '#B4846C'; // 深棕色
+        break;
+
+      default:
+        edgeColor = theme.edge.color; // 默认颜色
     }
-    geometry.setAttribute('flowOffset', new THREE.BufferAttribute(flowOffsets, 1));
     
-    // 创建自定义着色器材质
-    const material = new THREE.ShaderMaterial({
-      uniforms: {
-        color: { value: new THREE.Color(edgeData.type ? getEdgeColor(edgeData.type) : theme.edge.color) },
-        opacity: { value: theme.edge.opacity },
-        flowFactor: { value: 0.0 }, // 流动动画因子
-        dashSize: { value: 0.1 }, // 虚线大小
-        totalSize: { value: 1.0 } // 总长度
-      },
-      vertexShader: `
-        attribute float flowOffset;
-        varying float vFlowOffset;
-        void main() {
-          vFlowOffset = flowOffset;
-          gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-        }
-      `,
-      fragmentShader: `
-        uniform vec3 color;
-        uniform float opacity;
-        uniform float flowFactor;
-        uniform float dashSize;
-        uniform float totalSize;
-        varying float vFlowOffset;
-        
-        void main() {
-          float modulo = mod(vFlowOffset + flowFactor, totalSize);
-          float alpha = step(modulo, dashSize) * opacity;
-          gl_FragColor = vec4(color, alpha);
-        }
-      `,
+    // 创建发光材质
+    const material = new THREE.LineBasicMaterial({
+      color: edgeColor,
       transparent: true,
-      depthWrite: false
+      opacity: theme.edge.opacity,
+      linewidth: theme.edge.width
     });
 
     const line = new THREE.Line(geometry, material);
@@ -388,12 +453,12 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
       isEdge: true,
       source: source,
       target: target,
-      controlPoint: controlPoint,
-      curve: curve
+      controlPoint: controlPoint // 存储控制点以便后续更新
     };
 
     // 更新边的位置的方法
     group.updatePosition = () => {
+      // 更新中点和控制点
       const newMidPoint = new THREE.Vector3().addVectors(source.position, target.position).multiplyScalar(0.5);
       const newCenterToMid = new THREE.Vector3().subVectors(center, newMidPoint);
       const newDistance = newMidPoint.length();
@@ -403,29 +468,20 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
         newCenterToMid.normalize().multiplyScalar(newCurveFactor)
       );
 
+      // 更新曲线
       const newCurve = new THREE.QuadraticBezierCurve3(
         source.position,
         newControlPoint,
         target.position
       );
 
+      // 更新几何体
       const newPoints = newCurve.getPoints(50);
       geometry.setFromPoints(newPoints);
       geometry.computeBoundingSphere();
     };
 
     return group;
-  };
-
-  // 获取边的颜色
-  const getEdgeColor = (type) => {
-    // 保持原有的边颜色逻辑
-    switch(type) {
-      case 'is-a': return '#FF7676';
-      case 'contains': return '#FF9F45';
-      // ... 其他颜色映射保持不变 ...
-      default: return theme.edge.color;
-    }
   };
 
   const handleFullscreen = () => {
@@ -439,89 +495,13 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
   };
 
   const handleNodeClick = (node) => {
-    const { scene } = sceneRef.current;
+    if (selectedNode) {
+      selectedNode.material.color.setHex(parseInt(theme.node.color.replace('#', '0x')));
+    }
     
-    // 获取所有相连的边和节点
-    const connectedElements = getConnectedElements(node);
-    
-    // 遍历场景中的所有对象
-    scene.traverse((object) => {
-      if (object.type === 'Mesh' || object.type === 'Line') {
-        const material = object.material;
-        if (!material) return;
-        
-        // 判断是否是相连的元素
-        const isConnected = connectedElements.has(object);
-        const isClickedNode = object === node;
-        
-        // 设置透明度和颜色
-        if (material.transparent !== undefined) {
-          material.transparent = true;
-          
-          if (isClickedNode) {
-            // 点击的节点高亮显示
-            material.opacity = 1.0;
-            material.color.setHex(parseInt(theme.node.highlightColor.replace('#', '0x')));
-            // 增强发光效果
-            const glowSphere = object.parent?.children?.[1];
-            if (glowSphere?.material?.uniforms) {
-              glowSphere.material.uniforms.c.value = 1.0;
-              glowSphere.material.uniforms.p.value = 2.5;
-            }
-          } else if (isConnected) {
-            // 相连的节点和边保持较高透明度
-            material.opacity = 0.8;
-            if (object.type === 'Line') {
-              // 为相连的边添加流动效果
-              if (!material.userData) material.userData = {};
-              material.userData.isFlowing = true;
-              material.userData.flowDirection = object.userData.source === node ? 1 : -1;
-            }
-          } else {
-            // 其他元素淡化
-            material.opacity = 0.15;
-          }
-        }
-      }
-      
-      // 处理标签
-      if (object instanceof CSS2DObject) {
-        const parent = object.parent;
-        if (!parent) return;
-        
-        const isConnected = connectedElements.has(parent.children[0]);
-        const isClickedNode = parent.children[0] === node;
-        
-        // 设置标签可见性
-        object.element.style.opacity = isConnected || isClickedNode ? '1' : '0.15';
-      }
-    });
-    
+    node.material.color.setHex(parseInt(theme.node.highlightColor.replace('#', '0x')));
     setSelectedNode(node);
     onNodeClick && onNodeClick(node.userData);
-  };
-
-  // 获取与节点相连的所有边和节点
-  const getConnectedElements = (node) => {
-    const connectedElements = new Set();
-    const nodeId = node.userData.id;
-    
-    // 遍历场景找到相关元素
-    sceneRef.current.scene.traverse((object) => {
-      if (object.userData?.isEdge) {
-        const sourceId = object.userData.source.userData.id;
-        const targetId = object.userData.target.userData.id;
-        
-        if (sourceId === nodeId || targetId === nodeId) {
-          connectedElements.add(object); // 添加相连的边
-          // 添加边的两端节点
-          connectedElements.add(object.userData.source.children[0]);
-          connectedElements.add(object.userData.target.children[0]);
-        }
-      }
-    });
-    
-    return connectedElements;
   };
 
   const handleResetView = () => {
@@ -725,26 +705,10 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
       // 更新控制器
       controls.update();
 
-      // 更新所有边的位置和动画
-      scene.traverse((object) => {
-        if (object.userData?.isEdge) {
-          // 更新边的位置
-          if (object.updatePosition) {
-            object.updatePosition();
-          }
-          
-          // 更新流动动画
-          const line = object.children[0];
-          if (line && line.material.userData?.isFlowing) {
-            const flowSpeed = 0.5; // 控制流动速度
-            const direction = line.material.userData.flowDirection || 1;
-            line.material.uniforms.flowFactor.value += flowSpeed * direction * 0.01;
-            
-            // 重置流动因子以避免数值过大
-            if (Math.abs(line.material.uniforms.flowFactor.value) > 1.0) {
-              line.material.uniforms.flowFactor.value = 0.0;
-            }
-          }
+      // 更新所有边的位置和标签
+      scene.children.forEach(child => {
+        if (child.userData?.isEdge && child.updatePosition) {
+          child.updatePosition();
         }
       });
 
