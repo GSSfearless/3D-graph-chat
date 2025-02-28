@@ -1,4 +1,4 @@
-import { faArrowRight, faBrain, faLightbulb, faSearch, faChartNetwork, faLock, faRocket, faMagicWandSparkles } from '@fortawesome/free-solid-svg-icons';
+import { faArrowRight, faBrain, faLightbulb, faChartNetwork, faLock, faRocket, faMagicWandSparkles } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { useRouter } from 'next/router';
 import { useState, useEffect } from 'react';
@@ -6,24 +6,11 @@ import 'tailwindcss/tailwind.css';
 
 function Home() {
   const router = useRouter();
-  const [query, setQuery] = useState('');
   const [isVisible, setIsVisible] = useState(false);
 
   useEffect(() => {
     setIsVisible(true);
   }, []);
-
-  const handleKeyPress = (e) => {
-    if (e.key === 'Enter') {
-      handleSearch();
-    }
-  };
-
-  const handleSearch = () => {
-    if (query.trim() !== '') {
-      router.push(`/search?q=${query}&side=both`);
-    }
-  };
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-50 via-white to-blue-50 overflow-hidden">
@@ -48,24 +35,23 @@ function Home() {
           </p>
         </div>
         
-        {/* Search Bar */}
+        {/* Main CTA Buttons */}
         <div className={`max-w-2xl mx-auto relative group transform transition-all duration-1000 delay-300 ${isVisible ? 'translate-y-0 opacity-100' : 'translate-y-10 opacity-0'}`}>
-          <div className="absolute inset-0 bg-gradient-to-r from-blue-200/50 to-purple-200/50 opacity-20 blur-2xl group-hover:opacity-30 transition-opacity rounded-full"></div>
-          <div className="relative flex items-center bg-white rounded-full shadow-[0_0_20px_rgba(0,0,0,0.05)] group-hover:shadow-[0_0_25px_rgba(0,0,0,0.1)] transition-all duration-300">
-            <input
-              type="text"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              onKeyPress={handleKeyPress}
-              placeholder="输入任何主题，开始你的知识探索..."
-              className="w-full px-8 py-5 text-lg rounded-full bg-transparent border-2 border-transparent focus:border-blue-100 focus:ring-2 focus:ring-blue-50 transition-all outline-none"
-            />
+          <div className="absolute inset-0 bg-gradient-to-r from-blue-200/50 to-purple-200/50 opacity-20 blur-2xl group-hover:opacity-30 transition-opacity rounded-3xl"></div>
+          <div className="relative flex flex-col sm:flex-row items-center justify-center gap-4 bg-white/80 backdrop-blur-sm p-8 rounded-3xl shadow-[0_0_20px_rgba(0,0,0,0.05)] group-hover:shadow-[0_0_25px_rgba(0,0,0,0.1)] transition-all duration-300">
             <button
-              onClick={handleSearch}
-              className="absolute right-2 bg-gradient-to-r from-blue-500 to-indigo-600 text-white px-6 py-3 rounded-full flex items-center gap-2 transition-all transform hover:translate-x-1 hover:shadow-lg group"
+              onClick={() => router.push('/search')}
+              className="w-full sm:w-auto px-8 py-4 bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-full text-lg font-semibold hover:shadow-lg transform hover:scale-105 transition-all flex items-center justify-center gap-2"
             >
-              <span className="hidden md:inline font-medium">开始探索</span>
-              <FontAwesomeIcon icon={faSearch} className="text-lg transition-transform group-hover:scale-110" />
+              <FontAwesomeIcon icon={faRocket} className="text-lg" />
+              <span>开始探索</span>
+            </button>
+            <button
+              onClick={() => router.push('/demo')}
+              className="w-full sm:w-auto px-8 py-4 bg-white text-gray-700 border-2 border-gray-200 rounded-full text-lg font-semibold hover:border-blue-300 hover:text-blue-600 transition-all flex items-center justify-center gap-2"
+            >
+              <FontAwesomeIcon icon={faLightbulb} className="text-lg" />
+              <span>查看演示</span>
             </button>
           </div>
         </div>
