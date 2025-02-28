@@ -21,13 +21,24 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
       maxSize: 15,       // 最大节点大小
       segments: 32,
       opacity: 0.9,
-      glowColor: '#818CF8'
+      glowColor: '#818CF8',
+      levels: {
+        1: { color: '#3B82F6', size: 15, glow: 2.0 },
+        2: { color: '#6366F1', size: 12, glow: 1.5 },
+        3: { color: '#8B5CF6', size: 9, glow: 1.0 }
+      }
     },
     edge: {
       color: '#94A3B8',
       highlightColor: '#64748B',
       opacity: 0.6,
-      width: 2
+      width: 2,
+      particles: {
+        count: 20,
+        size: 0.5,
+        speed: 0.02,
+        color: '#818CF8'
+      }
     },
     label: {
       color: '#1E293B',
@@ -59,40 +70,40 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
     // 创建场景
     const scene = new THREE.Scene();
     scene.background = new THREE.Color(0xf8fafc);
-    scene.fog = new THREE.Fog(0xf8fafc, 100, 1000);
+    
+    // 优化雾效果的距离，减少计算量
+    scene.fog = new THREE.Fog(0xf8fafc, 200, 800);
 
-    // 创建相机并设置到合适的观察位置
-    const camera = new THREE.PerspectiveCamera(45, width / height, 1, 2000);
-    // 将相机位置设置为球体半径的2.5倍，确保能看到整个球体
+    // 优化相机设置
+    const camera = new THREE.PerspectiveCamera(45, width / height, 5, 1000);
     camera.position.set(0, 0, 500);
     camera.lookAt(0, 0, 0);
 
-    // 创建渲染器
+    // 优化渲染器设置
     const renderer = new THREE.WebGLRenderer({ 
       antialias: true,
       alpha: true,
-      logarithmicDepthBuffer: true
+      powerPreference: 'high-performance', // 优先使用高性能GPU
+      logarithmicDepthBuffer: false // 关闭对数深度缓冲，因为我们的场景较简单
     });
     renderer.setSize(width, height);
-    renderer.setPixelRatio(window.devicePixelRatio);
-    renderer.shadowMap.enabled = true;
-    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-
-    // 创建标签渲染器
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2)); // 限制像素比，提高性能
+    renderer.shadowMap.enabled = false; // 关闭阴影，因为我们不需要
+    
+    // 优化标签渲染器
     const labelRenderer = new CSS2DRenderer();
     labelRenderer.setSize(width, height);
     labelRenderer.domElement.style.position = 'absolute';
     labelRenderer.domElement.style.top = '0';
     labelRenderer.domElement.style.pointerEvents = 'none';
-
-    // 添加光源
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+    
+    // 使用性能更好的光源
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
     scene.add(ambientLight);
 
-    const pointLight = new THREE.PointLight(0xffffff, 1);
-    pointLight.position.set(100, 100, 100);
-    pointLight.castShadow = true;
-    scene.add(pointLight);
+    const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+    directionalLight.position.set(100, 100, 100);
+    scene.add(directionalLight);
 
     // 优化控制器设置
     const controls = new OrbitControls(camera, renderer.domElement);
@@ -197,49 +208,83 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
     return size;
   };
 
-  const createNode3D = (nodeData, index, total) => {
-    const group = new THREE.Group();
-
-    // 计算节点大小
-    const nodeSize = calculateNodeSize(nodeData);
-
-    // 创建球体几何体
-    const geometry = new THREE.SphereGeometry(
-      nodeSize,
-      theme.node.segments,
-      theme.node.segments
-    );
-
-    // 创建发光材质
-    const material = new THREE.MeshPhongMaterial({
-      color: theme.node.color,
-      specular: 0x666666,
-      shininess: 50,
+  const createParticleSystem = (source, target) => {
+    const particleCount = Math.min(theme.edge.particles.count, 20); // 限制粒子数量
+    const geometry = new THREE.BufferGeometry();
+    const positions = new Float32Array(particleCount * 3);
+    
+    for (let i = 0; i < particleCount; i++) {
+      const t = i / particleCount;
+      positions[i * 3] = source.x + (target.x - source.x) * t;
+      positions[i * 3 + 1] = source.y + (target.y - source.y) * t;
+      positions[i * 3 + 2] = source.z + (target.z - source.z) * t;
+    }
+    
+    geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+    
+    const material = new THREE.PointsMaterial({
+      color: theme.edge.particles.color,
+      size: theme.edge.particles.size,
       transparent: true,
-      opacity: theme.node.opacity
+      opacity: 0.6,
+      sizeAttenuation: false // 禁用大小衰减以提高性能
     });
 
-    const sphere = new THREE.Mesh(geometry, material);
-    sphere.castShadow = true;
-    sphere.receiveShadow = true;
+    const particles = new THREE.Points(geometry, material);
+    particles.userData.source = source;
+    particles.userData.target = target;
     
-    // 添加悬浮效果所需的属性
-    sphere.userData = {
-      ...nodeData,
-      originalScale: new THREE.Vector3(1, 1, 1),
-      originalColor: theme.node.color,
-      isHovered: false
-    };
+    return particles;
+  };
+
+  const createNode3D = (nodeData, index, total) => {
+    const level = nodeData.data.level || 1;
+    const levelConfig = theme.node.levels[level];
     
-    group.add(sphere);
+    // 复用几何体
+    if (!sceneRef.current.geometries) {
+      sceneRef.current.geometries = new Map();
+    }
+    
+    const geometryKey = `sphere-${levelConfig.size}-${theme.node.segments}`;
+    let geometry = sceneRef.current.geometries.get(geometryKey);
+    
+    if (!geometry) {
+      geometry = new THREE.SphereGeometry(
+        levelConfig.size,
+        theme.node.segments,
+        theme.node.segments
+      );
+      sceneRef.current.geometries.set(geometryKey, geometry);
+    }
+
+    // 复用材质
+    const materialKey = `material-${levelConfig.color}`;
+    let material = sceneRef.current.materials?.get(materialKey);
+    
+    if (!material) {
+      material = new THREE.MeshPhongMaterial({
+        color: levelConfig.color,
+        transparent: true,
+        opacity: theme.node.opacity,
+        shininess: 30
+      });
+      
+      if (!sceneRef.current.materials) {
+        sceneRef.current.materials = new Map();
+      }
+      sceneRef.current.materials.set(materialKey, material);
+    }
+
+    const node = new THREE.Mesh(geometry, material);
 
     // 添加发光效果
     const glowMaterial = new THREE.ShaderMaterial({
       uniforms: {
-        c: { type: 'f', value: 0.5 },
-        p: { type: 'f', value: 1.4 },
-        glowColor: { type: 'c', value: new THREE.Color(theme.node.glowColor) },
-        viewVector: { type: 'v3', value: sceneRef.current.camera.position }
+        c: { type: "f", value: 0.1 },
+        p: { type: "f", value: 1.4 },
+        glowColor: { type: "c", value: new THREE.Color(theme.node.glowColor) },
+        viewVector: { type: "v3", value: sceneRef.current.camera.position }
       },
       vertexShader: `
         uniform vec3 viewVector;
@@ -259,16 +304,14 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
           gl_FragColor = vec4(glow, 1.0);
         }
       `,
-      side: THREE.BackSide,
+      side: THREE.FrontSide,
       blending: THREE.AdditiveBlending,
       transparent: true
     });
 
-    const glowSphere = new THREE.Mesh(
-      new THREE.SphereGeometry(nodeSize * 1.2, theme.node.segments, theme.node.segments),
-      glowMaterial
-    );
-    group.add(glowSphere);
+    const glowMesh = new THREE.Mesh(geometry.clone(), glowMaterial);
+    glowMesh.scale.multiplyScalar(1.2);
+    node.add(glowMesh);
 
     // 创建标签
     const labelDiv = document.createElement('div');
@@ -287,22 +330,22 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
     labelDiv.style.userSelect = 'none';
     
     const label = new CSS2DObject(labelDiv);
-    label.position.set(0, nodeSize + 5, 0);
-    group.add(label);
+    label.position.set(0, levelConfig.size + 5, 0);
+    node.add(label);
 
     // 计算节点位置
     const phi = Math.acos(-1 + (2 * index) / total);
     const theta = Math.sqrt(total * Math.PI) * phi;
     const radius = 200;
 
-    group.position.x = radius * Math.cos(theta) * Math.sin(phi);
-    group.position.y = radius * Math.sin(theta) * Math.sin(phi);
-    group.position.z = radius * Math.cos(phi);
+    node.position.x = radius * Math.cos(theta) * Math.sin(phi);
+    node.position.y = radius * Math.sin(theta) * Math.sin(phi);
+    node.position.z = radius * Math.cos(phi);
 
     // 添加用户数据
-    group.userData = nodeData;
+    node.userData = nodeData;
 
-    return group;
+    return node;
   };
 
   const createEdge3D = (source, target, edgeData) => {
@@ -447,6 +490,10 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
     const line = new THREE.Line(geometry, material);
     group.add(line);
 
+    // 添加粒子系统
+    const particles = createParticleSystem(source.position, target.position);
+    group.add(particles);
+
     // 添加用户数据
     group.userData = {
       ...edgeData,
@@ -481,7 +528,19 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
       geometry.computeBoundingSphere();
     };
 
-    return group;
+    // 更新动画
+    const updateParticles = () => {
+      const positions = particles.geometry.attributes.position.array;
+      for (let i = 0; i < positions.length; i += 3) {
+        const t = (Date.now() * theme.edge.particles.speed + i) % 1;
+        positions[i] = source.position.x + (target.position.x - source.position.x) * t;
+        positions[i + 1] = source.position.y + (target.position.y - source.position.y) * t;
+        positions[i + 2] = source.position.z + (target.position.z - source.position.z) * t;
+      }
+      particles.geometry.attributes.position.needsUpdate = true;
+    };
+    
+    return { line, particles };
   };
 
   const handleFullscreen = () => {
@@ -680,13 +739,14 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
               可用的节点ID列表: Array.from(nodes3D.keys())
             });
           } else {
-            const edge3D = createEdge3D(source, target, {
+            const { line, particles } = createEdge3D(source, target, {
               ...edgeData,
               label: edgeData.label || edgeData.type || '关系'
             });
             edge3D.userData.isEdge = true;
-            scene.add(edge3D);
-            edgeMap.set(edgeKey1, edge3D);
+            scene.add(line);
+            scene.add(particles);
+            edgeMap.set(edgeKey1, { line, particles });
             console.log(`成功创建边: ${sourceId} -> ${targetId}`);
           }
         }
@@ -702,28 +762,37 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
       
       const { scene, camera, renderer, labelRenderer, controls } = sceneRef.current;
       
-      // 更新控制器
-      controls.update();
+      // 只在需要时更新控制器
+      if (controls.enabled) {
+        controls.update();
+      }
 
-      // 更新所有边的位置和标签
-      scene.children.forEach(child => {
-        if (child.userData?.isEdge && child.updatePosition) {
-          child.updatePosition();
-        }
-      });
-
-      // 更新节点发光效果
+      // 使用对象池来管理粒子更新
+      const currentTime = Date.now() * theme.edge.particles.speed;
       scene.traverse((object) => {
-        if (object.material && object.material.uniforms) {
-          object.material.uniforms.viewVector.value = camera.position;
+        if (object.type === 'Points') {
+          const positions = object.geometry.attributes.position.array;
+          const source = object.userData.source;
+          const target = object.userData.target;
+          
+          for (let i = 0; i < positions.length; i += 3) {
+            const t = (currentTime + i) % 1;
+            positions[i] = source.x + (target.x - source.x) * t;
+            positions[i + 1] = source.y + (target.y - source.y) * t;
+            positions[i + 2] = source.z + (target.z - source.z) * t;
+          }
+          object.geometry.attributes.position.needsUpdate = true;
         }
       });
 
-      // 渲染场景
-      renderer.render(scene, camera);
-      labelRenderer.render(scene, camera);
+      // 使用节流来控制渲染频率
+      if (!sceneRef.current.lastRenderTime || 
+          Date.now() - sceneRef.current.lastRenderTime >= 16) { // 约60fps
+        renderer.render(scene, camera);
+        labelRenderer.render(scene, camera);
+        sceneRef.current.lastRenderTime = Date.now();
+      }
 
-      // 存储动画帧ID以便清理
       sceneRef.current.animationFrameId = requestAnimationFrame(animate);
     };
     animate();
@@ -793,71 +862,142 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
     if (!sceneRef.current || !data) return;
 
     const { scene, camera, renderer } = sceneRef.current;
-
-    // 添加鼠标事件处理
+    
+    // 使用防抖处理鼠标事件
+    let mouseTimeout;
     const raycaster = new THREE.Raycaster();
     const mouse = new THREE.Vector2();
     let hoveredNode = null;
 
     const onMouseMove = (event) => {
-      const rect = renderer.domElement.getBoundingClientRect();
-      mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
-      mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
-
-      raycaster.setFromCamera(mouse, camera);
-      const intersects = raycaster.intersectObjects(scene.children, true);
-
-      // 找到第一个是球体的相交对象
-      const nodeIntersect = intersects.find(intersect => 
-        intersect.object?.type === 'Mesh' && 
-        intersect.object?.geometry?.type === 'SphereGeometry'
-      );
-
-      // 如果之前有悬浮的节点，恢复其状态
-      if (hoveredNode && (!nodeIntersect || nodeIntersect.object !== hoveredNode)) {
-        if (hoveredNode.material && hoveredNode.userData) {
-          const material = hoveredNode.material;
-          if (material.color && material.color.set && hoveredNode.userData.originalColor) {
-            material.color.set(hoveredNode.userData.originalColor);
-          }
-          hoveredNode.userData.isHovered = false;
-          
-          // 更新发光效果
-          const glowSphere = hoveredNode.parent?.children?.[1];
-          if (glowSphere?.material?.uniforms) {
-            glowSphere.material.uniforms.c.value = 0.5;
-            glowSphere.material.uniforms.p.value = 1.4;
-          }
-        }
-        hoveredNode = null;
+      if (mouseTimeout) {
+        clearTimeout(mouseTimeout);
       }
 
-      // 如果找到新的节点，应用悬浮效果
-      if (nodeIntersect && nodeIntersect.object && nodeIntersect.object !== hoveredNode) {
-        const node = nodeIntersect.object;
-        if (node.material && node.material.color && node.material.color.set) {
-          node.material.color.set(theme.node.highlightColor);
-        }
-        if (node.userData) {
-          node.userData.isHovered = true;
-        }
+      mouseTimeout = setTimeout(() => {
+        const rect = renderer.domElement.getBoundingClientRect();
+        mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+        mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+
+        raycaster.setFromCamera(mouse, camera);
         
-        // 增强发光效果
-        const glowSphere = node.parent?.children?.[1];
-        if (glowSphere?.material?.uniforms) {
-          glowSphere.material.uniforms.c.value = 0.8;
-          glowSphere.material.uniforms.p.value = 2.0;
+        // 只检查节点对象，忽略其他对象
+        const nodeObjects = scene.children.filter(obj => 
+          obj instanceof THREE.Mesh && 
+          obj.geometry instanceof THREE.SphereGeometry
+        );
+        
+        const intersects = raycaster.intersectObjects(nodeObjects, false);
+        const nodeIntersect = intersects[0];
+
+        if (hoveredNode && (!nodeIntersect || nodeIntersect.object !== hoveredNode)) {
+          resetNodeState(hoveredNode);
+          hoveredNode = null;
         }
-        hoveredNode = node;
+
+        if (nodeIntersect && nodeIntersect.object !== hoveredNode) {
+          highlightNode(nodeIntersect.object);
+          hoveredNode = nodeIntersect.object;
+        }
+      }, 16); // 约60fps的更新频率
+    };
+
+    // 优化节点状态重置
+    const resetNodeState = (node) => {
+      if (!node?.material?.color) return;
+      
+      const level = node.userData?.data?.level || 1;
+      const levelConfig = theme.node.levels[level];
+      node.material.color.set(levelConfig.color);
+      node.userData.isHovered = false;
+      
+      const glowMesh = node.children?.find(child => child.material?.type === 'ShaderMaterial');
+      if (glowMesh?.material?.uniforms) {
+        glowMesh.material.uniforms.c.value = 0.1;
+        glowMesh.material.uniforms.p.value = 1.4;
       }
     };
 
-    renderer.domElement.addEventListener('mousemove', onMouseMove);
+    // 优化节点高亮
+    const highlightNode = (node) => {
+      if (!node?.material?.color) return;
+      
+      node.material.color.set(theme.node.highlightColor);
+      node.userData.isHovered = true;
+      
+      const glowMesh = node.children?.find(child => child.material?.type === 'ShaderMaterial');
+      if (glowMesh?.material?.uniforms) {
+        glowMesh.material.uniforms.c.value = 0.8;
+        glowMesh.material.uniforms.p.value = 2.0;
+      }
+    };
+
+    // 使用passive事件监听器提高性能
+    renderer.domElement.addEventListener('mousemove', onMouseMove, { passive: true });
 
     return () => {
       renderer.domElement.removeEventListener('mousemove', onMouseMove);
+      if (mouseTimeout) {
+        clearTimeout(mouseTimeout);
+      }
     };
   }, [data]);
+
+  // 优化清理函数
+  useEffect(() => {
+    return () => {
+      if (sceneRef.current) {
+        // 停止动画循环
+        cancelAnimationFrame(sceneRef.current.animationFrameId);
+        
+        // 清理几何体
+        if (sceneRef.current.geometries) {
+          sceneRef.current.geometries.forEach(geometry => geometry.dispose());
+          sceneRef.current.geometries.clear();
+        }
+        
+        // 清理材质
+        if (sceneRef.current.materials) {
+          sceneRef.current.materials.forEach(material => material.dispose());
+          sceneRef.current.materials.clear();
+        }
+        
+        // 清理场景中的对象
+        if (sceneRef.current.scene) {
+          sceneRef.current.scene.traverse((object) => {
+            if (object.geometry) {
+              object.geometry.dispose();
+            }
+            if (object.material) {
+              if (Array.isArray(object.material)) {
+                object.material.forEach(material => {
+                  if (material.map) material.map.dispose();
+                  material.dispose();
+                });
+              } else {
+                if (object.material.map) object.material.map.dispose();
+                object.material.dispose();
+              }
+            }
+          });
+        }
+        
+        // 清理渲染器
+        if (sceneRef.current.renderer) {
+          sceneRef.current.renderer.dispose();
+          sceneRef.current.renderer.forceContextLoss();
+        }
+        
+        // 清理控制器
+        if (sceneRef.current.controls) {
+          sceneRef.current.controls.dispose();
+        }
+        
+        // 清理引用
+        sceneRef.current = null;
+      }
+    };
+  }, []);
 
   return (
     <div className="knowledge-graph-container" style={{ width: '100%', height: '100%', ...style }}>
