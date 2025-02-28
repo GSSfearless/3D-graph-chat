@@ -21,24 +21,13 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
       maxSize: 15,       // 最大节点大小
       segments: 32,
       opacity: 0.9,
-      glowColor: '#818CF8',
-      levels: {
-        1: { color: '#3B82F6', size: 15, glow: 2.0 },
-        2: { color: '#6366F1', size: 12, glow: 1.5 },
-        3: { color: '#8B5CF6', size: 9, glow: 1.0 }
-      }
+      glowColor: '#818CF8'
     },
     edge: {
       color: '#94A3B8',
       highlightColor: '#64748B',
       opacity: 0.6,
-      width: 2,
-      particles: {
-        count: 20,
-        size: 0.5,
-        speed: 0.02,
-        color: '#818CF8'
-      }
+      width: 2
     },
     label: {
       color: '#1E293B',
@@ -208,56 +197,49 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
     return size;
   };
 
-  const createParticleSystem = (source, target) => {
-    const points = [];
-    const particleCount = theme.edge.particles.count;
-    const geometry = new THREE.BufferGeometry();
-    const material = new THREE.PointsMaterial({
-      color: theme.edge.particles.color,
-      size: theme.edge.particles.size,
-      transparent: true,
-      opacity: 0.6
-    });
-
-    for (let i = 0; i < particleCount; i++) {
-      const t = i / particleCount;
-      const point = new THREE.Vector3(
-        source.x + (target.x - source.x) * t,
-        source.y + (target.y - source.y) * t,
-        source.z + (target.z - source.z) * t
-      );
-      points.push(point);
-    }
-
-    geometry.setFromPoints(points);
-    return new THREE.Points(geometry, material);
-  };
-
   const createNode3D = (nodeData, index, total) => {
-    const level = nodeData.data.level || 1;
-    const levelConfig = theme.node.levels[level];
-    
+    const group = new THREE.Group();
+
+    // 计算节点大小
+    const nodeSize = calculateNodeSize(nodeData);
+
+    // 创建球体几何体
     const geometry = new THREE.SphereGeometry(
-      levelConfig.size,
+      nodeSize,
       theme.node.segments,
       theme.node.segments
     );
 
+    // 创建发光材质
     const material = new THREE.MeshPhongMaterial({
-      color: levelConfig.color,
+      color: theme.node.color,
+      specular: 0x666666,
+      shininess: 50,
       transparent: true,
       opacity: theme.node.opacity
     });
 
-    const node = new THREE.Mesh(geometry, material);
+    const sphere = new THREE.Mesh(geometry, material);
+    sphere.castShadow = true;
+    sphere.receiveShadow = true;
+    
+    // 添加悬浮效果所需的属性
+    sphere.userData = {
+      ...nodeData,
+      originalScale: new THREE.Vector3(1, 1, 1),
+      originalColor: theme.node.color,
+      isHovered: false
+    };
+    
+    group.add(sphere);
 
     // 添加发光效果
     const glowMaterial = new THREE.ShaderMaterial({
       uniforms: {
-        c: { type: "f", value: 0.1 },
-        p: { type: "f", value: 1.4 },
-        glowColor: { type: "c", value: new THREE.Color(theme.node.glowColor) },
-        viewVector: { type: "v3", value: sceneRef.current.camera.position }
+        c: { type: 'f', value: 0.5 },
+        p: { type: 'f', value: 1.4 },
+        glowColor: { type: 'c', value: new THREE.Color(theme.node.glowColor) },
+        viewVector: { type: 'v3', value: sceneRef.current.camera.position }
       },
       vertexShader: `
         uniform vec3 viewVector;
@@ -277,14 +259,16 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
           gl_FragColor = vec4(glow, 1.0);
         }
       `,
-      side: THREE.FrontSide,
+      side: THREE.BackSide,
       blending: THREE.AdditiveBlending,
       transparent: true
     });
 
-    const glowMesh = new THREE.Mesh(geometry.clone(), glowMaterial);
-    glowMesh.scale.multiplyScalar(1.2);
-    node.add(glowMesh);
+    const glowSphere = new THREE.Mesh(
+      new THREE.SphereGeometry(nodeSize * 1.2, theme.node.segments, theme.node.segments),
+      glowMaterial
+    );
+    group.add(glowSphere);
 
     // 创建标签
     const labelDiv = document.createElement('div');
@@ -303,22 +287,22 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
     labelDiv.style.userSelect = 'none';
     
     const label = new CSS2DObject(labelDiv);
-    label.position.set(0, levelConfig.size + 5, 0);
-    node.add(label);
+    label.position.set(0, nodeSize + 5, 0);
+    group.add(label);
 
     // 计算节点位置
     const phi = Math.acos(-1 + (2 * index) / total);
     const theta = Math.sqrt(total * Math.PI) * phi;
     const radius = 200;
 
-    node.position.x = radius * Math.cos(theta) * Math.sin(phi);
-    node.position.y = radius * Math.sin(theta) * Math.sin(phi);
-    node.position.z = radius * Math.cos(phi);
+    group.position.x = radius * Math.cos(theta) * Math.sin(phi);
+    group.position.y = radius * Math.sin(theta) * Math.sin(phi);
+    group.position.z = radius * Math.cos(phi);
 
     // 添加用户数据
-    node.userData = nodeData;
+    group.userData = nodeData;
 
-    return node;
+    return group;
   };
 
   const createEdge3D = (source, target, edgeData) => {
@@ -463,10 +447,6 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
     const line = new THREE.Line(geometry, material);
     group.add(line);
 
-    // 添加粒子系统
-    const particles = createParticleSystem(source.position, target.position);
-    group.add(particles);
-
     // 添加用户数据
     group.userData = {
       ...edgeData,
@@ -501,19 +481,7 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
       geometry.computeBoundingSphere();
     };
 
-    // 更新动画
-    const updateParticles = () => {
-      const positions = particles.geometry.attributes.position.array;
-      for (let i = 0; i < positions.length; i += 3) {
-        const t = (Date.now() * theme.edge.particles.speed + i) % 1;
-        positions[i] = source.position.x + (target.position.x - source.position.x) * t;
-        positions[i + 1] = source.position.y + (target.position.y - source.position.y) * t;
-        positions[i + 2] = source.position.z + (target.position.z - source.position.z) * t;
-      }
-      particles.geometry.attributes.position.needsUpdate = true;
-    };
-    
-    return { line, particles };
+    return group;
   };
 
   const handleFullscreen = () => {
@@ -712,14 +680,13 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
               可用的节点ID列表: Array.from(nodes3D.keys())
             });
           } else {
-            const { line, particles } = createEdge3D(source, target, {
+            const edge3D = createEdge3D(source, target, {
               ...edgeData,
               label: edgeData.label || edgeData.type || '关系'
             });
             edge3D.userData.isEdge = true;
-            scene.add(line);
-            scene.add(particles);
-            edgeMap.set(edgeKey1, { line, particles });
+            scene.add(edge3D);
+            edgeMap.set(edgeKey1, edge3D);
             console.log(`成功创建边: ${sourceId} -> ${targetId}`);
           }
         }
