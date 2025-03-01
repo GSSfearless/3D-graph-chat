@@ -1,4 +1,4 @@
-import { faArrowRight, faRocket, faLightbulb, faSearch, faNetworkWired, faBrain, faProjectDiagram, faCubes, faHandshake } from '@fortawesome/free-solid-svg-icons';
+import { faArrowRight, faRocket, faLightbulb, faSearch, faNetworkWired, faBrain, faProjectDiagram } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { useRouter } from 'next/router';
 import { useState, useEffect } from 'react';
@@ -26,30 +26,28 @@ function Home() {
         <div className="container mx-auto px-4">
           <div className="flex flex-col lg:flex-row items-center">
             <div className={`lg:w-1/2 mb-12 lg:mb-0 transition-all duration-1000 ${isVisible ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-12'}`}>
-              <div className="max-w-xl">
-                <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-slate-800 leading-tight mb-6">
-                  知识不再零散，<br />
-                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600">智慧尽在连接</span>
-                </h1>
-                <p className="text-xl text-slate-600 mb-8">
-                  Think Graph 利用 AI 技术，将您的碎片化知识构建成一张完整的思维导图，让学习和记忆变得更加高效、直观。
-                </p>
-                <div className="flex flex-col sm:flex-row gap-4">
-                  <button
-                    onClick={() => router.push('/search')}
-                    className="px-8 py-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-full text-lg font-semibold hover:shadow-lg transform hover:scale-105 transition-all flex items-center justify-center gap-2"
-                  >
-                    <FontAwesomeIcon icon={faRocket} />
-                    立即开始探索
-                  </button>
-                  <button
-                    onClick={() => router.push('/demo')}
-                    className="px-8 py-4 bg-transparent border-2 border-indigo-600 text-indigo-600 rounded-full text-lg font-semibold hover:bg-indigo-600 hover:text-white transition-all flex items-center justify-center gap-2"
-                  >
-                    观看演示
-                    <FontAwesomeIcon icon={faArrowRight} />
-                  </button>
-                </div>
+              <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-slate-800 leading-tight mb-6">
+                知识不再零散，<br />
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600">智慧尽在连接</span>
+              </h1>
+              <p className="text-xl text-slate-600 mb-8 max-w-xl">
+                Think Graph 利用 AI 技术，将您的碎片化知识构建成一张完整的思维导图，让学习和记忆变得更加高效、直观。
+              </p>
+              <div className="flex flex-col sm:flex-row gap-4">
+                <button
+                  onClick={() => router.push('/search')}
+                  className="px-8 py-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-full text-lg font-semibold hover:shadow-lg transform hover:scale-105 transition-all flex items-center justify-center gap-2"
+                >
+                  <FontAwesomeIcon icon={faRocket} />
+                  立即开始探索
+                </button>
+                <button
+                  onClick={() => router.push('/demo')}
+                  className="px-8 py-4 bg-transparent border-2 border-indigo-600 text-indigo-600 rounded-full text-lg font-semibold hover:bg-indigo-600 hover:text-white transition-all flex items-center justify-center gap-2"
+                >
+                  观看演示
+                  <FontAwesomeIcon icon={faArrowRight} />
+                </button>
               </div>
             </div>
             <div className={`lg:w-1/2 transition-all duration-1000 delay-300 ${isVisible ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-12'}`}>
@@ -67,22 +65,22 @@ function Home() {
       {/* Feature Section */}
       <section className="py-16 md:py-24 bg-white">
         <div className="container mx-auto px-4">
-          <div className="text-center mb-16 max-w-3xl mx-auto">
+          <div className="text-center mb-16">
             <h2 className="text-3xl md:text-4xl font-bold text-slate-800 mb-6">强大功能，重塑知识管理方式</h2>
-            <p className="text-xl text-slate-600">
+            <p className="text-xl text-slate-600 max-w-3xl mx-auto">
               Think Graph 集成多种先进功能，让您的学习和知识管理体验达到新高度
             </p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {/* Feature 1 - 替换AI智能分析 */}
+            {/* Feature 1 */}
             <div className="bg-slate-50 rounded-xl p-8 hover:shadow-lg transition-all hover:-translate-y-2">
               <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 mb-6">
-                <FontAwesomeIcon icon={faCubes} className="text-2xl" />
+                <FontAwesomeIcon icon={faBrain} className="text-2xl" />
               </div>
-              <h3 className="text-xl font-bold text-slate-800 mb-4">智能知识结构化</h3>
+              <h3 className="text-xl font-bold text-slate-800 mb-4">AI 智能分析</h3>
               <p className="text-slate-600">
-                自动将无序信息转化为结构化知识，分类整理各类概念，建立层次分明的知识体系。
+                强大的 AI 引擎自动分析文本内容，提取关键概念，构建知识连接，帮助您更深入理解复杂信息。
               </p>
             </div>
 
@@ -97,25 +95,25 @@ function Home() {
               </p>
             </div>
 
-            {/* Feature 3 - 替换语义搜索 */}
+            {/* Feature 3 */}
             <div className="bg-slate-50 rounded-xl p-8 hover:shadow-lg transition-all hover:-translate-y-2">
               <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center text-purple-600 mb-6">
-                <FontAwesomeIcon icon={faHandshake} className="text-2xl" />
+                <FontAwesomeIcon icon={faSearch} className="text-2xl" />
               </div>
-              <h3 className="text-xl font-bold text-slate-800 mb-4">概念关联发现</h3>
+              <h3 className="text-xl font-bold text-slate-800 mb-4">语义搜索</h3>
               <p className="text-slate-600">
-                智能识别知识点之间的隐含联系，挖掘不同学科间的跨领域关联，促进融会贯通的学习方式。
+                深度理解搜索意图，返回最相关的知识内容，不再局限于关键词匹配，发现更有价值的关联信息。
               </p>
             </div>
 
-            {/* Feature 4 - 替换智能推荐 */}
+            {/* Feature 4 */}
             <div className="bg-slate-50 rounded-xl p-8 hover:shadow-lg transition-all hover:-translate-y-2">
               <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center text-green-600 mb-6">
                 <FontAwesomeIcon icon={faLightbulb} className="text-2xl" />
               </div>
-              <h3 className="text-xl font-bold text-slate-800 mb-4">学习路径规划</h3>
+              <h3 className="text-xl font-bold text-slate-800 mb-4">智能推荐</h3>
               <p className="text-slate-600">
-                根据您的学习目标和当前知识水平，智能生成个性化学习路径，指导高效学习，避免盲目和遗漏。
+                基于学习历史和兴趣偏好，智能推荐相关知识点，帮助您持续扩展知识边界，发现新的学习方向。
               </p>
             </div>
 
