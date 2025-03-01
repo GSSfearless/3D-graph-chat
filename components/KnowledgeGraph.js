@@ -1,6 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
-import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 import { CSS2DRenderer, CSS2DObject } from 'three/examples/jsm/renderers/CSS2DRenderer';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faExpand, faCompress, faSearch, faRefresh, faSave, faDownload } from '@fortawesome/free-solid-svg-icons';
@@ -18,24 +17,44 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
       color: '#6366F1',
       highlightColor: '#F43F5E',
       minSize: 3,        // 最小节点大小
-      maxSize: 15,       // 最大节点大小
-      segments: 32,
-      opacity: 0.9,
-      glowColor: '#818CF8'
+      maxSize: 8,        // 最大节点大小
     },
     edge: {
-      color: '#94A3B8',
-      highlightColor: '#64748B',
-      opacity: 0.6,
-      width: 2
+      color: '#D1D5DB',
+      highlightColor: '#F43F5E',
+      width: 0.5,
+      opacity: 0.7,
     },
     label: {
-      color: '#1E293B',
-      size: '14px',
-      font: 'Inter, system-ui, -apple-system, sans-serif',
-      weight: '500'
-    }
+      fontSize: 14,
+      color: '#111827',
+      backgroundColor: 'rgba(255, 255, 255, 0.8)',
+    },
+    background: '#FFFFFF',
   };
+
+  // 控制变量
+  const controlsRef = useRef({
+    rotateSpeed: 0.5,
+    isDragging: false,
+    mousePosition: { x: 0, y: 0 },
+    autoRotate: true,
+    autoRotateSpeed: 0.5,
+  });
+
+  // 场景状态
+  const graphRef = useRef({
+    nodes: new Map(),
+    edges: new Map(),
+    nodeObjects: new Map(),
+    edgeObjects: new Map(),
+    labelObjects: new Map(),
+    raycast: new THREE.Raycaster(),
+    pointer: new THREE.Vector2(),
+    hoveredNode: null,
+    clickedNode: null,
+    // ... 其他状态
+  });
 
   // 检查数据是否有效
   const isValidData = data && 
@@ -52,101 +71,105 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
   const initScene = () => {
     if (!containerRef.current) return;
     
-    const container = containerRef.current;
-    const width = container.clientWidth;
-    const height = container.clientHeight;
-
     // 创建场景
     const scene = new THREE.Scene();
-    scene.background = new THREE.Color(0xf8fafc);
-    scene.fog = new THREE.Fog(0xf8fafc, 100, 1000);
-
-    // 创建相机并设置到合适的观察位置
-    const camera = new THREE.PerspectiveCamera(45, width / height, 1, 2000);
-    // 将相机位置设置为球体半径的2.5倍，确保能看到整个球体
-    camera.position.set(0, 0, 500);
-    camera.lookAt(0, 0, 0);
-
+    scene.background = new THREE.Color(theme.background);
+    sceneRef.current = scene;
+    
+    // 设置摄像机
+    const camera = new THREE.PerspectiveCamera(
+      60,
+      containerRef.current.clientWidth / containerRef.current.clientHeight,
+      0.1,
+      1000
+    );
+    camera.position.z = 200;
+    
     // 创建渲染器
-    const renderer = new THREE.WebGLRenderer({ 
-      antialias: true,
-      alpha: true,
-      logarithmicDepthBuffer: true
-    });
-    renderer.setSize(width, height);
-    renderer.setPixelRatio(window.devicePixelRatio);
-    renderer.shadowMap.enabled = true;
-    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-
-    // 创建标签渲染器
+    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setSize(containerRef.current.clientWidth, containerRef.current.clientHeight);
+    containerRef.current.appendChild(renderer.domElement);
+    
+    // 添加自定义控制逻辑替代OrbitControls
+    const cameraGroup = new THREE.Group();
+    cameraGroup.add(camera);
+    scene.add(cameraGroup);
+    
+    // 鼠标控制
+    const handleMouseDown = (e) => {
+      controlsRef.current.isDragging = true;
+      controlsRef.current.mousePosition = { x: e.clientX, y: e.clientY };
+    };
+    
+    const handleMouseMove = (e) => {
+      if (controlsRef.current.isDragging) {
+        const deltaX = e.clientX - controlsRef.current.mousePosition.x;
+        const deltaY = e.clientY - controlsRef.current.mousePosition.y;
+        
+        cameraGroup.rotation.y += deltaX * 0.005 * controlsRef.current.rotateSpeed;
+        cameraGroup.rotation.x += deltaY * 0.005 * controlsRef.current.rotateSpeed;
+        
+        // 限制垂直旋转角度
+        cameraGroup.rotation.x = Math.max(-Math.PI/3, Math.min(Math.PI/3, cameraGroup.rotation.x));
+        
+        controlsRef.current.mousePosition = { x: e.clientX, y: e.clientY };
+      }
+    };
+    
+    const handleMouseUp = () => {
+      controlsRef.current.isDragging = false;
+    };
+    
+    // 添加事件监听
+    renderer.domElement.addEventListener('mousedown', handleMouseDown);
+    window.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('mouseup', handleMouseUp);
+    
+    // 滚轮缩放
+    const handleWheel = (e) => {
+      camera.position.z += e.deltaY * 0.1;
+      // 限制缩放范围
+      camera.position.z = Math.max(50, Math.min(300, camera.position.z));
+    };
+    
+    renderer.domElement.addEventListener('wheel', handleWheel);
+    
+    // 创建CSS2D渲染器用于标签
     const labelRenderer = new CSS2DRenderer();
-    labelRenderer.setSize(width, height);
+    labelRenderer.setSize(containerRef.current.clientWidth, containerRef.current.clientHeight);
     labelRenderer.domElement.style.position = 'absolute';
     labelRenderer.domElement.style.top = '0';
     labelRenderer.domElement.style.pointerEvents = 'none';
-
-    // 添加光源
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
-    scene.add(ambientLight);
-
-    const pointLight = new THREE.PointLight(0xffffff, 1);
-    pointLight.position.set(100, 100, 100);
-    pointLight.castShadow = true;
-    scene.add(pointLight);
-
-    // 优化控制器设置
-    const controls = new OrbitControls(camera, renderer.domElement);
-    controls.enableDamping = true; // 启用阻尼效果
-    controls.dampingFactor = 0.1; // 阻尼系数
-    controls.rotateSpeed = 0.8; // 降低旋转速度
-    controls.panSpeed = 0.8; // 平移速度
-    controls.zoomSpeed = 1.2; // 缩放速度
-    controls.minDistance = 300; // 最小距离，防止过于靠近
-    controls.maxDistance = 1000; // 最大距离
-    controls.target.set(0, 0, 0); // 设置旋转中心为原点（球心）
-    controls.enablePan = true; // 允许平移
-    controls.enableZoom = true; // 允许缩放
-    controls.autoRotate = false; // 禁用自动旋转
-    controls.screenSpacePanning = true; // 使平移始终平行于屏幕
-
-    // 清除原有内容并添加新的渲染器
-    container.innerHTML = '';
-    container.appendChild(renderer.domElement);
-    container.appendChild(labelRenderer.domElement);
-
-    sceneRef.current = {
-      scene,
-      camera,
-      renderer,
-      labelRenderer,
-      controls,
-      width,
-      height
-    };
-
-    // 添加事件监听
-    window.addEventListener('resize', handleResize);
-
+    containerRef.current.appendChild(labelRenderer.domElement);
+    
+    // 简化的动画函数
+    function animate() {
+      requestAnimationFrame(animate);
+      
+      // 自动旋转
+      if (controlsRef.current.autoRotate && !controlsRef.current.isDragging) {
+        cameraGroup.rotation.y += 0.001 * controlsRef.current.autoRotateSpeed;
+      }
+      
+      renderer.render(scene, camera);
+      labelRenderer.render(scene, camera);
+    }
+    
+    animate();
+    
+    // 返回清理函数
     return () => {
-      window.removeEventListener('resize', handleResize);
+      renderer.domElement.removeEventListener('mousedown', handleMouseDown);
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mouseup', handleMouseUp);
+      renderer.domElement.removeEventListener('wheel', handleWheel);
+      
       renderer.dispose();
-      controls.dispose();
+      if (containerRef.current) {
+        containerRef.current.removeChild(renderer.domElement);
+        containerRef.current.removeChild(labelRenderer.domElement);
+      }
     };
-  };
-
-  const handleResize = () => {
-    if (!sceneRef.current || !containerRef.current) return;
-
-    const { camera, renderer, labelRenderer } = sceneRef.current;
-    const container = containerRef.current;
-    const newWidth = container.clientWidth;
-    const newHeight = container.clientHeight;
-
-    camera.aspect = newWidth / newHeight;
-    camera.updateProjectionMatrix();
-
-    renderer.setSize(newWidth, newHeight);
-    labelRenderer.setSize(newWidth, newHeight);
   };
 
   // 添加一个工具函数来统一处理ID
@@ -206,8 +229,8 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
     // 创建球体几何体
     const geometry = new THREE.SphereGeometry(
       nodeSize,
-      theme.node.segments,
-      theme.node.segments
+      32,
+      32
     );
 
     // 创建发光材质
@@ -216,7 +239,7 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
       specular: 0x666666,
       shininess: 50,
       transparent: true,
-      opacity: theme.node.opacity
+      opacity: 0.9
     });
 
     const sphere = new THREE.Mesh(geometry, material);
@@ -265,7 +288,7 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
     });
 
     const glowSphere = new THREE.Mesh(
-      new THREE.SphereGeometry(nodeSize * 1.2, theme.node.segments, theme.node.segments),
+      new THREE.SphereGeometry(nodeSize * 1.2, 32, 32),
       glowMaterial
     );
     group.add(glowSphere);
@@ -277,9 +300,9 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
     const cleanText = nodeData.label.replace(/[#*]/g, '').replace(/\s+/g, ' ').trim();
     labelDiv.textContent = cleanText;
     labelDiv.style.color = theme.label.color;
-    labelDiv.style.fontSize = theme.label.size;
-    labelDiv.style.fontFamily = theme.label.font;
-    labelDiv.style.background = 'transparent';
+    labelDiv.style.fontSize = theme.label.fontSize.toString() + 'px';
+    labelDiv.style.fontFamily = 'Inter, system-ui, -apple-system, sans-serif';
+    labelDiv.style.background = theme.label.backgroundColor;
     labelDiv.style.padding = '4px 8px';
     labelDiv.style.borderRadius = '4px';
     labelDiv.style.whiteSpace = 'nowrap';
@@ -507,16 +530,11 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
   const handleResetView = () => {
     if (!sceneRef.current) return;
     
-    const { camera, controls } = sceneRef.current;
+    const { camera } = sceneRef.current;
     
     // 重置到初始视角
-    camera.position.set(0, 0, 500);
+    camera.position.set(0, 0, 200);
     camera.lookAt(0, 0, 0);
-    
-    // 重置控制器
-    controls.reset();
-    controls.target.set(0, 0, 0);
-    controls.update();
   };
 
   useEffect(() => {
@@ -526,7 +544,7 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
     // 清理函数
     return () => {
       if (sceneRef.current) {
-        const { renderer, labelRenderer, controls } = sceneRef.current;
+        const { renderer, labelRenderer } = sceneRef.current;
         
         // 停止动画循环
         cancelAnimationFrame(sceneRef.current.animationFrameId);
@@ -541,27 +559,6 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
         // 清理标签渲染器
         if (labelRenderer) {
           labelRenderer.domElement?.remove();
-        }
-        
-        // 清理控制器
-        if (controls) {
-          controls.dispose();
-        }
-        
-        // 清理场景
-        if (sceneRef.current.scene) {
-          sceneRef.current.scene.traverse((object) => {
-            if (object.geometry) {
-              object.geometry.dispose();
-            }
-            if (object.material) {
-              if (Array.isArray(object.material)) {
-                object.material.forEach(material => material.dispose());
-              } else {
-                object.material.dispose();
-              }
-            }
-          });
         }
         
         // 重置引用
@@ -700,11 +697,8 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
     const animate = () => {
       if (!sceneRef.current || !containerRef.current) return;
       
-      const { scene, camera, renderer, labelRenderer, controls } = sceneRef.current;
+      const { scene, camera, renderer, labelRenderer } = sceneRef.current;
       
-      // 更新控制器
-      controls.update();
-
       // 更新所有边的位置和标签
       scene.children.forEach(child => {
         if (child.userData?.isEdge && child.updatePosition) {
@@ -860,46 +854,33 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
   }, [data]);
 
   return (
-    <div className="knowledge-graph-container" style={{ width: '100%', height: '100%', ...style }}>
+    <div className="knowledge-graph-container relative rounded-lg overflow-hidden" style={{ width: '100%', height: '60vh', ...style }}>
       {!isValidData && (
         <div className="empty-state">
           <p>暂无可视化数据</p>
         </div>
       )}
-      <div className="toolbar" style={{ 
-        flexDirection: isMobile ? 'column' : 'row',
-        right: isMobile ? '8px' : '16px',
-        top: isMobile ? '8px' : '16px'
-      }}>
-        <div className="toolbar-group">
-          <button onClick={() => sceneRef.current.controls.zoomIn()} className="toolbar-button" title="放大">
-            <FontAwesomeIcon icon={faSearch} className="mr-1" />+
-          </button>
-          <button onClick={() => sceneRef.current.controls.zoomOut()} className="toolbar-button" title="缩小">
-            <FontAwesomeIcon icon={faSearch} className="mr-1" />-
-          </button>
-          <button onClick={handleResetView} className="toolbar-button" title="重置视角">
-            <FontAwesomeIcon icon={faRefresh} />
-          </button>
-        </div>
-        <div className="toolbar-group">
-          <button onClick={handleFullscreen} className="toolbar-button" title="全屏">
-            <FontAwesomeIcon icon={isFullscreen ? faCompress : faExpand} />
-          </button>
-          <button
-            onClick={() => {
-              const dataUrl = sceneRef.current.renderer.domElement.toDataURL('image/png');
-              const link = document.createElement('a');
-              link.href = dataUrl;
-              link.download = 'knowledge-graph.png';
-              link.click();
-            }}
-            className="toolbar-button"
-            title="导出图片"
-          >
-            <FontAwesomeIcon icon={faDownload} />
-          </button>
-        </div>
+      <div className="absolute top-2 right-2 flex gap-2 z-10">
+        <button 
+          onClick={handleFullscreen}
+          className="bg-white p-2 rounded-full shadow hover:bg-gray-100"
+          title={isFullscreen ? "退出全屏" : "全屏"}
+        >
+          <FontAwesomeIcon icon={isFullscreen ? faCompress : faExpand} />
+        </button>
+        <button
+          onClick={() => {
+            const dataUrl = sceneRef.current.renderer.domElement.toDataURL('image/png');
+            const link = document.createElement('a');
+            link.href = dataUrl;
+            link.download = 'knowledge-graph.png';
+            link.click();
+          }}
+          className="bg-white p-2 rounded-full shadow hover:bg-gray-100"
+          title="导出图片"
+        >
+          <FontAwesomeIcon icon={faDownload} />
+        </button>
       </div>
       
       <div ref={containerRef} style={{ width: '100%', height: '100%' }} onWheel={e => e.stopPropagation()} />
@@ -915,74 +896,6 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
           -webkit-overflow-scrolling: touch; /* iOS平滑滚动 */
         }
         
-        .toolbar {
-          position: absolute;
-          display: flex;
-          gap: 8px;
-          padding: 8px;
-          background: rgba(255, 255, 255, 0.9);
-          backdrop-filter: blur(10px);
-          border-radius: 12px;
-          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-          z-index: 1000;
-        }
-
-        @media (max-width: 768px) {
-          .toolbar-button {
-            width: 28px;
-            height: 28px;
-          }
-
-          :global(.node-label) {
-            font-size: 10px;
-            padding: 1px 2px;
-          }
-
-          :global(.edge-label) {
-            font-size: 10px;
-          }
-        }
-
-        .toolbar-group {
-          display: flex;
-          gap: 8px;
-          padding: 0 8px;
-          border-right: 1px solid rgba(0, 0, 0, 0.1);
-        }
-
-        .toolbar-group:last-child {
-          border-right: none;
-        }
-
-        .toolbar-button {
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          width: 32px;
-          height: 32px;
-          border: none;
-          border-radius: 8px;
-          background: transparent;
-          color: var(--neutral-600);
-          cursor: pointer;
-          transition: all 0.2s ease;
-        }
-
-        .toolbar-button:hover {
-          background: rgba(0, 0, 0, 0.05);
-          color: var(--neutral-900);
-        }
-
-        :global(.node-label) {
-          color: #1a1a1a;
-          font-size: 12px;
-          padding: 2px 4px;
-          background: rgba(255, 255, 255, 0.8);
-          border-radius: 4px;
-          pointer-events: none;
-          white-space: nowrap;
-        }
-
         .empty-state {
           position: absolute;
           top: 50%;
@@ -991,17 +904,6 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
           text-align: center;
           color: #666;
           z-index: 1;
-        }
-
-        :global(.edge-label) {
-          color: #1a1a1a;
-          font-size: 12px;
-          padding: 2px 4px;
-          background: transparent;
-          pointer-events: none;
-          white-space: nowrap;
-          text-align: center;
-          text-shadow: 0 0 3px rgba(255,255,255,0.8);
         }
       `}</style>
     </div>

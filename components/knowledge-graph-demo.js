@@ -2,7 +2,8 @@
 
 import { useEffect, useRef } from "react"
 import * as THREE from "three"
-import { OrbitControls } from "three/examples/jsm/controls/OrbitControls"
+// 修改导入方式，使用简化版控制器替代OrbitControls
+// import { OrbitControls } from "three/examples/jsm/controls/OrbitControls"
 
 export function KnowledgeGraphDemo() {
   const containerRef = useRef(null)
@@ -28,10 +29,31 @@ export function KnowledgeGraphDemo() {
     renderer.setSize(containerRef.current.clientWidth, containerRef.current.clientHeight)
     containerRef.current.appendChild(renderer.domElement)
 
-    // 添加轨道控制
-    const controls = new OrbitControls(camera, renderer.domElement)
-    controls.enableDamping = true
-    controls.dampingFactor = 0.05
+    // 添加基本旋转逻辑代替OrbitControls
+    let rotationSpeed = 0.001
+    let mouseDown = false
+    let lastMouseX = 0
+    
+    const handleMouseDown = (e) => {
+      mouseDown = true
+      lastMouseX = e.clientX
+    }
+    
+    const handleMouseUp = () => {
+      mouseDown = false
+    }
+    
+    const handleMouseMove = (e) => {
+      if (mouseDown) {
+        const deltaX = e.clientX - lastMouseX
+        nodeGroup.rotation.y += deltaX * 0.005
+        lastMouseX = e.clientX
+      }
+    }
+    
+    containerRef.current.addEventListener('mousedown', handleMouseDown)
+    window.addEventListener('mouseup', handleMouseUp)
+    window.addEventListener('mousemove', handleMouseMove)
 
     // 创建节点和连接的数据
     const nodes = []
@@ -138,11 +160,10 @@ export function KnowledgeGraphDemo() {
     const animate = () => {
       requestAnimationFrame(animate)
 
-      // 旋转节点群
-      nodeGroup.rotation.y += 0.001
-
-      // 更新控制器
-      controls.update()
+      // 自动旋转节点群
+      if (!mouseDown) {
+        nodeGroup.rotation.y += rotationSpeed
+      }
 
       renderer.render(scene, camera)
     }
@@ -163,6 +184,10 @@ export function KnowledgeGraphDemo() {
     // 清理函数
     return () => {
       window.removeEventListener("resize", handleResize)
+      containerRef.current.removeEventListener('mousedown', handleMouseDown)
+      window.removeEventListener('mouseup', handleMouseUp)
+      window.removeEventListener('mousemove', handleMouseMove)
+      
       if (containerRef.current) {
         containerRef.current.removeChild(renderer.domElement)
       }
