@@ -53,9 +53,10 @@ module.exports = {
         sm: "calc(var(--radius) - 4px)",
       },
       animation: {
-        // 移除accordion动画定义
+        "accordion-down": "accordion-down 0.2s ease-out",
+        "accordion-up": "accordion-up 0.2s ease-out",
       },
     },
   },
-  plugins: [],
+  plugins: [require("tailwindcss-animate")],
 } 

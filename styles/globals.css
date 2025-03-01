@@ -140,6 +140,11 @@ body {
   animation: spin 2s linear infinite; /* 动画效果 */
 }
 
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
 .result-item {
   margin-bottom: 20px;
   text-align: left; /* 左对齐内容，提升阅读性 */
