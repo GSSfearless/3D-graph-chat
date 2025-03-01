@@ -40,36 +40,31 @@ function Home() {
             <span className="text-blue-600 font-medium">🎉 Welcome to Think Graph</span>
           </div>
           <h1 className="text-4xl lg:text-7xl font-bold mb-6 bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 text-transparent bg-clip-text leading-tight">
-            Visualize Your Thoughts<br />with AI-Powered Graphs
+            Redefining Knowledge<br />Management with AI
           </h1>
           <p className="text-xl lg:text-2xl text-gray-600 mb-12 max-w-3xl mx-auto leading-relaxed">
-            Transform your ideas and questions into beautiful knowledge graphs.<br />
-            Discover connections you never knew existed.
+            Connect scattered knowledge into comprehensive networks.<br />
+            Visualize your thinking, learn more effectively.
           </p>
         </div>
         
         {/* Search Bar */}
-        <div className={`max-w-3xl mx-auto relative group transform transition-all duration-1000 delay-300 ${isVisible ? 'translate-y-0 opacity-100' : 'translate-y-10 opacity-0'}`}>
-          <div className="flex gap-4 items-center">
-            <div className="flex-1 relative">
-              <div className="absolute inset-0 bg-gradient-to-r from-blue-200/50 to-purple-200/50 opacity-20 blur-2xl group-hover:opacity-30 transition-opacity rounded-2xl"></div>
-              <input
-                type="text"
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                onKeyPress={handleKeyPress}
-                placeholder="Explore the world of knowledge..."
-                className="w-full px-6 py-4 text-lg rounded-2xl bg-white/80 backdrop-blur-sm border-2 border-transparent shadow-[0_0_20px_rgba(0,0,0,0.05)] 
-                         focus:border-blue-100 focus:ring-2 focus:ring-blue-50 transition-all outline-none
-                         group-hover:shadow-[0_0_25px_rgba(0,0,0,0.1)]"
-              />
-            </div>
+        <div className={`max-w-2xl mx-auto relative group transform transition-all duration-1000 delay-300 ${isVisible ? 'translate-y-0 opacity-100' : 'translate-y-10 opacity-0'}`}>
+          <div className="absolute inset-0 bg-gradient-to-r from-blue-200/50 to-purple-200/50 opacity-20 blur-2xl group-hover:opacity-30 transition-opacity rounded-full"></div>
+          <div className="relative flex items-center bg-white rounded-full shadow-[0_0_20px_rgba(0,0,0,0.05)] group-hover:shadow-[0_0_25px_rgba(0,0,0,0.1)] transition-all duration-300">
+            <input
+              type="text"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              onKeyPress={handleKeyPress}
+              placeholder="Enter any topic to start your knowledge exploration..."
+              className="w-full px-8 py-5 text-lg rounded-full bg-transparent border-2 border-transparent focus:border-blue-100 focus:ring-2 focus:ring-blue-50 transition-all outline-none"
+            />
             <button
               onClick={handleSearch}
-              className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-8 py-4 rounded-2xl flex items-center gap-3 
-                       shadow-lg transition-all transform hover:translate-y-[-2px] hover:shadow-xl group"
+              className="absolute right-2 bg-gradient-to-r from-blue-500 to-indigo-600 text-white px-6 py-3 rounded-full flex items-center gap-2 transition-all transform hover:translate-x-1 hover:shadow-lg group"
             >
-              <span className="font-medium">Explore</span>
+              <span className="hidden md:inline font-medium">Explore</span>
               <FontAwesomeIcon icon={faSearch} className="text-lg transition-transform group-hover:scale-110" />
             </button>
           </div>
@@ -78,16 +73,16 @@ function Home() {
         {/* Quick Stats */}
         <div className={`flex justify-center gap-8 mt-16 transform transition-all duration-1000 delay-500 ${isVisible ? 'translate-y-0 opacity-100' : 'translate-y-10 opacity-0'}`}>
           <div className="text-center">
-            <div className="text-2xl font-bold text-blue-600">1M+</div>
-            <div className="text-gray-600">Graph Nodes</div>
+            <div className="text-2xl font-bold text-blue-600">100,000+</div>
+            <div className="text-gray-600">Knowledge Nodes</div>
           </div>
           <div className="text-center">
-            <div className="text-2xl font-bold text-indigo-600">100K+</div>
-            <div className="text-gray-600">Visualizations</div>
+            <div className="text-2xl font-bold text-indigo-600">50,000+</div>
+            <div className="text-gray-600">Active Users</div>
           </div>
           <div className="text-center">
-            <div className="text-2xl font-bold text-purple-600">500K+</div>
-            <div className="text-gray-600">Insights Found</div>
+            <div className="text-2xl font-bold text-purple-600">1,000,000+</div>
+            <div className="text-gray-600">Knowledge Connections</div>
           </div>
         </div>
       </div>
@@ -102,27 +97,27 @@ function Home() {
             <div className="w-14 h-14 rounded-full bg-blue-100 flex items-center justify-center mb-6">
               <FontAwesomeIcon icon={faBrain} className="text-2xl text-blue-600" />
             </div>
-            <h3 className="text-xl font-semibold mb-4">AI-Powered Insights</h3>
+            <h3 className="text-xl font-semibold mb-4">AI-Powered Analysis</h3>
             <p className="text-gray-600 leading-relaxed">
-              Our advanced AI analyzes your queries and visualizes complex relationships, helping you uncover hidden patterns and connections.
+              Powerful AI engine automatically analyzes content, extracts key concepts, and builds knowledge connections.
             </p>
           </div>
           <div className="p-8 rounded-2xl bg-white hover:shadow-xl transition-all duration-500 transform hover:-translate-y-2 border border-gray-100">
             <div className="w-14 h-14 rounded-full bg-purple-100 flex items-center justify-center mb-6">
               <FontAwesomeIcon icon={faChartNetwork} className="text-2xl text-purple-600" />
             </div>
-            <h3 className="text-xl font-semibold mb-4">Interactive Visualization</h3>
+            <h3 className="text-xl font-semibold mb-4">Real-time Visualization</h3>
             <p className="text-gray-600 leading-relaxed">
-              Explore dynamic 3D knowledge graphs that respond to your interactions, making complex information easy to understand and navigate.
+              Intuitive knowledge graph display with real-time interaction helps you quickly understand complex knowledge systems.
             </p>
           </div>
           <div className="p-8 rounded-2xl bg-white hover:shadow-xl transition-all duration-500 transform hover:-translate-y-2 border border-gray-100">
             <div className="w-14 h-14 rounded-full bg-indigo-100 flex items-center justify-center mb-6">
-              <FontAwesomeIcon icon={faLightbulb} className="text-2xl text-indigo-600" />
+              <FontAwesomeIcon icon={faMagicWandSparkles} className="text-2xl text-indigo-600" />
             </div>
-            <h3 className="text-xl font-semibold mb-4">Deep Understanding</h3>
+            <h3 className="text-xl font-semibold mb-4">Smart Recommendations</h3>
             <p className="text-gray-600 leading-relaxed">
-              Go beyond simple answers with our deep thinking mode, revealing the intricate connections in your knowledge exploration.
+              Get intelligent suggestions based on your learning history and interests to expand your knowledge boundaries.
             </p>
           </div>
         </div>
@@ -134,10 +129,10 @@ function Home() {
         <div className="container mx-auto px-4 py-20 relative">
           <div className="max-w-4xl mx-auto text-center text-white">
             <h2 className="text-3xl lg:text-5xl font-bold mb-8">
-              Transform Your Understanding
+              Start Your Knowledge Journey
             </h2>
             <p className="text-xl mb-12 opacity-90">
-              Join thousands of thinkers who are using Think Graph to explore and understand complex topics in a whole new way
+              Join thousands of learners who are already using Think Graph to redefine their learning experience
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <button
