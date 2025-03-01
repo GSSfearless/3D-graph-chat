@@ -1,11 +1,12 @@
-// tailwind.config.js
 /** @type {import('tailwindcss').Config} */
 module.exports = {
   darkMode: ["class"],
   content: [
-    "./pages/**/*.{js,ts,jsx,tsx}",
-    "./components/**/*.{js,ts,jsx,tsx}",
-  ],
+    './pages/**/*.{ts,tsx,js,jsx}',
+    './components/**/*.{ts,tsx,js,jsx}',
+    './app/**/*.{ts,tsx,js,jsx}',
+    './src/**/*.{ts,tsx,js,jsx}',
+	],
   theme: {
     container: {
       center: true,
@@ -57,9 +58,5 @@ module.exports = {
       },
     },
   },
-  plugins: [
-    require("@tailwindcss/typography"),
-    require("daisyui"),
-    require("tailwindcss-animate"),
-  ],
-};
+  plugins: [require("tailwindcss-animate")],
+} 
