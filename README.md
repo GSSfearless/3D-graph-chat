@@ -1,90 +1,90 @@
-# Think Graph - AI驱动的知识图谱工具
+# Think Graph - AI-Powered Knowledge Graph Tool
 
-Think Graph 是一个革新性的知识管理和学习工具，它利用人工智能技术将零散的知识点连接成完整的知识网络，帮助用户更好地理解和记忆复杂的知识体系。
+Think Graph is an innovative knowledge management and learning tool that uses artificial intelligence to connect scattered knowledge points into comprehensive knowledge networks, helping users better understand and remember complex knowledge systems.
 
-## ✨ 核心特性
+## ✨ Core Features
 
-- 🤖 **AI智能分析** - 强大的AI引擎自动分析文本内容，提取关键概念，构建知识连接
-- 📊 **实时可视化** - 直观的知识图谱展示，帮助快速理解知识结构
-- 🎯 **智能推荐** - 基于学习历史和兴趣，智能推荐相关知识点
-- 🔍 **语义搜索** - 深度理解搜索意图，返回最相关的知识内容
-- 🌐 **知识连接** - 自动发现知识点之间的关联，构建完整知识网络
-- 💡 **深度思考** - 支持深度思考模式，提供更全面的知识分析
+- 🤖 **AI Analysis** - Powerful AI engine automatically analyzes text content, extracts key concepts, and builds knowledge connections
+- 📊 **Real-time Visualization** - Intuitive knowledge graph display helps quickly understand knowledge structures
+- 🎯 **Smart Recommendations** - Get intelligent suggestions based on learning history and interests
+- 🔍 **Semantic Search** - Deep understanding of search intent, returning the most relevant knowledge content
+- 🌐 **Knowledge Connections** - Automatically discover relationships between knowledge points, building complete knowledge networks
+- 💡 **Deep Thinking Mode** - Supports deep thinking mode, providing more comprehensive knowledge analysis
 
-## 🚀 快速开始
+## 🚀 Quick Start
 
-### 环境要求
+### Requirements
 
-- Node.js 18.0.0 或更高版本
-- npm 或 yarn 包管理器
-- 现代浏览器（推荐 Chrome, Firefox, Safari 最新版本）
+- Node.js 18.0.0 or higher
+- npm or yarn package manager
+- Modern browsers (Chrome, Firefox, Safari latest versions recommended)
 
-### 安装步骤
+### Installation
 
-1. 克隆项目代码
+1. Clone the repository
 ```bash
 git clone https://github.com/yourusername/think-graph.git
 cd think-graph
 ```
 
-2. 安装依赖
+2. Install dependencies
 ```bash
 npm install
-# 或
+# or
 yarn install
 ```
 
-3. 配置环境变量
-复制 `.env.example` 文件为 `.env.local` 并填写必要的配置信息：
+3. Configure environment variables
+Copy `.env.example` file to `.env.local` and fill in the necessary configuration:
 ```bash
 cp .env.example .env.local
 ```
 
-4. 启动开发服务器
+4. Start development server
 ```bash
 npm run dev
-# 或
+# or
 yarn dev
 ```
 
-访问 http://localhost:3000 开始使用
+Visit http://localhost:3000 to start using
 
-## 📖 使用指南
+## 📖 Usage Guide
 
-### 基础搜索
+### Basic Search
 
-1. 在首页搜索框输入任意主题或问题
-2. 系统将自动分析内容并生成知识图谱
-3. 点击图谱中的节点可查看详细信息
+1. Enter any topic or question in the search box
+2. The system will automatically analyze the content and generate a knowledge graph
+3. Click on nodes in the graph to view detailed information
 
-### 高级功能
+### Advanced Features
 
-- **深度思考模式**: 开启后将提供更详细的推理过程
-- **联网搜索**: 启用后可获取实时网络信息
-- **知识导出**: 支持导出知识图谱为多种格式
+- **Deep Thinking Mode**: Provides more detailed reasoning process when enabled
+- **Web Search**: Access real-time web information when enabled
+- **Knowledge Export**: Export knowledge graphs in various formats
 
-## 🛠 技术栈
+## 🛠 Tech Stack
 
-- **前端框架**: Next.js
-- **UI组件**: Tailwind CSS
-- **图形渲染**: Cytoscape.js, Three.js
-- **AI模型**: OpenAI GPT
-- **数据存储**: Supabase
+- **Frontend Framework**: Next.js
+- **UI Components**: Tailwind CSS
+- **Graph Rendering**: Cytoscape.js, Three.js
+- **AI Model**: OpenAI GPT
+- **Data Storage**: Supabase
 
-## 🤝 贡献指南
+## 🤝 Contributing
 
-我们欢迎任何形式的贡献，无论是新功能、bug修复还是文档改进。请查看我们的贡献指南了解详情。
+We welcome all forms of contributions, whether it's new features, bug fixes, or documentation improvements. Please check our contribution guidelines for details.
 
-## 📄 许可证
+## 📄 License
 
-本项目采用 MIT 许可证 - 查看 [LICENSE](LICENSE) 文件了解详情
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details
 
-## 🙋‍♂️ 获取帮助
+## 🙋‍♂️ Get Help
 
-- 查看我们的 [常见问题解答](FAQ.md)
-- 加入我们的 [Discord 社区](https://discord.gg/thinkgraph)
-- 发送邮件至 support@thinkgraph.ai
+- Check our [FAQ](FAQ.md)
+- Join our [Discord community](https://discord.gg/thinkgraph)
+- Email us at support@thinkgraph.ai
 
-## 🌟 致谢
+## 🌟 Acknowledgments
 
-感谢所有为这个项目做出贡献的开发者和用户。
+Thanks to all developers and users who have contributed to this project.
