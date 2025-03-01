@@ -12,16 +12,10 @@ import { KnowledgeGraphProcessor } from '../utils/knowledge-processor';
 import LeftSidebar from '../components/LeftSidebar';
 import { HistoryManager } from '../utils/history-manager';
 import { useAuth } from '../contexts/AuthContext';
-import LoadingSpinner from '../components/LoadingSpinner';
-import ProductTour from '../components/ProductTour';
 
 const KnowledgeGraph = dynamic(() => import('../components/KnowledgeGraph'), {
   ssr: false,
-  loading: () => (
-    <div className="flex items-center justify-center h-full min-h-[400px]">
-      <LoadingSpinner size="large" message="正在加载知识图谱..." />
-    </div>
-  )
+  loading: () => <div className="loading-placeholder">Loading knowledge graph...</div>
 });
 
 export default function Search() {
@@ -39,7 +33,6 @@ export default function Search() {
   const searchInputRef = useRef(null);
   const knowledgeProcessor = useRef(new KnowledgeGraphProcessor());
   const { user } = useAuth();
-  const [showTour, setShowTour] = useState(true);
 
   const defaultQuery = "What is the answer to life, the universe, and everything?";
 
@@ -249,149 +242,110 @@ export default function Search() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {showTour && <ProductTour onComplete={() => setShowTour(false)} />}
-      
-      <div className="flex flex-col md:flex-row">
-        <input
-          ref={searchInputRef}
-          type="text"
-          value={query}
-          onChange={handleInputChange}
-          placeholder="输入任何主题，开始你的知识探索..."
-          className="search-input w-full p-4 border rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-        />
-        
-        <div className="graph-container flex-1 min-h-[600px] relative">
-          {graphData && <KnowledgeGraph data={graphData} onNodeClick={handleNodeClick} />}
-        </div>
-        
-        <div className="flex items-center gap-4 mb-4">
-          <label className="deep-thinking-toggle flex items-center gap-2">
-            <input
-              type="checkbox"
-              checked={useDeepThinking}
-              onChange={(e) => setUseDeepThinking(e.target.checked)}
-              className="form-checkbox h-5 w-5 text-blue-600"
-            />
-            <span>深度思考模式</span>
-          </label>
-        </div>
-      </div>
-      
-      <div className="flex h-screen overflow-hidden">
-        <LeftSidebar />
-        <div className="flex-1 flex flex-col overflow-hidden">
-          <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 overflow-hidden">
-            {/* 主要内容区域 */}
-            <div className="grid grid-cols-12 gap-4 h-screen">
-              {/* 3D知识图谱显示区域 - 固定位置 */}
-              <div className="col-span-9 relative">
-                <div className="bg-white rounded-xl shadow-sm border border-gray-100 h-full sticky top-0">
-                  {loading ? (
-                    <div className="flex items-center justify-center h-full">
-                      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
-                    </div>
-                  ) : graphData ? (
-                    <KnowledgeGraph
-                      data={graphData}
-                      onNodeClick={handleNodeClick}
-                      style={{ height: '100%' }}
-                      defaultMode="3d"
-                    />
-                  ) : (
-                    <div className="flex items-center justify-center h-full">
-                      <p className="text-gray-400">在下方输入问题开始查询</p>
-                    </div>
-                  )}
-                </div>
+    <div className="flex h-screen overflow-hidden">
+      <LeftSidebar />
+      <div className="flex-1 flex flex-col overflow-hidden">
+        <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 overflow-hidden">
+          {/* 主要内容区域 */}
+          <div className="grid grid-cols-12 gap-4 h-screen">
+            {/* 3D知识图谱显示区域 - 固定位置 */}
+            <div className="col-span-9 relative">
+              <div className="bg-white rounded-xl shadow-sm border border-gray-100 h-full sticky top-0">
+                {loading ? (
+                  <div className="flex items-center justify-center h-full">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+                  </div>
+                ) : graphData ? (
+                  <KnowledgeGraph
+                    data={graphData}
+                    onNodeClick={handleNodeClick}
+                    style={{ height: '100%' }}
+                    defaultMode="3d"
+                  />
+                ) : (
+                  <div className="flex items-center justify-center h-full">
+                    <p className="text-gray-400">在下方输入问题开始查询</p>
+                  </div>
+                )}
               </div>
+            </div>
 
-              {/* 文本显示区域 - 可滚动 */}
-              <div className="col-span-3 h-[calc(100vh-4rem)] overflow-y-auto custom-scrollbar">
-                <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
-                  {useDeepThinking && reasoningProcess && (
-                    <div className="mb-4 p-3 bg-purple-50 rounded-lg border border-purple-200">
-                      <div className="flex items-center space-x-2 mb-2">
-                        <h3 className="text-sm font-semibold text-purple-700">💭 思考过程</h3>
-                      </div>
-                      <div className="prose prose-sm prose-purple max-w-none">
-                        <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                          {reasoningProcess}
-                        </ReactMarkdown>
-                      </div>
+            {/* 文本显示区域 - 可滚动 */}
+            <div className="col-span-3 h-[calc(100vh-4rem)] overflow-y-auto custom-scrollbar">
+              <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
+                {useDeepThinking && reasoningProcess && (
+                  <div className="mb-4 p-3 bg-purple-50 rounded-lg border border-purple-200">
+                    <div className="flex items-center space-x-2 mb-2">
+                      <h3 className="text-sm font-semibold text-purple-700">💭 思考过程</h3>
                     </div>
-                  )}
-                  {streamedAnswer && (
-                    <div className={useDeepThinking && reasoningProcess ? "mt-4" : ""}>
-                      <ReactMarkdown remarkPlugins={[remarkGfm]} className="prose prose-sm max-w-none">
-                        {streamedAnswer}
+                    <div className="prose prose-sm prose-purple max-w-none">
+                      <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                        {reasoningProcess}
                       </ReactMarkdown>
                     </div>
-                  )}
-                </div>
+                  </div>
+                )}
+                {streamedAnswer && (
+                  <div className={useDeepThinking && reasoningProcess ? "mt-4" : ""}>
+                    <ReactMarkdown remarkPlugins={[remarkGfm]} className="prose prose-sm max-w-none">
+                      {streamedAnswer}
+                    </ReactMarkdown>
+                  </div>
+                )}
               </div>
             </div>
+          </div>
 
-            {/* 底部搜索区域 */}
-            <div className="fixed bottom-4 left-1/2 transform -translate-x-1/2 w-full max-w-2xl px-4">
-              <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-gray-100 p-4 transition-all duration-300 hover:shadow-xl hover:bg-white/90">
-                <div className="flex items-center space-x-4">
-                  <div className="flex items-center space-x-3">
-                    <span className="text-sm font-medium bg-gradient-to-r from-purple-600 to-pink-600 text-transparent bg-clip-text">Deepseek</span>
-                    <button
-                      onClick={() => setUseDeepThinking(!useDeepThinking)}
-                      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 ${
-                        useDeepThinking ? 'bg-purple-500' : 'bg-gray-200'
-                      }`}
-                    >
-                      <span
-                        className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-lg transition-transform duration-300 ease-in-out ${
-                          useDeepThinking ? 'translate-x-6' : 'translate-x-1'
-                        }`}
-                      />
-                    </button>
-                  </div>
-                  <div className="relative flex-1">
-                    <input
-                      ref={searchInputRef}
-                      type="text"
-                      value={query}
-                      onChange={handleInputChange}
-                      onKeyPress={(e) => e.key === 'Enter' && handleSubmit(e)}
-                      placeholder={defaultQuery}
-                      className="w-full px-4 py-2.5 bg-white/50 border border-gray-200 rounded-xl 
-                               text-sm transition-all duration-300
-                               focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent
-                               hover:border-blue-300 hover:shadow-sm"
-                    />
-                  </div>
+          {/* 底部搜索区域 */}
+          <div className="fixed bottom-4 left-1/2 transform -translate-x-1/2 w-full max-w-2xl px-4">
+            <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-gray-100 p-4 transition-all duration-300 hover:shadow-xl hover:bg-white/90">
+              <div className="flex items-center space-x-4">
+                <div className="flex items-center space-x-3">
+                  <span className="text-sm font-medium bg-gradient-to-r from-purple-600 to-pink-600 text-transparent bg-clip-text">Deepseek</span>
                   <button
-                    onClick={handleSubmit}
-                    disabled={loading}
-                    className="flex items-center justify-center w-10 h-10 rounded-xl 
-                             bg-gradient-to-r from-blue-500 to-blue-600 
-                             text-white shadow-md transition-all duration-300
-                             hover:from-blue-600 hover:to-blue-700 hover:shadow-lg
-                             focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2
-                             disabled:opacity-50 disabled:cursor-not-allowed
-                             disabled:hover:shadow-none"
+                    onClick={() => setUseDeepThinking(!useDeepThinking)}
+                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 ${
+                      useDeepThinking ? 'bg-purple-500' : 'bg-gray-200'
+                    }`}
                   >
-                    <FontAwesomeIcon icon={faArrowRight} className="w-4 h-4" />
+                    <span
+                      className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-lg transition-transform duration-300 ease-in-out ${
+                        useDeepThinking ? 'translate-x-6' : 'translate-x-1'
+                      }`}
+                    />
                   </button>
                 </div>
+                <div className="relative flex-1">
+                  <input
+                    ref={searchInputRef}
+                    type="text"
+                    value={query}
+                    onChange={handleInputChange}
+                    onKeyPress={(e) => e.key === 'Enter' && handleSubmit(e)}
+                    placeholder={defaultQuery}
+                    className="w-full px-4 py-2.5 bg-white/50 border border-gray-200 rounded-xl 
+                             text-sm transition-all duration-300
+                             focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent
+                             hover:border-blue-300 hover:shadow-sm"
+                  />
+                </div>
+                <button
+                  onClick={handleSubmit}
+                  disabled={loading}
+                  className="flex items-center justify-center w-10 h-10 rounded-xl 
+                           bg-gradient-to-r from-blue-500 to-blue-600 
+                           text-white shadow-md transition-all duration-300
+                           hover:from-blue-600 hover:to-blue-700 hover:shadow-lg
+                           focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2
+                           disabled:opacity-50 disabled:cursor-not-allowed
+                           disabled:hover:shadow-none"
+                >
+                  <FontAwesomeIcon icon={faArrowRight} className="w-4 h-4" />
+                </button>
               </div>
             </div>
           </div>
         </div>
-
-        {loading && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white p-8 rounded-lg shadow-xl">
-              <LoadingSpinner size="large" message="正在分析内容，请稍候..." />
-            </div>
-          </div>
-        )}
       </div>
 
       <style jsx>{`
