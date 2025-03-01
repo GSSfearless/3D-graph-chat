@@ -1,6 +1,12 @@
+const { i18n } = require('./next-i18next.config')
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  i18n,
   reactStrictMode: true,
+  images: {
+    domains: ['your-domain.com'],
+  },
   webpack: (config, { isServer }) => {
     // 处理 echarts-wordcloud 模块
     config.resolve.fallback = {

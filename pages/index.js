@@ -2,12 +2,16 @@ import { faArrowRight, faBrain, faLightbulb, faSearch, faChartNetwork, faLock, f
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { useRouter } from 'next/router';
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'next-i18next';
+import { serverSideTranslations } from 'next-i18next/serverSideTranslations';
+import LanguageSwitcher from '../components/LanguageSwitcher';
 import 'tailwindcss/tailwind.css';
 
 function Home() {
   const router = useRouter();
   const [query, setQuery] = useState('');
   const [isVisible, setIsVisible] = useState(false);
+  const { t } = useTranslation('common');
 
   useEffect(() => {
     setIsVisible(true);
@@ -27,6 +31,11 @@ function Home() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-50 via-white to-blue-50 overflow-hidden">
+      {/* Language Switcher */}
+      <div className="absolute top-4 right-4 z-50">
+        <LanguageSwitcher />
+      </div>
+
       {/* Floating Background Elements */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
         <div className="absolute -top-1/2 -right-1/2 w-full h-full bg-gradient-to-b from-blue-100/20 to-purple-100/20 rounded-full blur-3xl transform rotate-12 animate-pulse"></div>
@@ -37,10 +46,10 @@ function Home() {
       <div className="container mx-auto px-4 pt-12 lg:pt-20 pb-32 relative">
         <div className={`text-center transform transition-all duration-1000 ${isVisible ? 'translate-y-0 opacity-100' : 'translate-y-10 opacity-0'}`}>
           <div className="inline-block mb-4 px-6 py-2 bg-blue-50 rounded-full">
-            <span className="text-blue-600 font-medium">🎉 欢迎使用 Think Graph</span>
+            <span className="text-blue-600 font-medium">🎉 {t('title')}</span>
           </div>
           <h1 className="text-4xl lg:text-7xl font-bold mb-6 bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 text-transparent bg-clip-text leading-tight">
-            用AI重新定义<br />知识管理方式
+            {t('description')}
           </h1>
           <p className="text-xl lg:text-2xl text-gray-600 mb-12 max-w-3xl mx-auto leading-relaxed">
             将零散的知识点连接成完整的知识网络<br />
@@ -57,14 +66,14 @@ function Home() {
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               onKeyPress={handleKeyPress}
-              placeholder="输入任何主题，开始你的知识探索..."
+              placeholder={t('search.placeholder')}
               className="w-full px-8 py-5 text-lg rounded-full bg-transparent border-2 border-transparent focus:border-blue-100 focus:ring-2 focus:ring-blue-50 transition-all outline-none"
             />
             <button
               onClick={handleSearch}
               className="absolute right-2 bg-gradient-to-r from-blue-500 to-indigo-600 text-white px-6 py-3 rounded-full flex items-center gap-2 transition-all transform hover:translate-x-1 hover:shadow-lg group"
             >
-              <span className="hidden md:inline font-medium">开始探索</span>
+              <span className="hidden md:inline font-medium">{t('search.button')}</span>
               <FontAwesomeIcon icon={faSearch} className="text-lg transition-transform group-hover:scale-110" />
             </button>
           </div>
@@ -155,6 +164,14 @@ function Home() {
       </div>
     </div>
   );
+}
+
+export async function getStaticProps({ locale }) {
+  return {
+    props: {
+      ...(await serverSideTranslations(locale, ['common'])),
+    },
+  };
 }
 
 export default Home;
