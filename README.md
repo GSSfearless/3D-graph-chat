@@ -1,15 +1,14 @@
-# Think Graph - AI-Powered Knowledge Graph Tool
+# Think Graph - AI-Powered Knowledge Visualization Tool
 
-Think Graph is an innovative knowledge management and learning tool that uses artificial intelligence to connect scattered knowledge points into comprehensive knowledge networks, helping users better understand and remember complex knowledge systems.
+Think Graph is an innovative tool that transforms your thoughts and questions into beautiful, interactive knowledge graphs. Using advanced AI technology, it helps you visualize complex relationships and discover connections you never knew existed.
 
 ## ✨ Core Features
 
-- 🤖 **AI Analysis** - Powerful AI engine automatically analyzes text content, extracts key concepts, and builds knowledge connections
-- 📊 **Real-time Visualization** - Intuitive knowledge graph display helps quickly understand knowledge structures
-- 🎯 **Smart Recommendations** - Get intelligent suggestions based on learning history and interests
-- 🔍 **Semantic Search** - Deep understanding of search intent, returning the most relevant knowledge content
-- 🌐 **Knowledge Connections** - Automatically discover relationships between knowledge points, building complete knowledge networks
-- 💡 **Deep Thinking Mode** - Supports deep thinking mode, providing more comprehensive knowledge analysis
+- 🤖 **AI-Powered Insights** - Advanced AI engine analyzes your queries and visualizes complex relationships
+- 📊 **Interactive Visualization** - Dynamic 3D knowledge graphs that respond to your interactions
+- 🔍 **Semantic Understanding** - Deep understanding of queries, revealing intricate connections
+- 🌐 **Deep Thinking Mode** - Go beyond simple answers with comprehensive analysis
+- 💡 **Visual Exploration** - Navigate through complex topics with intuitive graph interfaces
 
 ## 🚀 Quick Start
 
@@ -47,21 +46,21 @@ npm run dev
 yarn dev
 ```
 
-Visit http://localhost:3000 to start using
+Visit http://localhost:3000 to start exploring
 
 ## 📖 Usage Guide
 
-### Basic Search
+### Basic Exploration
 
-1. Enter any topic or question in the search box
-2. The system will automatically analyze the content and generate a knowledge graph
-3. Click on nodes in the graph to view detailed information
+1. Enter any question or topic in the search box
+2. Watch as the AI generates an interactive knowledge graph
+3. Explore connections by interacting with the graph nodes
 
 ### Advanced Features
 
-- **Deep Thinking Mode**: Provides more detailed reasoning process when enabled
-- **Web Search**: Access real-time web information when enabled
-- **Knowledge Export**: Export knowledge graphs in various formats
+- **Deep Thinking Mode**: Reveals deeper connections and relationships
+- **3D Visualization**: Explore knowledge graphs in three dimensions
+- **Interactive Navigation**: Click and drag to explore complex relationships
 
 ## 🛠 Tech Stack
 
