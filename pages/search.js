@@ -15,18 +15,7 @@ import { useAuth } from '../contexts/AuthContext';
 
 const KnowledgeGraph = dynamic(() => import('../components/KnowledgeGraph'), {
   ssr: false,
-  loading: () => (
-    <div className="flex items-center justify-center h-full">
-      <div className="animate-pulse text-gray-600">
-        <div className="flex items-center space-x-2">
-          <div className="w-4 h-4 bg-blue-500 rounded-full animate-bounce"></div>
-          <div className="w-4 h-4 bg-blue-500 rounded-full animate-bounce delay-100"></div>
-          <div className="w-4 h-4 bg-blue-500 rounded-full animate-bounce delay-200"></div>
-        </div>
-        <div className="mt-2">Loading knowledge graph...</div>
-      </div>
-    </div>
-  )
+  loading: () => <div className="loading-placeholder">Loading knowledge graph...</div>
 });
 
 export default function Search() {
@@ -68,7 +57,7 @@ export default function Search() {
       if (useWebSearch) {
         const searchResponse = await fetch(`/api/rag-search?query=${encodeURIComponent(searchQuery)}`);
         if (!searchResponse.ok) {
-          throw new Error('Search request failed');
+          throw new Error('搜索请求失败');
         }
       }
 
@@ -155,7 +144,7 @@ export default function Search() {
                           setGraphData(null);
                         }
                       } catch (error) {
-                        console.error('Error generating knowledge graph:', error);
+                        console.error('生成知识图谱失败:', error);
                         setGraphData(null);
                       }
                     }
@@ -199,14 +188,14 @@ export default function Search() {
                           setGraphData(null);
                         }
                       } catch (error) {
-                        console.error('Error generating final knowledge graph:', error);
+                        console.error('生成最终知识图谱失败:', error);
                         setGraphData(null);
                       }
                     }
                     break;
                 }
               } catch (e) {
-                console.error('Error parsing response data:', e);
+                console.error('解析响应数据失败:', e);
                 continue;
               }
             }
@@ -217,7 +206,7 @@ export default function Search() {
       }
     } catch (error) {
       console.error('Search process error:', error);
-      alert('An error occurred during search. Please try again.');
+      alert('搜索过程中出错，请重试');
     } finally {
       setLoading(false);
     }
@@ -305,35 +294,55 @@ export default function Search() {
                 )}
               </div>
             </div>
+          </div>
 
-            {/* Search form */}
-            <div className="col-span-12 p-4">
-              <form onSubmit={handleSubmit} className="relative">
-                <input
-                  type="text"
-                  value={query}
-                  onChange={handleInputChange}
-                  placeholder="Enter your question..."
-                  className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  disabled={loading}
-                />
+          {/* 底部搜索区域 */}
+          <div className="fixed bottom-4 left-1/2 transform -translate-x-1/2 w-full max-w-2xl px-4">
+            <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-gray-100 p-4 transition-all duration-300 hover:shadow-xl hover:bg-white/90">
+              <div className="flex items-center space-x-4">
+                <div className="flex items-center space-x-3">
+                  <span className="text-sm font-medium bg-gradient-to-r from-purple-600 to-pink-600 text-transparent bg-clip-text">Deepseek</span>
+                  <button
+                    onClick={() => setUseDeepThinking(!useDeepThinking)}
+                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 ${
+                      useDeepThinking ? 'bg-purple-500' : 'bg-gray-200'
+                    }`}
+                  >
+                    <span
+                      className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-lg transition-transform duration-300 ease-in-out ${
+                        useDeepThinking ? 'translate-x-6' : 'translate-x-1'
+                      }`}
+                    />
+                  </button>
+                </div>
+                <div className="relative flex-1">
+                  <input
+                    ref={searchInputRef}
+                    type="text"
+                    value={query}
+                    onChange={handleInputChange}
+                    onKeyPress={(e) => e.key === 'Enter' && handleSubmit(e)}
+                    placeholder={defaultQuery}
+                    className="w-full px-4 py-2.5 bg-white/50 border border-gray-200 rounded-xl 
+                             text-sm transition-all duration-300
+                             focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent
+                             hover:border-blue-300 hover:shadow-sm"
+                  />
+                </div>
                 <button
-                  type="submit"
+                  onClick={handleSubmit}
                   disabled={loading}
-                  className={`absolute right-2 top-1/2 transform -translate-y-1/2 px-4 py-1 rounded-md ${
-                    loading ? 'bg-gray-400' : 'bg-blue-500 hover:bg-blue-600'
-                  } text-white transition-colors`}
+                  className="flex items-center justify-center w-10 h-10 rounded-xl 
+                           bg-gradient-to-r from-blue-500 to-blue-600 
+                           text-white shadow-md transition-all duration-300
+                           hover:from-blue-600 hover:to-blue-700 hover:shadow-lg
+                           focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2
+                           disabled:opacity-50 disabled:cursor-not-allowed
+                           disabled:hover:shadow-none"
                 >
-                  {loading ? (
-                    <div className="flex items-center space-x-2">
-                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                      <span>Searching...</span>
-                    </div>
-                  ) : (
-                    'Search'
-                  )}
+                  <FontAwesomeIcon icon={faArrowRight} className="w-4 h-4" />
                 </button>
-              </form>
+              </div>
             </div>
           </div>
         </div>

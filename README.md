@@ -1,90 +1,90 @@
-# Think Graph - AI-Powered Knowledge Graph Tool
+# Think Graph - AI驱动的知识图谱工具
 
-Think Graph is an innovative knowledge management and learning tool that uses artificial intelligence to connect scattered knowledge points into comprehensive knowledge networks, helping users better understand and remember complex knowledge systems.
+Think Graph 是一个革新性的知识管理和学习工具，它利用人工智能技术将零散的知识点连接成完整的知识网络，帮助用户更好地理解和记忆复杂的知识体系。
 
-## ✨ Core Features
+## ✨ 核心特性
 
-- 🤖 **AI Analysis** - Powerful AI engine automatically analyzes text content, extracts key concepts, and builds knowledge connections
-- 📊 **Real-time Visualization** - Intuitive knowledge graph display helps quickly understand knowledge structures
-- 🎯 **Smart Recommendations** - Get intelligent suggestions based on learning history and interests
-- 🔍 **Semantic Search** - Deep understanding of search intent, returning the most relevant knowledge content
-- 🌐 **Knowledge Connections** - Automatically discover relationships between knowledge points, building complete knowledge networks
-- 💡 **Deep Thinking Mode** - Supports deep thinking mode, providing more comprehensive knowledge analysis
+- 🤖 **AI智能分析** - 强大的AI引擎自动分析文本内容，提取关键概念，构建知识连接
+- 📊 **实时可视化** - 直观的知识图谱展示，帮助快速理解知识结构
+- 🎯 **智能推荐** - 基于学习历史和兴趣，智能推荐相关知识点
+- 🔍 **语义搜索** - 深度理解搜索意图，返回最相关的知识内容
+- 🌐 **知识连接** - 自动发现知识点之间的关联，构建完整知识网络
+- 💡 **深度思考** - 支持深度思考模式，提供更全面的知识分析
 
-## 🚀 Quick Start
+## 🚀 快速开始
 
-### Requirements
+### 环境要求
 
-- Node.js 18.0.0 or higher
-- npm or yarn package manager
-- Modern browsers (Chrome, Firefox, Safari latest versions recommended)
+- Node.js 18.0.0 或更高版本
+- npm 或 yarn 包管理器
+- 现代浏览器（推荐 Chrome, Firefox, Safari 最新版本）
 
-### Installation
+### 安装步骤
 
-1. Clone the repository
+1. 克隆项目代码
 ```bash
 git clone https://github.com/yourusername/think-graph.git
 cd think-graph
 ```
 
-2. Install dependencies
+2. 安装依赖
 ```bash
 npm install
-# or
+# 或
 yarn install
 ```
 
-3. Configure environment variables
-Copy `.env.example` file to `.env.local` and fill in the necessary configuration:
+3. 配置环境变量
+复制 `.env.example` 文件为 `.env.local` 并填写必要的配置信息：
 ```bash
 cp .env.example .env.local
 ```
 
-4. Start development server
+4. 启动开发服务器
 ```bash
 npm run dev
-# or
+# 或
 yarn dev
 ```
 
-Visit http://localhost:3000 to start using
+访问 http://localhost:3000 开始使用
 
-## 📖 Usage Guide
+## 📖 使用指南
 
-### Basic Search
+### 基础搜索
 
-1. Enter any topic or question in the search box
-2. The system will automatically analyze the content and generate a knowledge graph
-3. Click on nodes in the graph to view detailed information
+1. 在首页搜索框输入任意主题或问题
+2. 系统将自动分析内容并生成知识图谱
+3. 点击图谱中的节点可查看详细信息
 
-### Advanced Features
+### 高级功能
 
-- **Deep Thinking Mode**: Provides more detailed reasoning process when enabled
-- **Web Search**: Access real-time web information when enabled
-- **Knowledge Export**: Export knowledge graphs in various formats
+- **深度思考模式**: 开启后将提供更详细的推理过程
+- **联网搜索**: 启用后可获取实时网络信息
+- **知识导出**: 支持导出知识图谱为多种格式
 
-## 🛠 Tech Stack
+## 🛠 技术栈
 
-- **Frontend Framework**: Next.js
-- **UI Components**: Tailwind CSS
-- **Graph Rendering**: Cytoscape.js, Three.js
-- **AI Model**: OpenAI GPT
-- **Data Storage**: Supabase
+- **前端框架**: Next.js
+- **UI组件**: Tailwind CSS
+- **图形渲染**: Cytoscape.js, Three.js
+- **AI模型**: OpenAI GPT
+- **数据存储**: Supabase
 
-## 🤝 Contributing
+## 🤝 贡献指南
 
-We welcome all forms of contributions, whether it's new features, bug fixes, or documentation improvements. Please check our contribution guidelines for details.
+我们欢迎任何形式的贡献，无论是新功能、bug修复还是文档改进。请查看我们的贡献指南了解详情。
 
-## 📄 License
+## 📄 许可证
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details
+本项目采用 MIT 许可证 - 查看 [LICENSE](LICENSE) 文件了解详情
 
-## 🙋‍♂️ Get Help
+## 🙋‍♂️ 获取帮助
 
-- Check our [FAQ](FAQ.md)
-- Join our [Discord community](https://discord.gg/thinkgraph)
-- Email us at support@thinkgraph.ai
+- 查看我们的 [常见问题解答](FAQ.md)
+- 加入我们的 [Discord 社区](https://discord.gg/thinkgraph)
+- 发送邮件至 support@thinkgraph.ai
 
-## 🌟 Acknowledgments
+## 🌟 致谢
 
-Thanks to all developers and users who have contributed to this project.
+感谢所有为这个项目做出贡献的开发者和用户。

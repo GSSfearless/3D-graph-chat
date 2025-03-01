@@ -37,14 +37,14 @@ function Home() {
       <div className="container mx-auto px-4 pt-12 lg:pt-20 pb-32 relative">
         <div className={`text-center transform transition-all duration-1000 ${isVisible ? 'translate-y-0 opacity-100' : 'translate-y-10 opacity-0'}`}>
           <div className="inline-block mb-4 px-6 py-2 bg-blue-50 rounded-full">
-            <span className="text-blue-600 font-medium">🎉 Welcome to Think Graph</span>
+            <span className="text-blue-600 font-medium">🎉 欢迎使用 Think Graph</span>
           </div>
           <h1 className="text-4xl lg:text-7xl font-bold mb-6 bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 text-transparent bg-clip-text leading-tight">
-            Redefining Knowledge<br />Management with AI
+            用AI重新定义<br />知识管理方式
           </h1>
           <p className="text-xl lg:text-2xl text-gray-600 mb-12 max-w-3xl mx-auto leading-relaxed">
-            Connect scattered knowledge into comprehensive networks.<br />
-            Visualize your thinking, learn more effectively.
+            将零散的知识点连接成完整的知识网络<br />
+            让思维可视化，让学习更高效
           </p>
         </div>
         
@@ -57,14 +57,14 @@ function Home() {
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               onKeyPress={handleKeyPress}
-              placeholder="Enter any topic to start your knowledge exploration..."
+              placeholder="输入任何主题，开始你的知识探索..."
               className="w-full px-8 py-5 text-lg rounded-full bg-transparent border-2 border-transparent focus:border-blue-100 focus:ring-2 focus:ring-blue-50 transition-all outline-none"
             />
             <button
               onClick={handleSearch}
               className="absolute right-2 bg-gradient-to-r from-blue-500 to-indigo-600 text-white px-6 py-3 rounded-full flex items-center gap-2 transition-all transform hover:translate-x-1 hover:shadow-lg group"
             >
-              <span className="hidden md:inline font-medium">Explore</span>
+              <span className="hidden md:inline font-medium">开始探索</span>
               <FontAwesomeIcon icon={faSearch} className="text-lg transition-transform group-hover:scale-110" />
             </button>
           </div>
@@ -74,15 +74,15 @@ function Home() {
         <div className={`flex justify-center gap-8 mt-16 transform transition-all duration-1000 delay-500 ${isVisible ? 'translate-y-0 opacity-100' : 'translate-y-10 opacity-0'}`}>
           <div className="text-center">
             <div className="text-2xl font-bold text-blue-600">100,000+</div>
-            <div className="text-gray-600">Knowledge Nodes</div>
+            <div className="text-gray-600">知识节点</div>
           </div>
           <div className="text-center">
             <div className="text-2xl font-bold text-indigo-600">50,000+</div>
-            <div className="text-gray-600">Active Users</div>
+            <div className="text-gray-600">活跃用户</div>
           </div>
           <div className="text-center">
             <div className="text-2xl font-bold text-purple-600">1,000,000+</div>
-            <div className="text-gray-600">Knowledge Connections</div>
+            <div className="text-gray-600">知识连接</div>
           </div>
         </div>
       </div>
@@ -90,34 +90,34 @@ function Home() {
       {/* Features Section */}
       <div className="container mx-auto px-4 py-20">
         <h2 className="text-3xl lg:text-5xl font-bold text-center mb-20 bg-gradient-to-r from-gray-800 to-gray-600 text-transparent bg-clip-text">
-          Why Choose Think Graph
+          为什么选择 Think Graph
         </h2>
         <div className="grid md:grid-cols-3 gap-8">
           <div className="p-8 rounded-2xl bg-white hover:shadow-xl transition-all duration-500 transform hover:-translate-y-2 border border-gray-100">
             <div className="w-14 h-14 rounded-full bg-blue-100 flex items-center justify-center mb-6">
               <FontAwesomeIcon icon={faBrain} className="text-2xl text-blue-600" />
             </div>
-            <h3 className="text-xl font-semibold mb-4">AI-Powered Analysis</h3>
+            <h3 className="text-xl font-semibold mb-4">AI智能分析</h3>
             <p className="text-gray-600 leading-relaxed">
-              Powerful AI engine automatically analyzes content, extracts key concepts, and builds knowledge connections.
+              强大的AI引擎自动分析文本内容，提取关键概念，构建知识连接，让知识管理更智能
             </p>
           </div>
           <div className="p-8 rounded-2xl bg-white hover:shadow-xl transition-all duration-500 transform hover:-translate-y-2 border border-gray-100">
             <div className="w-14 h-14 rounded-full bg-purple-100 flex items-center justify-center mb-6">
               <FontAwesomeIcon icon={faChartNetwork} className="text-2xl text-purple-600" />
             </div>
-            <h3 className="text-xl font-semibold mb-4">Real-time Visualization</h3>
+            <h3 className="text-xl font-semibold mb-4">实时可视化</h3>
             <p className="text-gray-600 leading-relaxed">
-              Intuitive knowledge graph display with real-time interaction helps you quickly understand complex knowledge systems.
+              直观的知识图谱展示，实时互动，帮助你快速理解和记忆复杂的知识体系
             </p>
           </div>
           <div className="p-8 rounded-2xl bg-white hover:shadow-xl transition-all duration-500 transform hover:-translate-y-2 border border-gray-100">
             <div className="w-14 h-14 rounded-full bg-indigo-100 flex items-center justify-center mb-6">
               <FontAwesomeIcon icon={faMagicWandSparkles} className="text-2xl text-indigo-600" />
             </div>
-            <h3 className="text-xl font-semibold mb-4">Smart Recommendations</h3>
+            <h3 className="text-xl font-semibold mb-4">智能推荐</h3>
             <p className="text-gray-600 leading-relaxed">
-              Get intelligent suggestions based on your learning history and interests to expand your knowledge boundaries.
+              基于你的学习历史和兴趣，智能推荐相关知识点，帮助你拓展知识边界
             </p>
           </div>
         </div>
@@ -129,10 +129,10 @@ function Home() {
         <div className="container mx-auto px-4 py-20 relative">
           <div className="max-w-4xl mx-auto text-center text-white">
             <h2 className="text-3xl lg:text-5xl font-bold mb-8">
-              Start Your Knowledge Journey
+              开启你的知识探索之旅
             </h2>
             <p className="text-xl mb-12 opacity-90">
-              Join thousands of learners who are already using Think Graph to redefine their learning experience
+              加入thousands of learners已经开始使用 Think Graph 重新定义他们的学习方式
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <button
@@ -140,13 +140,13 @@ function Home() {
                 className="px-8 py-4 bg-white text-blue-600 rounded-full text-lg font-semibold hover:shadow-lg transform hover:scale-105 transition-all flex items-center justify-center gap-2"
               >
                 <FontAwesomeIcon icon={faRocket} />
-                Start Now
+                立即开始
               </button>
               <button
                 onClick={() => router.push('/demo')}
                 className="px-8 py-4 bg-transparent border-2 border-white text-white rounded-full text-lg font-semibold hover:bg-white hover:text-blue-600 transition-all flex items-center justify-center gap-2"
               >
-                Watch Demo
+                观看演示
                 <FontAwesomeIcon icon={faArrowRight} />
               </button>
             </div>
