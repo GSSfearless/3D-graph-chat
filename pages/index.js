@@ -1,8 +1,19 @@
 import { faArrowRight, faBrain, faLightbulb, faSearch, faChartNetwork, faLock, faRocket, faMagicWandSparkles, faCube, faCode, faNetworkWired, faAtom } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { useRouter } from 'next/router';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import 'tailwindcss/tailwind.css';
+import dynamic from 'next/dynamic';
+
+// 动态导入3D知识图谱组件
+const DemoKnowledgeGraph = dynamic(() => import('../components/DemoKnowledgeGraph'), {
+  ssr: false,
+  loading: () => (
+    <div className="w-full h-[400px] bg-white/30 rounded-xl flex items-center justify-center">
+      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+    </div>
+  )
+});
 
 function Home() {
   const router = useRouter();
@@ -46,19 +57,12 @@ function Home() {
             突破传统平面限制，以沉浸式3D体验<br />
             将复杂知识立体化展现，让思维触手可及
           </p>
-          
-          {/* 添加图谱预览效果图 */}
-          <div className="relative w-full max-w-4xl mx-auto mb-12 rounded-xl overflow-hidden shadow-2xl">
-            <div className="absolute inset-0 bg-gradient-to-r from-blue-500/10 to-purple-500/10 mix-blend-overlay"></div>
-            <img 
-              src="/demo-graph-3d.png" 
-              alt="3D知识图谱演示" 
-              className="w-full object-cover rounded-xl"
-              onError={(e) => {
-                e.target.onerror = null;
-                e.target.src = "https://via.placeholder.com/1200x600/f1f5f9/64748b?text=3D知识图谱演示";
-              }}
-            />
+        </div>
+        
+        {/* 3D旋转知识图谱展示 */}
+        <div className={`w-full max-w-4xl mx-auto mb-16 rounded-xl overflow-hidden shadow-2xl transform transition-all duration-1000 delay-300 ${isVisible ? 'translate-y-0 opacity-100' : 'translate-y-10 opacity-0'}`}>
+          <div className="h-[400px] relative">
+            <DemoKnowledgeGraph />
             <div className="absolute top-4 right-4 bg-blue-600 text-white px-4 py-2 rounded-full text-sm font-medium">
               <FontAwesomeIcon icon={faCube} className="mr-2" />
               3D立体视图
@@ -66,26 +70,30 @@ function Home() {
           </div>
         </div>
         
-        {/* Search Bar */}
-        <div className={`max-w-2xl mx-auto relative group transform transition-all duration-1000 delay-300 ${isVisible ? 'translate-y-0 opacity-100' : 'translate-y-10 opacity-0'}`}>
-          <div className="absolute inset-0 bg-gradient-to-r from-blue-200/50 to-purple-200/50 opacity-20 blur-2xl group-hover:opacity-30 transition-opacity rounded-full"></div>
-          <div className="relative flex items-center bg-white rounded-full shadow-[0_0_20px_rgba(0,0,0,0.05)] group-hover:shadow-[0_0_25px_rgba(0,0,0,0.1)] transition-all duration-300">
+        {/* Search Bar - 移动到图谱下方 */}
+        <div className={`max-w-2xl mx-auto relative group transform transition-all duration-1000 delay-500 ${isVisible ? 'translate-y-0 opacity-100' : 'translate-y-10 opacity-0'}`}>
+          <div className="text-center mb-8">
+            <h3 className="text-2xl font-semibold text-gray-800">体验您自己的知识图谱</h3>
+            <p className="text-gray-600 mt-2">输入任何主题，即刻创建专属3D知识可视化</p>
+          </div>
+          <div className="relative">
+            <div className="absolute inset-0 bg-gradient-to-r from-blue-200/50 to-purple-200/50 opacity-20 blur-2xl group-hover:opacity-30 transition-opacity rounded-xl"></div>
             <input
               type="text"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               onKeyPress={handleKeyPress}
               placeholder="输入任何主题，体验3D知识图谱的魅力..."
-              className="w-full px-8 py-5 text-lg rounded-full bg-transparent border-2 border-transparent focus:border-blue-100 focus:ring-2 focus:ring-blue-50 transition-all outline-none"
+              className="w-full px-8 py-5 text-lg rounded-xl bg-white shadow-md border-2 border-transparent focus:border-blue-100 focus:ring-2 focus:ring-blue-50 transition-all outline-none"
             />
-            <button
-              onClick={handleSearch}
-              className="absolute right-2 bg-gradient-to-r from-blue-500 to-indigo-600 text-white px-6 py-3 rounded-full flex items-center gap-2 transition-all transform hover:translate-x-1 hover:shadow-lg group"
-            >
-              <span className="hidden md:inline font-medium">开始探索</span>
-              <FontAwesomeIcon icon={faSearch} className="text-lg transition-transform group-hover:scale-110" />
-            </button>
           </div>
+          <button
+            onClick={handleSearch}
+            className="mt-4 w-full bg-gradient-to-r from-blue-500 to-indigo-600 text-white px-6 py-4 rounded-xl flex items-center justify-center gap-2 transition-all hover:shadow-lg group"
+          >
+            <span className="font-medium">开始我的3D知识探索</span>
+            <FontAwesomeIcon icon={faSearch} className="text-lg transition-transform group-hover:scale-110" />
+          </button>
         </div>
 
         {/* Quick Stats - 更新数据突出技术优势 */}
