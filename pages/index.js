@@ -44,6 +44,8 @@ function Home() {
         <div className="absolute inset-0 pointer-events-none z-0">
           <div className="absolute top-0 right-0 w-1/3 h-1/3 bg-indigo-50 rounded-bl-full opacity-80"></div>
           <div className="absolute bottom-0 left-0 w-1/3 h-1/3 bg-blue-50 rounded-tr-full opacity-80"></div>
+          <div className="absolute bottom-1/4 right-1/4 w-40 h-40 bg-purple-50 rounded-full opacity-60 blur-xl"></div>
+          <div className="absolute top-1/3 left-1/4 w-32 h-32 bg-blue-50 rounded-full opacity-60 blur-xl"></div>
         </div>
         
         <div className="container mx-auto px-4 md:px-6 z-10">
@@ -51,7 +53,7 @@ function Home() {
             {/* 左侧：标题和介绍 */}
             <div className="lg:col-span-5 order-2 lg:order-1">
               <div className="mb-4">
-                <span className="inline-block px-3 py-1 bg-blue-50 text-blue-600 text-sm font-medium rounded-full">
+                <span className="inline-block px-3 py-1 bg-blue-50 text-blue-600 text-sm font-medium rounded-full shadow-sm">
                   革命性的知识可视化工具
                 </span>
               </div>
@@ -68,7 +70,7 @@ function Home() {
               </p>
               
               {/* 搜索体验区 */}
-              <div className="bg-white p-6 rounded-2xl shadow-lg mb-8">
+              <div className="bg-white p-6 rounded-2xl shadow-lg mb-8 border border-gray-100 hover:shadow-xl transition-shadow duration-300">
                 <h2 className="text-xl font-semibold text-gray-800 mb-3">体验您自己的知识图谱</h2>
                 <p className="text-gray-600 mb-4">输入任何主题，即刻创建专属3D知识可视化</p>
                 
@@ -127,10 +129,10 @@ function Home() {
       </section>
 
       {/* Feature Section - 展示产品特点和技术优势 */}
-      <section className="py-20 bg-gradient-to-b from-white to-blue-50">
+      <section className="py-16 lg:py-20 bg-gradient-to-b from-white to-blue-50">
         <div className="container mx-auto px-4 md:px-6">
           <div className="text-center mb-16">
-            <h2 className="text-3xl font-bold mb-4">
+            <h2 className="text-3xl md:text-4xl font-bold mb-4">
               <span className="text-indigo-600">先进的技术</span>
               <span className="mx-2">·</span>
               <span className="text-purple-600">卓越的体验</span>
@@ -141,18 +143,18 @@ function Home() {
           </div>
           
           {/* 特性卡片组 */}
-          <div className="grid md:grid-cols-3 gap-8">
-            <div className="bg-white p-8 rounded-xl shadow-md hover:shadow-lg transition-shadow duration-300">
+          <div className="grid md:grid-cols-3 gap-6 lg:gap-8">
+            <div className="bg-white p-8 rounded-xl shadow-md hover:shadow-lg transition-shadow duration-300 border border-gray-100 hover:border-gray-200">
               <div className="w-14 h-14 rounded-lg bg-blue-100 flex items-center justify-center mb-6">
                 <FontAwesomeIcon icon={faNetworkWired} className="text-2xl text-blue-600" />
               </div>
-              <h3 className="text-xl font-semibold mb-4">NLP实体关系抽取</h3>
+              <h3 className="text-xl font-semibold mb-4">实体关系抽取</h3>
               <p className="text-gray-600 leading-relaxed">
-                采用先进的自然语言处理技术，精准识别文本中的概念实体与关系，构建完整知识网络
+                采用自然语言处理技术，精准识别文本中的概念实体与关系，构建完整知识网络
               </p>
             </div>
             
-            <div className="bg-white p-8 rounded-xl shadow-md hover:shadow-lg transition-shadow duration-300">
+            <div className="bg-white p-8 rounded-xl shadow-md hover:shadow-lg transition-shadow duration-300 border border-gray-100 hover:border-gray-200">
               <div className="w-14 h-14 rounded-lg bg-indigo-100 flex items-center justify-center mb-6">
                 <FontAwesomeIcon icon={faCube} className="text-2xl text-indigo-600" />
               </div>
@@ -162,7 +164,7 @@ function Home() {
               </p>
             </div>
             
-            <div className="bg-white p-8 rounded-xl shadow-md hover:shadow-lg transition-shadow duration-300">
+            <div className="bg-white p-8 rounded-xl shadow-md hover:shadow-lg transition-shadow duration-300 border border-gray-100 hover:border-gray-200">
               <div className="w-14 h-14 rounded-lg bg-purple-100 flex items-center justify-center mb-6">
                 <FontAwesomeIcon icon={faBrain} className="text-2xl text-purple-600" />
               </div>
@@ -175,21 +177,74 @@ function Home() {
         </div>
       </section>
 
-      {/* CTA Section */}
+      {/* CTA Section - 纵向布局 */}
       <section className="bg-gradient-to-r from-blue-600 to-indigo-700 py-16">
-        <div className="container mx-auto px-4 md:px-6 text-center">
-          <h2 className="text-3xl font-bold text-white mb-6">开始您的知识可视化之旅</h2>
-          <p className="text-blue-100 mb-8 max-w-xl mx-auto leading-relaxed">
-            免费体验Think Graph，重新发现知识连接的力量
-          </p>
-          <a
-            href="/signup"
-            className="inline-block bg-white text-indigo-700 hover:bg-blue-50 px-8 py-3 rounded-lg font-medium transition duration-200 shadow-md hover:shadow-lg transform hover:-translate-y-1"
-          >
-            免费开始使用
-          </a>
+        <div className="container mx-auto px-4 md:px-6">
+          <div className="max-w-3xl mx-auto flex flex-col items-center text-center">
+            <div className="mb-6">
+              <div className="w-16 h-16 rounded-full bg-white/20 flex items-center justify-center mb-5 mx-auto">
+                <FontAwesomeIcon icon={faRocket} className="text-2xl text-white" />
+              </div>
+            </div>
+            <h2 className="text-3xl md:text-4xl font-bold text-white mb-6">开始您的知识可视化之旅</h2>
+            <p className="text-blue-100 mb-10 leading-relaxed max-w-xl mx-auto">
+              免费体验Think Graph，重新发现知识连接的力量。我们的平台助您将复杂信息转化为直观可视化的知识图谱，激发创新思维。
+            </p>
+            <div className="flex flex-col sm:flex-row gap-4 w-full max-w-md">
+              <a
+                href="/signup"
+                className="flex-1 bg-white text-indigo-700 hover:bg-blue-50 px-8 py-4 rounded-lg font-medium transition duration-200 shadow-md hover:shadow-lg transform hover:-translate-y-1 text-center"
+              >
+                免费开始使用
+              </a>
+              <a
+                href="/demo"
+                className="flex-1 bg-transparent text-white border border-white hover:bg-white/10 px-8 py-4 rounded-lg font-medium transition duration-200 text-center"
+              >
+                查看演示
+              </a>
+            </div>
+          </div>
         </div>
       </section>
+
+      {/* 页脚 */}
+      <footer className="bg-gray-900 text-gray-400 py-10">
+        <div className="container mx-auto px-4 md:px-6">
+          <div className="flex flex-col md:flex-row justify-between items-center">
+            <div className="mb-6 md:mb-0">
+              <h3 className="text-xl font-semibold text-white mb-2">Think Graph</h3>
+              <p className="text-sm">重新定义知识可视化体验</p>
+            </div>
+            <div className="flex space-x-8">
+              <div>
+                <h4 className="text-white text-sm font-medium mb-3">产品</h4>
+                <ul className="space-y-2 text-sm">
+                  <li><a href="#" className="hover:text-white transition">功能</a></li>
+                  <li><a href="#" className="hover:text-white transition">价格</a></li>
+                </ul>
+              </div>
+              <div>
+                <h4 className="text-white text-sm font-medium mb-3">资源</h4>
+                <ul className="space-y-2 text-sm">
+                  <li><a href="#" className="hover:text-white transition">帮助中心</a></li>
+                  <li><a href="#" className="hover:text-white transition">文档</a></li>
+                </ul>
+              </div>
+              <div>
+                <h4 className="text-white text-sm font-medium mb-3">公司</h4>
+                <ul className="space-y-2 text-sm">
+                  <li><a href="#" className="hover:text-white transition">关于我们</a></li>
+                  <li><a href="#" className="hover:text-white transition">联系我们</a></li>
+                </ul>
+              </div>
+            </div>
+          </div>
+          <div className="mt-8 pt-6 border-t border-gray-800 text-center text-sm">
+            <p>&copy; {new Date().getFullYear()} Think Graph. 保留所有权利。</p>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 }
