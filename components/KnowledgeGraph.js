@@ -705,55 +705,88 @@ const KnowledgeGraph = ({
   };
 
   useEffect(() => {
-    if (!containerRef.current) return;
-    initScene();
+    // 清理前一个场景
+    if (sceneRef.current?.animationFrameId) {
+      cancelAnimationFrame(sceneRef.current.animationFrameId);
+    }
+    
+    if (sceneRef.current?.renderer) {
+      sceneRef.current.renderer.dispose();
+    }
+    
+    if (sceneRef.current?.controls) {
+      sceneRef.current.controls.dispose();
+    }
 
-    // 清理函数
-    return () => {
-      if (sceneRef.current) {
-        const { renderer, labelRenderer, controls } = sceneRef.current;
-        
-        // 停止动画循环
-        cancelAnimationFrame(sceneRef.current.animationFrameId);
-        
-        // 清理渲染器
-        if (renderer) {
-          renderer.dispose();
-          renderer.forceContextLoss();
-          renderer.domElement?.remove();
+    // 初始化场景
+    if (isValidData) {
+      const cleanup = initScene();
+      
+      // 等待场景初始化完成后构建图谱
+      setTimeout(() => {
+        try {
+          buildGraph();
+          
+          // 强制触发一次窗口调整大小事件，确保正确渲染
+          window.dispatchEvent(new Event('resize'));
+        } catch (error) {
+          console.error('构建图谱时出错:', error);
         }
-        
-        // 清理标签渲染器
-        if (labelRenderer) {
-          labelRenderer.domElement?.remove();
+      }, 200);
+
+      // 清理函数
+      return () => {
+        if (typeof cleanup === 'function') {
+          cleanup();
         }
-        
-        // 清理控制器
-        if (controls) {
-          controls.dispose();
+        if (sceneRef.current?.animationFrameId) {
+          cancelAnimationFrame(sceneRef.current.animationFrameId);
         }
-        
-        // 清理场景
-        if (sceneRef.current.scene) {
-          sceneRef.current.scene.traverse((object) => {
-            if (object.geometry) {
-              object.geometry.dispose();
-            }
-            if (object.material) {
-              if (Array.isArray(object.material)) {
-                object.material.forEach(material => material.dispose());
-              } else {
-                object.material.dispose();
-              }
-            }
-          });
+      };
+    }
+  }, [data]);
+
+  // 动画函数
+  const animate = () => {
+    if (!sceneRef.current || !containerRef.current) return;
+    
+    const { scene, camera, renderer, labelRenderer, controls } = sceneRef.current;
+    
+    // 检查是否有效场景
+    if (!scene || !camera || !renderer || !labelRenderer) {
+      return;
+    }
+    
+    try {
+      // 更新控制器
+      controls.update();
+
+      // 更新所有边的位置和标签
+      scene.children.forEach(child => {
+        if (child?.userData?.isEdge && typeof child.updatePosition === 'function') {
+          child.updatePosition();
         }
-        
-        // 重置引用
-        sceneRef.current = null;
-      }
-    };
-  }, []);
+      });
+
+      // 更新节点发光效果
+      scene.traverse((object) => {
+        if (object?.material?.uniforms) {
+          object.material.uniforms.viewVector.value = camera.position;
+        }
+      });
+
+      // 渲染场景
+      renderer.render(scene, camera);
+      labelRenderer.render(scene, camera);
+    } catch (error) {
+      console.error('动画循环中出错:', error);
+    }
+
+    // 存储动画帧ID以便清理
+    if (sceneRef.current) {
+      sceneRef.current.animationFrameId = requestAnimationFrame(animate);
+    }
+  };
 
   useEffect(() => {
     if (!sceneRef.current || !data) return;
