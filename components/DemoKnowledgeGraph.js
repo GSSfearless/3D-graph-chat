@@ -5,17 +5,17 @@ import dynamic from 'next/dynamic';
 const defaultData = {
   nodes: [
     // 核心概念节点 - 较大尺寸
-    { data: { id: 'knowledge-graph', label: '知识图谱', type: 'concept', size: 24, color: '#4F46E5' } },
-    { data: { id: 'visualization', label: '可视化', type: 'concept', size: 18, color: '#6366F1' } },
+    { data: { id: 'knowledge-graph', label: '知识图谱', type: 'concept', size: 26, color: '#4F46E5' } },
+    { data: { id: 'visualization', label: '可视化', type: 'concept', size: 20, color: '#6366F1' } },
     { data: { id: '3d-rendering', label: '3D渲染', type: 'technology', size: 18, color: '#8B5CF6' } },
-    { data: { id: 'ai', label: '人工智能', type: 'technology', size: 22, color: '#8B5CF6' } },
-    { data: { id: 'big-data', label: '大数据', type: 'technology', size: 20, color: '#0EA5E9' } },
+    { data: { id: 'ai', label: '人工智能', type: 'technology', size: 24, color: '#8B5CF6' } },
+    { data: { id: 'big-data', label: '大数据', type: 'technology', size: 22, color: '#0EA5E9' } },
     { data: { id: 'thinking', label: '立体思考', type: 'concept', size: 19, color: '#6366F1' } },
     
     // 技术节点 - 中等尺寸
-    { data: { id: 'nlp', label: '自然语言处理', type: 'technology', size: 17, color: '#8B5CF6' } },
-    { data: { id: 'deep-learning', label: '深度学习', type: 'technology', size: 17, color: '#8B5CF6' } },
-    { data: { id: 'machine-learning', label: '机器学习', type: 'technology', size: 16, color: '#8B5CF6' } },
+    { data: { id: 'nlp', label: '自然语言处理', type: 'technology', size: 18, color: '#8B5CF6' } },
+    { data: { id: 'deep-learning', label: '深度学习', type: 'technology', size: 18, color: '#8B5CF6' } },
+    { data: { id: 'machine-learning', label: '机器学习', type: 'technology', size: 17, color: '#8B5CF6' } },
     { data: { id: 'semantic-web', label: '语义网络', type: 'technology', size: 16, color: '#0EA5E9' } },
     { data: { id: 'data-mining', label: '数据挖掘', type: 'technology', size: 16, color: '#0EA5E9' } },
     { data: { id: 'graph-db', label: '图数据库', type: 'technology', size: 16, color: '#0EA5E9' } },
@@ -131,19 +131,33 @@ const DemoKnowledgeGraph = ({ className = "" }) => {
     if (width < 768) {
       // 小屏幕调整 - 减少节点数量并缩小尺寸
       if (width < 480) {
-        // 超小屏幕 - 显示核心节点和关系
-        const coreNodeIds = ['knowledge-graph', 'visualization', '3d-rendering', 'ai', 'thinking', 'nlp', 'interactive'];
-        newData.nodes = newData.nodes.filter(node => coreNodeIds.includes(node.data.id));
-        newData.edges = newData.edges.filter(edge => 
-          coreNodeIds.includes(edge.data.source) && coreNodeIds.includes(edge.data.target)
+        // 超小屏幕 - 显示核心节点和关系，但保留足够节点保证视觉效果
+        const coreNodeIds = ['knowledge-graph', 'ai', 'visualization', '3d-rendering', 'thinking', 'nlp', 'deep-learning'];
+        newData.nodes = newData.nodes.filter(node => coreNodeIds.includes(node.data.id) || Math.random() > 0.5);
+        
+        // 确保保留的节点数不少于8个
+        if (newData.nodes.length < 8) {
+          const additionalNodes = defaultData.nodes
+            .filter(node => !coreNodeIds.includes(node.data.id))
+            .slice(0, 8 - newData.nodes.length);
+          newData.nodes = [...newData.nodes, ...additionalNodes];
+        }
+        
+        // 过滤边，确保两端节点都存在
+        const availableNodeIds = newData.nodes.map(node => node.data.id);
+        newData.edges = defaultData.edges.filter(edge => 
+          availableNodeIds.includes(edge.data.source) && availableNodeIds.includes(edge.data.target)
         );
       }
       
-      // 缩小节点尺寸
+      // 调整节点尺寸 - 对小屏幕加大核心节点尺寸以提高可见性
       newData.nodes = newData.nodes.map(node => {
+        const isCoreNode = ['knowledge-graph', 'ai', 'visualization'].includes(node.data.id);
+        const sizeFactor = isCoreNode ? 0.9 : 0.75;
+        
         node.data = {
           ...node.data,
-          size: Math.max(10, node.data.size * 0.7) // 确保最小尺寸不低于10
+          size: Math.max(12, node.data.size * sizeFactor) // 确保最小尺寸不低于12
         };
         return node;
       });
@@ -151,7 +165,14 @@ const DemoKnowledgeGraph = ({ className = "" }) => {
       // 小屏幕隐藏标签
       setShouldHideLabels(width < 480);
     } else {
-      // 大屏幕保持原样
+      // 大屏幕增加节点尺寸，提升视觉冲击力
+      newData.nodes = newData.nodes.map(node => {
+        node.data = {
+          ...node.data,
+          size: node.data.size * 1.1 // 增大10%
+        };
+        return node;
+      });
       setShouldHideLabels(false);
     }
     
@@ -173,7 +194,8 @@ const DemoKnowledgeGraph = ({ className = "" }) => {
       className={`w-full h-full ${className}`} 
       style={{ 
         position: 'relative', 
-        minHeight: '500px',
+        minHeight: '550px',
+        overflow: 'visible', // 允许内容溢出容器，不截断球体
         zIndex: 1 
       }}
     >
@@ -188,7 +210,9 @@ const DemoKnowledgeGraph = ({ className = "" }) => {
           height: "100%", 
           position: "absolute",
           top: 0,
-          left: 0
+          left: 0,
+          transform: "scale(1.1)", // 稍微放大球体
+          transformOrigin: "center center"
         }}
       />
       {!isLoaded && (
