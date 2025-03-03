@@ -52,25 +52,36 @@ const KnowledgeGraph = dynamic(() => import('./KnowledgeGraph'), {
   )
 });
 
-const DemoKnowledgeGraph = () => {
+const DemoKnowledgeGraph = ({ className = "" }) => {
   const [mounted, setMounted] = useState(false);
   
   // 在客户端加载后再渲染组件
   useEffect(() => {
     setMounted(true);
+    
+    // 添加控制台日志以便调试
+    console.log("DemoKnowledgeGraph mounted");
   }, []);
   
-  if (!mounted) return null;
+  if (!mounted) {
+    console.log("DemoKnowledgeGraph not mounted yet");
+    return null;
+  }
+  
+  console.log("Rendering KnowledgeGraph with data:", defaultData);
   
   return (
-    <KnowledgeGraph 
-      data={defaultData} 
-      onNodeClick={() => {}} 
-      defaultMode="3d"
-      autoRotate={true} // 设置自动旋转
-      hideControls={true} // 隐藏控制按钮
-      disableLabels={true} // 可选：在演示中禁用标签，使视觉更简洁
-    />
+    <div className={`w-full h-full ${className}`} style={{ minHeight: "400px", position: "relative", zIndex: 10 }}>
+      <KnowledgeGraph 
+        data={defaultData} 
+        onNodeClick={(node) => console.log("Node clicked:", node)} 
+        defaultMode="3d"
+        autoRotate={true}
+        hideControls={true}
+        disableLabels={false}
+        style={{ width: "100%", height: "100%", minHeight: "400px" }}
+      />
+    </div>
   );
 };
 
