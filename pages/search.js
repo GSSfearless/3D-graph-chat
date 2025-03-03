@@ -67,7 +67,7 @@ export default function Search() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
           query: searchQuery,
-          useDeepThinking
+          useDeepThinking: false // 强制设置为false，忽略用户设置
         })
       });
 
@@ -273,6 +273,7 @@ export default function Search() {
             {/* 文本显示区域 - 可滚动 */}
             <div className="col-span-3 h-[calc(100vh-4rem)] overflow-y-auto custom-scrollbar">
               <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
+                {/* 隐藏DeepThinking思考过程显示 
                 {useDeepThinking && reasoningProcess && (
                   <div className="mb-4 p-3 bg-purple-50 rounded-lg border border-purple-200">
                     <div className="flex items-center space-x-2 mb-2">
@@ -285,8 +286,9 @@ export default function Search() {
                     </div>
                   </div>
                 )}
+                */}
                 {streamedAnswer && (
-                  <div className={useDeepThinking && reasoningProcess ? "mt-4" : ""}>
+                  <div className="">
                     <ReactMarkdown remarkPlugins={[remarkGfm]} className="prose prose-sm max-w-none">
                       {streamedAnswer}
                     </ReactMarkdown>
@@ -300,21 +302,6 @@ export default function Search() {
           <div className="fixed bottom-4 left-1/2 transform -translate-x-1/2 w-full max-w-2xl px-4">
             <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-gray-100 p-4 transition-all duration-300 hover:shadow-xl hover:bg-white/90">
               <div className="flex items-center space-x-4">
-                <div className="flex items-center space-x-3">
-                  <span className="text-sm font-medium bg-gradient-to-r from-purple-600 to-pink-600 text-transparent bg-clip-text">Deepseek</span>
-                  <button
-                    onClick={() => setUseDeepThinking(!useDeepThinking)}
-                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 ${
-                      useDeepThinking ? 'bg-purple-500' : 'bg-gray-200'
-                    }`}
-                  >
-                    <span
-                      className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-lg transition-transform duration-300 ease-in-out ${
-                        useDeepThinking ? 'translate-x-6' : 'translate-x-1'
-                      }`}
-                    />
-                  </button>
-                </div>
                 <div className="relative flex-1">
                   <input
                     ref={searchInputRef}
