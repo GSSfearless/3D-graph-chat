@@ -46,7 +46,7 @@ const defaultData = {
 const KnowledgeGraph = dynamic(() => import('./KnowledgeGraph'), {
   ssr: false,
   loading: () => (
-    <div className="w-full h-full bg-white/30 rounded-xl flex items-center justify-center">
+    <div className="w-full h-full bg-white/30 flex items-center justify-center">
       <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
     </div>
   )
@@ -54,32 +54,82 @@ const KnowledgeGraph = dynamic(() => import('./KnowledgeGraph'), {
 
 const DemoKnowledgeGraph = ({ className = "" }) => {
   const [mounted, setMounted] = useState(false);
+  const [windowSize, setWindowSize] = useState({
+    width: undefined,
+    height: undefined,
+  });
   
-  // 在客户端加载后再渲染组件
+  // 在客户端加载后再渲染组件并监听窗口大小变化
   useEffect(() => {
     setMounted(true);
     
-    // 添加控制台日志以便调试
-    console.log("DemoKnowledgeGraph mounted");
+    // 设置初始窗口大小
+    setWindowSize({
+      width: window.innerWidth,
+      height: window.innerHeight,
+    });
+    
+    // 添加窗口大小变化监听
+    const handleResize = () => {
+      setWindowSize({
+        width: window.innerWidth,
+        height: window.innerHeight,
+      });
+    };
+    
+    window.addEventListener('resize', handleResize);
+    console.log("DemoKnowledgeGraph mounted, window size:", windowSize);
+    
+    // 清理函数
+    return () => window.removeEventListener('resize', handleResize);
   }, []);
   
   if (!mounted) {
-    console.log("DemoKnowledgeGraph not mounted yet");
     return null;
   }
   
-  console.log("Rendering KnowledgeGraph with data:", defaultData);
+  // 根据屏幕大小调整节点尺寸
+  const adjustedData = {
+    ...defaultData,
+    nodes: defaultData.nodes.map(node => {
+      // 在小屏幕上减小节点尺寸
+      const sizeAdjustment = windowSize.width < 768 ? 0.8 : 1;
+      return {
+        ...node,
+        data: {
+          ...node.data,
+          size: node.data.size * sizeAdjustment
+        }
+      };
+    })
+  };
+  
+  console.log("Rendering KnowledgeGraph with adjusted data");
+  
+  // 确定节点标签显示策略（在小屏幕上可能隐藏标签）
+  const shouldShowLabels = windowSize.width >= 640;
   
   return (
-    <div className={`w-full h-full ${className}`} style={{ minHeight: "400px", position: "relative", zIndex: 10 }}>
+    <div className={`w-full h-full ${className}`} style={{ 
+      position: "relative", 
+      zIndex: 10,
+      minHeight: "100%",
+      height: "500px"
+    }}>
       <KnowledgeGraph 
-        data={defaultData} 
+        data={adjustedData} 
         onNodeClick={(node) => console.log("Node clicked:", node)} 
         defaultMode="3d"
         autoRotate={true}
         hideControls={true}
-        disableLabels={false}
-        style={{ width: "100%", height: "100%", minHeight: "400px" }}
+        disableLabels={!shouldShowLabels}
+        style={{ 
+          width: "100%", 
+          height: "100%", 
+          position: "absolute",
+          top: 0,
+          left: 0
+        }}
       />
     </div>
   );
