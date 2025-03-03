@@ -39,83 +39,92 @@ function Home() {
   };
 
   return (
-    <div className="min-h-screen bg-white">
-      {/* 主内容区 */}
-      <main className="pt-10 pb-16">
-        <div className="container mx-auto px-4 max-w-6xl">
-          {/* 左侧标题和介绍 */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-16 items-center">
-            <div>
-              <div className="inline-block mb-3 px-3 py-1 bg-blue-50 rounded-full">
-                <span className="text-blue-600 text-sm font-medium">革命性的知识可视化工具</span>
-              </div>
-              
-              <h1 className="text-4xl sm:text-5xl font-bold mb-6 leading-tight">
-                <div className="text-blue-600">3D<span className="text-indigo-600">立体知识图谱</span></div>
-                <div className="text-indigo-600">重新<span className="text-purple-600">定义思考方式</span></div>
-              </h1>
-              
-              <p className="text-gray-600 mb-8">
-                突破传统平面限制，以沉浸式3D体验<br/>
-                将复杂知识立体化展现，让思维触手可及
-              </p>
-              
-              {/* 统计数据 - 横向布局 */}
-              <div className="flex flex-wrap gap-6 sm:gap-10">
-                <div className="flex items-center">
-                  <span className="text-2xl font-bold text-blue-600 mr-2">360°</span>
-                  <span className="text-sm text-gray-500">立体可视化</span>
-                </div>
-                <div className="flex items-center">
-                  <span className="text-2xl font-bold text-indigo-600 mr-2">98.5%</span>
-                  <span className="text-sm text-gray-500">识别准确率</span>
-                </div>
-                <div className="flex items-center">
-                  <span className="text-2xl font-bold text-purple-600 mr-2">1M+</span>
-                  <span className="text-sm text-gray-500">知识连接</span>
-                </div>
-              </div>
+    <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white">
+      {/* Hero Section */}
+      <main className="flex-grow">
+        <div className="container mx-auto px-6 py-12 max-w-6xl">
+          {/* 顶部标题区 */}
+          <div className="mb-8">
+            <div className="inline-block mb-3 px-3 py-1 bg-blue-50 rounded-full">
+              <span className="text-blue-600 text-sm font-medium">革命性的知识可视化工具</span>
             </div>
             
-            {/* 右侧：3D知识图谱展示框 */}
-            <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-2xl overflow-hidden shadow-lg h-[400px]">
+            <div className="text-left">
+              <h1 className="text-5xl font-bold leading-tight mb-6">
+                <div className="text-blue-600">
+                  3D<span className="text-indigo-600">立体知识图谱</span>
+                </div>
+                <div className="text-indigo-600">
+                  重新<span className="text-purple-600">定义思考方式</span>
+                </div>
+              </h1>
+              
+              <p className="text-gray-600 max-w-xl">
+                突破传统平面限制，以沉浸式3D体验
+                将复杂知识立体化展现，让思维触手可及
+              </p>
+            </div>
+          </div>
+
+          {/* 主要内容区 - 两列布局 */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 mb-16">
+            {/* 左侧：3D知识图谱展示 */}
+            <div className="order-2 lg:order-1 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-2xl overflow-hidden shadow-lg" style={{ height: "560px" }}>
               <div className="relative w-full h-full">
-                <DemoKnowledgeGraph className="demo-graph-container" />
-                <div className="absolute top-4 right-4 bg-blue-600 text-white px-3 py-1.5 rounded-full text-xs font-medium z-10">
+                <DemoKnowledgeGraph />
+                <div className="absolute top-4 right-4 bg-blue-600 text-white px-3 py-1.5 rounded-full text-xs font-medium">
                   <FontAwesomeIcon icon={faCube} className="mr-1.5" />
                   3D立体视图
                 </div>
               </div>
             </div>
-          </div>
-          
-          {/* 搜索和体验区域 */}
-          <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-8 mb-16 max-w-2xl mx-auto">
-            <h2 className="text-xl font-semibold text-gray-800 mb-4 text-center">体验您自己的知识图谱</h2>
-            <p className="text-gray-600 mb-6 text-center">输入任何主题，即刻创建专属3D知识可视化</p>
             
-            <div className="flex flex-col sm:flex-row gap-3">
-              <input
-                type="text"
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                onKeyPress={handleKeyPress}
-                placeholder="输入任何主题..."
-                className="flex-grow px-4 py-3 rounded-lg border border-gray-300 focus:border-blue-500 focus:ring focus:ring-blue-200 transition duration-200"
-              />
+            {/* 右侧：搜索栏和体验区 */}
+            <div className="order-1 lg:order-2">
+              <div className="bg-white p-6 rounded-2xl shadow-lg mb-8">
+                <h2 className="text-xl font-semibold text-gray-800 mb-4">体验您自己的知识图谱</h2>
+                <p className="text-gray-600 mb-5 text-sm">输入任何主题，即刻创建专属3D知识可视化</p>
+                
+                <div className="mb-4">
+                  <input
+                    type="text"
+                    value={query}
+                    onChange={(e) => setQuery(e.target.value)}
+                    onKeyPress={handleKeyPress}
+                    placeholder="输入任何主题..."
+                    className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-blue-500 focus:ring focus:ring-blue-200 transition duration-200"
+                  />
+                </div>
+                
+                <button
+                  onClick={handleSearch}
+                  className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 px-6 rounded-lg transition duration-200 flex items-center justify-center gap-2"
+                >
+                  <span>开始3D知识探索</span>
+                  <FontAwesomeIcon icon={faSearch} />
+                </button>
+              </div>
               
-              <button
-                onClick={handleSearch}
-                className="bg-blue-600 hover:bg-blue-700 text-white py-3 px-6 rounded-lg transition duration-200 flex items-center justify-center whitespace-nowrap"
-              >
-                <span>开始3D知识探索</span>
-                <FontAwesomeIcon icon={faSearch} className="ml-2" />
-              </button>
+              {/* 数据统计卡片 */}
+              <div className="grid grid-cols-3 gap-4">
+                <div className="bg-white p-4 rounded-xl shadow-md text-center">
+                  <div className="text-xl font-bold text-blue-600">360°</div>
+                  <div className="text-xs text-gray-500">立体可视化</div>
+                </div>
+                <div className="bg-white p-4 rounded-xl shadow-md text-center">
+                  <div className="text-xl font-bold text-indigo-600">98.5%</div>
+                  <div className="text-xs text-gray-500">识别准确率</div>
+                </div>
+                <div className="bg-white p-4 rounded-xl shadow-md text-center">
+                  <div className="text-xl font-bold text-purple-600">1M+</div>
+                  <div className="text-xs text-gray-500">知识连接</div>
+                </div>
+              </div>
             </div>
           </div>
-          
+
           {/* 技术特点展示 */}
-          <div>
+          <div className="mb-16">
             <h2 className="text-2xl font-bold text-center mb-10">
               <span className="text-indigo-600">先进的技术</span>
               <span className="mx-2">,</span>
@@ -123,8 +132,8 @@ function Home() {
             </h2>
             
             <div className="grid md:grid-cols-3 gap-6">
-              <div className="bg-white p-6 rounded-xl shadow-md hover:shadow-lg transition-shadow duration-300 border border-gray-50">
-                <div className="w-12 h-12 rounded-lg bg-blue-100 flex items-center justify-center mb-4">
+              <div className="bg-white p-5 rounded-xl shadow-md hover:shadow-lg transition-shadow duration-300">
+                <div className="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center mb-4">
                   <FontAwesomeIcon icon={faNetworkWired} className="text-lg text-blue-600" />
                 </div>
                 <h3 className="text-lg font-semibold mb-2">NLP实体关系抽取</h3>
@@ -133,8 +142,8 @@ function Home() {
                 </p>
               </div>
               
-              <div className="bg-white p-6 rounded-xl shadow-md hover:shadow-lg transition-shadow duration-300 border border-gray-50">
-                <div className="w-12 h-12 rounded-lg bg-indigo-100 flex items-center justify-center mb-4">
+              <div className="bg-white p-5 rounded-xl shadow-md hover:shadow-lg transition-shadow duration-300">
+                <div className="w-10 h-10 rounded-lg bg-indigo-100 flex items-center justify-center mb-4">
                   <FontAwesomeIcon icon={faCube} className="text-lg text-indigo-600" />
                 </div>
                 <h3 className="text-lg font-semibold mb-2">3D立体图谱</h3>
@@ -143,8 +152,8 @@ function Home() {
                 </p>
               </div>
               
-              <div className="bg-white p-6 rounded-xl shadow-md hover:shadow-lg transition-shadow duration-300 border border-gray-50">
-                <div className="w-12 h-12 rounded-lg bg-purple-100 flex items-center justify-center mb-4">
+              <div className="bg-white p-5 rounded-xl shadow-md hover:shadow-lg transition-shadow duration-300">
+                <div className="w-10 h-10 rounded-lg bg-purple-100 flex items-center justify-center mb-4">
                   <FontAwesomeIcon icon={faBrain} className="text-lg text-purple-600" />
                 </div>
                 <h3 className="text-lg font-semibold mb-2">实时图谱生成</h3>

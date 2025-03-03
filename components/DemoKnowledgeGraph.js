@@ -4,32 +4,36 @@ import dynamic from 'next/dynamic';
 // 预设的知识图谱演示数据 - 精简节点和边，提高可视性
 const defaultData = {
   nodes: [
-    { data: { id: 'knowledge-graph', label: '知识图谱', type: 'concept', size: 18, color: '#4F46E5' } },
-    { data: { id: 'visualization', label: '可视化', type: 'concept', size: 14, color: '#6366F1' } },
-    { data: { id: '3d-rendering', label: '3D渲染', type: 'technology', size: 13, color: '#8B5CF6' } },
-    { data: { id: 'interactive', label: '交互性', type: 'feature', size: 12, color: '#EC4899' } },
-    { data: { id: 'ai', label: '人工智能', type: 'technology', size: 16, color: '#8B5CF6' } },
-    { data: { id: 'nlp', label: '自然语言处理', type: 'technology', size: 14, color: '#8B5CF6' } },
-    { data: { id: 'entity', label: '实体识别', type: 'feature', size: 12, color: '#EC4899' } },
-    { data: { id: 'relation', label: '关系抽取', type: 'feature', size: 12, color: '#EC4899' } },
+    { data: { id: 'knowledge-graph', label: '知识图谱', type: 'concept', size: 16, color: '#4F46E5' } },
+    { data: { id: 'visualization', label: '可视化', type: 'concept', size: 12, color: '#6366F1' } },
+    { data: { id: '3d-rendering', label: '3D渲染', type: 'technology', size: 12, color: '#8B5CF6' } },
+    { data: { id: 'interactive', label: '交互性', type: 'feature', size: 10, color: '#EC4899' } },
+    { data: { id: 'ai', label: '人工智能', type: 'technology', size: 14, color: '#8B5CF6' } },
+    { data: { id: 'nlp', label: '自然语言处理', type: 'technology', size: 12, color: '#8B5CF6' } },
+    { data: { id: 'entity', label: '实体识别', type: 'feature', size: 10, color: '#EC4899' } },
+    { data: { id: 'relation', label: '关系抽取', type: 'feature', size: 10, color: '#EC4899' } },
+    { data: { id: 'spatial', label: '空间思维', type: 'concept', size: 11, color: '#6366F1' } },
+    { data: { id: 'thinking', label: '立体思考', type: 'concept', size: 13, color: '#6366F1' } }
   ],
   edges: [
     { data: { id: 'e1', source: 'knowledge-graph', target: 'visualization', label: '包含', weight: 5 } },
     { data: { id: 'e2', source: 'knowledge-graph', target: '3d-rendering', label: '使用', weight: 4 } },
-    { data: { id: 'e3', source: 'visualization', target: 'interactive', label: '提供', weight: 3 } },
-    { data: { id: 'e4', source: 'knowledge-graph', target: 'ai', label: '结合', weight: 5 } },
-    { data: { id: 'e5', source: 'ai', target: 'nlp', label: '应用', weight: 4 } },
-    { data: { id: 'e6', source: 'nlp', target: 'entity', label: '识别', weight: 3 } },
-    { data: { id: 'e7', source: 'nlp', target: 'relation', label: '提取', weight: 3 } },
-    { data: { id: 'e8', source: 'entity', target: 'relation', label: '形成', weight: 2 } },
+    { data: { id: 'e3', source: 'knowledge-graph', target: 'interactive', label: '提供', weight: 3 } },
+    { data: { id: 'e5', source: 'knowledge-graph', target: 'ai', label: '应用', weight: 4 } },
+    { data: { id: 'e7', source: 'ai', target: 'nlp', label: '包含', weight: 5 } },
+    { data: { id: 'e9', source: 'nlp', target: 'entity', label: '识别', weight: 4 } },
+    { data: { id: 'e10', source: 'nlp', target: 'relation', label: '抽取', weight: 4 } },
+    { data: { id: 'e12', source: 'visualization', target: 'spatial', label: '增强', weight: 3 } },
+    { data: { id: 'e14', source: 'spatial', target: 'thinking', label: '促进', weight: 3 } },
+    { data: { id: 'e17', source: 'thinking', target: 'knowledge-graph', label: '应用于', weight: 4 } }
   ]
 };
 
-// 动态导入KnowledgeGraph组件
+// 动态导入KnowledgeGraph组件，避免SSR问题
 const KnowledgeGraph = dynamic(() => import('./KnowledgeGraph'), {
   ssr: false,
   loading: () => (
-    <div className="w-full h-full flex items-center justify-center">
+    <div className="w-full h-full bg-white/30 flex items-center justify-center">
       <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
     </div>
   )
@@ -37,68 +41,77 @@ const KnowledgeGraph = dynamic(() => import('./KnowledgeGraph'), {
 
 const DemoKnowledgeGraph = ({ className = "" }) => {
   const [mounted, setMounted] = useState(false);
-  const [adjustedData, setAdjustedData] = useState(defaultData);
-  const [windowWidth, setWindowWidth] = useState(1200);
+  const [windowSize, setWindowSize] = useState({
+    width: undefined,
+    height: undefined,
+  });
   
+  // 在客户端加载后再渲染组件并监听窗口大小变化
   useEffect(() => {
     setMounted(true);
     
-    // 初始设置窗口宽度
-    setWindowWidth(window.innerWidth);
+    // 设置初始窗口大小
+    setWindowSize({
+      width: window.innerWidth,
+      height: window.innerHeight,
+    });
     
-    // 设置窗口大小变化监听
+    // 添加窗口大小变化监听
     const handleResize = () => {
-      setWindowWidth(window.innerWidth);
+      setWindowSize({
+        width: window.innerWidth,
+        height: window.innerHeight,
+      });
     };
     
     window.addEventListener('resize', handleResize);
-    console.log("DemoKnowledgeGraph mounted");
     
     // 清理函数
-    return () => {
-      window.removeEventListener('resize', handleResize);
-      console.log("DemoKnowledgeGraph unmounted");
-    };
+    return () => window.removeEventListener('resize', handleResize);
   }, []);
   
-  // 根据窗口大小调整节点大小
-  useEffect(() => {
-    if (!mounted) return;
-    
-    // 窗口宽度小于768px时缩小节点尺寸
-    if (windowWidth < 768) {
-      const scaleFactor = 0.7;
-      const newData = {
-        nodes: defaultData.nodes.map(node => ({
-          data: {
-            ...node.data,
-            size: Math.max(8, Math.floor(node.data.size * scaleFactor))
-          }
-        })),
-        edges: defaultData.edges
-      };
-      setAdjustedData(newData);
-    } else {
-      setAdjustedData(defaultData);
-    }
-  }, [windowWidth, mounted]);
-  
   if (!mounted) {
-    return (
-      <div className={`w-full h-full flex items-center justify-center ${className}`}>
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
-      </div>
-    );
+    return null;
   }
   
+  // 根据屏幕大小调整节点参数
+  const adjustedData = {
+    ...defaultData,
+    nodes: defaultData.nodes.map(node => {
+      // 在小屏幕上减小节点尺寸
+      const sizeAdjustment = windowSize.width < 768 ? 0.75 : 1;
+      return {
+        ...node,
+        data: {
+          ...node.data,
+          size: node.data.size * sizeAdjustment
+        }
+      };
+    })
+  };
+  
+  // 根据屏幕大小决定是否显示标签
+  const shouldShowLabels = windowSize.width >= 480;
+  
   return (
-    <div className={`w-full h-full ${className}`}>
-      <KnowledgeGraph
-        data={adjustedData}
+    <div className={`w-full h-full ${className}`} style={{ 
+      position: "relative", 
+      zIndex: 10
+    }}>
+      <KnowledgeGraph 
+        data={adjustedData} 
+        onNodeClick={(node) => console.log("Node clicked:", node)} 
+        defaultMode="3d"
         autoRotate={true}
-        hideControls={windowWidth < 640}
-        disableLabels={windowWidth < 480}
-        onNodeClick={(node) => console.log('Node clicked:', node)}
+        hideControls={true}
+        disableLabels={!shouldShowLabels}
+        style={{ 
+          width: "100%", 
+          height: "100%", 
+          position: "absolute",
+          top: 0,
+          left: 0
+        }}
       />
     </div>
   );
