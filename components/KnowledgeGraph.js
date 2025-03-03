@@ -3,14 +3,23 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 import { CSS2DRenderer, CSS2DObject } from 'three/examples/jsm/renderers/CSS2DRenderer';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faExpand, faCompress, faSearch, faRefresh, faSave, faDownload } from '@fortawesome/free-solid-svg-icons';
+import { faExpand, faCompress, faSearch, faRefresh, faSave, faDownload, faCube } from '@fortawesome/free-solid-svg-icons';
 
-const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
+const KnowledgeGraph = ({ 
+  data, 
+  onNodeClick, 
+  style = {},
+  defaultMode = "2d",
+  autoRotate = false,
+  hideControls = false,
+  disableLabels = false
+}) => {
   const containerRef = useRef(null);
   const sceneRef = useRef(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [selectedNode, setSelectedNode] = useState(null);
   const [isMobile, setIsMobile] = useState(false);
+  const [is3DMode, setIs3DMode] = useState(defaultMode === "3d");
   
   // 主题配置
   const theme = {
@@ -98,6 +107,8 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
     const controls = new OrbitControls(camera, renderer.domElement);
     controls.enableDamping = true; // 启用阻尼效果
     controls.dampingFactor = 0.1; // 阻尼系数
+    controls.autoRotate = autoRotate; // 根据传入参数设置自动旋转
+    controls.autoRotateSpeed = 1.0; // 自动旋转速度
     controls.rotateSpeed = 0.8; // 降低旋转速度
     controls.panSpeed = 0.8; // 平移速度
     controls.zoomSpeed = 1.2; // 缩放速度
@@ -106,7 +117,6 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
     controls.target.set(0, 0, 0); // 设置旋转中心为原点（球心）
     controls.enablePan = true; // 允许平移
     controls.enableZoom = true; // 允许缩放
-    controls.autoRotate = false; // 禁用自动旋转
     controls.screenSpacePanning = true; // 使平移始终平行于屏幕
 
     // 清除原有内容并添加新的渲染器
@@ -271,24 +281,26 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
     group.add(glowSphere);
 
     // 创建标签
-    const labelDiv = document.createElement('div');
-    labelDiv.className = 'node-label';
-    // 清理文本内容，移除特殊字符
-    const cleanText = nodeData.label.replace(/[#*]/g, '').replace(/\s+/g, ' ').trim();
-    labelDiv.textContent = cleanText;
-    labelDiv.style.color = theme.label.color;
-    labelDiv.style.fontSize = theme.label.size;
-    labelDiv.style.fontFamily = theme.label.font;
-    labelDiv.style.background = 'transparent';
-    labelDiv.style.padding = '4px 8px';
-    labelDiv.style.borderRadius = '4px';
-    labelDiv.style.whiteSpace = 'nowrap';
-    labelDiv.style.pointerEvents = 'none';
-    labelDiv.style.userSelect = 'none';
-    
-    const label = new CSS2DObject(labelDiv);
-    label.position.set(0, nodeSize + 5, 0);
-    group.add(label);
+    if (!disableLabels) {
+      const labelDiv = document.createElement('div');
+      labelDiv.className = 'node-label';
+      // 清理文本内容，移除特殊字符
+      const cleanText = nodeData.label.replace(/[#*]/g, '').replace(/\s+/g, ' ').trim();
+      labelDiv.textContent = cleanText;
+      labelDiv.style.color = theme.label.color;
+      labelDiv.style.fontSize = theme.label.size;
+      labelDiv.style.fontFamily = theme.label.font;
+      labelDiv.style.background = 'transparent';
+      labelDiv.style.padding = '4px 8px';
+      labelDiv.style.borderRadius = '4px';
+      labelDiv.style.whiteSpace = 'nowrap';
+      labelDiv.style.pointerEvents = 'none';
+      labelDiv.style.userSelect = 'none';
+      
+      const label = new CSS2DObject(labelDiv);
+      label.position.set(0, nodeSize + 5, 0);
+      group.add(label);
+    }
 
     // 计算节点位置
     const phi = Math.acos(-1 + (2 * index) / total);
@@ -517,6 +529,179 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
     controls.reset();
     controls.target.set(0, 0, 0);
     controls.update();
+  };
+
+  const handleRefreshLayout = () => {
+    if (!sceneRef.current) return;
+    
+    const { scene } = sceneRef.current;
+
+    // 清除现有内容
+    while (scene.children.length > 0) {
+      scene.remove(scene.children[0]);
+    }
+
+    // 如果数据无效，显示空场景
+    if (!isValidData) {
+      console.warn('Invalid graph data:', data);
+      // 添加基本光源
+      const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+      scene.add(ambientLight);
+      return;
+    }
+
+    // 添加光源
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+    scene.add(ambientLight);
+
+    const pointLight = new THREE.PointLight(0xffffff, 1);
+    pointLight.position.set(100, 100, 100);
+    scene.add(pointLight);
+
+    try {
+      // 创建节点
+      const nodes3D = new Map();
+      data.nodes.forEach((node, index) => {
+        const nodeData = node.data;
+        if (!nodeData || !nodeData.id || !nodeData.label) {
+          console.warn('Invalid node data:', node);
+          return;
+        }
+        
+        // 规范化节点ID
+        nodeData.id = normalizeId(nodeData.id);
+        console.log('创建节点:', {
+          原始ID: node.data.id,
+          规范化ID: nodeData.id,
+          标签: nodeData.label
+        });
+        
+        const node3D = createNode3D(nodeData, index, data.nodes.length);
+        scene.add(node3D);
+        nodes3D.set(nodeData.id, node3D);
+        // 同时存储原始ID的映射，以防边使用原始ID
+        const originalId = String(node.data.id).trim();
+        if (originalId !== nodeData.id) {
+          nodes3D.set(originalId, node3D);
+        }
+
+        // 添加点击事件
+        if (node3D.children[0]) {
+          node3D.children[0].callback = () => handleNodeClick(node3D.children[0]);
+        }
+      });
+
+      // 创建边的映射以避免重复
+      const edgeMap = new Map();
+      
+      // 处理边数据
+      data.edges.forEach(edge => {
+        const edgeData = edge.data || edge;
+        
+        // 获取源节点和目标节点的ID
+        let sourceId, targetId;
+        
+        try {
+          // 获取原始ID
+          const rawSourceId = edgeData.source?.id || edgeData.source;
+          const rawTargetId = edgeData.target?.id || edgeData.target;
+          
+          // 规范化ID
+          sourceId = normalizeId(rawSourceId);
+          targetId = normalizeId(rawTargetId);
+          
+          console.log('处理边:', {
+            原始源节点ID: rawSourceId,
+            原始目标节点ID: rawTargetId,
+            规范化源节点ID: sourceId,
+            规范化目标节点ID: targetId
+          });
+          
+        } catch (error) {
+          console.error('解析边的节点ID时出错:', error);
+          return;
+        }
+        
+        // 创建双向的边标识符
+        const edgeKey1 = `${sourceId}-${targetId}`;
+        const edgeKey2 = `${targetId}-${sourceId}`;
+        
+        // 如果这条边还没有被创建过
+        if (!edgeMap.has(edgeKey1) && !edgeMap.has(edgeKey2)) {
+          // 尝试多种方式获取节点
+          const source = nodes3D.get(sourceId) || nodes3D.get(edgeData.source?.id) || nodes3D.get(edgeData.source);
+          const target = nodes3D.get(targetId) || nodes3D.get(edgeData.target?.id) || nodes3D.get(edgeData.target);
+          
+          if (!source || !target) {
+            console.warn(`边创建失败: ${sourceId} -> ${targetId}`, {
+              源节点存在: !!source,
+              目标节点存在: !!target,
+              源节点ID: sourceId,
+              目标节点ID: targetId,
+              可用的节点ID列表: Array.from(nodes3D.keys())
+            });
+          } else {
+            const edge3D = createEdge3D(source, target, {
+              ...edgeData,
+              label: edgeData.label || edgeData.type || '关系'
+            });
+            edge3D.userData.isEdge = true;
+            scene.add(edge3D);
+            edgeMap.set(edgeKey1, edge3D);
+            console.log(`成功创建边: ${sourceId} -> ${targetId}`);
+          }
+        }
+      });
+
+    } catch (error) {
+      console.error('Error creating 3D objects:', error);
+    }
+
+    // 动画循环
+    const animate = () => {
+      if (!sceneRef.current || !containerRef.current) return;
+      
+      const { scene, camera, renderer, labelRenderer, controls } = sceneRef.current;
+      
+      // 更新控制器
+      controls.update();
+
+      // 更新所有边的位置和标签
+      scene.children.forEach(child => {
+        if (child.userData?.isEdge && child.updatePosition) {
+          child.updatePosition();
+        }
+      });
+
+      // 更新节点发光效果
+      scene.traverse((object) => {
+        if (object.material && object.material.uniforms) {
+          object.material.uniforms.viewVector.value = camera.position;
+        }
+      });
+
+      // 渲染场景
+      renderer.render(scene, camera);
+      labelRenderer.render(scene, camera);
+
+      // 存储动画帧ID以便清理
+      sceneRef.current.animationFrameId = requestAnimationFrame(animate);
+    };
+    animate();
+  };
+
+  const toggleMode = () => {
+    setIs3DMode(!is3DMode);
+  };
+
+  const handleSaveImage = () => {
+    if (!sceneRef.current || !sceneRef.current.renderer) return;
+    
+    const dataUrl = sceneRef.current.renderer.domElement.toDataURL('image/png');
+    const link = document.createElement('a');
+    link.href = dataUrl;
+    link.download = 'knowledge-graph.png';
+    link.click();
   };
 
   useEffect(() => {
@@ -860,7 +1045,11 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
   }, [data]);
 
   return (
-    <div className="knowledge-graph-container" style={{ width: '100%', height: '100%', ...style }}>
+    <div 
+      ref={containerRef} 
+      className={`relative ${isFullscreen ? 'fixed inset-0 z-50 bg-white' : ''}`} 
+      style={style}
+    >
       {!isValidData && (
         <div className="empty-state">
           <p>暂无可视化数据</p>
@@ -887,13 +1076,7 @@ const KnowledgeGraph = ({ data, onNodeClick, style = {} }) => {
             <FontAwesomeIcon icon={isFullscreen ? faCompress : faExpand} />
           </button>
           <button
-            onClick={() => {
-              const dataUrl = sceneRef.current.renderer.domElement.toDataURL('image/png');
-              const link = document.createElement('a');
-              link.href = dataUrl;
-              link.download = 'knowledge-graph.png';
-              link.click();
-            }}
+            onClick={handleSaveImage}
             className="toolbar-button"
             title="导出图片"
           >

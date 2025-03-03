@@ -50,8 +50,9 @@ function Home() {
           <div className="inline-block mb-4 px-6 py-2 bg-blue-50 rounded-full">
             <span className="text-blue-600 font-medium">🔮 革命性的知识可视化工具</span>
           </div>
-          <h1 className="text-4xl lg:text-7xl font-bold mb-6 bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 text-transparent bg-clip-text leading-tight">
-            3D立体知识图谱<br />重新定义思考方式
+          <h1 className="text-4xl lg:text-7xl font-bold mb-6 leading-tight">
+            <span className="bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 text-transparent bg-clip-text">3D立体知识图谱</span><br />
+            <span className="bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 text-transparent bg-clip-text">重新定义思考方式</span>
           </h1>
           <p className="text-xl lg:text-2xl text-gray-600 mb-8 max-w-3xl mx-auto leading-relaxed">
             突破传统平面限制，以沉浸式3D体验<br />
@@ -70,53 +71,58 @@ function Home() {
           </div>
         </div>
         
-        {/* Search Bar - 移动到图谱下方 */}
-        <div className={`max-w-2xl mx-auto relative group transform transition-all duration-1000 delay-500 ${isVisible ? 'translate-y-0 opacity-100' : 'translate-y-10 opacity-0'}`}>
-          <div className="text-center mb-8">
-            <h3 className="text-2xl font-semibold text-gray-800">体验您自己的知识图谱</h3>
-            <p className="text-gray-600 mt-2">输入任何主题，即刻创建专属3D知识可视化</p>
+        {/* Search Bar 和统计数据 - 改为上下布局并增加间距 */}
+        <div className="max-w-5xl mx-auto grid grid-cols-1 gap-10">
+          {/* 搜索区域 */}
+          <div className={`bg-white/80 backdrop-blur-sm p-8 rounded-2xl shadow-lg transform transition-all duration-1000 delay-500 ${isVisible ? 'translate-y-0 opacity-100' : 'translate-y-10 opacity-0'}`}>
+            <div className="text-center mb-6">
+              <h3 className="text-2xl font-semibold text-gray-800">体验您自己的知识图谱</h3>
+              <p className="text-gray-600 mt-2">输入任何主题，即刻创建专属3D知识可视化</p>
+            </div>
+            <div className="relative">
+              <div className="absolute inset-0 bg-gradient-to-r from-blue-200/50 to-purple-200/50 opacity-20 blur-2xl transition-opacity rounded-xl"></div>
+              <input
+                type="text"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                onKeyPress={handleKeyPress}
+                placeholder="输入任何主题，体验3D知识图谱的魅力..."
+                className="w-full px-8 py-5 text-lg rounded-xl bg-white shadow-md border-2 border-transparent focus:border-blue-100 focus:ring-2 focus:ring-blue-50 transition-all outline-none"
+              />
+            </div>
+            <button
+              onClick={handleSearch}
+              className="mt-4 w-full bg-gradient-to-r from-blue-500 to-indigo-600 text-white px-6 py-4 rounded-xl flex items-center justify-center gap-2 transition-all hover:shadow-lg group"
+            >
+              <span className="font-medium">开始我的3D知识探索</span>
+              <FontAwesomeIcon icon={faSearch} className="text-lg transition-transform group-hover:scale-110" />
+            </button>
           </div>
-          <div className="relative">
-            <div className="absolute inset-0 bg-gradient-to-r from-blue-200/50 to-purple-200/50 opacity-20 blur-2xl group-hover:opacity-30 transition-opacity rounded-xl"></div>
-            <input
-              type="text"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              onKeyPress={handleKeyPress}
-              placeholder="输入任何主题，体验3D知识图谱的魅力..."
-              className="w-full px-8 py-5 text-lg rounded-xl bg-white shadow-md border-2 border-transparent focus:border-blue-100 focus:ring-2 focus:ring-blue-50 transition-all outline-none"
-            />
-          </div>
-          <button
-            onClick={handleSearch}
-            className="mt-4 w-full bg-gradient-to-r from-blue-500 to-indigo-600 text-white px-6 py-4 rounded-xl flex items-center justify-center gap-2 transition-all hover:shadow-lg group"
-          >
-            <span className="font-medium">开始我的3D知识探索</span>
-            <FontAwesomeIcon icon={faSearch} className="text-lg transition-transform group-hover:scale-110" />
-          </button>
-        </div>
 
-        {/* Quick Stats - 更新数据突出技术优势 */}
-        <div className={`flex flex-wrap justify-center gap-8 mt-16 transform transition-all duration-1000 delay-500 ${isVisible ? 'translate-y-0 opacity-100' : 'translate-y-10 opacity-0'}`}>
-          <div className="text-center">
-            <div className="text-2xl font-bold text-blue-600">360°</div>
-            <div className="text-gray-600">立体可视化</div>
-          </div>
-          <div className="text-center">
-            <div className="text-2xl font-bold text-indigo-600">98.5%</div>
-            <div className="text-gray-600">关系识别准确率</div>
-          </div>
-          <div className="text-center">
-            <div className="text-2xl font-bold text-purple-600">1,000,000+</div>
-            <div className="text-gray-600">知识连接</div>
+          {/* 统计数据 - 改为横向排列并增加视觉效果 */}
+          <div className={`grid grid-cols-3 gap-6 transform transition-all duration-1000 delay-700 ${isVisible ? 'translate-y-0 opacity-100' : 'translate-y-10 opacity-0'}`}>
+            <div className="bg-white/80 backdrop-blur-sm p-6 rounded-2xl shadow-lg text-center">
+              <div className="text-3xl font-bold text-blue-600 mb-2">360°</div>
+              <div className="text-gray-600">立体可视化</div>
+            </div>
+            <div className="bg-white/80 backdrop-blur-sm p-6 rounded-2xl shadow-lg text-center">
+              <div className="text-3xl font-bold text-indigo-600 mb-2">98.5%</div>
+              <div className="text-gray-600">关系识别准确率</div>
+            </div>
+            <div className="bg-white/80 backdrop-blur-sm p-6 rounded-2xl shadow-lg text-center">
+              <div className="text-3xl font-bold text-purple-600 mb-2">1,000,000+</div>
+              <div className="text-gray-600">知识连接</div>
+            </div>
           </div>
         </div>
       </div>
 
-      {/* 技术优势展示 - 新增部分 */}
+      {/* 技术优势展示 - 修复标题排版 */}
       <div className="container mx-auto px-4 py-20 relative">
-        <h2 className="text-3xl lg:text-5xl font-bold text-center mb-12 bg-gradient-to-r from-indigo-700 to-purple-700 text-transparent bg-clip-text">
-          先进的技术，卓越的体验
+        <h2 className="text-3xl lg:text-5xl font-bold text-center mb-12">
+          <span className="bg-gradient-to-r from-indigo-700 to-purple-700 text-transparent bg-clip-text">先进的技术</span>
+          <span className="mx-2">,</span>
+          <span className="bg-gradient-to-r from-purple-700 to-pink-600 text-transparent bg-clip-text">卓越的体验</span>
         </h2>
         
         <div className="grid md:grid-cols-2 gap-16 items-center">
