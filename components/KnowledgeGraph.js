@@ -116,7 +116,7 @@ const KnowledgeGraph = ({
     controls.maxDistance = 1000; // 最大距离
     controls.target.set(0, 0, 0); // 设置旋转中心为原点（球心）
     controls.enablePan = true; // 允许平移
-    controls.enableZoom = true; // 允许缩放
+    controls.enableZoom = false; // 禁用缩放
     controls.screenSpacePanning = true; // 使平移始终平行于屏幕
 
     // 清除原有内容并添加新的渲染器
