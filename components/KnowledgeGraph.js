@@ -27,7 +27,7 @@ const KnowledgeGraph = ({
       color: '#6366F1',
       highlightColor: '#F43F5E',
       minSize: 3,        // 最小节点大小
-      maxSize: 15,       // 最大节点大小
+      maxSize: 12,       // 减小最大节点大小 
       segments: 32,
       opacity: 0.9,
       glowColor: null    // 移除发光效果
@@ -71,9 +71,9 @@ const KnowledgeGraph = ({
     scene.fog = null; // 移除雾效果以确保完全透明
 
     // 创建相机并设置到合适的观察位置
-    const camera = new THREE.PerspectiveCamera(45, width / height, 1, 2000);
+    const camera = new THREE.PerspectiveCamera(50, width / height, 1, 2000);
     // 将相机位置设置得更远，以便看到所有节点
-    camera.position.set(0, 0, 700);
+    camera.position.set(0, 0, 750);
     camera.lookAt(0, 0, 0);
 
     // 创建渲染器
@@ -113,8 +113,8 @@ const KnowledgeGraph = ({
     controls.rotateSpeed = 0.8; // 降低旋转速度
     controls.panSpeed = 0.8; // 平移速度
     controls.zoomSpeed = 1.2; // 缩放速度
-    controls.minDistance = 350; // 增加最小距离
-    controls.maxDistance = 1200; // 增加最大距离
+    controls.minDistance = 380; // 增加最小距离
+    controls.maxDistance = 1500; // 增加最大距离
     controls.target.set(0, 0, 0); // 设置旋转中心为原点（球心）
     controls.enablePan = true; // 允许平移
     controls.enableZoom = false; // 禁用缩放
@@ -198,12 +198,17 @@ const KnowledgeGraph = ({
     
     const maxConnections = Math.max(...allConnectionCounts);
 
-    // 使用指数函数计算大小
-    const base = 2.0; // 增大基数以使差异更明显
+    // 使用平方根函数使尺寸分布更加均匀
     const normalizedConnections = connections / maxConnections;
     const size = theme.node.minSize + 
       (theme.node.maxSize - theme.node.minSize) * 
-      (Math.pow(base, normalizedConnections) - 1) / (base - 1);
+      Math.sqrt(normalizedConnections);
+
+    // 用户自定义大小优先
+    if (nodeData.size) {
+      // 将原始尺寸缩小25%
+      return nodeData.size * 0.75;
+    }
 
     return size;
   };
@@ -271,7 +276,7 @@ const KnowledgeGraph = ({
     // 计算节点位置
     const phi = Math.acos(-1 + (2 * index) / total);
     const theta = Math.sqrt(total * Math.PI) * phi;
-    const radius = 250; // 增大节点分布半径
+    const radius = 230; // 稍微缩小节点分布半径
 
     group.position.x = radius * Math.cos(theta) * Math.sin(phi);
     group.position.y = radius * Math.sin(theta) * Math.sin(phi);
@@ -352,7 +357,7 @@ const KnowledgeGraph = ({
     const { camera, controls } = sceneRef.current;
     
     // 重置到初始视角
-    camera.position.set(0, 0, 700);
+    camera.position.set(0, 0, 750);
     camera.lookAt(0, 0, 0);
     
     // 重置控制器

@@ -5,30 +5,30 @@ import dynamic from 'next/dynamic';
 const defaultData = {
   nodes: [
     // 核心概念节点 - 较大尺寸
-    { data: { id: 'knowledge-graph', label: '知识图谱', type: 'concept', size: 24, color: '#4F46E5' } },
-    { data: { id: 'visualization', label: '可视化', type: 'concept', size: 18, color: '#6366F1' } },
-    { data: { id: '3d-rendering', label: '3D渲染', type: 'technology', size: 18, color: '#8B5CF6' } },
-    { data: { id: 'ai', label: '人工智能', type: 'technology', size: 22, color: '#8B5CF6' } },
-    { data: { id: 'big-data', label: '大数据', type: 'technology', size: 20, color: '#0EA5E9' } },
-    { data: { id: 'thinking', label: '立体思考', type: 'concept', size: 19, color: '#6366F1' } },
+    { data: { id: 'knowledge-graph', label: '知识图谱', type: 'concept', size: 20, color: '#4F46E5' } },
+    { data: { id: 'visualization', label: '可视化', type: 'concept', size: 15, color: '#6366F1' } },
+    { data: { id: '3d-rendering', label: '3D渲染', type: 'technology', size: 15, color: '#8B5CF6' } },
+    { data: { id: 'ai', label: '人工智能', type: 'technology', size: 18, color: '#8B5CF6' } },
+    { data: { id: 'big-data', label: '大数据', type: 'technology', size: 16, color: '#0EA5E9' } },
+    { data: { id: 'thinking', label: '立体思考', type: 'concept', size: 15, color: '#6366F1' } },
     
     // 技术节点 - 中等尺寸
-    { data: { id: 'nlp', label: '自然语言处理', type: 'technology', size: 17, color: '#8B5CF6' } },
-    { data: { id: 'deep-learning', label: '深度学习', type: 'technology', size: 17, color: '#8B5CF6' } },
-    { data: { id: 'machine-learning', label: '机器学习', type: 'technology', size: 16, color: '#8B5CF6' } },
-    { data: { id: 'semantic-web', label: '语义网络', type: 'technology', size: 16, color: '#0EA5E9' } },
-    { data: { id: 'data-mining', label: '数据挖掘', type: 'technology', size: 16, color: '#0EA5E9' } },
-    { data: { id: 'graph-db', label: '图数据库', type: 'technology', size: 16, color: '#0EA5E9' } },
+    { data: { id: 'nlp', label: '自然语言处理', type: 'technology', size: 14, color: '#8B5CF6' } },
+    { data: { id: 'deep-learning', label: '深度学习', type: 'technology', size: 14, color: '#8B5CF6' } },
+    { data: { id: 'machine-learning', label: '机器学习', type: 'technology', size: 13, color: '#8B5CF6' } },
+    { data: { id: 'semantic-web', label: '语义网络', type: 'technology', size: 13, color: '#0EA5E9' } },
+    { data: { id: 'data-mining', label: '数据挖掘', type: 'technology', size: 13, color: '#0EA5E9' } },
+    { data: { id: 'graph-db', label: '图数据库', type: 'technology', size: 13, color: '#0EA5E9' } },
     
     // 特性和功能节点 - 较小尺寸
-    { data: { id: 'interactive', label: '交互性', type: 'feature', size: 14, color: '#EC4899' } },
-    { data: { id: 'spatial', label: '空间思维', type: 'concept', size: 15, color: '#6366F1' } },
-    { data: { id: 'entity-recognition', label: '实体识别', type: 'feature', size: 14, color: '#EC4899' } },
-    { data: { id: 'relation-extraction', label: '关系抽取', type: 'feature', size: 14, color: '#EC4899' } },
-    { data: { id: 'pattern-discovery', label: '模式发现', type: 'feature', size: 14, color: '#EC4899' } },
-    { data: { id: 'knowledge-reasoning', label: '知识推理', type: 'feature', size: 15, color: '#EC4899' } },
-    { data: { id: 'multi-dimension', label: '多维分析', type: 'feature', size: 14, color: '#EC4899' } },
-    { data: { id: 'realtime-update', label: '实时更新', type: 'feature', size: 13, color: '#EC4899' } }
+    { data: { id: 'interactive', label: '交互性', type: 'feature', size: 11, color: '#EC4899' } },
+    { data: { id: 'spatial', label: '空间思维', type: 'concept', size: 12, color: '#6366F1' } },
+    { data: { id: 'entity-recognition', label: '实体识别', type: 'feature', size: 11, color: '#EC4899' } },
+    { data: { id: 'relation-extraction', label: '关系抽取', type: 'feature', size: 11, color: '#EC4899' } },
+    { data: { id: 'pattern-discovery', label: '模式发现', type: 'feature', size: 11, color: '#EC4899' } },
+    { data: { id: 'knowledge-reasoning', label: '知识推理', type: 'feature', size: 12, color: '#EC4899' } },
+    { data: { id: 'multi-dimension', label: '多维分析', type: 'feature', size: 11, color: '#EC4899' } },
+    { data: { id: 'realtime-update', label: '实时更新', type: 'feature', size: 10, color: '#EC4899' } }
   ],
   edges: [
     // 知识图谱的直接关联

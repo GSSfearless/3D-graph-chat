@@ -45,7 +45,7 @@ function Home() {
         <div className="container mx-auto px-4 md:px-6 z-10">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 md:gap-12 items-center">
             {/* 左侧：标题和介绍 */}
-            <div className="lg:col-span-5 order-2 lg:order-1">
+            <div className="lg:col-span-4 order-2 lg:order-1">
               <div className="mb-4">
                 <span className="inline-block px-3 py-1 bg-blue-50 text-blue-600 text-sm font-medium rounded-full shadow-sm">
                   革命性的知识可视化工具
@@ -106,8 +106,8 @@ function Home() {
             </div>
             
             {/* 右侧：3D知识图谱展示 */}
-            <div className="lg:col-span-7 order-1 lg:order-2">
-              <div className="relative rounded-2xl overflow-hidden" style={{ height: "800px", maxHeight: "calc(100vh - 100px)", width: "100%" }}>
+            <div className="lg:col-span-8 order-1 lg:order-2">
+              <div className="relative rounded-2xl overflow-hidden" style={{ height: "800px", maxHeight: "calc(100vh - 100px)", width: "110%", marginLeft: "-5%" }}>
                 {/* 确保给3D图谱足够的空间并加上明确的z-index */}
                 <div className="absolute inset-0 z-10">
                   <DemoKnowledgeGraph className="w-full h-full" />
