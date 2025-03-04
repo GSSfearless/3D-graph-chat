@@ -67,33 +67,25 @@ const KnowledgeGraph = ({
 
     // 创建场景
     const scene = new THREE.Scene();
-    // 将背景设为透明而不是固定颜色
-    scene.background = null;
-    // 移除雾气效果，使场景更加清晰
-    // scene.fog = new THREE.Fog(0xf8fafc, 100, 1000);
+    scene.background = new THREE.Color(0xf8fafc);
+    scene.fog = new THREE.Fog(0xf8fafc, 100, 1000);
 
     // 创建相机并设置到合适的观察位置
     const camera = new THREE.PerspectiveCamera(45, width / height, 1, 2000);
-    // 将相机位置设置更远，确保可以看到整个球体
-    camera.position.set(0, 0, 550);
+    // 将相机位置设置为球体半径的2.5倍，确保能看到整个球体
+    camera.position.set(0, 0, 500);
     camera.lookAt(0, 0, 0);
 
     // 创建渲染器
     const renderer = new THREE.WebGLRenderer({ 
       antialias: true,
-      alpha: true, // 确保背景透明
+      alpha: true,
       logarithmicDepthBuffer: true
     });
     renderer.setSize(width, height);
     renderer.setPixelRatio(window.devicePixelRatio);
-    renderer.setClearColor(0x000000, 0); // 设置透明背景
     renderer.shadowMap.enabled = true;
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-    
-    // 设置渲染器DOM元素的样式
-    renderer.domElement.style.outline = 'none';
-    renderer.domElement.style.border = 'none';
-    renderer.domElement.style.boxShadow = 'none';
 
     // 创建标签渲染器
     const labelRenderer = new CSS2DRenderer();
@@ -119,12 +111,12 @@ const KnowledgeGraph = ({
     controls.autoRotateSpeed = 1.0; // 自动旋转速度
     controls.rotateSpeed = 0.8; // 降低旋转速度
     controls.panSpeed = 0.8; // 平移速度
-    controls.zoomSpeed = 1.2;
+    controls.zoomSpeed = 1.2; // 缩放速度
     controls.minDistance = 300; // 最小距离，防止过于靠近
-    controls.maxDistance = 550; // 减小最大距离，避免用户过度缩小
+    controls.maxDistance = 1000; // 最大距离
     controls.target.set(0, 0, 0); // 设置旋转中心为原点（球心）
-    controls.enablePan = hideControls ? false : true; // 根据hideControls参数设置是否允许平移
-    controls.enableZoom = hideControls ? false : controls.enableZoom; // 根据hideControls参数设置是否允许缩放
+    controls.enablePan = true; // 允许平移
+    controls.enableZoom = true; // 允许缩放
     controls.screenSpacePanning = true; // 使平移始终平行于屏幕
 
     // 清除原有内容并添加新的渲染器
@@ -313,8 +305,7 @@ const KnowledgeGraph = ({
     // 计算节点位置
     const phi = Math.acos(-1 + (2 * index) / total);
     const theta = Math.sqrt(total * Math.PI) * phi;
-    // 增加球体分布半径，使其更大一些
-    const radius = 220;
+    const radius = 200;
 
     group.position.x = radius * Math.cos(theta) * Math.sin(phi);
     group.position.y = radius * Math.sin(theta) * Math.sin(phi);
@@ -531,7 +522,7 @@ const KnowledgeGraph = ({
     const { camera, controls } = sceneRef.current;
     
     // 重置到初始视角
-    camera.position.set(0, 0, 550);
+    camera.position.set(0, 0, 500);
     camera.lookAt(0, 0, 0);
     
     // 重置控制器
