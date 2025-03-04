@@ -132,13 +132,13 @@ function Home() {
       <section className="py-16 lg:py-20 bg-gradient-to-b from-white to-blue-50">
         <div className="container mx-auto px-4 md:px-6">
           <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">
+            <h2 className="text-3xl md:text-4xl font-bold mb-4 text-center">
               <span className="text-purple-600">卓越的体验</span>
             </h2>
           </div>
           
           {/* 特性卡片组 */}
-          <div className="grid md:grid-cols-3 gap-6 lg:gap-8">
+          <div className="grid md:grid-cols-3 gap-6 lg:gap-8 max-w-5xl mx-auto">
             <div className="bg-white p-8 rounded-xl shadow-md hover:shadow-lg transition-shadow duration-300 border border-gray-100 hover:border-gray-200">
               <div className="w-14 h-14 rounded-lg bg-blue-100 flex items-center justify-center mb-6">
                 <FontAwesomeIcon icon={faNetworkWired} className="text-2xl text-blue-600" />

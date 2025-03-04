@@ -72,8 +72,8 @@ const KnowledgeGraph = ({
 
     // 创建相机并设置到合适的观察位置
     const camera = new THREE.PerspectiveCamera(45, width / height, 1, 2000);
-    // 将相机位置设置为球体半径的2.5倍，确保能看到整个球体
-    camera.position.set(0, 0, 500);
+    // 将相机位置设置为球体半径的3.5倍，确保能看到整个球体
+    camera.position.set(0, 0, 700);
     camera.lookAt(0, 0, 0);
 
     // 创建渲染器
@@ -112,8 +112,8 @@ const KnowledgeGraph = ({
     controls.rotateSpeed = 0.8; // 降低旋转速度
     controls.panSpeed = 0.8; // 平移速度
     controls.zoomSpeed = 1.2; // 缩放速度
-    controls.minDistance = 300; // 最小距离，防止过于靠近
-    controls.maxDistance = 1000; // 最大距离
+    controls.minDistance = 450; // 最小距离，防止过于靠近
+    controls.maxDistance = 1200; // 最大距离
     controls.target.set(0, 0, 0); // 设置旋转中心为原点（球心）
     controls.enablePan = true; // 允许平移
     controls.enableZoom = true; // 允许缩放
@@ -522,7 +522,7 @@ const KnowledgeGraph = ({
     const { camera, controls } = sceneRef.current;
     
     // 重置到初始视角
-    camera.position.set(0, 0, 500);
+    camera.position.set(0, 0, 700);
     camera.lookAt(0, 0, 0);
     
     // 重置控制器
