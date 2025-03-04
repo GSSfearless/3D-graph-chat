@@ -152,22 +152,22 @@ const HelpPage = () => {
             <div>
               <h2 className="text-2xl font-bold mb-8 text-gray-900">使用指南</h2>
               <div className="grid md:grid-cols-2 gap-6">
-                <a href="/docs/getting-started" className="border border-gray-200 rounded-xl p-6 hover:border-blue-200 hover:bg-blue-50/30 transition duration-200">
+                <a href="#" className="border border-gray-200 rounded-xl p-6 hover:border-blue-200 hover:bg-blue-50/30 transition duration-200">
                   <h3 className="text-xl font-semibold mb-3 text-gray-900">入门指南</h3>
                   <p className="text-gray-700 mb-4">快速上手Think Graph，了解基本功能和操作方法</p>
                   <span className="text-blue-600 font-medium">了解更多 →</span>
                 </a>
-                <a href="/docs/create-graph" className="border border-gray-200 rounded-xl p-6 hover:border-blue-200 hover:bg-blue-50/30 transition duration-200">
+                <a href="#" className="border border-gray-200 rounded-xl p-6 hover:border-blue-200 hover:bg-blue-50/30 transition duration-200">
                   <h3 className="text-xl font-semibold mb-3 text-gray-900">创建知识图谱</h3>
                   <p className="text-gray-700 mb-4">学习如何创建、编辑和组织您的第一个知识图谱</p>
                   <span className="text-blue-600 font-medium">了解更多 →</span>
                 </a>
-                <a href="/docs/advanced-features" className="border border-gray-200 rounded-xl p-6 hover:border-blue-200 hover:bg-blue-50/30 transition duration-200">
+                <a href="#" className="border border-gray-200 rounded-xl p-6 hover:border-blue-200 hover:bg-blue-50/30 transition duration-200">
                   <h3 className="text-xl font-semibold mb-3 text-gray-900">高级功能</h3>
                   <p className="text-gray-700 mb-4">探索Think Graph的高级功能，实现更多可能性</p>
                   <span className="text-blue-600 font-medium">了解更多 →</span>
                 </a>
-                <a href="/docs/sharing" className="border border-gray-200 rounded-xl p-6 hover:border-blue-200 hover:bg-blue-50/30 transition duration-200">
+                <a href="#" className="border border-gray-200 rounded-xl p-6 hover:border-blue-200 hover:bg-blue-50/30 transition duration-200">
                   <h3 className="text-xl font-semibold mb-3 text-gray-900">分享与协作</h3>
                   <p className="text-gray-700 mb-4">学习如何与他人分享您的知识图谱并进行协作</p>
                   <span className="text-blue-600 font-medium">了解更多 →</span>
@@ -238,7 +238,7 @@ const HelpPage = () => {
               <p className="text-gray-700 mb-4">
                 浏览我们的详细文档，了解Think Graph的所有功能和特性
               </p>
-              <a href="/docs" className="text-blue-600 hover:underline font-medium">查看文档</a>
+              <a href="#" className="text-blue-600 hover:underline font-medium">查看文档</a>
             </div>
             <div className="bg-white p-6 rounded-xl shadow-sm text-center">
               <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">

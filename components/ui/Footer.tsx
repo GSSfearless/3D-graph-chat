@@ -6,7 +6,7 @@ const Footer = () => {
     <footer className="bg-gray-900 text-gray-400 py-12">
       <div className="container mx-auto px-4 md:px-6">
         {/* 主要内容区域 */}
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-8 mb-10">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-10">
           {/* 左侧品牌信息 */}
           <div className="col-span-2">
             <h3 className="text-xl font-semibold text-white mb-4">Think Graph</h3>
@@ -30,23 +30,6 @@ const Footer = () => {
             </ul>
           </div>
           
-          {/* 链接区域 - 资源 */}
-          <div className="col-span-1">
-            <h4 className="text-white text-sm font-medium mb-4 uppercase tracking-wider">资源</h4>
-            <ul className="space-y-3 text-sm">
-              <li>
-                <Link href="/help">
-                  <span className="hover:text-white transition-colors duration-200 block">帮助中心</span>
-                </Link>
-              </li>
-              <li>
-                <Link href="/docs">
-                  <span className="hover:text-white transition-colors duration-200 block">文档</span>
-                </Link>
-              </li>
-            </ul>
-          </div>
-          
           {/* 链接区域 - 关于 */}
           <div className="col-span-1">
             <h4 className="text-white text-sm font-medium mb-4 uppercase tracking-wider">关于</h4>
@@ -59,6 +42,11 @@ const Footer = () => {
               <li>
                 <Link href="/contact">
                   <span className="hover:text-white transition-colors duration-200 block">联系我们</span>
+                </Link>
+              </li>
+              <li>
+                <Link href="/help">
+                  <span className="hover:text-white transition-colors duration-200 block">帮助中心</span>
                 </Link>
               </li>
             </ul>
