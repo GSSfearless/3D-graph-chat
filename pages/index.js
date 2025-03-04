@@ -134,12 +134,8 @@ function Home() {
           <div className="text-center mb-16">
             <h2 className="text-3xl md:text-4xl font-bold mb-4">
               <span className="text-indigo-600">先进的技术</span>
-              <span className="mx-2">·</span>
               <span className="text-purple-600">卓越的体验</span>
             </h2>
-            <p className="text-gray-600 max-w-2xl mx-auto leading-relaxed">
-              整合尖端技术，为您带来无与伦比的知识可视化体验
-            </p>
           </div>
           
           {/* 特性卡片组 */}
