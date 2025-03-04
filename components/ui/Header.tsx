@@ -26,21 +26,21 @@ const Header = () => {
 
           {/* 桌面端导航 */}
           <nav className="hidden md:flex items-center space-x-8">
+            <Link href="/features">
+              <span className="hover:text-blue-400 transition duration-200 cursor-pointer">功能</span>
+            </Link>
+            <Link href="/pricing">
+              <span className="hover:text-blue-400 transition duration-200 cursor-pointer">价格</span>
+            </Link>
             <Link href="/docs">
               <span className="hover:text-blue-400 transition duration-200 cursor-pointer">文档</span>
-            </Link>
-            <Link href="/help">
-              <span className="hover:text-blue-400 transition duration-200 cursor-pointer">帮助中心</span>
             </Link>
             <Link href="/about">
               <span className="hover:text-blue-400 transition duration-200 cursor-pointer">关于我们</span>
             </Link>
-            <Link href="/contact">
-              <span className="hover:text-blue-400 transition duration-200 cursor-pointer">联系我们</span>
-            </Link>
-            <Link href="/search">
+            <Link href="/auth/login">
               <span className="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg transition duration-200 cursor-pointer">
-                开始使用
+                登录
               </span>
             </Link>
           </nav>
@@ -50,21 +50,21 @@ const Header = () => {
         {isMenuOpen && (
           <div className="md:hidden mt-4 bg-gray-800 rounded-lg p-4">
             <nav className="flex flex-col space-y-3">
+              <Link href="/features">
+                <span className="hover:text-blue-400 transition duration-200 cursor-pointer">功能</span>
+              </Link>
+              <Link href="/pricing">
+                <span className="hover:text-blue-400 transition duration-200 cursor-pointer">价格</span>
+              </Link>
               <Link href="/docs">
                 <span className="hover:text-blue-400 transition duration-200 cursor-pointer">文档</span>
-              </Link>
-              <Link href="/help">
-                <span className="hover:text-blue-400 transition duration-200 cursor-pointer">帮助中心</span>
               </Link>
               <Link href="/about">
                 <span className="hover:text-blue-400 transition duration-200 cursor-pointer">关于我们</span>
               </Link>
-              <Link href="/contact">
-                <span className="hover:text-blue-400 transition duration-200 cursor-pointer">联系我们</span>
-              </Link>
-              <Link href="/search">
+              <Link href="/auth/login">
                 <span className="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg inline-block transition duration-200 cursor-pointer">
-                  开始使用
+                  登录
                 </span>
               </Link>
             </nav>
