@@ -161,7 +161,7 @@ const DemoKnowledgeGraph = ({ className = "" }) => {
   // 加载状态
   if (!isMounted) {
     return (
-      <div className={`w-full h-full flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-50 ${className}`}>
+      <div className={`w-full h-full flex items-center justify-center bg-transparent ${className}`}>
         <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-600"></div>
       </div>
     );
@@ -174,7 +174,12 @@ const DemoKnowledgeGraph = ({ className = "" }) => {
       style={{ 
         position: 'relative', 
         minHeight: '500px',
-        zIndex: 1 
+        zIndex: 1,
+        overflow: 'visible', // 确保3D球体可以溢出容器显示
+        border: 'none',
+        outline: 'none',
+        boxShadow: 'none',
+        background: 'transparent'
       }}
     >
       <KnowledgeGraph
@@ -182,13 +187,19 @@ const DemoKnowledgeGraph = ({ className = "" }) => {
         autoRotate={true}
         hideControls={true} 
         disableLabels={shouldHideLabels}
+        defaultMode="3d" // 确保默认为3D模式
         onNodeClick={(nodeData) => console.log('节点点击:', nodeData)}
         style={{ 
           width: "100%", 
           height: "100%", 
           position: "absolute",
           top: 0,
-          left: 0
+          left: 0,
+          overflow: 'visible', // 确保3D球体可以溢出容器显示
+          border: 'none',
+          outline: 'none',
+          boxShadow: 'none',
+          background: 'transparent'
         }}
       />
       {!isLoaded && (
