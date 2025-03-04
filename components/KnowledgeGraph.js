@@ -12,7 +12,8 @@ const KnowledgeGraph = ({
   defaultMode = "2d",
   autoRotate = false,
   hideControls = false,
-  disableLabels = false
+  disableLabels = false,
+  disableZoom = false
 }) => {
   const containerRef = useRef(null);
   const sceneRef = useRef(null);
@@ -116,7 +117,7 @@ const KnowledgeGraph = ({
     controls.maxDistance = 900; // 最大距离
     controls.target.set(0, 0, 0); // 设置旋转中心为原点（球心）
     controls.enablePan = true; // 允许平移
-    controls.enableZoom = true; // 允许缩放
+    controls.enableZoom = !disableZoom; // 根据disableZoom参数控制是否允许缩放
     controls.screenSpacePanning = true; // 使平移始终平行于屏幕
 
     // 清除原有内容并添加新的渲染器

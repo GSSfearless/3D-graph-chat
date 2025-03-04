@@ -86,7 +86,9 @@ const DemoKnowledgeGraph = ({ className = "" }) => {
   const [isLoaded, setIsLoaded] = useState(false);
   const [adaptedData, setAdaptedData] = useState(defaultData);
   const [shouldHideLabels, setShouldHideLabels] = useState(false);
+  const [interactionEnabled, setInteractionEnabled] = useState(false);
   const containerRef = useRef(null);
+  const overlayRef = useRef(null);
 
   // 组件挂载时设置状态
   useEffect(() => {
@@ -100,6 +102,11 @@ const DemoKnowledgeGraph = ({ className = "" }) => {
       // 监听窗口大小变化
       window.addEventListener('resize', handleResize);
       
+      // 阻止鼠标滚轮事件在图谱容器上触发
+      if (containerRef.current) {
+        containerRef.current.addEventListener('wheel', preventWheel, { passive: false });
+      }
+      
       // 设置另一个短延迟，确保加载标志在初始化后设置
       const loadTimer = setTimeout(() => {
         setIsLoaded(true);
@@ -107,12 +114,41 @@ const DemoKnowledgeGraph = ({ className = "" }) => {
       
       return () => clearTimeout(loadTimer);
     }, 200);
+
+    // 添加点击事件监听，处理图谱外部点击
+    const handleClickOutside = (e) => {
+      if (
+        containerRef.current && 
+        !containerRef.current.contains(e.target) && 
+        interactionEnabled
+      ) {
+        setInteractionEnabled(false);
+      }
+    };
+
+    document.addEventListener('click', handleClickOutside);
     
     return () => {
       clearTimeout(initTimer);
       window.removeEventListener('resize', handleResize);
+      document.removeEventListener('click', handleClickOutside);
+      if (containerRef.current) {
+        containerRef.current.removeEventListener('wheel', preventWheel);
+      }
     };
-  }, []);
+  }, [interactionEnabled]);
+
+  // 阻止鼠标滚轮事件
+  const preventWheel = (e) => {
+    if (!interactionEnabled) {
+      e.stopPropagation();
+    }
+  };
+
+  // 启用图谱交互
+  const enableInteraction = () => {
+    setInteractionEnabled(true);
+  };
 
   // 窗口大小变化时调整图谱
   const handleResize = () => {
@@ -182,6 +218,7 @@ const DemoKnowledgeGraph = ({ className = "" }) => {
         autoRotate={true}
         hideControls={true} 
         disableLabels={shouldHideLabels}
+        disableZoom={true} // 禁用缩放功能，防止滚动页面时触发图谱缩放
         onNodeClick={(nodeData) => console.log('节点点击:', nodeData)}
         style={{ 
           width: "100%", 
@@ -191,8 +228,23 @@ const DemoKnowledgeGraph = ({ className = "" }) => {
           left: 0
         }}
       />
+      
+      {/* 透明覆盖层，只有点击时才能与图谱交互 */}
+      {!interactionEnabled && (
+        <div 
+          ref={overlayRef}
+          onClick={enableInteraction}
+          className="absolute inset-0 bg-transparent z-10 cursor-pointer flex items-center justify-center"
+          style={{ backdropFilter: 'blur(0px)' }}
+        >
+          <div className="bg-white/70 px-4 py-2 rounded-lg text-sm font-medium text-gray-600 shadow-sm hover:bg-white/90 transition">
+            点击启用图谱交互
+          </div>
+        </div>
+      )}
+      
       {!isLoaded && (
-        <div className="absolute inset-0 bg-white/80 flex items-center justify-center z-10">
+        <div className="absolute inset-0 bg-white/80 flex items-center justify-center z-20">
           <div className="flex flex-col items-center">
             <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-600 mb-4"></div>
             <div className="text-blue-600 font-medium">图谱初始化中...</div>
