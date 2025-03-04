@@ -30,13 +30,13 @@ const KnowledgeGraph = ({
       maxSize: 15,       // 最大节点大小
       segments: 32,
       opacity: 0.9,
-      glowColor: '#818CF8'
+      glowColor: null    // 移除发光效果
     },
     edge: {
-      color: '#94A3B8',
-      highlightColor: '#64748B',
-      opacity: 0.6,
-      width: 2
+      color: '#4F46E5',  // 改为深蓝色而不是灰色
+      highlightColor: '#6366F1',
+      opacity: 0.7,
+      width: 1.5
     },
     label: {
       color: '#1E293B',
@@ -72,8 +72,8 @@ const KnowledgeGraph = ({
 
     // 创建相机并设置到合适的观察位置
     const camera = new THREE.PerspectiveCamera(45, width / height, 1, 2000);
-    // 将相机位置设置为球体半径的2.5倍，确保能看到整个球体
-    camera.position.set(0, 0, 500);
+    // 将相机位置设置得更远，以便看到所有节点
+    camera.position.set(0, 0, 700);
     camera.lookAt(0, 0, 0);
 
     // 创建渲染器
@@ -113,8 +113,8 @@ const KnowledgeGraph = ({
     controls.rotateSpeed = 0.8; // 降低旋转速度
     controls.panSpeed = 0.8; // 平移速度
     controls.zoomSpeed = 1.2; // 缩放速度
-    controls.minDistance = 300; // 最小距离，防止过于靠近
-    controls.maxDistance = 1000; // 最大距离
+    controls.minDistance = 350; // 增加最小距离
+    controls.maxDistance = 1200; // 增加最大距离
     controls.target.set(0, 0, 0); // 设置旋转中心为原点（球心）
     controls.enablePan = true; // 允许平移
     controls.enableZoom = false; // 禁用缩放
@@ -221,11 +221,11 @@ const KnowledgeGraph = ({
       theme.node.segments
     );
 
-    // 创建发光材质
+    // 创建材质 - 使用更简单的材质，不带发光
     const material = new THREE.MeshPhongMaterial({
-      color: theme.node.color,
-      specular: 0x666666,
-      shininess: 50,
+      color: nodeData.color || theme.node.color,
+      specular: 0x444444,
+      shininess: 30,
       transparent: true,
       opacity: theme.node.opacity
     });
@@ -238,49 +238,14 @@ const KnowledgeGraph = ({
     sphere.userData = {
       ...nodeData,
       originalScale: new THREE.Vector3(1, 1, 1),
-      originalColor: theme.node.color,
+      originalColor: nodeData.color || theme.node.color,
       isHovered: false
     };
     
     group.add(sphere);
 
-    // 添加发光效果
-    const glowMaterial = new THREE.ShaderMaterial({
-      uniforms: {
-        c: { type: 'f', value: 0.5 },
-        p: { type: 'f', value: 1.4 },
-        glowColor: { type: 'c', value: new THREE.Color(theme.node.glowColor) },
-        viewVector: { type: 'v3', value: sceneRef.current.camera.position }
-      },
-      vertexShader: `
-        uniform vec3 viewVector;
-        varying float intensity;
-        void main() {
-          vec3 vNormal = normalize(normalMatrix * normal);
-          vec3 vNormel = normalize(normalMatrix * viewVector);
-          intensity = pow(0.5 - dot(vNormal, vNormel), 2.0);
-          gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-        }
-      `,
-      fragmentShader: `
-        uniform vec3 glowColor;
-        varying float intensity;
-        void main() {
-          vec3 glow = glowColor * intensity;
-          gl_FragColor = vec4(glow, 1.0);
-        }
-      `,
-      side: THREE.BackSide,
-      blending: THREE.AdditiveBlending,
-      transparent: true
-    });
-
-    const glowSphere = new THREE.Mesh(
-      new THREE.SphereGeometry(nodeSize * 1.2, theme.node.segments, theme.node.segments),
-      glowMaterial
-    );
-    group.add(glowSphere);
-
+    // 不再添加发光效果
+    
     // 创建标签
     if (!disableLabels) {
       const labelDiv = document.createElement('div');
@@ -306,7 +271,7 @@ const KnowledgeGraph = ({
     // 计算节点位置
     const phi = Math.acos(-1 + (2 * index) / total);
     const theta = Math.sqrt(total * Math.PI) * phi;
-    const radius = 200;
+    const radius = 250; // 增大节点分布半径
 
     group.position.x = radius * Math.cos(theta) * Math.sin(phi);
     group.position.y = radius * Math.sin(theta) * Math.sin(phi);
@@ -314,187 +279,51 @@ const KnowledgeGraph = ({
 
     // 添加用户数据
     group.userData = nodeData;
-
-    return group;
+    
+    return {
+      group,
+      sphere,
+      nodeData
+    };
   };
 
   const createEdge3D = (source, target, edgeData) => {
-    const group = new THREE.Group();
-
-    // 计算球心（在原点）
-    const center = new THREE.Vector3(0, 0, 0);
+    // 创建连接两个节点的曲线
+    const sourcePosition = source.position.clone();
+    const targetPosition = target.position.clone();
+    const direction = new THREE.Vector3().subVectors(targetPosition, sourcePosition);
+    const distance = direction.length();
     
-    // 计算源点和目标点的中点
-    const midPoint = new THREE.Vector3().addVectors(source.position, target.position).multiplyScalar(0.5);
+    // 计算曲线控制点
+    const mid = sourcePosition.clone().add(targetPosition).multiplyScalar(0.5);
+    const normal = new THREE.Vector3(-direction.y, direction.x, direction.z).normalize();
+    const curveOffset = Math.min(30, distance * 0.2); // 确保曲率不会太大
+    const curveHeight = normal.clone().multiplyScalar(curveOffset);
+    const controlPoint = mid.clone().add(curveHeight);
     
-    // 计算从中点到球心的向量
-    const centerToMid = new THREE.Vector3().subVectors(center, midPoint);
-    
-    // 计算控制点
-    // 控制点会受到球心的影响，距离球心越远，弯曲程度越大
-    const distance = midPoint.length(); // 到球心的距离
-    const curveFactor = Math.min(distance * 0.5, 100); // 限制最大弯曲程度
-    
-    // 将控制点向球心方向移动
-    const controlPoint = midPoint.clone().add(
-      centerToMid.normalize().multiplyScalar(curveFactor)
-    );
-
-    // 创建二次贝塞尔曲线的点
+    // 创建三维曲线
     const curve = new THREE.QuadraticBezierCurve3(
-      source.position,
+      sourcePosition,
       controlPoint,
-      target.position
+      targetPosition
     );
-
-    // 生成曲线上的点
-    const points = curve.getPoints(50); // 50个点以确保曲线平滑
+    
+    // 根据曲线生成几何体
+    const points = curve.getPoints(20);
     const geometry = new THREE.BufferGeometry().setFromPoints(points);
     
-    // 根据边的类型设置不同的颜色
-    let edgeColor;
-    switch(edgeData.type) {
-      // 层次关系 - 暖色调
-      case 'is-a':
-        edgeColor = '#FF7676'; // 鲜红色
-        break;
-      case 'contains':
-        edgeColor = '#FF9F45'; // 橙色
-        break;
-      case 'belongs-to':
-        edgeColor = '#FFC436'; // 金色
-        break;
-
-      // 依赖关系 - 冷色调
-      case 'requires':
-        edgeColor = '#45B7D1'; // 蓝色
-        break;
-      case 'depends':
-        edgeColor = '#4477CE'; // 深蓝色
-        break;
-      case 'implements':
-        edgeColor = '#3876BF'; // 靛蓝色
-        break;
-
-      // 动作关系 - 绿色系
-      case 'performs':
-        edgeColor = '#96CEB4'; // 薄荷绿
-        break;
-      case 'uses':
-        edgeColor = '#7AB800'; // 草绿色
-        break;
-      case 'provides':
-        edgeColor = '#4CAF50'; // 翠绿色
-        break;
-      case 'obtains':
-        edgeColor = '#88B04B'; // 橄榄绿
-        break;
-
-      // 时序关系 - 紫色系
-      case 'before':
-        edgeColor = '#9B6B9E'; // 浅紫色
-        break;
-      case 'after':
-        edgeColor = '#845EC2'; // 深紫色
-        break;
-      case 'during':
-        edgeColor = '#BE93D4'; // 淡紫色
-        break;
-      case 'sequence':
-        edgeColor = '#A084E8'; // 亮紫色
-        break;
-
-      // 关联关系 - 靛蓝色系（与节点颜色一致）
-      case 'context':
-        edgeColor = '#6366F1'; // 主色调
-        break;
-      case 'similar':
-        edgeColor = '#818CF8'; // 浅靛蓝
-        break;
-      case 'related':
-        edgeColor = '#4F46E5'; // 深靛蓝
-        break;
-      case 'and':
-        edgeColor = '#5B5EF4'; // 中靛蓝
-        break;
-
-      // 方向关系 - 粉色系
-      case 'to':
-        edgeColor = '#FF8FB1'; // 粉红色
-        break;
-      case 'from':
-        edgeColor = '#FC7FB6'; // 深粉色
-        break;
-      case 'towards':
-        edgeColor = '#FDA4BA'; // 浅粉色
-        break;
-
-      // 逻辑关系 - 灰色系
-      case 'if-then':
-        edgeColor = '#7D7C7C'; // 深灰色
-        break;
-      case 'therefore':
-        edgeColor = '#9DB2BF'; // 蓝灰色
-        break;
-
-      // 修饰关系 - 棕色系
-      case 'of':
-        edgeColor = '#C4A484'; // 棕色
-        break;
-      case 'degree':
-        edgeColor = '#B4846C'; // 深棕色
-        break;
-
-      default:
-        edgeColor = theme.edge.color; // 默认颜色
-    }
-    
-    // 创建发光材质
-    const material = new THREE.LineBasicMaterial({
-      color: edgeColor,
-      transparent: true,
+    // 使用与主题一致的颜色
+    const material = new THREE.LineBasicMaterial({ 
+      color: edgeData.color || theme.edge.color,
+      transparent: true, 
       opacity: theme.edge.opacity,
       linewidth: theme.edge.width
     });
-
+    
     const line = new THREE.Line(geometry, material);
-    group.add(line);
-
-    // 添加用户数据
-    group.userData = {
-      ...edgeData,
-      isEdge: true,
-      source: source,
-      target: target,
-      controlPoint: controlPoint // 存储控制点以便后续更新
-    };
-
-    // 更新边的位置的方法
-    group.updatePosition = () => {
-      // 更新中点和控制点
-      const newMidPoint = new THREE.Vector3().addVectors(source.position, target.position).multiplyScalar(0.5);
-      const newCenterToMid = new THREE.Vector3().subVectors(center, newMidPoint);
-      const newDistance = newMidPoint.length();
-      const newCurveFactor = Math.min(newDistance * 0.5, 100);
-      
-      const newControlPoint = newMidPoint.clone().add(
-        newCenterToMid.normalize().multiplyScalar(newCurveFactor)
-      );
-
-      // 更新曲线
-      const newCurve = new THREE.QuadraticBezierCurve3(
-        source.position,
-        newControlPoint,
-        target.position
-      );
-
-      // 更新几何体
-      const newPoints = newCurve.getPoints(50);
-      geometry.setFromPoints(newPoints);
-      geometry.computeBoundingSphere();
-    };
-
-    return group;
+    line.userData = edgeData;
+    
+    return line;
   };
 
   const handleFullscreen = () => {
@@ -523,7 +352,7 @@ const KnowledgeGraph = ({
     const { camera, controls } = sceneRef.current;
     
     // 重置到初始视角
-    camera.position.set(0, 0, 500);
+    camera.position.set(0, 0, 700);
     camera.lookAt(0, 0, 0);
     
     // 重置控制器
@@ -578,17 +407,17 @@ const KnowledgeGraph = ({
         });
         
         const node3D = createNode3D(nodeData, index, data.nodes.length);
-        scene.add(node3D);
-        nodes3D.set(nodeData.id, node3D);
+        scene.add(node3D.group);
+        nodes3D.set(nodeData.id, node3D.group);
         // 同时存储原始ID的映射，以防边使用原始ID
         const originalId = String(node.data.id).trim();
         if (originalId !== nodeData.id) {
-          nodes3D.set(originalId, node3D);
+          nodes3D.set(originalId, node3D.group);
         }
 
         // 添加点击事件
-        if (node3D.children[0]) {
-          node3D.children[0].callback = () => handleNodeClick(node3D.children[0]);
+        if (node3D.sphere) {
+          node3D.sphere.callback = () => handleNodeClick(node3D.sphere);
         }
       });
 
@@ -835,17 +664,17 @@ const KnowledgeGraph = ({
         });
         
         const node3D = createNode3D(nodeData, index, data.nodes.length);
-        scene.add(node3D);
-        nodes3D.set(nodeData.id, node3D);
+        scene.add(node3D.group);
+        nodes3D.set(nodeData.id, node3D.group);
         // 同时存储原始ID的映射，以防边使用原始ID
         const originalId = String(node.data.id).trim();
         if (originalId !== nodeData.id) {
-          nodes3D.set(originalId, node3D);
+          nodes3D.set(originalId, node3D.group);
         }
 
         // 添加点击事件
-        if (node3D.children[0]) {
-          node3D.children[0].callback = () => handleNodeClick(node3D.children[0]);
+        if (node3D.sphere) {
+          node3D.sphere.callback = () => handleNodeClick(node3D.sphere);
         }
       });
 
