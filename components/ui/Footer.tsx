@@ -18,13 +18,8 @@ const Footer = () => {
             <h4 className="text-white text-sm font-medium mb-4 uppercase tracking-wider">产品</h4>
             <ul className="space-y-3 text-sm">
               <li>
-                <Link href="/features">
-                  <span className="hover:text-white transition-colors duration-200 block">功能</span>
-                </Link>
-              </li>
-              <li>
-                <Link href="/pricing">
-                  <span className="hover:text-white transition-colors duration-200 block">价格</span>
+                <Link href="/search">
+                  <span className="hover:text-white transition-colors duration-200 block">开始使用</span>
                 </Link>
               </li>
             </ul>
@@ -69,10 +64,10 @@ const Footer = () => {
         <div className="pt-8 border-t border-gray-800 flex flex-col md:flex-row justify-between items-center">
           <p className="text-xs mb-4 md:mb-0">&copy; {new Date().getFullYear()} Think Graph. 保留所有权利。</p>
           <div className="flex space-x-6">
-            <Link href="/privacy">
+            <Link href="/about">
               <span className="text-xs hover:text-white transition-colors duration-200 cursor-pointer">隐私政策</span>
             </Link>
-            <Link href="/terms">
+            <Link href="/about">
               <span className="text-xs hover:text-white transition-colors duration-200 cursor-pointer">使用条款</span>
             </Link>
           </div>
