@@ -4,6 +4,8 @@ import { useRouter } from 'next/router';
 import { useState, useEffect, useRef } from 'react';
 import 'tailwindcss/tailwind.css';
 import dynamic from 'next/dynamic';
+import Head from 'next/head';
+import Footer from '../components/ui/Footer';
 
 // 动态导入3D知识图谱组件
 const DemoKnowledgeGraph = dynamic(() => import('../components/DemoKnowledgeGraph'), {
@@ -38,6 +40,13 @@ function Home() {
 
   return (
     <div className="min-h-screen bg-white flex flex-col">
+      <Head>
+        <title>Think Graph</title>
+        <meta name="description" content="Think Graph - 革命性的知识可视化工具" />
+        <meta name="keywords" content="Think Graph, 3D知识图谱, 知识可视化, 人工智能, 自然语言处理" />
+        <meta name="author" content="Think Graph" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      </Head>
       {/* Hero Section - 全屏展示主要内容和3D知识图谱 */}
       <section className="relative min-h-screen flex items-center py-12 lg:py-16 overflow-hidden">
         {/* 背景装饰元素 */}
@@ -190,7 +199,7 @@ function Home() {
             <div className="flex flex-col sm:flex-row gap-4 w-full max-w-md">
               <a
                 href="/signup"
-                className="flex-1 bg-white text-indigo-700 hover:bg-blue-50 px-8 py-4 rounded-lg font-medium transition duration-200 shadow-md hover:shadow-lg transform hover:-translate-y-1 text-center"
+                className="flex-1 bg-white text-indigo-700 hover:bg-blue-50 px-6 py-3 rounded-lg font-medium transition duration-200 shadow-md hover:shadow-lg transform hover:-translate-y-1 text-center text-sm"
               >
                 免费开始使用
               </a>
@@ -200,42 +209,7 @@ function Home() {
       </section>
 
       {/* 页脚 */}
-      <footer className="bg-gray-900 text-gray-400 py-10">
-        <div className="container mx-auto px-4 md:px-6">
-          <div className="flex flex-col md:flex-row justify-between items-center">
-            <div className="mb-6 md:mb-0">
-              <h3 className="text-xl font-semibold text-white mb-2">Think Graph</h3>
-              <p className="text-sm">重新定义知识可视化体验</p>
-            </div>
-            <div className="flex space-x-8">
-              <div>
-                <h4 className="text-white text-sm font-medium mb-3">产品</h4>
-                <ul className="space-y-2 text-sm">
-                  <li><a href="#" className="hover:text-white transition">功能</a></li>
-                  <li><a href="#" className="hover:text-white transition">价格</a></li>
-                </ul>
-              </div>
-              <div>
-                <h4 className="text-white text-sm font-medium mb-3">资源</h4>
-                <ul className="space-y-2 text-sm">
-                  <li><a href="#" className="hover:text-white transition">帮助中心</a></li>
-                  <li><a href="#" className="hover:text-white transition">文档</a></li>
-                </ul>
-              </div>
-              <div>
-                <h4 className="text-white text-sm font-medium mb-3">公司</h4>
-                <ul className="space-y-2 text-sm">
-                  <li><a href="#" className="hover:text-white transition">关于我们</a></li>
-                  <li><a href="#" className="hover:text-white transition">联系我们</a></li>
-                </ul>
-              </div>
-            </div>
-          </div>
-          <div className="mt-8 pt-6 border-t border-gray-800 text-center text-sm">
-            <p>&copy; {new Date().getFullYear()} Think Graph. 保留所有权利。</p>
-          </div>
-        </div>
-      </footer>
+      <Footer />
     </div>
   );
 }
