@@ -72,7 +72,7 @@ const defaultData = {
 const KnowledgeGraph = dynamic(() => import('./KnowledgeGraph'), {
   ssr: false,
   loading: () => (
-    <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-50">
+    <div className="w-full h-full flex items-center justify-center bg-transparent">
       <div className="flex flex-col items-center">
         <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-600 mb-4"></div>
         <div className="text-blue-600 font-medium">正在加载3D图谱...</div>
@@ -161,7 +161,7 @@ const DemoKnowledgeGraph = ({ className = "" }) => {
   // 加载状态
   if (!isMounted) {
     return (
-      <div className={`w-full h-full flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-50 ${className}`}>
+      <div className={`w-full h-full flex items-center justify-center bg-transparent ${className}`}>
         <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-600"></div>
       </div>
     );
@@ -192,7 +192,7 @@ const DemoKnowledgeGraph = ({ className = "" }) => {
         }}
       />
       {!isLoaded && (
-        <div className="absolute inset-0 bg-white/80 flex items-center justify-center z-10">
+        <div className="absolute inset-0 bg-transparent flex items-center justify-center z-10">
           <div className="flex flex-col items-center">
             <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-600 mb-4"></div>
             <div className="text-blue-600 font-medium">图谱初始化中...</div>

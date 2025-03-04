@@ -37,7 +37,7 @@ function Home() {
   };
 
   return (
-    <div className="min-h-screen bg-white flex flex-col">
+    <div className="min-h-screen bg-gradient-to-br from-white via-gray-50 to-blue-50 flex flex-col">
       {/* Hero Section - 全屏展示主要内容和3D知识图谱 */}
       <section className="relative min-h-screen flex items-center py-12 lg:py-16 overflow-hidden">
         {/* 背景装饰元素 */}
@@ -113,7 +113,7 @@ function Home() {
             
             {/* 右侧：3D知识图谱展示 */}
             <div className="lg:col-span-7 order-1 lg:order-2">
-              <div className="relative bg-gradient-to-br from-blue-50/80 to-indigo-50/80 rounded-2xl overflow-hidden shadow-xl border border-indigo-100" style={{ height: "600px", maxHeight: "calc(100vh - 200px)" }}>
+              <div className="relative bg-transparent rounded-2xl" style={{ height: "600px", maxHeight: "calc(100vh - 200px)" }}>
                 {/* 确保给3D图谱足够的空间并加上明确的z-index */}
                 <div className="absolute inset-0 z-10">
                   <DemoKnowledgeGraph className="w-full h-full" />
@@ -134,7 +134,6 @@ function Home() {
           <div className="text-center mb-16">
             <h2 className="text-3xl md:text-4xl font-bold mb-4">
               <span className="text-indigo-600">先进的技术</span>
-              <span className="mx-2">·</span>
               <span className="text-purple-600">卓越的体验</span>
             </h2>
             <p className="text-gray-600 max-w-2xl mx-auto leading-relaxed">
