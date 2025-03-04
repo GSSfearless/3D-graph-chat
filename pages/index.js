@@ -196,10 +196,10 @@ function Home() {
             <p className="text-blue-100 mb-10 leading-relaxed max-w-xl mx-auto">
               免费体验Think Graph，重新发现知识连接的力量。我们的平台助您将复杂信息转化为直观可视化的知识图谱，激发创新思维。
             </p>
-            <div className="flex flex-col sm:flex-row gap-4 w-full max-w-md">
+            <div className="flex flex-col sm:flex-row gap-4 w-full max-w-md justify-center">
               <a
-                href="/signup"
-                className="flex-1 bg-white text-indigo-700 hover:bg-blue-50 px-6 py-3 rounded-lg font-medium transition duration-200 shadow-md hover:shadow-lg transform hover:-translate-y-1 text-center text-sm"
+                href="/search"
+                className="bg-white text-indigo-700 hover:bg-blue-50 px-6 py-3 rounded-lg font-medium transition duration-200 shadow-md hover:shadow-lg transform hover:-translate-y-1 text-center text-sm w-auto inline-block"
               >
                 免费开始使用
               </a>
