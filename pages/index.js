@@ -1,4 +1,4 @@
-import { faArrowRight, faBrain, faLightbulb, faSearch, faChartNetwork, faLock, faRocket, faMagicWandSparkles, faCube, faCode, faNetworkWired, faAtom } from '@fortawesome/free-solid-svg-icons';
+import { faArrowRight, faBrain, faLightbulb, faSearch, faChartNetwork, faLock, faRocket, faMagicWandSparkles, faCube, faCode, faNetworkWired, faAtom, faRedo, faExpand } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { useRouter } from 'next/router';
 import { useState, useEffect, useRef } from 'react';
@@ -113,14 +113,30 @@ function Home() {
             
             {/* 右侧：3D知识图谱展示 */}
             <div className="lg:col-span-7 order-1 lg:order-2">
-              <div className="relative bg-gradient-to-br from-blue-50/80 to-indigo-50/80 rounded-2xl overflow-hidden shadow-xl border border-indigo-100" style={{ height: "600px", maxHeight: "calc(100vh - 200px)" }}>
-                {/* 确保给3D图谱足够的空间并加上明确的z-index */}
+              <div className="relative overflow-visible" style={{ height: "600px", maxHeight: "calc(100vh - 200px)" }}>
+                {/* 创建一个柔和的圆形背景光晕，但允许图形超出边界 */}
+                <div className="absolute inset-0 bg-gradient-to-br from-blue-50/40 to-indigo-50/40 rounded-full blur-xl transform scale-75 opacity-70 animate-pulse-slow"></div>
+                
                 <div className="absolute inset-0 z-10">
                   <DemoKnowledgeGraph className="w-full h-full" />
                 </div>
+                
                 <div className="absolute top-4 right-4 bg-blue-600 text-white px-3 py-1 rounded-full text-xs font-medium z-20 shadow-md">
                   <FontAwesomeIcon icon={faCube} className="mr-1" />
                   3D立体视图
+                </div>
+                
+                {/* 添加简单的控制按钮 */}
+                <div className="absolute bottom-6 left-1/2 transform -translate-x-1/2 flex space-x-3 z-20">
+                  <button className="bg-white/80 hover:bg-white text-blue-600 p-2 rounded-full shadow-md transition duration-300">
+                    <FontAwesomeIcon icon={faSearch} />
+                  </button>
+                  <button className="bg-white/80 hover:bg-white text-blue-600 p-2 rounded-full shadow-md transition duration-300">
+                    <FontAwesomeIcon icon={faRedo} />
+                  </button>
+                  <button className="bg-white/80 hover:bg-white text-blue-600 p-2 rounded-full shadow-md transition duration-300">
+                    <FontAwesomeIcon icon={faExpand} />
+                  </button>
                 </div>
               </div>
             </div>
@@ -134,7 +150,6 @@ function Home() {
           <div className="text-center mb-16">
             <h2 className="text-3xl md:text-4xl font-bold mb-4">
               <span className="text-indigo-600">先进的技术</span>
-              <span className="mx-2">·</span>
               <span className="text-purple-600">卓越的体验</span>
             </h2>
             <p className="text-gray-600 max-w-2xl mx-auto leading-relaxed">
