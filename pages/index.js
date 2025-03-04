@@ -131,42 +131,44 @@ function Home() {
       {/* Feature Section - 展示产品特点和技术优势 */}
       <section className="py-16 lg:py-20 bg-gradient-to-b from-white to-blue-50">
         <div className="container mx-auto px-4 md:px-6">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold mb-4 text-center">
-              <span className="text-purple-600">卓越的体验</span>
-            </h2>
-          </div>
-          
-          {/* 特性卡片组 */}
-          <div className="grid md:grid-cols-3 gap-6 lg:gap-8 max-w-5xl mx-auto">
-            <div className="bg-white p-8 rounded-xl shadow-md hover:shadow-lg transition-shadow duration-300 border border-gray-100 hover:border-gray-200">
-              <div className="w-14 h-14 rounded-lg bg-blue-100 flex items-center justify-center mb-6">
-                <FontAwesomeIcon icon={faNetworkWired} className="text-2xl text-blue-600" />
-              </div>
-              <h3 className="text-xl font-semibold mb-4">实体关系抽取</h3>
-              <p className="text-gray-600 leading-relaxed">
-                采用自然语言处理技术，精准识别文本中的概念实体与关系，构建完整知识网络
-              </p>
+          <div className="flex flex-col items-center">
+            <div className="text-center mb-16">
+              <h2 className="text-3xl md:text-4xl font-bold mb-4">
+                <span className="text-purple-600">卓越的体验</span>
+              </h2>
             </div>
             
-            <div className="bg-white p-8 rounded-xl shadow-md hover:shadow-lg transition-shadow duration-300 border border-gray-100 hover:border-gray-200">
-              <div className="w-14 h-14 rounded-lg bg-indigo-100 flex items-center justify-center mb-6">
-                <FontAwesomeIcon icon={faCube} className="text-2xl text-indigo-600" />
+            {/* 特性卡片组 */}
+            <div className="grid md:grid-cols-3 gap-6 lg:gap-8 max-w-5xl mx-auto w-full">
+              <div className="bg-white p-8 rounded-xl shadow-md hover:shadow-lg transition-shadow duration-300 border border-gray-100 hover:border-gray-200">
+                <div className="w-14 h-14 rounded-lg bg-blue-100 flex items-center justify-center mb-6">
+                  <FontAwesomeIcon icon={faNetworkWired} className="text-2xl text-blue-600" />
+                </div>
+                <h3 className="text-xl font-semibold mb-4">实体关系抽取</h3>
+                <p className="text-gray-600 leading-relaxed">
+                  采用自然语言处理技术，精准识别文本中的概念实体与关系，构建完整知识网络
+                </p>
               </div>
-              <h3 className="text-xl font-semibold mb-4">3D立体图谱</h3>
-              <p className="text-gray-600 leading-relaxed">
-                突破传统平面限制，提供沉浸式立体可视化体验，支持360°全方位探索，从多角度理解知识结构
-              </p>
-            </div>
-            
-            <div className="bg-white p-8 rounded-xl shadow-md hover:shadow-lg transition-shadow duration-300 border border-gray-100 hover:border-gray-200">
-              <div className="w-14 h-14 rounded-lg bg-purple-100 flex items-center justify-center mb-6">
-                <FontAwesomeIcon icon={faBrain} className="text-2xl text-purple-600" />
+              
+              <div className="bg-white p-8 rounded-xl shadow-md hover:shadow-lg transition-shadow duration-300 border border-gray-100 hover:border-gray-200">
+                <div className="w-14 h-14 rounded-lg bg-indigo-100 flex items-center justify-center mb-6">
+                  <FontAwesomeIcon icon={faCube} className="text-2xl text-indigo-600" />
+                </div>
+                <h3 className="text-xl font-semibold mb-4">3D立体图谱</h3>
+                <p className="text-gray-600 leading-relaxed">
+                  突破传统平面限制，提供沉浸式立体可视化体验，支持360°全方位探索，从多角度理解知识结构
+                </p>
               </div>
-              <h3 className="text-xl font-semibold mb-4">实时图谱生成</h3>
-              <p className="text-gray-600 leading-relaxed">
-                强大的实时计算架构，支持边提问边构建，将思维过程即时可视化，真正实现思考与呈现同步
-              </p>
+              
+              <div className="bg-white p-8 rounded-xl shadow-md hover:shadow-lg transition-shadow duration-300 border border-gray-100 hover:border-gray-200">
+                <div className="w-14 h-14 rounded-lg bg-purple-100 flex items-center justify-center mb-6">
+                  <FontAwesomeIcon icon={faBrain} className="text-2xl text-purple-600" />
+                </div>
+                <h3 className="text-xl font-semibold mb-4">实时图谱生成</h3>
+                <p className="text-gray-600 leading-relaxed">
+                  强大的实时计算架构，支持边提问边构建，将思维过程即时可视化，真正实现思考与呈现同步
+                </p>
+              </div>
             </div>
           </div>
         </div>
@@ -191,12 +193,6 @@ function Home() {
                 className="flex-1 bg-white text-indigo-700 hover:bg-blue-50 px-8 py-4 rounded-lg font-medium transition duration-200 shadow-md hover:shadow-lg transform hover:-translate-y-1 text-center"
               >
                 免费开始使用
-              </a>
-              <a
-                href="/demo"
-                className="flex-1 bg-transparent text-white border border-white hover:bg-white/10 px-8 py-4 rounded-lg font-medium transition duration-200 text-center"
-              >
-                查看演示
               </a>
             </div>
           </div>
