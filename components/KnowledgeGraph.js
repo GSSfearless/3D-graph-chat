@@ -12,8 +12,7 @@ const KnowledgeGraph = ({
   defaultMode = "2d",
   autoRotate = false,
   hideControls = false,
-  disableLabels = false,
-  disableZoom = false
+  disableLabels = false
 }) => {
   const containerRef = useRef(null);
   const sceneRef = useRef(null);
@@ -68,8 +67,8 @@ const KnowledgeGraph = ({
 
     // 创建场景
     const scene = new THREE.Scene();
-    scene.background = null; // 透明背景
-    scene.fog = null; // 移除雾效果
+    scene.background = new THREE.Color(0xf8fafc);
+    scene.fog = new THREE.Fog(0xf8fafc, 100, 1000);
 
     // 创建相机并设置到合适的观察位置
     const camera = new THREE.PerspectiveCamera(45, width / height, 1, 2000);
@@ -85,7 +84,6 @@ const KnowledgeGraph = ({
     });
     renderer.setSize(width, height);
     renderer.setPixelRatio(window.devicePixelRatio);
-    renderer.setClearColor(0x000000, 0); // 设置透明背景
     renderer.shadowMap.enabled = true;
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
@@ -118,7 +116,7 @@ const KnowledgeGraph = ({
     controls.maxDistance = 1000; // 最大距离
     controls.target.set(0, 0, 0); // 设置旋转中心为原点（球心）
     controls.enablePan = true; // 允许平移
-    controls.enableZoom = !disableZoom; // 根据参数决定是否允许缩放
+    controls.enableZoom = true; // 允许缩放
     controls.screenSpacePanning = true; // 使平移始终平行于屏幕
 
     // 清除原有内容并添加新的渲染器

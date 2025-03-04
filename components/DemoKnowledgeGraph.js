@@ -174,8 +174,7 @@ const DemoKnowledgeGraph = ({ className = "" }) => {
       style={{ 
         position: 'relative', 
         minHeight: '500px',
-        zIndex: 1,
-        overflow: 'visible'
+        zIndex: 1 
       }}
     >
       <KnowledgeGraph
@@ -183,15 +182,13 @@ const DemoKnowledgeGraph = ({ className = "" }) => {
         autoRotate={true}
         hideControls={true} 
         disableLabels={shouldHideLabels}
-        disableZoom={true}
         onNodeClick={(nodeData) => console.log('节点点击:', nodeData)}
         style={{ 
           width: "100%", 
           height: "100%", 
           position: "absolute",
           top: 0,
-          left: 0,
-          overflow: 'visible'
+          left: 0
         }}
       />
       {!isLoaded && (
