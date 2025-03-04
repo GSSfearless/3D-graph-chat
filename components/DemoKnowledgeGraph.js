@@ -32,39 +32,39 @@ const defaultData = {
   ],
   edges: [
     // 知识图谱的直接关联
-    { data: { id: 'e1', source: 'knowledge-graph', target: 'visualization', label: '应用', weight: 5, color: '#4F46E5' } },
-    { data: { id: 'e2', source: 'knowledge-graph', target: '3d-rendering', label: '使用', weight: 4, color: '#4F46E5' } },
-    { data: { id: 'e3', source: 'knowledge-graph', target: 'interactive', label: '提供', weight: 3, color: '#4F46E5' } },
-    { data: { id: 'e4', source: 'knowledge-graph', target: 'ai', label: '结合', weight: 5, color: '#4F46E5' } },
-    { data: { id: 'e5', source: 'knowledge-graph', target: 'big-data', label: '基于', weight: 5, color: '#4F46E5' } },
-    { data: { id: 'e6', source: 'knowledge-graph', target: 'spatial', label: '促进', weight: 4, color: '#4F46E5' } },
-    { data: { id: 'e7', source: 'knowledge-graph', target: 'graph-db', label: '存储于', weight: 4, color: '#4F46E5' } },
-    { data: { id: 'e8', source: 'knowledge-graph', target: 'semantic-web', label: '源于', weight: 3, color: '#4F46E5' } },
+    { data: { id: 'e1', source: 'knowledge-graph', target: 'visualization', label: '应用', weight: 5 } },
+    { data: { id: 'e2', source: 'knowledge-graph', target: '3d-rendering', label: '使用', weight: 4 } },
+    { data: { id: 'e3', source: 'knowledge-graph', target: 'interactive', label: '提供', weight: 3 } },
+    { data: { id: 'e4', source: 'knowledge-graph', target: 'ai', label: '结合', weight: 5 } },
+    { data: { id: 'e5', source: 'knowledge-graph', target: 'big-data', label: '基于', weight: 5 } },
+    { data: { id: 'e6', source: 'knowledge-graph', target: 'spatial', label: '促进', weight: 4 } },
+    { data: { id: 'e7', source: 'knowledge-graph', target: 'graph-db', label: '存储于', weight: 4 } },
+    { data: { id: 'e8', source: 'knowledge-graph', target: 'semantic-web', label: '源于', weight: 3 } },
     
     // AI相关联系
-    { data: { id: 'e9', source: 'ai', target: 'nlp', label: '包含', weight: 4, color: '#4F46E5' } },
-    { data: { id: 'e10', source: 'ai', target: 'deep-learning', label: '使用', weight: 5, color: '#4F46E5' } },
-    { data: { id: 'e11', source: 'ai', target: 'machine-learning', label: '基于', weight: 5, color: '#4F46E5' } },
-    { data: { id: 'e12', source: 'nlp', target: 'entity-recognition', label: '实现', weight: 4, color: '#4F46E5' } },
-    { data: { id: 'e13', source: 'nlp', target: 'relation-extraction', label: '支持', weight: 4, color: '#4F46E5' } },
+    { data: { id: 'e9', source: 'ai', target: 'nlp', label: '包含', weight: 4 } },
+    { data: { id: 'e10', source: 'ai', target: 'deep-learning', label: '使用', weight: 5 } },
+    { data: { id: 'e11', source: 'ai', target: 'machine-learning', label: '基于', weight: 5 } },
+    { data: { id: 'e12', source: 'nlp', target: 'entity-recognition', label: '实现', weight: 4 } },
+    { data: { id: 'e13', source: 'nlp', target: 'relation-extraction', label: '支持', weight: 4 } },
     
     // 大数据相关联系
-    { data: { id: 'e14', source: 'big-data', target: 'data-mining', label: '通过', weight: 4, color: '#4F46E5' } },
-    { data: { id: 'e15', source: 'big-data', target: 'pattern-discovery', label: '发现', weight: 3, color: '#4F46E5' } },
-    { data: { id: 'e16', source: 'data-mining', target: 'knowledge-reasoning', label: '辅助', weight: 3, color: '#4F46E5' } },
+    { data: { id: 'e14', source: 'big-data', target: 'data-mining', label: '通过', weight: 4 } },
+    { data: { id: 'e15', source: 'big-data', target: 'pattern-discovery', label: '发现', weight: 3 } },
+    { data: { id: 'e16', source: 'data-mining', target: 'knowledge-reasoning', label: '辅助', weight: 3 } },
     
     // 技术间关系
-    { data: { id: 'e17', source: 'deep-learning', target: 'machine-learning', label: '属于', weight: 4, color: '#4F46E5' } },
-    { data: { id: 'e18', source: 'machine-learning', target: 'pattern-discovery', label: '用于', weight: 3, color: '#4F46E5' } },
-    { data: { id: 'e19', source: 'semantic-web', target: 'graph-db', label: '利用', weight: 3, color: '#4F46E5' } },
+    { data: { id: 'e17', source: 'deep-learning', target: 'machine-learning', label: '属于', weight: 4 } },
+    { data: { id: 'e18', source: 'machine-learning', target: 'pattern-discovery', label: '用于', weight: 3 } },
+    { data: { id: 'e19', source: 'semantic-web', target: 'graph-db', label: '利用', weight: 3 } },
     
     // 视觉和功能相关
-    { data: { id: 'e20', source: 'visualization', target: 'multi-dimension', label: '提供', weight: 3, color: '#4F46E5' } },
-    { data: { id: 'e21', source: 'visualization', target: 'thinking', label: '辅助', weight: 4, color: '#4F46E5' } },
-    { data: { id: 'e22', source: '3d-rendering', target: 'interactive', label: '增强', weight: 4, color: '#4F46E5' } },
-    { data: { id: 'e23', source: '3d-rendering', target: 'spatial', label: '表现', weight: 4, color: '#4F46E5' } },
-    { data: { id: 'e24', source: 'spatial', target: 'thinking', label: '启发', weight: 5, color: '#4F46E5' } },
-    { data: { id: 'e25', source: 'interactive', target: 'realtime-update', label: '需要', weight: 3, color: '#4F46E5' } }
+    { data: { id: 'e20', source: 'visualization', target: 'multi-dimension', label: '提供', weight: 3 } },
+    { data: { id: 'e21', source: 'visualization', target: 'thinking', label: '辅助', weight: 4 } },
+    { data: { id: 'e22', source: '3d-rendering', target: 'interactive', label: '增强', weight: 4 } },
+    { data: { id: 'e23', source: '3d-rendering', target: 'spatial', label: '表现', weight: 4 } },
+    { data: { id: 'e24', source: 'spatial', target: 'thinking', label: '启发', weight: 5 } },
+    { data: { id: 'e25', source: 'interactive', target: 'realtime-update', label: '需要', weight: 3 } }
   ]
 };
 
