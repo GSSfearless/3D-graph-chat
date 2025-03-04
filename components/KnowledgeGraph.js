@@ -67,8 +67,8 @@ const KnowledgeGraph = ({
 
     // 创建场景
     const scene = new THREE.Scene();
-    scene.background = null; // 设置为透明背景
-    scene.fog = null; // 移除雾效果以确保完全透明
+    scene.background = new THREE.Color(0xf8fafc);
+    scene.fog = new THREE.Fog(0xf8fafc, 100, 1000);
 
     // 创建相机并设置到合适的观察位置
     const camera = new THREE.PerspectiveCamera(45, width / height, 1, 2000);
@@ -86,7 +86,6 @@ const KnowledgeGraph = ({
     renderer.setPixelRatio(window.devicePixelRatio);
     renderer.shadowMap.enabled = true;
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-    renderer.setClearColor(0x000000, 0); // 设置为完全透明
 
     // 创建标签渲染器
     const labelRenderer = new CSS2DRenderer();
