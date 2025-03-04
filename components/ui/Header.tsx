@@ -32,9 +32,6 @@ const Header = () => {
             <Link href="/pricing">
               <span className="hover:text-blue-400 transition duration-200 cursor-pointer">价格</span>
             </Link>
-            <Link href="/docs">
-              <span className="hover:text-blue-400 transition duration-200 cursor-pointer">文档</span>
-            </Link>
             <Link href="/about">
               <span className="hover:text-blue-400 transition duration-200 cursor-pointer">关于我们</span>
             </Link>
@@ -55,9 +52,6 @@ const Header = () => {
               </Link>
               <Link href="/pricing">
                 <span className="hover:text-blue-400 transition duration-200 cursor-pointer">价格</span>
-              </Link>
-              <Link href="/docs">
-                <span className="hover:text-blue-400 transition duration-200 cursor-pointer">文档</span>
               </Link>
               <Link href="/about">
                 <span className="hover:text-blue-400 transition duration-200 cursor-pointer">关于我们</span>

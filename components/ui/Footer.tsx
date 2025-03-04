@@ -44,11 +44,6 @@ const Footer = () => {
                   <span className="hover:text-white transition-colors duration-200 block">联系我们</span>
                 </Link>
               </li>
-              <li>
-                <Link href="/help">
-                  <span className="hover:text-white transition-colors duration-200 block">帮助中心</span>
-                </Link>
-              </li>
             </ul>
           </div>
         </div>
