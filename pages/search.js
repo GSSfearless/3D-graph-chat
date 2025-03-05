@@ -13,6 +13,7 @@ import { KnowledgeGraphProcessor } from '../utils/knowledge-processor';
 import LeftSidebar from '../components/LeftSidebar';
 import { HistoryManager } from '../utils/history-manager';
 import { useAuth } from '../contexts/AuthContext';
+import { useWindowSize } from '../hooks/useWindowSize';
 
 const KnowledgeGraph = dynamic(() => import('../components/KnowledgeGraph'), {
   ssr: false,
@@ -31,9 +32,12 @@ export default function Search() {
   const [useWebSearch, setUseWebSearch] = useState(false);
   const [useDeepThinking, setUseDeepThinking] = useState(false);
   const [reasoningProcess, setReasoningProcess] = useState('');
+  const [showLeftSidebar, setShowLeftSidebar] = useState(false);  // 控制移动端侧边栏显示
   const searchInputRef = useRef(null);
   const knowledgeProcessor = useRef(new KnowledgeGraphProcessor());
   const { user } = useAuth();
+  const { width } = useWindowSize();
+  const isMobile = width ? width < 768 : false;
 
   const defaultQuery = "What is the answer to life, the universe, and everything?";
 
@@ -262,14 +266,44 @@ export default function Search() {
 
   return (
     <div className="flex h-screen overflow-hidden">
-      <LeftSidebar />
+      {/* 在移动端，只有当showLeftSidebar为true时才显示侧边栏 */}
+      {(!isMobile || showLeftSidebar) && (
+        <div className={`${isMobile ? 'fixed inset-0 z-50 bg-white' : ''}`}>
+          <LeftSidebar onClose={() => setShowLeftSidebar(false)} />
+          {isMobile && (
+            <button 
+              onClick={() => setShowLeftSidebar(false)}
+              className="absolute top-4 right-4 p-2 bg-gray-100 rounded-full text-gray-500 hover:bg-gray-200"
+              aria-label="关闭侧边栏"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          )}
+        </div>
+      )}
+      
       <div className="flex-1 flex flex-col overflow-hidden">
         <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 overflow-hidden">
           {/* 主要内容区域 */}
-          <div className="grid grid-cols-12 gap-4 h-screen">
-            {/* 3D知识图谱显示区域 - 固定位置 */}
-            <div className="col-span-9 relative">
-              <div className="bg-white rounded-xl shadow-sm border border-gray-100 h-full sticky top-0">
+          <div className={`${isMobile ? 'flex flex-col' : 'grid grid-cols-12 gap-4'} h-screen`}>
+            {/* 在移动端显示的菜单按钮 */}
+            {isMobile && !showLeftSidebar && (
+              <button 
+                onClick={() => setShowLeftSidebar(true)}
+                className="fixed top-4 left-4 z-40 p-2 bg-white rounded-full shadow-md text-gray-600 hover:bg-gray-50"
+                aria-label="打开菜单"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16m-7 6h7" />
+                </svg>
+              </button>
+            )}
+            
+            {/* 3D知识图谱显示区域 - 在移动端和PC端使用不同的布局 */}
+            <div className={`${isMobile ? 'flex-1' : 'col-span-9'} relative`}>
+              <div className={`bg-white rounded-xl shadow-sm border border-gray-100 ${isMobile ? 'h-[60vh]' : 'h-full'} sticky top-0`}>
                 {loading ? (
                   <div className="flex items-center justify-center h-full">
                     <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
@@ -289,8 +323,8 @@ export default function Search() {
               </div>
             </div>
 
-            {/* 文本显示区域 - 可滚动 */}
-            <div className="col-span-3 h-[calc(100vh-4rem)] overflow-y-auto custom-scrollbar">
+            {/* 文本显示区域 - 在移动端使用全宽设计 */}
+            <div className={`${isMobile ? 'flex-1 h-[40vh]' : 'col-span-3 h-[calc(100vh-4rem)]'} overflow-y-auto custom-scrollbar`}>
               <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
                 {/* 隐藏DeepThinking思考过程显示 
                 {useDeepThinking && reasoningProcess && (
@@ -317,8 +351,8 @@ export default function Search() {
             </div>
           </div>
 
-          {/* 底部搜索区域 */}
-          <div className="fixed bottom-4 left-1/2 transform -translate-x-1/2 w-full max-w-2xl px-4">
+          {/* 底部搜索区域 - 调整移动端的尺寸和位置 */}
+          <div className={`fixed bottom-4 ${isMobile ? 'left-0 w-full px-4' : 'left-1/2 transform -translate-x-1/2 w-full max-w-2xl px-4'}`}>
             <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-gray-100 p-4 transition-all duration-300 hover:shadow-xl hover:bg-white/90">
               <div className="flex items-center space-x-4">
                 {/* 分享按钮 */}
@@ -340,7 +374,7 @@ export default function Search() {
                     value={query}
                     onChange={handleInputChange}
                     onKeyPress={(e) => e.key === 'Enter' && handleSubmit(e)}
-                    placeholder={defaultQuery}
+                    placeholder={isMobile ? "输入问题..." : defaultQuery}
                     className="w-full px-4 py-2.5 bg-white/50 border border-gray-200 rounded-xl 
                              text-sm transition-all duration-300
                              focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent
@@ -391,6 +425,13 @@ export default function Search() {
         
         .custom-scrollbar::-webkit-scrollbar-thumb:hover {
           background: #a8a8a8;
+        }
+        
+        /* 移动端样式调整 */
+        @media (max-width: 768px) {
+          .custom-scrollbar::-webkit-scrollbar {
+            width: 4px;
+          }
         }
       `}</style>
     </div>

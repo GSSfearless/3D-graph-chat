@@ -12,7 +12,11 @@ import { faDiscord } from '@fortawesome/free-brands-svg-icons';
 import { useAuth } from '../contexts/AuthContext';
 import { AuthForm } from './auth/AuthForm';
 
-const LeftSidebar = () => {
+interface LeftSidebarProps {
+  onClose?: () => void;
+}
+
+const LeftSidebar: React.FC<LeftSidebarProps> = ({ onClose }) => {
   const router = useRouter();
   const { user, signOut, loading } = useAuth();
   const [searchHistory, setSearchHistory] = useState<SearchHistoryItem[]>([]);
