@@ -8,13 +8,13 @@ const Footer = () => {
         {/* 主要内容区域 */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-10">
           {/* 左侧品牌信息 */}
-          <div className="col-span-2">
+          <div className="col-span-2 md:col-span-4">
             <h3 className="text-xl font-semibold text-white mb-4">Think Graph</h3>
             <p className="text-sm mb-4 leading-relaxed max-w-sm">重新定义知识可视化体验，通过立体图谱展现信息间的关联，激发创新思维</p>
           </div>
           
-          {/* 链接区域 - 产品 */}
-          <div className="col-span-1">
+          {/* 链接区域 - 产品 (已隐藏) */}
+          <div className="col-span-1" style={{ display: 'none' }}>
             <h4 className="text-white text-sm font-medium mb-4 uppercase tracking-wider">产品</h4>
             <ul className="space-y-3 text-sm">
               <li>
@@ -30,8 +30,8 @@ const Footer = () => {
             </ul>
           </div>
           
-          {/* 链接区域 - 关于 */}
-          <div className="col-span-1">
+          {/* 链接区域 - 关于 (已隐藏) */}
+          <div className="col-span-1" style={{ display: 'none' }}>
             <h4 className="text-white text-sm font-medium mb-4 uppercase tracking-wider">关于</h4>
             <ul className="space-y-3 text-sm">
               <li>
