@@ -210,6 +210,8 @@ export default function Search() {
       alert('搜索过程中出错，请重试');
     } finally {
       setLoading(false);
+      // 搜索完成后清空搜索框
+      setQuery('');
     }
   }, [useWebSearch, useDeepThinking, user]);
 
@@ -233,8 +235,8 @@ export default function Search() {
         query: { q: query }
       });
       handleSearch(query);
-      // 搜索完成后清空搜索框
-      setQuery('');
+      // 注释掉，因为已经在handleSearch中清空
+      // setQuery('');
     }
   };
 
