@@ -35,11 +35,6 @@ const Header = () => {
             <Link href="/about">
               <span className="hover:text-blue-400 transition duration-200 cursor-pointer">关于我们</span>
             </Link>
-            <Link href="/auth/login">
-              <span className="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg transition duration-200 cursor-pointer">
-                登录
-              </span>
-            </Link>
           </nav>
         </div>
 
@@ -55,11 +50,6 @@ const Header = () => {
               </Link>
               <Link href="/about">
                 <span className="hover:text-blue-400 transition duration-200 cursor-pointer">关于我们</span>
-              </Link>
-              <Link href="/auth/login">
-                <span className="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg inline-block transition duration-200 cursor-pointer">
-                  登录
-                </span>
               </Link>
             </nav>
           </div>
