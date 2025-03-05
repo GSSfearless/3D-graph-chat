@@ -6,7 +6,7 @@ const API_CONFIG = {
     url: 'https://api.siliconflow.cn/v1/chat/completions',
     key: process.env.SILICONFLOW_API_KEY,
     models: {
-      fast: 'Qwen/Qwen1.5-7B-Chat',  // 快速响应模型 - 更新为Qwen1.5-7B-Chat
+      fast: 'deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B',  // 快速响应模型
       deep: 'deepseek-ai/DeepSeek-R1',  // 深度思考模型
       chat: 'deepseek-ai/deepseek-chat-7b',  // 通用对话模型
       coder: 'deepseek-ai/deepseek-coder-7b',  // 代码生成模型
@@ -134,38 +134,17 @@ const callDeepSeekAPI = async (messages, stream = false, useDeepThinking = false
 
   // 根据任务类型选择合适的模型
   let model;
-  if (messages.some(m => m.content && (m.content.includes('代码') || m.content.includes('编程') || m.content.includes('code')))) {
+  if (messages.some(m => m.content.includes('代码') || m.content.includes('编程'))) {
     model = config.models.coder;
-  } else if (messages.some(m => m.content && (m.content.includes('数学') || m.content.includes('计算') || m.content.includes('math')))) {
+  } else if (messages.some(m => m.content.includes('数学') || m.content.includes('计算'))) {
     model = config.models.math;
-  } else if (messages.length > 8) {  // 复杂对话使用 MOE 模型
+  } else if (messages.length > 5) {  // 复杂对话使用 MOE 模型
     model = config.models.moe;
   } else {
-    model = config.models.fast;  // 默认使用快速模型 (Qwen1.5-7B-Chat)
+    model = config.models.fast;  // 默认使用快速模型
   }
 
   logApiDetails('DeepSeek', 'info', `Using model: ${model}`);
-
-  // 为Qwen模型优化的参数
-  const isQwenModel = model.includes('Qwen');
-  const temperature = isQwenModel ? 0.8 : 0.7;
-  const max_tokens = isQwenModel ? 4000 : 2000;
-  const top_p = isQwenModel ? 0.9 : 0.8;
-
-  // 增强的日志记录
-  if (isQwenModel) {
-    console.log('=== 免费Qwen模型调用详情 ===');
-    console.log('🚀 模型:', model);
-    console.log('📝 消息数量:', messages.length);
-    console.log('⚙️ 参数配置:');
-    console.log('   - 温度:', temperature);
-    console.log('   - 最大token:', max_tokens);
-    console.log('   - Top P:', top_p);
-    console.log('   - 流式响应:', stream ? '是' : '否');
-    console.log('================================');
-    
-    logApiDetails('DeepSeek', 'info', `使用免费的阿里云Qwen大模型: ${model}`);
-  }
 
   try {
     const response = await api({
@@ -174,10 +153,10 @@ const callDeepSeekAPI = async (messages, stream = false, useDeepThinking = false
       data: {
         model: model,
         messages,
-        temperature,
-        max_tokens,
+        temperature: 0.7,
+        max_tokens: 2000,
         stream,
-        top_p,
+        top_p: 0.8,
         frequency_penalty: 0.5
       },
       headers: {
@@ -357,63 +336,6 @@ const callWithFallback = async (messages, stream = false, useDeepThinking = fals
 
   // 定义多个 DeepSeek 模型尝试顺序
   const deepseekModels = [
-    { name: 'qwen-fast', fn: (msgs, strm) => {
-      // 强制使用Qwen模型作为快速响应模型
-      const configCopy = JSON.parse(JSON.stringify(API_CONFIG.deepseek));
-      const origModel = configCopy.models.fast;
-      try {
-        // 确保使用的是Qwen模型
-        if (!origModel.includes('Qwen')) {
-          configCopy.models.fast = 'Qwen/Qwen1.5-7B-Chat';
-          logApiDetails('Fallback', 'info', '已切换到免费的Qwen大模型');
-        }
-        const customDeepSeekAPI = async (messages, stream) => {
-          // 使用修改后的配置调用DeepSeekAPI函数的核心逻辑
-          if (!configCopy.key) {
-            throw new Error('SiliconFlow API key not configured');
-          }
-          
-          // 确保使用fast模型
-          const model = configCopy.models.fast;
-          
-          // Qwen模型优化参数
-          const temperature = 0.8;
-          const max_tokens = 4000;
-          const top_p = 0.9;
-          
-          logApiDetails('Qwen', 'info', `Using optimized Qwen model: ${model}`);
-          
-          const response = await api({
-            method: 'post',
-            url: configCopy.url,
-            data: {
-              model: model,
-              messages,
-              temperature,
-              max_tokens,
-              stream,
-              top_p,
-              frequency_penalty: 0.5
-            },
-            headers: {
-              'Authorization': `Bearer ${configCopy.key}`,
-              'Content-Type': 'application/json',
-              'Accept': stream ? 'text/event-stream' : 'application/json'
-            },
-            responseType: stream ? 'stream' : 'json',
-            retry: 3,
-            retryDelay: 1000
-          });
-          
-          return response;
-        };
-        
-        return customDeepSeekAPI(msgs, strm);
-      } catch (error) {
-        logApiDetails('Qwen', 'error', `Qwen模型调用失败: ${error.message}`);
-        throw error;
-      }
-    }},
     { name: 'deepseek-primary', fn: (msgs, strm) => callDeepSeekAPI(msgs, strm, false) },
     { name: 'deepseek-backup', fn: (msgs, strm) => callDeepSeekAPI(msgs, strm, false) }
   ];
