@@ -6,7 +6,7 @@ const API_CONFIG = {
     url: 'https://api.siliconflow.cn/v1/chat/completions',
     key: process.env.SILICONFLOW_API_KEY,
     models: {
-      fast: 'deepseek-ai/DeepSeek-R1-Distill-Qwen-32B',  // 快速响应模型
+      fast: 'deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B',  // 快速响应模型
       deep: 'deepseek-ai/DeepSeek-R1',  // 深度思考模型
       chat: 'deepseek-ai/deepseek-chat-7b',  // 通用对话模型
       coder: 'deepseek-ai/deepseek-coder-7b',  // 代码生成模型
@@ -134,14 +134,14 @@ const callDeepSeekAPI = async (messages, stream = false, useDeepThinking = false
 
   // 根据任务类型选择合适的模型
   let model;
-  // 默认优先使用Qwen-32B模型，只有在特定情况下才使用专用模型
-  if (messages.some(m => m.content.includes('代码') || m.content.includes('编程') || m.content.includes('code') || m.content.includes('program'))) {
+  if (messages.some(m => m.content.includes('代码') || m.content.includes('编程'))) {
     model = config.models.coder;
-  } else if (messages.some(m => m.content.includes('数学') || m.content.includes('计算') || m.content.includes('math') || m.content.includes('calculate'))) {
+  } else if (messages.some(m => m.content.includes('数学') || m.content.includes('计算'))) {
     model = config.models.math;
+  } else if (messages.length > 5) {  // 复杂对话使用 MOE 模型
+    model = config.models.moe;
   } else {
-    // 大多数查询都使用fast模型(现在是Qwen-32B)
-    model = config.models.fast;
+    model = config.models.fast;  // 默认使用快速模型
   }
 
   logApiDetails('DeepSeek', 'info', `Using model: ${model}`);
@@ -316,12 +316,7 @@ const callWithFallback = async (messages, stream = false, useDeepThinking = fals
           model_id: !config.model_id ? '未配置' : '已配置',
           url: !config.url ? '未配置' : '已配置'
         });
-        // 不立即抛出错误，尝试使用Qwen-32B作为备选
-        logApiDetails('Fallback', 'warning', '⚠️ 将使用DeepSeek-R1-Distill-Qwen-32B作为深度思考模式的备选模型');
-        // 使用deepseek的fast模型作为备选（已更新为32B模型）
-        const deepseekResponse = await callDeepSeekAPI(messages, stream, false);
-        logApiDetails('Fallback', 'success', '✅ DeepSeek-R1-Distill-Qwen-32B调用成功');
-        return { provider: 'deepseek', response: deepseekResponse };
+        throw new Error('Volcengine configuration incomplete');
       }
 
       logApiDetails('Fallback', 'info', `📌 火山引擎配置验证成功:
