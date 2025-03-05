@@ -218,8 +218,6 @@ export default function Search() {
       setQuery(initialQuery);
       handleSearch(initialQuery);
       setInitialLoad(false);
-      // 初始搜索后清空搜索框，与搜索后行为保持一致
-      setTimeout(() => setQuery(''), 500);
     }
   }, [initialQuery, initialLoad, handleSearch]);
 
