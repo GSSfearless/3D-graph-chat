@@ -181,8 +181,8 @@ const LeftSidebar = () => {
         )}
       </div>
 
-      {/* Discord link */}
-      <div className="p-4 border-t border-gray-200">
+      {/* Discord link - 已隐藏 */}
+      <div className="p-4 border-t border-gray-200" style={{ display: 'none' }}>
         <a
           href="https://discord.gg/your-discord"
           target="_blank"
