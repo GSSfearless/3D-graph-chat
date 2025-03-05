@@ -48,13 +48,10 @@ function Home() {
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
       </Head>
       {/* Hero Section - 全屏展示主要内容和3D知识图谱 */}
-      <section className="relative min-h-screen flex items-center py-12 lg:py-16 overflow-hidden">
-        {/* 背景装饰元素 */}
-        <div className="absolute inset-0 pointer-events-none z-0">
-          <div className="absolute top-0 right-0 w-1/3 h-1/3 bg-indigo-50 rounded-bl-full opacity-80"></div>
-          <div className="absolute bottom-0 left-0 w-1/3 h-1/3 bg-blue-50 rounded-tr-full opacity-80"></div>
-          <div className="absolute bottom-1/4 right-1/4 w-40 h-40 bg-purple-50 rounded-full opacity-60 blur-xl"></div>
-          <div className="absolute top-1/3 left-1/4 w-32 h-32 bg-blue-50 rounded-full opacity-60 blur-xl"></div>
+      <section className="relative min-h-screen flex items-center py-12 lg:py-16 overflow-hidden bg-white">
+        {/* 背景装饰元素 - 已移除彩色装饰，改为纯白色背景 */}
+        <div className="absolute inset-0 pointer-events-none z-0 bg-white">
+          {/* 所有装饰元素已移除 */}
         </div>
         
         <div className="container mx-auto px-4 md:px-6 z-10">
@@ -147,7 +144,7 @@ function Home() {
             <div className="text-center mb-16">
               <h2 className="text-3xl md:text-4xl font-bold mb-4">
                 <span className="text-purple-600">卓越的体验</span>
-              </h2>
+                </h2>
             </div>
             
             {/* 特性卡片组 */}
