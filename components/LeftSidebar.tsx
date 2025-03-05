@@ -8,11 +8,9 @@ import { Button } from './ui/button';
 import { HistoryManager, SearchHistoryItem, FavoriteItem } from '../utils/history-manager';
 import { useRouter } from 'next/router';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faHome, faHistory, faStar, faTrash, faChevronDown, faChevronUp, faXmark } from '@fortawesome/free-solid-svg-icons';
 import { faDiscord } from '@fortawesome/free-brands-svg-icons';
 import { useAuth } from '../contexts/AuthContext';
 import { AuthForm } from './auth/AuthForm';
-import Link from 'next/link';
 
 const LeftSidebar = () => {
   const router = useRouter();
@@ -107,102 +105,84 @@ const LeftSidebar = () => {
   };
 
   return (
-    <div className="w-64 h-screen flex flex-col bg-white border-r border-gray-200 shadow-sm">
-      {/* 导航链接 */}
+    <div className="w-64 bg-white border-r border-gray-200 h-screen flex flex-col">
+      {/* Logo section */}
       <div className="p-4 border-b border-gray-200">
-        <Link href="/">
-          <div className="flex items-center mb-4 cursor-pointer">
-            <span className="text-lg font-bold">Think Graph</span>
-          </div>
-        </Link>
-        <Link href="/">
-          <div className="flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors duration-200 cursor-pointer mb-2">
-            <FontAwesomeIcon icon={faHome} className="w-4 h-4" />
-            <span>首页</span>
-          </div>
-        </Link>
+        <a href="/" className="flex items-center space-x-2">
+          <span className="text-xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 text-transparent bg-clip-text">Think Graph</span>
+        </a>
       </div>
 
-      {/* 历史记录 */}
-      <div className="flex-1 overflow-y-auto">
-        {/* Logo section */}
-        <div className="p-4 border-b border-gray-200">
-          <a href="/" className="flex items-center space-x-2">
-            <span className="text-xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 text-transparent bg-clip-text">Think Graph</span>
-          </a>
-        </div>
-
-        {/* Main content area */}
-        <div className="flex-1 overflow-auto p-4">
-          {loading ? (
-            <div className="flex items-center justify-center h-full">
-              <div className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+      {/* Main content area */}
+      <div className="flex-1 overflow-auto p-4">
+        {loading ? (
+          <div className="flex items-center justify-center h-full">
+            <div className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+          </div>
+        ) : user ? (
+          <div className="space-y-4">
+            {/* User info */}
+            <div className="p-4 bg-gray-50 rounded-lg">
+              <div className="flex items-center space-x-2 mb-3">
+                <User className="w-4 h-4 text-gray-500" />
+                <span className="text-sm text-gray-700 truncate">{user.email}</span>
+              </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => signOut()}
+                className="w-full justify-start text-red-500 hover:text-red-600 hover:bg-red-50"
+              >
+                <LogOut className="w-4 h-4 mr-2" />
+                Sign Out
+              </Button>
             </div>
-          ) : user ? (
-            <div className="space-y-4">
-              {/* User info */}
-              <div className="p-4 bg-gray-50 rounded-lg">
-                <div className="flex items-center space-x-2 mb-3">
-                  <User className="w-4 h-4 text-gray-500" />
-                  <span className="text-sm text-gray-700 truncate">{user.email}</span>
-                </div>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => signOut()}
-                  className="w-full justify-start text-red-500 hover:text-red-600 hover:bg-red-50"
-                >
-                  <LogOut className="w-4 h-4 mr-2" />
-                  Sign Out
-                </Button>
-              </div>
-              
-              {/* Future features placeholder */}
-              <div className="text-center text-sm text-gray-500 mt-8">
-                <p>More features coming soon!</p>
-              </div>
+            
+            {/* Future features placeholder */}
+            <div className="text-center text-sm text-gray-500 mt-8">
+              <p>More features coming soon!</p>
             </div>
-          ) : (
-            <div className="space-y-6">
-              <div className="text-center">
-                <h2 className="text-xl font-semibold text-gray-800 mb-2">Welcome to Think Graph</h2>
-                <p className="text-sm text-gray-600">Create beautiful knowledge graphs with AI</p>
-              </div>
-              
-              <AuthForm mode={authMode} />
-              
-              <div className="flex justify-between text-sm">
-                {authMode === 'login' ? (
-                  <>
-                    <button
-                      onClick={() => setAuthMode('register')}
-                      className="text-blue-600 hover:text-blue-700"
-                    >
-                      Register
-                    </button>
-                    <button
-                      onClick={() => setAuthMode('reset')}
-                      className="text-blue-600 hover:text-blue-700"
-                    >
-                      Forgot Password?
-                    </button>
-                  </>
-                ) : (
+          </div>
+        ) : (
+          <div className="space-y-6">
+            <div className="text-center">
+              <h2 className="text-xl font-semibold text-gray-800 mb-2">Welcome to Think Graph</h2>
+              <p className="text-sm text-gray-600">Create beautiful knowledge graphs with AI</p>
+            </div>
+            
+            <AuthForm mode={authMode} />
+            
+            <div className="flex justify-between text-sm">
+              {authMode === 'login' ? (
+                <>
                   <button
-                    onClick={() => setAuthMode('login')}
+                    onClick={() => setAuthMode('register')}
                     className="text-blue-600 hover:text-blue-700"
                   >
-                    Back to Login
+                    Register
                   </button>
-                )}
-              </div>
+                  <button
+                    onClick={() => setAuthMode('reset')}
+                    className="text-blue-600 hover:text-blue-700"
+                  >
+                    Forgot Password?
+                  </button>
+                </>
+              ) : (
+                <button
+                  onClick={() => setAuthMode('login')}
+                  className="text-blue-600 hover:text-blue-700"
+                >
+                  Back to Login
+                </button>
+              )}
             </div>
-          )}
-        </div>
+          </div>
+        )}
       </div>
 
-      {/* Discord link - 已隐藏 */}
-      <div className="p-4 border-t border-gray-200" style={{ display: 'none' }}>
+      {/* Discord link */}
+      <div className="p-4 border-t border-gray-200">
         <a
           href="https://discord.gg/your-discord"
           target="_blank"
