@@ -2,6 +2,8 @@ body {
   font-family: 'Noto Sans', sans-serif;
   background-color: #ffffff;
   margin: 0;
+  -webkit-tap-highlight-color: rgba(0,0,0,0); /* 移除移动端点击高亮 */
+  overscroll-behavior-y: none; /* 防止整页弹性滚动 */
 }
 
 .container {
@@ -12,6 +14,15 @@ body {
   padding: 20px;
   min-height: 80vh; /* 确保内容区域占满视口 */
   box-sizing: border-box;
+}
+
+/* 适配不同屏幕尺寸的响应式容器 */
+@media (max-width: 768px) {
+  .container {
+    flex-direction: column;
+    padding: 15px;
+    gap: 15px;
+  }
 }
 
 .column {
@@ -28,10 +39,29 @@ body {
   max-width: 50%; /* 中心栏最大比例 */
 }
 
+/* 移动设备响应式布局 */
+@media (max-width: 768px) {
+  .column {
+    max-width: 100%;
+    padding: 15px;
+  }
+  
+  .column-center {
+    max-width: 100%;
+  }
+}
+
 .column h3 {
   display: flex;
   justify-content: center; /* 居中文本 */
   align-items: center; /* 居中 emoji 和标题 */
+  font-size: 1.2rem;
+}
+
+@media (max-width: 480px) {
+  .column h3 {
+    font-size: 1rem;
+  }
 }
 
 .column h3::before {
@@ -61,6 +91,12 @@ body {
   animation: spin 2s linear infinite; /* 动画效果 */
 }
 
+@media (max-width: 480px) {
+  .loading-img {
+    max-width: 100px;
+  }
+}
+
 @keyframes spin {
   0% { transform: rotate(0deg); }
   100% { transform: rotate(360deg); }
@@ -79,8 +115,15 @@ body {
   text-align: center; /* 标题居中 */
 }
 
+@media (max-width: 480px) {
+  .result-title {
+    font-size: 16px;
+  }
+}
+
 .result-snippet {
   color: #666;
+  font-size: 0.9rem;
 }
 
 .footer-search-container {
@@ -96,6 +139,13 @@ body {
   gap: 10px;
 }
 
+@media (max-width: 768px) {
+  .footer-search-container {
+    width: 90%;
+    bottom: 15px;
+  }
+}
+
 .footer-search-input {
   width: 100%; /* 扩展输入框接近整个搜索栏宽度 */
   height: 50px; /* 增加输入框高度 */
@@ -103,6 +153,14 @@ body {
   font-size: 18px; /* 增加字体大小 */
   border: 1px solid #ccc; /* 边框设置为浅灰色 */
   border-radius: 25px;
+}
+
+@media (max-width: 480px) {
+  .footer-search-input {
+    height: 40px;
+    padding: 8px 15px;
+    font-size: 16px;
+  }
 }
 
 .footer-search-button {
@@ -119,6 +177,13 @@ body {
   cursor: pointer;
 }
 
+@media (max-width: 480px) {
+  .footer-search-button {
+    width: 40px;
+    height: 40px;
+  }
+}
+
 .footer-search-button:hover {
   background-color: #ffffff;
 }
@@ -126,4 +191,52 @@ body {
 .footer-search-button i {
   font-size: 20px; /* 设置箭头图标大小 */
   color: #ffffff;
+}
+
+@media (max-width: 480px) {
+  .footer-search-button i {
+    font-size: 16px;
+  }
+}
+
+/* 移动触摸优化 */
+@media (max-width: 768px) {
+  button, a, input[type="button"], input[type="submit"] {
+    min-height: 44px; /* 确保可点击区域足够大 */
+    min-width: 44px;
+  }
+  
+  input, select, textarea {
+    font-size: 16px; /* 防止iOS缩放 */
+  }
+}
+
+/* 增加移动端可读性 */
+@media (max-width: 480px) {
+  p, li, .result-snippet {
+    font-size: 0.95rem;
+    line-height: 1.5;
+  }
+  
+  h1 {
+    font-size: 1.8rem;
+  }
+  
+  h2 {
+    font-size: 1.5rem;
+  }
+  
+  h3 {
+    font-size: 1.2rem;
+  }
+}
+
+/* 适应小屏幕的固定元素调整 */
+@media (max-height: 600px) {
+  .footer-search-container {
+    position: static;
+    margin: 20px auto;
+    transform: none;
+    left: auto;
+  }
 }

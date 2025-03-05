@@ -21,15 +21,17 @@ const KnowledgeGraph = ({
   const [selectedNode, setSelectedNode] = useState(null);
   const [isMobile, setIsMobile] = useState(false);
   const [is3DMode, setIs3DMode] = useState(defaultMode === "3d");
+  const [touchStartPos, setTouchStartPos] = useState(null);
+  const [touchMoved, setTouchMoved] = useState(false);
   
   // 主题配置
   const theme = {
     node: {
       color: '#6366F1',
       highlightColor: '#F43F5E',
-      minSize: 3,        // 最小节点大小
-      maxSize: 15,       // 最大节点大小
-      segments: 32,
+      minSize: isMobile ? 4 : 3,        // 移动端增大节点最小大小
+      maxSize: isMobile ? 18 : 15,      // 移动端增大节点最大大小
+      segments: isMobile ? 24 : 32,     // 移动端降低精度以提高性能
       opacity: 0.9,
       glowColor: '#818CF8'
     },
@@ -37,11 +39,11 @@ const KnowledgeGraph = ({
       color: '#94A3B8',
       highlightColor: '#64748B',
       opacity: 0.6,
-      width: 2
+      width: isMobile ? 1.5 : 2         // 移动端略微调整线宽
     },
     label: {
       color: '#1E293B',
-      size: '14px',
+      size: isMobile ? '12px' : '14px', // 移动端调整标签大小
       font: 'Inter, system-ui, -apple-system, sans-serif',
       weight: '500'
     }
@@ -59,6 +61,21 @@ const KnowledgeGraph = ({
       typeof node.data.label === 'string'
     );
 
+  // 移动设备检测
+  useEffect(() => {
+    const checkMobile = () => {
+      const isMobileDevice = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth < 768;
+      setIsMobile(isMobileDevice);
+    };
+    
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    
+    return () => {
+      window.removeEventListener('resize', checkMobile);
+    };
+  }, []);
+
   const initScene = () => {
     if (!containerRef.current) return;
     
@@ -73,19 +90,20 @@ const KnowledgeGraph = ({
 
     // 创建相机并设置到合适的观察位置
     const camera = new THREE.PerspectiveCamera(45, width / height, 1, 2000);
-    // 将相机位置设置到合适观察距离
-    camera.position.set(0, 0, 550);
+    // 将相机位置设置到合适观察距离，移动设备上调整观察距离
+    const cameraDistance = isMobile ? 450 : 550;
+    camera.position.set(0, 0, cameraDistance);
     camera.lookAt(0, 0, 0);
 
     // 创建渲染器
     const renderer = new THREE.WebGLRenderer({ 
-      antialias: true,
+      antialias: !isMobile, // 移动设备关闭抗锯齿以提高性能
       alpha: true,
       logarithmicDepthBuffer: true
     });
     renderer.setSize(width, height);
-    renderer.setPixelRatio(window.devicePixelRatio);
-    renderer.shadowMap.enabled = true;
+    renderer.setPixelRatio(isMobile ? Math.min(window.devicePixelRatio, 2) : window.devicePixelRatio); // 限制移动设备的像素比
+    renderer.shadowMap.enabled = !isMobile; // 移动设备关闭阴影以提高性能
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
     // 创建标签渲染器
@@ -972,15 +990,6 @@ const KnowledgeGraph = ({
     }
   }, [data, isValidData]);
 
-  useEffect(() => {
-    const checkMobile = () => {
-      setIsMobile(window.innerWidth < 768);
-    };
-    checkMobile();
-    window.addEventListener('resize', checkMobile);
-    return () => window.removeEventListener('resize', checkMobile);
-  }, []);
-
   // 添加触摸事件支持
   useEffect(() => {
     if (!containerRef.current) return;
@@ -990,28 +999,40 @@ const KnowledgeGraph = ({
     let isDragging = false;
 
     const handleTouchStart = (e) => {
-      touchStartX = e.touches[0].clientX;
-      touchStartY = e.touches[0].clientY;
-      isDragging = true;
+      if (e.touches.length === 1) {
+        // 保存触摸起始位置
+        setTouchStartPos({
+          x: e.touches[0].clientX,
+          y: e.touches[0].clientY
+        });
+        setTouchMoved(false);
+      }
     };
 
     const handleTouchMove = (e) => {
-      if (!isDragging) return;
-      
-      const deltaX = e.touches[0].clientX - touchStartX;
-      const deltaY = e.touches[0].clientY - touchStartY;
-      
-      // 在这里处理图谱的平移
-      // 可以根据需要调整移动速度
-      containerRef.current.scrollLeft -= deltaX;
-      containerRef.current.scrollTop -= deltaY;
-      
-      touchStartX = e.touches[0].clientX;
-      touchStartY = e.touches[0].clientY;
+      if (touchStartPos && e.touches.length === 1) {
+        // 计算移动距离
+        const deltaX = e.touches[0].clientX - touchStartPos.x;
+        const deltaY = e.touches[0].clientY - touchStartPos.y;
+        
+        // 如果移动距离超过阈值，标记为已移动
+        if (Math.abs(deltaX) > 10 || Math.abs(deltaY) > 10) {
+          setTouchMoved(true);
+        }
+      }
     };
 
-    const handleTouchEnd = () => {
-      isDragging = false;
+    const handleTouchEnd = (e) => {
+      // 如果没有移动过，则视为点击
+      if (touchStartPos && !touchMoved) {
+        // 这里处理点击事件
+        // 例如，可以检测点击位置是否在节点上
+        // 然后调用handleNodeClick函数
+      }
+      
+      // 重置触摸状态
+      setTouchStartPos(null);
+      setTouchMoved(false);
     };
 
     const element = containerRef.current;
@@ -1096,6 +1117,39 @@ const KnowledgeGraph = ({
     };
   }, [data]);
 
+  // 添加移动设备优化的控制面板
+  const renderControls = () => {
+    if (hideControls) return null;
+    
+    return (
+      <div className={`absolute ${isMobile ? 'bottom-2 right-2' : 'top-4 right-4'} flex ${isMobile ? 'flex-row' : 'flex-col'} gap-2 z-20`}>
+        <button
+          onClick={toggleMode}
+          className="bg-white p-2 rounded-full shadow-md hover:bg-gray-100 transition-colors text-gray-700 focus:outline-none"
+          title={is3DMode ? "切换到2D模式" : "切换到3D模式"}
+        >
+          <FontAwesomeIcon icon={faCube} size={isMobile ? "sm" : "lg"} />
+        </button>
+        
+        <button
+          onClick={handleFullscreen}
+          className="bg-white p-2 rounded-full shadow-md hover:bg-gray-100 transition-colors text-gray-700 focus:outline-none"
+          title={isFullscreen ? "退出全屏" : "全屏查看"}
+        >
+          <FontAwesomeIcon icon={isFullscreen ? faCompress : faExpand} size={isMobile ? "sm" : "lg"} />
+        </button>
+        
+        <button
+          onClick={handleResetView}
+          className="bg-white p-2 rounded-full shadow-md hover:bg-gray-100 transition-colors text-gray-700 focus:outline-none"
+          title="重置视图"
+        >
+          <FontAwesomeIcon icon={faRefresh} size={isMobile ? "sm" : "lg"} />
+        </button>
+      </div>
+    );
+  };
+
   return (
     <div 
       ref={containerRef} 
@@ -1151,6 +1205,8 @@ const KnowledgeGraph = ({
       </button>
       
       <div ref={containerRef} style={{ width: '100%', height: '100%' }} onWheel={e => e.stopPropagation()} />
+      
+      {renderControls()}
       
       <style jsx>{`
         .knowledge-graph-container {
