@@ -3,10 +3,10 @@ import axios from 'axios';
 // API 配置
 const API_CONFIG = {
   deepseek: {
-    url: 'https://api.siliconflow.cn/v1/chat/completions',
+    url: 'https://api.siliconflow.com/v1/chat/completions',
     key: process.env.SILICONFLOW_API_KEY,
     models: {
-      fast: 'Qwen/Qwen1.5-7B-Chat',  // 快速响应模型 - 更新为Qwen1.5-7B-Chat
+      fast: 'Qwen/Qwen1.5-0.5B-Chat',  // 更换为更轻量级的模型，响应更快
       deep: 'deepseek-ai/DeepSeek-R1',  // 深度思考模型
       chat: 'deepseek-ai/deepseek-chat-7b',  // 通用对话模型
       coder: 'deepseek-ai/deepseek-coder-7b',  // 代码生成模型
@@ -33,7 +33,7 @@ const API_CONFIG = {
 };
 
 // 创建 axios 实例
-const createAxiosInstance = (timeout = 120000) => {
+const createAxiosInstance = (timeout = 30000) => {
   return axios.create({
     timeout,
     maxContentLength: Infinity,
@@ -41,22 +41,61 @@ const createAxiosInstance = (timeout = 120000) => {
   });
 };
 
-// 添加重试逻辑
+// 添加重试逻辑和错误处理
 const addRetryInterceptor = (api) => {
-  api.interceptors.response.use(undefined, async (err) => {
-    const { config } = err;
-    if (!config || !config.retry) {
-      return Promise.reject(err);
-    }
-    config.currentRetryAttempt = config.currentRetryAttempt || 0;
-    if (config.currentRetryAttempt >= config.retry) {
-      return Promise.reject(err);
-    }
-    config.currentRetryAttempt += 1;
-    const delayMs = config.retryDelay || 1000;
-    await new Promise(resolve => setTimeout(resolve, delayMs));
-    return api(config);
+  // 添加请求拦截器
+  api.interceptors.request.use(config => {
+    // 记录请求开始时间
+    config.metadata = { startTime: new Date() };
+    return config;
   });
+
+  // 添加响应拦截器
+  api.interceptors.response.use(
+    response => {
+      // 计算请求耗时
+      const requestTime = new Date() - response.config.metadata.startTime;
+      console.log(`请求耗时: ${requestTime}ms`);
+      return response;
+    },
+    async (err) => {
+      const { config } = err;
+      if (!config || !config.retry) {
+        return Promise.reject(err);
+      }
+      
+      // 记录详细错误信息
+      const errorStatus = err.response ? err.response.status : 'network error';
+      console.error(`API错误(${config.url}): ${errorStatus} - ${err.message}`);
+      
+      config.currentRetryAttempt = config.currentRetryAttempt || 0;
+      
+      // 对于504错误，立即切换到备用端点
+      if (err.response && err.response.status === 504 && config.url.includes('siliconflow') && config.currentRetryAttempt === 0) {
+        console.log('检测到504超时，正在切换到备用API端点...');
+        
+        // 尝试切换API端点
+        if (config.url.includes('api.siliconflow.com')) {
+          config.url = config.url.replace('api.siliconflow.com', 'api.siliconflow.cn');
+        } else if (config.url.includes('api.siliconflow.cn')) {
+          config.url = config.url.replace('api.siliconflow.cn', 'api.siliconflow.com');
+        }
+        
+        console.log(`已切换到新端点: ${config.url}`);
+        return api(config);
+      }
+      
+      if (config.currentRetryAttempt >= config.retry) {
+        return Promise.reject(err);
+      }
+      
+      config.currentRetryAttempt += 1;
+      const delayMs = config.retryDelay || 1000;
+      console.log(`重试中(${config.currentRetryAttempt}/${config.retry})，等待${delayMs}ms...`);
+      await new Promise(resolve => setTimeout(resolve, delayMs));
+      return api(config);
+    }
+  );
   return api;
 };
 
@@ -120,7 +159,7 @@ const callOpenAIAPI = async (messages, stream = false) => {
 };
 
 // DeepSeek API 调用
-const callDeepSeekAPI = async (messages, stream = false, useDeepThinking = false) => {
+const callDeepSeekAPI = async (messages, stream = true, useDeepThinking = false) => {
   // 如果启用深度思考，使用火山引擎
   if (useDeepThinking) {
     return callVolcengineAPI(messages, stream);
@@ -141,20 +180,20 @@ const callDeepSeekAPI = async (messages, stream = false, useDeepThinking = false
   } else if (messages.length > 8) {  // 复杂对话使用 MOE 模型
     model = config.models.moe;
   } else {
-    model = config.models.fast;  // 默认使用快速模型 (Qwen1.5-7B-Chat)
+    model = config.models.fast;  // 默认使用快速模型 (Qwen1.5-0.5B-Chat)
   }
 
   logApiDetails('DeepSeek', 'info', `Using model: ${model}`);
 
   // 为Qwen模型优化的参数
   const isQwenModel = model.includes('Qwen');
-  const temperature = isQwenModel ? 0.8 : 0.7;
-  const max_tokens = isQwenModel ? 4000 : 2000;
+  const temperature = isQwenModel ? 0.7 : 0.7;
+  const max_tokens = isQwenModel ? 2000 : 2000; // 减少token数量以加快响应
   const top_p = isQwenModel ? 0.9 : 0.8;
 
   // 增强的日志记录
   if (isQwenModel) {
-    console.log('=== 免费Qwen模型调用详情 ===');
+    console.log('=== 快速响应Qwen模型调用详情 ===');
     console.log('🚀 模型:', model);
     console.log('📝 消息数量:', messages.length);
     console.log('⚙️ 参数配置:');
@@ -164,7 +203,7 @@ const callDeepSeekAPI = async (messages, stream = false, useDeepThinking = false
     console.log('   - 流式响应:', stream ? '是' : '否');
     console.log('================================');
     
-    logApiDetails('DeepSeek', 'info', `使用免费的阿里云Qwen大模型: ${model}`);
+    logApiDetails('DeepSeek', 'info', `使用轻量级Qwen模型: ${model}`);
   }
 
   try {
@@ -178,7 +217,8 @@ const callDeepSeekAPI = async (messages, stream = false, useDeepThinking = false
         max_tokens,
         stream,
         top_p,
-        frequency_penalty: 0.5
+        frequency_penalty: 0.3, // 降低重复惩罚以加快生成速度
+        presence_penalty: 0.1   // 低值以提高响应速度
       },
       headers: {
         'Authorization': `Bearer ${config.key}`,
@@ -186,8 +226,8 @@ const callDeepSeekAPI = async (messages, stream = false, useDeepThinking = false
         'Accept': stream ? 'text/event-stream' : 'application/json'
       },
       responseType: stream ? 'stream' : 'json',
-      retry: 3,
-      retryDelay: 1000
+      retry: 2,        // 减少重试次数，以便更快切换到备用模型
+      retryDelay: 500  // 减少重试延迟
     });
     logApiDetails('DeepSeek', 'success', `API call successful using ${model}`);
     return response;
@@ -321,7 +361,24 @@ const callGeminiAPI = async (messages, stream = false) => {
 };
 
 // 故障转移调用
-const callWithFallback = async (messages, stream = false, useDeepThinking = false) => {
+const callWithFallback = async (messages, stream = true, useDeepThinking = false) => {
+  // 确保消息不为空且格式正确
+  if (!messages || !Array.isArray(messages) || messages.length === 0) {
+    logApiDetails('Fallback', 'error', '消息格式错误或为空');
+    throw new Error('Invalid messages format');
+  }
+
+  // 缩短长消息以减少处理时间
+  const optimizedMessages = messages.map(msg => {
+    if (msg.content && typeof msg.content === 'string' && msg.content.length > 4000) {
+      return {
+        ...msg,
+        content: msg.content.substring(0, 4000) + '...(content truncated for performance)'
+      };
+    }
+    return msg;
+  });
+
   // 如果启用深度思考，优先使用火山引擎
   if (useDeepThinking) {
     try {
@@ -345,7 +402,7 @@ const callWithFallback = async (messages, stream = false, useDeepThinking = fals
         - Model ID: ${config.model_id}
         - Region: ${config.region}`);
 
-      const response = await callVolcengineAPI(messages, stream);
+      const response = await callVolcengineAPI(optimizedMessages, stream);
       logApiDetails('Fallback', 'success', '✅ 火山引擎 DeepSeek R1 调用成功');
       return { provider: 'volcengine', response };
     } catch (error) {
@@ -355,94 +412,89 @@ const callWithFallback = async (messages, stream = false, useDeepThinking = fals
     }
   }
 
-  // 定义多个 DeepSeek 模型尝试顺序
-  const deepseekModels = [
-    { name: 'qwen-fast', fn: (msgs, strm) => {
-      // 强制使用Qwen模型作为快速响应模型
-      const configCopy = JSON.parse(JSON.stringify(API_CONFIG.deepseek));
-      const origModel = configCopy.models.fast;
-      try {
-        // 确保使用的是Qwen模型
-        if (!origModel.includes('Qwen')) {
-          configCopy.models.fast = 'Qwen/Qwen1.5-7B-Chat';
-          logApiDetails('Fallback', 'info', '已切换到免费的Qwen大模型');
-        }
-        const customDeepSeekAPI = async (messages, stream) => {
-          // 使用修改后的配置调用DeepSeekAPI函数的核心逻辑
-          if (!configCopy.key) {
-            throw new Error('SiliconFlow API key not configured');
-          }
-          
-          // 确保使用fast模型
-          const model = configCopy.models.fast;
-          
-          // Qwen模型优化参数
-          const temperature = 0.8;
-          const max_tokens = 4000;
-          const top_p = 0.9;
-          
-          logApiDetails('Qwen', 'info', `Using optimized Qwen model: ${model}`);
-          
-          const response = await api({
-            method: 'post',
-            url: configCopy.url,
-            data: {
-              model: model,
-              messages,
-              temperature,
-              max_tokens,
-              stream,
-              top_p,
-              frequency_penalty: 0.5
-            },
-            headers: {
-              'Authorization': `Bearer ${configCopy.key}`,
-              'Content-Type': 'application/json',
-              'Accept': stream ? 'text/event-stream' : 'application/json'
-            },
-            responseType: stream ? 'stream' : 'json',
-            retry: 3,
-            retryDelay: 1000
-          });
-          
-          return response;
-        };
+  // 定义API调用列表和优先级
+  const apiConfigs = [
+    // 优先使用超轻量模型，保证快速响应
+    { 
+      name: 'qwen-fast', 
+      description: '超轻量级Qwen模型(0.5B)',
+      fn: async (msgs, strm) => {
+        // 确保使用轻量级模型
+        const modelName = 'Qwen/Qwen1.5-0.5B-Chat';
+        const config = API_CONFIG.deepseek;
         
-        return customDeepSeekAPI(msgs, strm);
-      } catch (error) {
-        logApiDetails('Qwen', 'error', `Qwen模型调用失败: ${error.message}`);
-        throw error;
+        const response = await api({
+          method: 'post',
+          url: config.url,
+          data: {
+            model: modelName,
+            messages: msgs,
+            temperature: 0.7,
+            max_tokens: 1500,
+            stream: strm,
+            top_p: 0.9,
+            frequency_penalty: 0.3
+          },
+          headers: {
+            'Authorization': `Bearer ${config.key}`,
+            'Content-Type': 'application/json',
+            'Accept': strm ? 'text/event-stream' : 'application/json'
+          },
+          responseType: strm ? 'stream' : 'json',
+          retry: 1,
+          retryDelay: 300
+        });
+        
+        return response;
       }
-    }},
-    { name: 'deepseek-primary', fn: (msgs, strm) => callDeepSeekAPI(msgs, strm, false) },
-    { name: 'deepseek-backup', fn: (msgs, strm) => callDeepSeekAPI(msgs, strm, false) }
+    },
+    // 其次使用标准DeepSeek调用
+    { 
+      name: 'deepseek-primary', 
+      description: '标准DeepSeek模型',
+      fn: (msgs, strm) => callDeepSeekAPI(msgs, strm, false) 
+    },
+    // 最后使用其他备用API
+    { 
+      name: 'openai', 
+      description: 'OpenAI (备用)',
+      fn: callOpenAIAPI 
+    },
+    { 
+      name: 'gemini', 
+      description: 'Google Gemini (备用)',
+      fn: callGeminiAPI 
+    }
   ];
 
-  // 其他 API 作为最后的备选
-  const backupApis = [
-    { name: 'openai', fn: callOpenAIAPI },
-    { name: 'gemini', fn: callGeminiAPI }
-  ];
-
-  // 合并所有 API，确保 DeepSeek 模型优先
-  const apis = [...deepseekModels, ...backupApis];
-
-  logApiDetails('Fallback', 'info', 'Starting API fallback sequence');
+  // 记录故障转移开始
+  console.log('==== API故障转移序列开始 ====');
+  console.log(`请求消息数: ${messages.length}`);
+  console.log(`流式响应: ${stream ? '启用' : '禁用'}`);
+  console.log('备选API顺序:');
+  apiConfigs.forEach((api, idx) => {
+    console.log(`${idx+1}. ${api.name} - ${api.description}`);
+  });
+  console.log('============================');
   
-  for (const api of apis) {
+  // 依次尝试每个API
+  for (const api of apiConfigs) {
     try {
-      logApiDetails('Fallback', 'info', `Attempting ${api.name} API`);
-      const response = await api.fn(messages, stream);
-      logApiDetails('Fallback', 'success', `Successfully used ${api.name} API`);
+      logApiDetails('Fallback', 'info', `尝试调用 ${api.name} API`);
+      const startTime = Date.now();
+      const response = await api.fn(optimizedMessages, stream);
+      const duration = Date.now() - startTime;
+      logApiDetails('Fallback', 'success', `成功使用 ${api.name} API (耗时: ${duration}ms)`);
       return { provider: api.name.split('-')[0], response };
     } catch (error) {
-      logApiDetails('Fallback', 'warning', `${api.name} API failed: ${error.message}`);
+      logApiDetails('Fallback', 'warning', `${api.name} API调用失败: ${error.message}`);
       continue;
     }
   }
 
-  logApiDetails('Fallback', 'error', 'All API calls failed');
-  throw new Error('All API calls failed');
+  // 所有API都失败，抛出最终错误
+  logApiDetails('Fallback', 'error', '所有API调用均失败，请检查网络连接或API配置');
+  throw new Error('所有API调用都失败');
 };
 
 export {
