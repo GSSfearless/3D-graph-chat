@@ -90,7 +90,10 @@ function Home() {
                     onChange={(e) => setQuery(e.target.value)}
                     onKeyPress={handleKeyPress}
                     placeholder="输入任何主题..."
-                    className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-blue-500 focus:ring focus:ring-blue-200 transition duration-200"
+                    className="w-full px-4 py-3 rounded-lg border border-gray-300 
+                             focus:outline-none focus:border-indigo-400 focus:shadow-[0_0_0_3px_rgba(99,102,241,0.1)] 
+                             transition-all duration-200 ease-in-out
+                             hover:border-gray-400"
                   />
                 </div>
                 
