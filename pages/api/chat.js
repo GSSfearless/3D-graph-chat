@@ -26,8 +26,8 @@ export default async function handler(req, res) {
       {
         role: 'system',
         content: useDeepThinking 
-          ? ''
-          : ''
+          ? '你是DeepSeek V3，一个强大的知识图谱助手。请使用深度思考模式回答用户的问题，展示你的推理过程，并尽可能提供详细和准确的信息。你的回答将用于构建知识图谱，因此请注重概念之间的关系和逻辑连接。'
+          : '你是DeepSeek V3，一个强大的知识图谱助手。请简明扼要地回答用户的问题，提供准确信息。你的回答将用于构建知识图谱，因此请使用清晰的结构和逻辑性强的表述。帮助用户理解复杂概念并发现概念之间的联系。'
       },
       {
         role: 'user',
@@ -90,8 +90,22 @@ export default async function handler(req, res) {
                 case 'deepseek':
                   if (parsed.choices && parsed.choices[0]) {
                     const choice = parsed.choices[0];
+                    // 处理流式响应
                     if (choice.delta && choice.delta.content) {
                       content = choice.delta.content;
+                    } 
+                    // 处理非流式响应
+                    else if (choice.message && choice.message.content) {
+                      content = choice.message.content;
+                    }
+                    // 支持V3模型可能的思考过程输出
+                    if (choice.reasoning_step || choice.thinking) {
+                      const reasoningContent = choice.reasoning_step || choice.thinking;
+                      res.write(`data: {"type":"reasoning","content":"${encodeURIComponent(reasoningContent)}"}\n\n`);
+                    }
+                    if (choice.reasoning_output || choice.thought_output) {
+                      const reasoningOutput = choice.reasoning_output || choice.thought_output;
+                      res.write(`data: {"type":"reasoning","content":"${encodeURIComponent(reasoningOutput)}"}\n\n`);
                     }
                   }
                   break;

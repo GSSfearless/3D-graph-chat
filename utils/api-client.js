@@ -6,6 +6,7 @@ const API_CONFIG = {
     url: 'https://api.siliconflow.cn/v1/chat/completions',
     key: process.env.SILICONFLOW_API_KEY,
     models: {
+      v3: 'deepseek-ai/deepseek-v3',  // 首选模型 - DeepSeek V3
       fast: 'deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B',  // 快速响应模型
       deep: 'deepseek-ai/DeepSeek-R1',  // 深度思考模型
       chat: 'deepseek-ai/deepseek-chat-7b',  // 通用对话模型
@@ -132,16 +133,21 @@ const callDeepSeekAPI = async (messages, stream = false, useDeepThinking = false
     throw new Error('DeepSeek API key not configured');
   }
 
-  // 根据任务类型选择合适的模型
-  let model;
-  if (messages.some(m => m.content.includes('代码') || m.content.includes('编程'))) {
-    model = config.models.coder;
-  } else if (messages.some(m => m.content.includes('数学') || m.content.includes('计算'))) {
-    model = config.models.math;
-  } else if (messages.length > 5) {  // 复杂对话使用 MOE 模型
-    model = config.models.moe;
-  } else {
-    model = config.models.fast;  // 默认使用快速模型
+  // 优先使用 DeepSeek V3 模型
+  let model = config.models.v3;  // 默认使用 V3 模型
+
+  // 以下是备选逻辑，仅在特定情况下考虑其他模型
+  // 根据任务类型选择备选模型（当V3不可用时）
+  if (!model) {
+    if (messages.some(m => m.content.includes('代码') || m.content.includes('编程'))) {
+      model = config.models.coder;
+    } else if (messages.some(m => m.content.includes('数学') || m.content.includes('计算'))) {
+      model = config.models.math;
+    } else if (messages.length > 5) {  // 复杂对话使用 MOE 模型
+      model = config.models.moe;
+    } else {
+      model = config.models.fast;  // 默认备选使用快速模型
+    }
   }
 
   logApiDetails('DeepSeek', 'info', `Using model: ${model}`);
@@ -301,7 +307,18 @@ const callGeminiAPI = async (messages, stream = false) => {
 
 // 故障转移调用
 const callWithFallback = async (messages, stream = false, useDeepThinking = false) => {
-  // 如果启用深度思考，优先使用火山引擎
+  // 优先尝试使用 DeepSeek V3
+  try {
+    logApiDetails('Fallback', 'info', '🚀 尝试使用 DeepSeek V3 模型...');
+    const response = await callDeepSeekAPI(messages, stream, false);
+    logApiDetails('Fallback', 'success', '✅ DeepSeek V3 调用成功');
+    return { provider: 'deepseek', response };
+  } catch (error) {
+    logApiDetails('Fallback', 'warning', `⚠️ DeepSeek V3 调用失败: ${error.message}`);
+    logApiDetails('Fallback', 'info', '正在切换到备用策略...');
+  }
+
+  // 如果启用深度思考，尝试使用火山引擎
   if (useDeepThinking) {
     try {
       logApiDetails('Fallback', 'info', '🔍 检测到深度思考模式已开启');
@@ -334,9 +351,8 @@ const callWithFallback = async (messages, stream = false, useDeepThinking = fals
     }
   }
 
-  // 定义多个 DeepSeek 模型尝试顺序
+  // 定义多个 DeepSeek 模型尝试顺序（作为备选）
   const deepseekModels = [
-    { name: 'deepseek-primary', fn: (msgs, strm) => callDeepSeekAPI(msgs, strm, false) },
     { name: 'deepseek-backup', fn: (msgs, strm) => callDeepSeekAPI(msgs, strm, false) }
   ];
 
