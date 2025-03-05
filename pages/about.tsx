@@ -6,9 +6,9 @@ import { faLightbulb, faUsers, faRocket } from '@fortawesome/free-solid-svg-icon
 const AboutPage = () => {
   return (
     <Layout title="关于我们 - Think Graph" description="了解Think Graph团队和我们的使命、愿景与价值观">
-      {/* 页面标题 */}
       <div className="w-full">
-        <section className="py-16 bg-gradient-to-b from-gray-900 to-indigo-900 text-white">
+        {/* 页面标题 */}
+        <section className="py-16 bg-gradient-to-b from-gray-900 to-indigo-900 text-white w-full">
           <div className="container mx-auto px-4 md:px-6">
             <div className="text-center max-w-3xl mx-auto">
               <h1 className="text-4xl md:text-5xl font-bold mb-6">关于我们</h1>
