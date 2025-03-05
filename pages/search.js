@@ -1,5 +1,6 @@
 import { faArrowRight } from '@fortawesome/free-solid-svg-icons';
 import { faDiscord } from '@fortawesome/free-brands-svg-icons';
+import { faShare } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import dynamic from 'next/dynamic';
 import { useRouter } from 'next/router';
@@ -241,6 +242,22 @@ export default function Search() {
     setSelectedNode(node);
   };
 
+  // 添加分享功能
+  const handleShare = () => {
+    // 获取当前URL
+    const currentUrl = window.location.href;
+    
+    // 复制URL到剪贴板
+    navigator.clipboard.writeText(currentUrl)
+      .then(() => {
+        // 显示提示信息
+        alert('链接已复制到剪贴板，现在您可以分享给他人了！');
+      })
+      .catch(err => {
+        console.error('无法复制链接: ', err);
+      });
+  };
+
   return (
     <div className="flex h-screen overflow-hidden">
       <LeftSidebar />
@@ -302,6 +319,18 @@ export default function Search() {
           <div className="fixed bottom-4 left-1/2 transform -translate-x-1/2 w-full max-w-2xl px-4">
             <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-gray-100 p-4 transition-all duration-300 hover:shadow-xl hover:bg-white/90">
               <div className="flex items-center space-x-4">
+                {/* 分享按钮 */}
+                <button
+                  onClick={handleShare}
+                  className="flex items-center justify-center px-4 py-2.5 rounded-xl 
+                         bg-black text-white font-medium shadow-md transition-all duration-300
+                         hover:bg-gray-800 hover:shadow-lg
+                         focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2"
+                >
+                  <FontAwesomeIcon icon={faShare} className="w-4 h-4 mr-2" />
+                  分享
+                </button>
+                
                 <div className="relative flex-1">
                   <input
                     ref={searchInputRef}
