@@ -4,7 +4,6 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 import { CSS2DRenderer, CSS2DObject } from 'three/examples/jsm/renderers/CSS2DRenderer';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faExpand, faCompress, faSearch, faRefresh, faSave, faDownload, faCube, faShare } from '@fortawesome/free-solid-svg-icons';
-import ReactDOM from 'react-dom';
 
 const KnowledgeGraph = ({ 
   data, 
@@ -724,63 +723,6 @@ const KnowledgeGraph = ({
       });
   };
 
-  // 在组件挂载后添加分享按钮
-  useEffect(() => {
-    // 创建一个新的div元素作为分享按钮的容器
-    const shareButtonContainer = document.createElement('div');
-    shareButtonContainer.id = 'knowledge-graph-share-button';
-    shareButtonContainer.style.position = 'fixed';
-    shareButtonContainer.style.top = '20px';
-    shareButtonContainer.style.right = '20px';
-    shareButtonContainer.style.zIndex = '9999';
-    
-    // 将容器添加到body
-    document.body.appendChild(shareButtonContainer);
-    
-    // 创建分享按钮
-    const shareButton = document.createElement('button');
-    shareButton.innerHTML = '<svg style="width:18px;height:18px;margin-right:6px" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--!Font Awesome Free 6.5.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2024 Fonticons, Inc.--><path fill="currentColor" d="M307 34.8c-11.5 5.1-19 16.6-19 29.2v64H176C78.8 128 0 206.8 0 304C0 417.3 81.5 467.9 100.2 478.1c2.5 1.4 5.3 1.9 8.1 1.9c10.9 0 19.7-8.9 19.7-19.7c0-7.5-4.3-14.4-9.8-19.5C108.8 431.9 96 414.4 96 384c0-53 43-96 96-96h96v64c0 12.6 7.4 24.1 19 29.2s25 3 34.4-5.4l160-144c6.7-6.1 10.6-14.7 10.6-23.8s-3.8-17.7-10.6-23.8l-160-144c-9.4-8.5-22.9-10.6-34.4-5.4z"/></svg>分享';
-    shareButton.style.display = 'flex';
-    shareButton.style.alignItems = 'center';
-    shareButton.style.justifyContent = 'center';
-    shareButton.style.padding = '10px 20px';
-    shareButton.style.backgroundColor = '#000';
-    shareButton.style.color = '#fff';
-    shareButton.style.border = 'none';
-    shareButton.style.borderRadius = '8px';
-    shareButton.style.fontWeight = 'bold';
-    shareButton.style.fontSize = '16px';
-    shareButton.style.cursor = 'pointer';
-    shareButton.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.3)';
-    shareButton.style.transition = 'all 0.3s ease';
-    
-    // 添加悬停效果
-    shareButton.addEventListener('mouseover', () => {
-      shareButton.style.backgroundColor = '#333';
-      shareButton.style.transform = 'translateY(-2px)';
-      shareButton.style.boxShadow = '0 6px 16px rgba(0, 0, 0, 0.4)';
-    });
-    
-    shareButton.addEventListener('mouseout', () => {
-      shareButton.style.backgroundColor = '#000';
-      shareButton.style.transform = 'translateY(0)';
-      shareButton.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.3)';
-    });
-    
-    // 添加点击事件
-    shareButton.addEventListener('click', handleShare);
-    
-    // 将按钮添加到容器
-    shareButtonContainer.appendChild(shareButton);
-    
-    // 组件卸载时移除按钮
-    return () => {
-      if (document.body.contains(shareButtonContainer)) {
-        document.body.removeChild(shareButtonContainer);
-      }
-    };
-  }, []);
-
   useEffect(() => {
     // 清理前一个场景
     if (sceneRef.current?.animationFrameId) {
@@ -1198,6 +1140,35 @@ const KnowledgeGraph = ({
         </div>
       </div>
       
+      {/* 新增显眼的黑色分享按钮 - 使用内联样式确保显示 */}
+      <button 
+        onClick={handleShare} 
+        style={{
+          position: 'absolute',
+          top: '16px',
+          right: '16px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: '6px',
+          padding: '8px 16px',
+          backgroundColor: '#000',
+          color: '#fff',
+          border: 'none',
+          borderRadius: '8px',
+          fontWeight: 600,
+          cursor: 'pointer',
+          transition: 'all 0.2s ease',
+          zIndex: 1001,
+          boxShadow: '0 2px 10px rgba(0, 0, 0, 0.2)'
+        }}
+        title="分享链接"
+        className="share-button-fixed"
+      >
+        <FontAwesomeIcon icon={faShare} />
+        <span style={{ fontSize: '14px' }}>分享</span>
+      </button>
+      
       {/* 取消重复的containerRef引用，使用空div作为容器 */}
       <div style={{ width: '100%', height: '100%' }} onWheel={e => e.stopPropagation()} />
       
@@ -1309,6 +1280,13 @@ const KnowledgeGraph = ({
           white-space: nowrap;
           text-align: center;
           text-shadow: 0 0 3px rgba(255,255,255,0.8);
+        }
+        
+        /* 分享按钮悬停效果 */
+        .share-button-fixed:hover {
+          background-color: #333 !important;
+          transform: translateY(-2px) !important;
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3) !important;
         }
       `}</style>
     </div>
