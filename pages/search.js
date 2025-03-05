@@ -322,13 +322,13 @@ export default function Search() {
                 {/* 分享按钮 */}
                 <button
                   onClick={handleShare}
-                  className="flex items-center justify-center px-4 py-2.5 rounded-xl 
-                         bg-black text-white font-medium shadow-md transition-all duration-300
+                  className="flex items-center justify-center w-10 h-10 rounded-xl 
+                         bg-black text-white shadow-md transition-all duration-300
                          hover:bg-gray-800 hover:shadow-lg
                          focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2"
+                  aria-label="分享"
                 >
-                  <FontAwesomeIcon icon={faShare} className="w-4 h-4 mr-2" />
-                  分享
+                  <FontAwesomeIcon icon={faShare} className="w-4 h-4" />
                 </button>
                 
                 <div className="relative flex-1">
