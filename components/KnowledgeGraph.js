@@ -1099,7 +1099,7 @@ const KnowledgeGraph = ({
   return (
     <div 
       ref={containerRef} 
-      className={`relative knowledge-graph-container ${isFullscreen ? 'fixed inset-0 z-50 bg-white' : ''}`} 
+      className={`relative ${isFullscreen ? 'fixed inset-0 z-50 bg-white' : ''}`} 
       style={style}
     >
       {!isValidData && (
@@ -1140,42 +1140,22 @@ const KnowledgeGraph = ({
         </div>
       </div>
       
-      {/* 新增显眼的黑色分享按钮 - 使用内联样式确保显示 */}
+      {/* 新增显眼的黑色分享按钮 */}
       <button 
         onClick={handleShare} 
-        style={{
-          position: 'absolute',
-          top: '16px',
-          right: '16px',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          gap: '6px',
-          padding: '8px 16px',
-          backgroundColor: '#000',
-          color: '#fff',
-          border: 'none',
-          borderRadius: '8px',
-          fontWeight: 600,
-          cursor: 'pointer',
-          transition: 'all 0.2s ease',
-          zIndex: 1001,
-          boxShadow: '0 2px 10px rgba(0, 0, 0, 0.2)'
-        }}
+        className="share-button" 
         title="分享链接"
-        className="share-button-fixed"
       >
         <FontAwesomeIcon icon={faShare} />
-        <span style={{ fontSize: '14px' }}>分享</span>
+        <span className="share-text">分享</span>
       </button>
       
-      {/* 取消重复的containerRef引用，使用空div作为容器 */}
-      <div style={{ width: '100%', height: '100%' }} onWheel={e => e.stopPropagation()} />
+      <div ref={containerRef} style={{ width: '100%', height: '100%' }} onWheel={e => e.stopPropagation()} />
       
-      <style jsx global>{`
+      <style jsx>{`
         .knowledge-graph-container {
           position: relative;
-          background: var(--neutral-50, #fafafa);
+          background: var(--neutral-50);
           border-radius: 12px;
           overflow: hidden;
           isolation: isolate;
@@ -1201,23 +1181,13 @@ const KnowledgeGraph = ({
             height: 28px;
           }
 
-          .node-label {
+          :global(.node-label) {
             font-size: 10px;
             padding: 1px 2px;
           }
 
-          .edge-label {
+          :global(.edge-label) {
             font-size: 10px;
-          }
-          
-          .share-button-fixed {
-            padding: 6px 12px !important;
-            top: 12px !important;
-            right: 12px !important;
-          }
-          
-          .share-button-fixed span {
-            font-size: 12px !important;
           }
         }
 
@@ -1241,17 +1211,17 @@ const KnowledgeGraph = ({
           border: none;
           border-radius: 8px;
           background: transparent;
-          color: var(--neutral-600, #666);
+          color: var(--neutral-600);
           cursor: pointer;
           transition: all 0.2s ease;
         }
 
         .toolbar-button:hover {
           background: rgba(0, 0, 0, 0.05);
-          color: var(--neutral-900, #333);
+          color: var(--neutral-900);
         }
 
-        .node-label {
+        :global(.node-label) {
           color: #1a1a1a;
           font-size: 12px;
           padding: 2px 4px;
@@ -1271,7 +1241,7 @@ const KnowledgeGraph = ({
           z-index: 1;
         }
 
-        .edge-label {
+        :global(.edge-label) {
           color: #1a1a1a;
           font-size: 12px;
           padding: 2px 4px;
@@ -1282,11 +1252,46 @@ const KnowledgeGraph = ({
           text-shadow: 0 0 3px rgba(255,255,255,0.8);
         }
         
-        /* 分享按钮悬停效果 */
-        .share-button-fixed:hover {
-          background-color: #333 !important;
-          transform: translateY(-2px) !important;
-          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3) !important;
+        .share-button {
+          position: absolute;
+          top: 16px;
+          right: 16px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 6px;
+          padding: 8px 16px;
+          background-color: #000;
+          color: #fff;
+          border: none;
+          border-radius: 8px;
+          font-weight: 600;
+          cursor: pointer;
+          transition: all 0.2s ease;
+          z-index: 1001;
+          box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+        }
+        
+        .share-button:hover {
+          background-color: #333;
+          transform: translateY(-2px);
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        }
+        
+        .share-text {
+          font-size: 14px;
+        }
+        
+        @media (max-width: 768px) {
+          .share-button {
+            padding: 6px 12px;
+            top: 12px;
+            right: 12px;
+          }
+          
+          .share-text {
+            font-size: 12px;
+          }
         }
       `}</style>
     </div>
