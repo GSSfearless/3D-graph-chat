@@ -42,6 +42,8 @@ function Home() {
   const handleSearch = () => {
     if (query.trim() !== '') {
       router.push(`/search?q=${query}&side=both`);
+      // 清空搜索框
+      setQuery('');
     }
   };
 

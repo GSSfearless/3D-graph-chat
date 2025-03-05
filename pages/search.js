@@ -239,8 +239,8 @@ export default function Search() {
         query: { q: query }
       });
       handleSearch(query);
-      // 注释掉，因为已经在handleSearch中清空
-      // setQuery('');
+      // 清空搜索框
+      setQuery('');
     }
   };
 
@@ -326,6 +326,16 @@ export default function Search() {
             {/* 文本显示区域 - 在移动端使用全宽设计 */}
             <div className={`${isMobile ? 'flex-1 h-[40vh]' : 'col-span-3 h-[calc(100vh-4rem)]'} overflow-y-auto custom-scrollbar`}>
               <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
+                {/* 在回答区域上方显示用户提问 */}
+                {initialQuery && (
+                  <div className="mb-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                    <div className="flex items-center space-x-2 mb-1">
+                      <h3 className="text-sm font-semibold text-blue-700">您的提问</h3>
+                    </div>
+                    <p className="text-gray-800">{initialQuery}</p>
+                  </div>
+                )}
+                
                 {/* 隐藏DeepThinking思考过程显示 
                 {useDeepThinking && reasoningProcess && (
                   <div className="mb-4 p-3 bg-purple-50 rounded-lg border border-purple-200">
