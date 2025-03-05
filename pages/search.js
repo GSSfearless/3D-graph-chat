@@ -4,7 +4,7 @@ import { faShare } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import dynamic from 'next/dynamic';
 import { useRouter } from 'next/router';
-import { useState, useCallback, useEffect, useRef } from 'react';
+import { useState, useCallback, useEffect, useRef, useMemo } from 'react';
 import 'tailwindcss/tailwind.css';
 import '../styles/globals.css';
 import ReactMarkdown from 'react-markdown';
@@ -37,7 +37,13 @@ export default function Search() {
   const knowledgeProcessor = useRef(new KnowledgeGraphProcessor());
   const { user } = useAuth();
   const { width } = useWindowSize();
-  const isMobile = width ? width < 768 : false;
+  
+  // 使用useMemo确保服务端和客户端一致性
+  const isMobile = useMemo(() => {
+    // 在服务端渲染时返回默认值
+    if (typeof window === 'undefined') return false;
+    return typeof width === 'number' ? width < 768 : false;
+  }, [width]);
 
   const defaultQuery = "What is the answer to life, the universe, and everything?";
 
@@ -49,7 +55,11 @@ export default function Search() {
   }, [initialQuery, user]);
 
   const handleSearch = useCallback(async (searchQuery) => {
-    if (!searchQuery.trim()) return;
+    // 添加更严格的类型检查
+    if (!searchQuery || typeof searchQuery !== 'string' || !searchQuery.trim()) {
+      console.warn('无效的搜索查询:', searchQuery);
+      return;
+    }
     
     setLoading(true);
     setStreamedAnswer('');
@@ -220,9 +230,19 @@ export default function Search() {
   }, [useWebSearch, useDeepThinking, user]);
 
   useEffect(() => {
-    if (initialQuery && typeof initialQuery === 'string' && initialLoad) {
-      setQuery(initialQuery);
-      handleSearch(initialQuery);
+    // 添加try-catch以防止初始化错误
+    try {
+      if (initialQuery && typeof initialQuery === 'string' && initialLoad) {
+        setQuery(initialQuery);
+        handleSearch(initialQuery);
+        setInitialLoad(false);
+      }
+    } catch (error) {
+      console.error('初始化搜索失败:', error);
+      // 向Sentry报告错误
+      if (typeof window !== 'undefined' && window.Sentry) {
+        window.Sentry.captureException(error);
+      }
       setInitialLoad(false);
     }
   }, [initialQuery, initialLoad, handleSearch]);
@@ -326,8 +346,8 @@ export default function Search() {
             {/* 文本显示区域 - 在移动端使用全宽设计 */}
             <div className={`${isMobile ? 'flex-1 h-[40vh]' : 'col-span-3 h-[calc(100vh-4rem)]'} overflow-y-auto custom-scrollbar`}>
               <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
-                {/* 在回答区域上方显示用户提问 */}
-                {initialQuery && typeof initialQuery === 'string' && (
+                {/* 在回答区域上方显示用户提问 - 添加更多安全检查 */}
+                {initialQuery && typeof initialQuery === 'string' && initialQuery.trim() !== '' && (
                   <div className="mb-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
                     <div className="flex items-center space-x-2 mb-1">
                       <h3 className="text-sm font-semibold text-blue-700">您的提问</h3>
