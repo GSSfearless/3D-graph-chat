@@ -3,7 +3,7 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 import { CSS2DRenderer, CSS2DObject } from 'three/examples/jsm/renderers/CSS2DRenderer';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faExpand, faCompress, faSearch, faRefresh, faSave, faDownload, faCube } from '@fortawesome/free-solid-svg-icons';
+import { faExpand, faCompress, faSearch, faRefresh, faSave, faDownload, faCube, faShare } from '@fortawesome/free-solid-svg-icons';
 
 const KnowledgeGraph = ({ 
   data, 
@@ -705,6 +705,24 @@ const KnowledgeGraph = ({
     link.click();
   };
 
+  // 新增分享功能
+  const handleShare = () => {
+    // 检查浏览器是否支持原生分享API
+    if (navigator.share) {
+      navigator.share({
+        title: '我的Think Graph知识图谱',
+        text: '查看我使用Think Graph创建的3D知识图谱！',
+        url: window.location.href,
+      })
+      .catch(error => console.error('分享失败:', error));
+    } else {
+      // 不支持原生分享API时，复制链接到剪贴板
+      navigator.clipboard.writeText(window.location.href)
+        .then(() => alert('链接已复制到剪贴板！'))
+        .catch(error => console.error('复制失败:', error));
+    }
+  };
+
   useEffect(() => {
     // 清理前一个场景
     if (sceneRef.current?.animationFrameId) {
@@ -1115,6 +1133,13 @@ const KnowledgeGraph = ({
             title="导出图片"
           >
             <FontAwesomeIcon icon={faDownload} />
+          </button>
+          <button
+            onClick={handleShare}
+            className="toolbar-button bg-black text-white hover:bg-gray-800"
+            title="分享图谱"
+          >
+            <FontAwesomeIcon icon={faShare} />
           </button>
         </div>
       </div>
