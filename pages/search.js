@@ -215,7 +215,8 @@ export default function Search() {
 
   useEffect(() => {
     if (initialQuery && initialLoad) {
-      setQuery(initialQuery);
+      // 不再设置搜索框的值，但仍然执行搜索
+      // setQuery(initialQuery);
       handleSearch(initialQuery);
       setInitialLoad(false);
     }
