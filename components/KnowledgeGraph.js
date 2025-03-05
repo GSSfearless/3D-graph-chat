@@ -3,7 +3,7 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 import { CSS2DRenderer, CSS2DObject } from 'three/examples/jsm/renderers/CSS2DRenderer';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faExpand, faCompress, faSearch, faRefresh, faSave, faDownload, faCube } from '@fortawesome/free-solid-svg-icons';
+import { faExpand, faCompress, faSearch, faRefresh, faSave, faDownload, faCube, faShare } from '@fortawesome/free-solid-svg-icons';
 
 const KnowledgeGraph = ({ 
   data, 
@@ -705,6 +705,24 @@ const KnowledgeGraph = ({
     link.click();
   };
 
+  // 添加分享功能
+  const handleShare = () => {
+    // 获取当前URL
+    const currentUrl = window.location.href;
+    
+    // 复制URL到剪贴板
+    navigator.clipboard.writeText(currentUrl)
+      .then(() => {
+        // 显示提示信息
+        alert('链接已复制到剪贴板，现在您可以分享给他人了！');
+      })
+      .catch(err => {
+        console.error('无法复制链接: ', err);
+        // 如果剪贴板API不可用，提示用户手动复制
+        prompt('请手动复制此链接:', currentUrl);
+      });
+  };
+
   useEffect(() => {
     // 清理前一个场景
     if (sceneRef.current?.animationFrameId) {
@@ -1089,10 +1107,13 @@ const KnowledgeGraph = ({
           <p>暂无可视化数据</p>
         </div>
       )}
+      
+      {/* 原有工具栏 - 保持不可见 */}
       <div className="toolbar" style={{ 
         flexDirection: isMobile ? 'column' : 'row',
         right: isMobile ? '8px' : '16px',
-        top: isMobile ? '8px' : '16px'
+        top: isMobile ? '8px' : '16px',
+        display: 'none'  // 使工具栏不可见
       }}>
         <div className="toolbar-group">
           <button onClick={() => sceneRef.current.controls.zoomIn()} className="toolbar-button" title="放大">
@@ -1118,6 +1139,16 @@ const KnowledgeGraph = ({
           </button>
         </div>
       </div>
+      
+      {/* 新增显眼的黑色分享按钮 */}
+      <button 
+        onClick={handleShare} 
+        className="share-button" 
+        title="分享链接"
+      >
+        <FontAwesomeIcon icon={faShare} />
+        <span className="share-text">分享</span>
+      </button>
       
       <div ref={containerRef} style={{ width: '100%', height: '100%' }} onWheel={e => e.stopPropagation()} />
       
@@ -1219,6 +1250,48 @@ const KnowledgeGraph = ({
           white-space: nowrap;
           text-align: center;
           text-shadow: 0 0 3px rgba(255,255,255,0.8);
+        }
+        
+        .share-button {
+          position: absolute;
+          top: 16px;
+          right: 16px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 6px;
+          padding: 8px 16px;
+          background-color: #000;
+          color: #fff;
+          border: none;
+          border-radius: 8px;
+          font-weight: 600;
+          cursor: pointer;
+          transition: all 0.2s ease;
+          z-index: 1001;
+          box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+        }
+        
+        .share-button:hover {
+          background-color: #333;
+          transform: translateY(-2px);
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        }
+        
+        .share-text {
+          font-size: 14px;
+        }
+        
+        @media (max-width: 768px) {
+          .share-button {
+            padding: 6px 12px;
+            top: 12px;
+            right: 12px;
+          }
+          
+          .share-text {
+            font-size: 12px;
+          }
         }
       `}</style>
     </div>
