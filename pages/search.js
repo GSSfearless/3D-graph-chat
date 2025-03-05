@@ -22,8 +22,27 @@ const KnowledgeGraph = dynamic(() => import('../components/KnowledgeGraph'), {
 
 export default function Search() {
   const router = useRouter();
-  const { q: initialQuery } = router.query;
-  const [query, setQuery] = useState(initialQuery && typeof initialQuery === 'string' ? initialQuery : '');
+  
+  // 增强路由参数处理的健壮性
+  const initialQuery = useMemo(() => {
+    // 如果router.query未就绪或为空对象，返回null
+    if (!router.isReady || !router.query) return null;
+    
+    const { q } = router.query;
+    // 参数验证
+    return typeof q === 'string' && q.trim() !== '' ? q : null;
+  }, [router.query, router.isReady]);
+  
+  // 基于新的initialQuery逻辑调整query状态初始化
+  const [query, setQuery] = useState('');
+  
+  // 将initialQuery的副作用独立出来
+  useEffect(() => {
+    if (initialQuery) {
+      setQuery(initialQuery);
+    }
+  }, [initialQuery]);
+  
   const [loading, setLoading] = useState(false);
   const [initialLoad, setInitialLoad] = useState(true);
   const [streamedAnswer, setStreamedAnswer] = useState('');
@@ -232,8 +251,8 @@ export default function Search() {
   useEffect(() => {
     // 添加try-catch以防止初始化错误
     try {
-      if (initialQuery && typeof initialQuery === 'string' && initialLoad) {
-        setQuery(initialQuery);
+      // 增强initialQuery检查，确保只有在router准备好且有有效查询时才进行搜索
+      if (initialQuery && initialLoad && router.isReady) {
         handleSearch(initialQuery);
         setInitialLoad(false);
       }
@@ -245,7 +264,7 @@ export default function Search() {
       }
       setInitialLoad(false);
     }
-  }, [initialQuery, initialLoad, handleSearch]);
+  }, [initialQuery, initialLoad, handleSearch, router.isReady]);
 
   const handleInputChange = (e) => {
     setQuery(e.target.value);
@@ -283,6 +302,37 @@ export default function Search() {
         console.error('无法复制链接: ', err);
       });
   };
+
+  // 在组件顶部添加浏览器历史监听
+  useEffect(() => {
+    // 只在客户端执行
+    if (typeof window === 'undefined') return;
+    
+    // 处理浏览器的popstate事件(回退/前进按钮)
+    const handlePopState = () => {
+      // 如果回退到搜索页但没有查询参数，回到首页
+      if (window.location.pathname === '/search' && !window.location.search.includes('q=')) {
+        console.log('检测到无参数回退到搜索页，重定向到首页');
+        window.location.href = '/';
+        return;
+      }
+      
+      // 如果当前是搜索页，尝试从URL获取参数
+      if (window.location.pathname === '/search') {
+        const urlParams = new URLSearchParams(window.location.search);
+        const queryParam = urlParams.get('q');
+        
+        if (queryParam && queryParam.trim() !== '') {
+          // 手动设置查询并触发搜索
+          setQuery(queryParam);
+          handleSearch(queryParam);
+        }
+      }
+    };
+    
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, [handleSearch]);
 
   return (
     <div className="flex h-screen overflow-hidden">
@@ -347,7 +397,7 @@ export default function Search() {
             <div className={`${isMobile ? 'flex-1 h-[40vh]' : 'col-span-3 h-[calc(100vh-4rem)]'} overflow-y-auto custom-scrollbar`}>
               <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
                 {/* 在回答区域上方显示用户提问 - 添加更多安全检查 */}
-                {initialQuery && typeof initialQuery === 'string' && initialQuery.trim() !== '' && (
+                {initialQuery && (
                   <div className="mb-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
                     <div className="flex items-center space-x-2 mb-1">
                       <h3 className="text-sm font-semibold text-blue-700">您的提问</h3>
@@ -356,7 +406,13 @@ export default function Search() {
                   </div>
                 )}
                 
-                {/* 隐藏DeepThinking思考过程显示 
+                {!initialQuery && !streamedAnswer && (
+                  <div className="text-center py-8 text-gray-500">
+                    <p>请在下方输入您想了解的问题</p>
+                  </div>
+                )}
+                
+                {/* 隐藏DeepThinking思考过程显示 */}
                 {useDeepThinking && reasoningProcess && (
                   <div className="mb-4 p-3 bg-purple-50 rounded-lg border border-purple-200">
                     <div className="flex items-center space-x-2 mb-2">
@@ -369,7 +425,7 @@ export default function Search() {
                     </div>
                   </div>
                 )}
-                */}
+                
                 {streamedAnswer && (
                   <div className="">
                     <ReactMarkdown remarkPlugins={[remarkGfm]} className="prose prose-sm max-w-none">
