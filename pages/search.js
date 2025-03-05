@@ -23,7 +23,7 @@ const KnowledgeGraph = dynamic(() => import('../components/KnowledgeGraph'), {
 export default function Search() {
   const router = useRouter();
   const { q: initialQuery } = router.query;
-  const [query, setQuery] = useState(initialQuery || '');
+  const [query, setQuery] = useState(initialQuery && typeof initialQuery === 'string' ? initialQuery : '');
   const [loading, setLoading] = useState(false);
   const [initialLoad, setInitialLoad] = useState(true);
   const [streamedAnswer, setStreamedAnswer] = useState('');
@@ -42,7 +42,7 @@ export default function Search() {
   const defaultQuery = "What is the answer to life, the universe, and everything?";
 
   useEffect(() => {
-    if (initialQuery && user) {
+    if (initialQuery && typeof initialQuery === 'string' && user) {
       // 初始查询时添加到搜索历史
       HistoryManager.addSearchHistory(initialQuery.toString());
     }
@@ -220,7 +220,7 @@ export default function Search() {
   }, [useWebSearch, useDeepThinking, user]);
 
   useEffect(() => {
-    if (initialQuery && initialLoad) {
+    if (initialQuery && typeof initialQuery === 'string' && initialLoad) {
       setQuery(initialQuery);
       handleSearch(initialQuery);
       setInitialLoad(false);
@@ -327,7 +327,7 @@ export default function Search() {
             <div className={`${isMobile ? 'flex-1 h-[40vh]' : 'col-span-3 h-[calc(100vh-4rem)]'} overflow-y-auto custom-scrollbar`}>
               <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
                 {/* 在回答区域上方显示用户提问 */}
-                {initialQuery && (
+                {initialQuery && typeof initialQuery === 'string' && (
                   <div className="mb-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
                     <div className="flex items-center space-x-2 mb-1">
                       <h3 className="text-sm font-semibold text-blue-700">您的提问</h3>
