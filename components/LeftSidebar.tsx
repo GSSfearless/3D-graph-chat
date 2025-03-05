@@ -106,9 +106,9 @@ const LeftSidebar = () => {
 
   return (
     <div className="w-64 bg-white border-r border-gray-200 h-screen flex flex-col">
-      {/* Logo section */}
-      <div className="p-4 border-b border-gray-200">
-        <a href="/" className="flex items-center space-x-2">
+      {/* Logo section - 居中且无分割线 */}
+      <div className="p-4 flex justify-center">
+        <a href="/" className="flex items-center">
           <span className="text-xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 text-transparent bg-clip-text">Think Graph</span>
         </a>
       </div>
