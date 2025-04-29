@@ -79,12 +79,3 @@ yarn dev
 
 本项目采用 MIT 许可证 - 查看 [LICENSE](LICENSE) 文件了解详情
 
-## 🙋‍♂️ 获取帮助
-
-- 查看我们的 [常见问题解答](FAQ.md)
-- 加入我们的 [Discord 社区](https://discord.gg/thinkgraph)
-- 发送邮件至 support@thinkgraph.ai
-
-## 🌟 致谢
-
-感谢所有为这个项目做出贡献的开发者和用户。
